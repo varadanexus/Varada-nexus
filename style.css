@@ -1,0 +1,10 @@
+
+body { font-family: 'Segoe UI', sans-serif; background: #ffffff; color: #222; margin: 0; padding: 0; }
+header { background: #002f6c; color: white; padding: 20px; text-align: center; }
+nav a { margin: 0 15px; color: white; text-decoration: none; font-weight: 500; }
+main { padding: 2em; max-width: 1000px; margin: auto; }
+footer { background: #002f6c; color: white; text-align: center; padding: 1em; margin-top: 3em; }
+img { width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin: 1em 0; }
+form input, form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+form button { background-color: #004aad; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+form button:hover { background-color: #003080; }

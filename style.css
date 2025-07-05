@@ -15,8 +15,12 @@ form button:hover { background-color: #003080; }
     gap: 15px;
     justify-content: center;
     flex-wrap: wrap;
+    margin-bottom: 10px;
 }
+
 .logo-wrapper .logo {
     height: 60px;
     width: auto;
+    border-radius: 6px;
+    object-fit: contain;
 }

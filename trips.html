@@ -1,4 +1,12 @@
-<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Trips - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -38,30 +46,6 @@ margin-left:220px;
 padding:30px;
 }
 
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-input,select{
-padding:8px;
-margin:5px;
-width:200px;
-}
-
-button{
-padding:6px 12px;
-border:none;
-cursor:pointer;
-}
-
-.saveBtn{background:#1f3c88;color:white;}
-.editBtn{background:#5bc0de;color:white;}
-.deleteBtn{background:#d9534f;color:white;}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -77,221 +61,127 @@ th{
 background:#eee;
 }
 
-.resultBox{
-font-weight:bold;
-margin-top:10px;
+input{
+padding:8px;
+margin:5px;
 }
 
-</style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+button{
+padding:6px 12px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+.deleteBtn{
+background:#d9534f;
+}
+
+.editBtn{
+background:#5bc0de;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+<h2>Varada Nexus</h2>
+
+<a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
-</div><div class="main"><h1>Trips</h1><div class="card"><h3>Create Trip</h3><select id="commodity"></select>
-<select id="route"></select>
-<select id="truck"></select>
+</div>
 
-<br><input id="weightKg" placeholder="Weight (KG)" oninput="calculateAmounts()"><div class="resultBox">
-Company Amount: <span id="companyAmount">0</span>
-</div><div class="resultBox">
-Transporter Amount: <span id="transporterAmount">0</span>
-</div><div class="resultBox">
-Profit: <span id="profitAmount">0</span>
-</div><br><button class="saveBtn" onclick="saveTrip()">Save Trip</button>
+<div class="main">
 
-</div><div class="card"><h3>Search Trips</h3><input id="searchCommodity" placeholder="Commodity">
-<input id="searchRoute" placeholder="Route">
-<input id="searchTruck" placeholder="Truck"><button onclick="loadTrips()">Search</button>
+<h1>Trips</h1>
 
-</div><table><thead><tr>
-<th>Commodity</th>
+<input id="searchTrip" placeholder="Search Trip ID">
+<button onclick="searchTrip()">Search</button>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
-<th>Weight KG</th>
-<th>Company</th>
-<th>Transporter</th>
-<th>Profit</th>
+<th>Commodity</th>
+<th>Weight</th>
+<th>Date</th>
+<th>Status</th>
 <th>Action</th>
-</tr></thead><tbody id="tripTable"></tbody></table></div><script>
+</tr>
+
+</thead>
+
+<tbody id="tripTable"></tbody>
+
+</table>
+
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-let companyRate=0
-let transporterRate=0
-
-init()
-
-async function init(){
-
-await loadDropdowns()
 loadTrips()
-
-}
-
-/* LOAD DROPDOWNS */
-
-async function loadDropdowns(){
-
-let {data:commodities}=await supabaseClient.from("commodities").select("*")
-let {data:routes}=await supabaseClient.from("routes").select("*")
-let {data:trucks}=await supabaseClient.from("trucks").select("*")
-
-commodity.innerHTML='<option value="">Commodity</option>'
-route.innerHTML='<option value="">Route</option>'
-truck.innerHTML='<option value="">Truck</option>'
-
-commodities.forEach(c=>{
-commodity.innerHTML+=`<option value="${c.id}">${c.name}</option>`
-})
-
-routes.forEach(r=>{
-route.innerHTML+=`<option value="${r.id}">${r.route_code}</option>`
-})
-
-trucks.forEach(t=>{
-truck.innerHTML+=`<option value="${t.id}">${t.truck_id}</option>`
-})
-
-}
-
-/* FETCH RATE */
-
-async function getRate(){
-
-let commodityId=commodity.value
-let routeId=route.value
-let truckId=truck.value
-
-if(!commodityId || !routeId || !truckId) return
-
-let {data:truckData}=await supabaseClient
-.from("trucks")
-.select("transporter_id")
-.eq("id",truckId)
-.single()
-
-let transporterId=truckData.transporter_id
-
-let {data:rateData}=await supabaseClient
-.from("rates")
-.select("*")
-.eq("commodity_id",commodityId)
-.eq("route_id",routeId)
-.eq("transporter_id",transporterId)
-.single()
-
-if(rateData){
-
-companyRate=rateData.company_rate_per_mt
-transporterRate=rateData.transporter_rate_per_mt
-
-}
-
-}
-
-/* CALCULATE */
-
-async function calculateAmounts(){
-
-await getRate()
-
-let kg=document.getElementById("weightKg").value
-if(!kg) return
-
-let mt=kg/1000
-
-let company=mt*companyRate
-let transporter=mt*transporterRate
-let profit=company-transporter
-
-document.getElementById("companyAmount").innerText=Math.round(company)
-document.getElementById("transporterAmount").innerText=Math.round(transporter)
-document.getElementById("profitAmount").innerText=Math.round(profit)
-
-}
-
-/* SAVE TRIP */
-
-async function saveTrip(){
-
-let commodityId=commodity.value
-let routeId=route.value
-let truckId=truck.value
-let kg=document.getElementById("weightKg").value
-
-let mt=kg/1000
-
-let company=mt*companyRate
-let transporter=mt*transporterRate
-let profit=company-transporter
-
-await supabaseClient.from("trips").insert({
-
-commodity_id:commodityId,
-route_id:routeId,
-truck_id:truckId,
-weight_kg:kg,
-company_amount:company,
-transporter_amount:transporter,
-profit:profit
-
-})
-
-document.getElementById("weightKg").value=""
-
-loadTrips()
-
-}
 
 /* LOAD TRIPS */
 
 async function loadTrips(){
 
-let commoditySearch=document.getElementById("searchCommodity").value.toLowerCase()
-let routeSearch=document.getElementById("searchRoute").value.toLowerCase()
-let truckSearch=document.getElementById("searchTruck").value.toLowerCase()
+const { data } = await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
 
-let {data}=await supabaseClient.from("trips").select("*")
+renderTrips(data)
+
+}
+
+/* RENDER TABLE */
+
+function renderTrips(data){
 
 let html=""
 
-for(let t of data){
-
-let {data:c}=await supabaseClient.from("commodities").select("name").eq("id",t.commodity_id).single()
-let {data:r}=await supabaseClient.from("routes").select("route_code").eq("id",t.route_id).single()
-let {data:tr}=await supabaseClient.from("trucks").select("truck_id").eq("id",t.truck_id).single()
-
-let commodity=c?.name ?? ""
-let route=r?.route_code ?? ""
-let truck=tr?.truck_id ?? ""
-
-if(
-commodity.toLowerCase().includes(commoditySearch) &&
-route.toLowerCase().includes(routeSearch) &&
-truck.toLowerCase().includes(truckSearch)
-){
+data.forEach(trip=>{
 
 html+=`
 
 <tr>
 
-<td>${commodity}</td>
-<td>${route}</td>
-<td>${truck}</td>
-<td>${t.weight_kg}</td>
-<td>${Math.round(t.company_amount)}</td>
-<td>${Math.round(t.transporter_amount)}</td>
-<td>${Math.round(t.profit)}</td>
+<td><b>${trip.trip_no}</b></td>
+
+<td>${trip.route ?? "-"}</td>
+
+<td>${trip.truck ?? "-"}</td>
+
+<td>${trip.commodity}</td>
+
+<td>${trip.weight_kg}</td>
+
+<td>${trip.trip_date ?? "-"}</td>
+
+<td>${trip.status ?? "-"}</td>
 
 <td>
 
-<button class="editBtn" onclick="editTrip('${t.id}','${t.weight_kg}')">Edit</button>
+<button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
 
-<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+<button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
 
 </td>
 
@@ -299,11 +189,24 @@ html+=`
 
 `
 
-}
-
-}
+})
 
 document.getElementById("tripTable").innerHTML=html
+
+}
+
+/* SEARCH */
+
+async function searchTrip(){
+
+let text=document.getElementById("searchTrip").value
+
+const { data } = await supabaseClient
+.from("trips")
+.select("*")
+.ilike("trip_no","%"+text+"%")
+
+renderTrips(data)
 
 }
 
@@ -311,7 +214,7 @@ document.getElementById("tripTable").innerHTML=html
 
 async function deleteTrip(id){
 
-if(!confirm("Delete trip?")) return
+if(!confirm("Delete this trip?")) return
 
 await supabaseClient
 .from("trips")
@@ -324,20 +227,53 @@ loadTrips()
 
 /* EDIT */
 
-async function editTrip(id,weight){
+async function editTrip(id){
 
-let newWeight=prompt("Edit Weight (KG)",weight)
+const { data } = await supabaseClient
+.from("trips")
+.select("*")
+.eq("id",id)
+.single()
 
-if(!newWeight) return
+let weight=prompt("Edit Weight",data.weight_kg)
+
+let status=prompt("Edit Status",data.status)
 
 await supabaseClient
 .from("trips")
-.update({weight_kg:newWeight})
+.update({
+weight_kg:weight,
+status:status
+})
 .eq("id",id)
 
 loadTrips()
 
 }
 
-</script></body>
+/* AUTO TRIP NUMBER GENERATOR */
+
+async function generateTripNo(){
+
+const now = new Date()
+
+let year = now.getFullYear().toString().slice(-2)
+let month = ("0"+(now.getMonth()+1)).slice(-2)
+
+const { data } = await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no","TR"+year+month+"%")
+
+let seq = data.length + 1
+
+let seqStr = seq.toString().padStart(4,"0")
+
+return "TR"+year+month+seqStr
+
+}
+
+</script>
+
+</body>
 </html>

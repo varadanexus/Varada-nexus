@@ -81,7 +81,16 @@ text-align:left;
 <th>Origin</th>
 <th>Destination</th>
 </tr>
-</thead><tbody id="routeTable"></tbody></table></div></div><script>
+</thead><tbody id="routeTable"></tbody></table></div><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name"><input id="clientCompany" placeholder="Company"><input id="clientPhone" placeholder="Phone"><input id="clientEmail" placeholder="Email"><button onclick="addClient()">Save Client</button>
+
+<table><thead>
+<tr>
+<th>Name</th>
+<th>Company</th>
+<th>Phone</th>
+<th>Email</th>
+</tr>
+</thead><tbody id="clientTable"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -90,6 +99,7 @@ const supabaseClient = supabase.createClient(
 
 loadCommodities()
 loadRoutes()
+loadClients()
 
 async function addCommodity(){
 
@@ -130,8 +140,6 @@ if(!origin || !destination){
 alert("Enter Origin and Destination")
 return
 }
-
-/* AUTO GENERATE ROUTE CODE */
 
 let originCode=origin.substring(0,4).toUpperCase()
 let destinationCode=destination.substring(0,4).toUpperCase()
@@ -174,6 +182,54 @@ html+=`
 })
 
 document.getElementById("routeTable").innerHTML=html
+
+}
+
+async function addClient(){
+
+let name=document.getElementById("clientName").value
+let company=document.getElementById("clientCompany").value
+let phone=document.getElementById("clientPhone").value
+let email=document.getElementById("clientEmail").value
+
+await supabaseClient
+.from("clients")
+.insert([{
+client_name:name,
+company:company,
+phone:phone,
+email:email
+}])
+
+document.getElementById("clientName").value=""
+document.getElementById("clientCompany").value=""
+document.getElementById("clientPhone").value=""
+document.getElementById("clientEmail").value=""
+
+loadClients()
+
+}
+
+async function loadClients(){
+
+let {data}=await supabaseClient
+.from("clients")
+.select("*")
+
+let html=""
+
+data.forEach(c=>{
+html+=`
+<tr>
+<td>${c.client_name}</td>
+<td>${c.company}</td>
+<td>${c.phone}</td>
+<td>${c.email}</td>
+</tr>
+`
+})
+
+document.getElementById("clientTable").innerHTML=html
 
 }
 

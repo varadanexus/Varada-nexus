@@ -23,7 +23,9 @@ color:white;
 text-decoration:none;
 }
 
-.sidebar a:hover{background:#162c66;}
+.sidebar a:hover{
+background:#162c66;
+}
 
 .main{
 margin-left:220px;
@@ -32,21 +34,24 @@ padding:30px;
 
 .card{
 background:white;
-padding:20px;
+padding:25px;
 border-radius:8px;
 margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 .form-grid{
 display:grid;
-grid-template-columns: repeat(6, 1fr);
-gap:10px;
+grid-template-columns: repeat(6,1fr);
+gap:12px;
+align-items:center;
 }
 
-.form-grid input,
-.form-grid select{
-padding:8px;
-width:100%;
+.form-grid select,
+.form-grid input{
+padding:10px;
+border:1px solid #ccc;
+border-radius:4px;
 }
 
 button{
@@ -54,6 +59,7 @@ padding:8px 14px;
 background:#1f3c88;
 color:white;
 border:none;
+border-radius:4px;
 cursor:pointer;
 }
 
@@ -71,7 +77,17 @@ padding:10px;
 border-bottom:1px solid #ddd;
 }
 
-th{background:#eee;}
+th{
+background:#eee;
+text-align:left;
+}
+
+.searchBox{
+padding:10px;
+width:220px;
+border:1px solid #ccc;
+border-radius:4px;
+}
 
 </style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
@@ -80,12 +96,19 @@ th{background:#eee;}
 <a href="rate-entry.html">Rates</a>
 
 </div><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
+
 <select id="truck"></select>
+
 <select id="commodity"></select>
 
-<input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><input id="status" placeholder="Status"></div><br><button onclick="saveTrip()">Save Trip</button>
+<input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
+<option value="">Status</option>
+<option>LOADED</option>
+<option>Completed</option>
+<option>Pending</option>
+</select></div><br><button onclick="saveTrip()">Save Trip</button>
 
-</div><div class="card"><input id="searchTrip" placeholder="Search Trip ID"><button onclick="searchTrip()">Search</button>
+</div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID"><button onclick="searchTrip()">Search</button>
 
 </div><table><thead><tr><th>Trip ID</th>
 <th>Route</th>
@@ -270,7 +293,7 @@ renderTrips()
 
 
 
-/* RENDER TRIPS */
+/* RENDER */
 
 async function renderTrips(){
 
@@ -334,6 +357,7 @@ html+=`
 <td>
 
 <button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
+
 <button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
 
 </td>
@@ -350,41 +374,30 @@ document.getElementById("tripTable").innerHTML=html
 
 
 
-function nextPage(){
+/* EDIT TRIP */
 
-if(page*pageSize<trips.length){
+async function editTrip(id){
 
-page++
-renderTrips()
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("id",id)
+.single()
 
-}
+let weight=prompt("Edit Weight",data.weight_kg)
+let status=prompt("Edit Status",data.status)
+let date=prompt("Edit Date (YYYY-MM-DD)",data.trip_date)
 
-}
+await supabaseClient
+.from("trips")
+.update({
+weight_kg:weight,
+status:status,
+trip_date:date
+})
+.eq("id",id)
 
-
-
-function prevPage(){
-
-if(page>1){
-
-page--
-renderTrips()
-
-}
-
-}
-
-
-
-function searchTrip(){
-
-let text=document.getElementById("searchTrip").value.toLowerCase()
-
-let filtered=trips.filter(t=>t.trip_no.toLowerCase().includes(text))
-
-trips=filtered
-
-renderTrips()
+loadTrips()
 
 }
 
@@ -404,24 +417,43 @@ loadTrips()
 
 
 
-/* EDIT */
+/* SEARCH */
 
-async function editTrip(id){
+function searchTrip(){
 
-const {data}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("id",id)
-.single()
+let text=document.getElementById("searchTrip").value.toLowerCase()
 
-let weight=prompt("Edit Weight",data.weight_kg)
+let filtered=trips.filter(t=>t.trip_no.toLowerCase().includes(text))
 
-await supabaseClient
-.from("trips")
-.update({weight_kg:weight})
-.eq("id",id)
+trips=filtered
 
-loadTrips()
+renderTrips()
+
+}
+
+
+
+/* PAGINATION */
+
+function nextPage(){
+
+if(page*pageSize<trips.length){
+
+page++
+renderTrips()
+
+}
+
+}
+
+function prevPage(){
+
+if(page>1){
+
+page--
+renderTrips()
+
+}
 
 }
 

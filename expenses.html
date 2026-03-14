@@ -75,13 +75,11 @@ background:#eee;
 
 </style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
-<a href="#">Trucks</a>
-<a href="#">Routes</a>
 <a href="expenses.html">Expenses</a>
-<a href="#">Client Payments</a>
-<a href="#">Transporter Payments</a>
 
-</div><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><input id="tripId" placeholder="Trip ID"><select id="type">
+</div><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><select id="tripSelect"></select>
+
+<select id="type">
 <option>Fuel</option>
 <option>Toll</option>
 <option>Driver Advance</option>
@@ -89,7 +87,7 @@ background:#eee;
 </select><input id="amount" placeholder="Amount"><button onclick="addExpense()">Add Expense</button>
 
 </div><table><thead><tr>
-<th>Trip</th>
+<th>Trip ID</th>
 <th>Type</th>
 <th>Amount</th>
 </tr></thead><tbody id="expenseTable"></tbody></table></div><script>
@@ -98,6 +96,24 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
+
+async function loadTrips(){
+
+const { data } = await supabaseClient
+.from("trips")
+.select("trip_no")
+
+let html=""
+
+data.forEach(trip=>{
+html+=`<option value="${trip.trip_no}">${trip.trip_no}</option>`
+})
+
+document.getElementById("tripSelect").innerHTML=html
+
+}
+
+loadTrips()
 
 async function loadExpenses(){
 
@@ -132,7 +148,7 @@ loadExpenses()
 
 async function addExpense(){
 
-const tripId=document.getElementById("tripId").value
+const tripId=document.getElementById("tripSelect").value
 const type=document.getElementById("type").value
 const amount=document.getElementById("amount").value
 

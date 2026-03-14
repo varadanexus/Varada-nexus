@@ -77,6 +77,7 @@ cursor:pointer;
 <th>Commodity</th>
 <th>Weight</th>
 <th>Status</th>
+<th>Action</th>
 </tr>
 </thead><tbody id="tripTable"></tbody></table></div><script>
 
@@ -106,6 +107,10 @@ html+=`
 <td>${trip.weight_kg}</td>
 <td>${trip.status ?? "-"}</td>
 
+<td>
+<button onclick="editTrip('${trip.id}')">View</button>
+</td>
+
 </tr>
 
 `
@@ -117,5 +122,11 @@ document.getElementById("tripTable").innerHTML=html
 }
 
 loadTrips()
+
+function editTrip(id){
+
+window.location.href="trip_detail.html?id="+id
+
+}
 
 </script></body></html>

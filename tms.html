@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<title>Varada Nexus TMS</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+body{
+font-family:Arial;
+margin:40px;
+background:#f5f7fa;
+}
+
+h1{
+color:#1a2a44;
+}
+
+button{
+padding:10px 20px;
+margin:5px;
+background:#1a2a44;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+input{
+padding:8px;
+margin:5px;
+}
+</style></head><body><h1>Varada Nexus Transport Management System</h1><h2>Add Trip</h2><input id="commodity" placeholder="Commodity">
+<input id="weight" placeholder="Weight KG">
+<button onclick="addTrip()">Add Trip</button><h2>Trips</h2><div id="tripList"></div><script>
+
+const supabaseUrl = "https://ticsgbtxfhhihamejiss.supabase.co"
+const supabaseKey = "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+
+async function addTrip(){
+
+const commodity=document.getElementById("commodity").value
+const weight=document.getElementById("weight").value
+
+await supabase
+.from("trips")
+.insert([{commodity:commodity,weight_kg:weight,status:"created"}])
+
+loadTrips()
+
+}
+
+async function loadTrips(){
+
+const {data}=await supabase
+.from("trips")
+.select("*")
+
+let html=""
+
+data.forEach(t=>{
+html+=`<p>${t.commodity} - ${t.weight_kg} KG</p>`
+})
+
+document.getElementById("tripList").innerHTML=html
+
+}
+
+loadTrips()
+
+</script></body></html>

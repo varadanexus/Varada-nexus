@@ -1,4 +1,11 @@
-<!DOCTYPE html><html><head><title>Varada Nexus Transport ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Dashboard - Varada Nexus ERP</title>
+
+<style>
 
 body{
 margin:0;
@@ -38,11 +45,11 @@ margin-left:220px;
 padding:30px;
 }
 
-.cards{
+.card-container{
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
 gap:20px;
-margin-bottom:30px;
+margin-top:20px;
 }
 
 .card{
@@ -55,79 +62,68 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 .card h3{
 margin:0;
 font-size:18px;
-color:#777;
 }
 
 .card p{
-font-size:28px;
+font-size:24px;
 margin-top:10px;
 }
 
-.table{
-background:white;
-padding:20px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
+</style>
 
-</style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
-<a href="tms.html">Trips</a>
-<a href="#">Trucks</a>
-<a href="#">Routes</a>
-<a href="#">Expenses</a>
-<a href="#">Client Payments</a>
-<a href="#">Transporter Payments</a>
+</head>
 
-</div><div class="main"><h1>Dashboard</h1><div class="cards"><div class="card">
+<body>
+
+
+<div class="sidebar">
+
+<h2>Varada Nexus</h2>
+
+<a href="dashboard.html">Dashboard</a>
+
+<a href="trips.html">Trips</a>
+
+<a href="expenses.html">Expenses</a>
+
+<a href="master-data.html">Master Data</a>
+
+<a href="rate-entry.html">Rates</a>
+
+</div>
+
+
+
+<div class="main">
+
+<h1>Dashboard</h1>
+
+<div class="card-container">
+
+<div class="card">
 <h3>Total Trips</h3>
-<p id="tripCount">0</p>
-</div><div class="card">
-<h3>Total Weight</h3>
-<p id="totalWeight">0</p>
-</div><div class="card">
+<p id="totalTrips">0</p>
+</div>
+
+<div class="card">
+<h3>Total Revenue</h3>
+<p id="totalRevenue">0</p>
+</div>
+
+<div class="card">
+<h3>Total Transport Cost</h3>
+<p id="totalCost">0</p>
+</div>
+
+<div class="card">
 <h3>Total Profit</h3>
-<p id="profit">0</p>
-</div></div><div class="table"><h2>Recent Trips</h2><div id="recentTrips"></div></div></div><script>
+<p id="totalProfit">0</p>
+</div>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
-)
+</div>
 
-async function loadDashboard(){
+</div>
 
-const { data } = await supabaseClient
-.from("trips")
-.select("*")
+</body>
 
-document.getElementById("tripCount").innerText=data.length
-
-let weight=0
-
-data.forEach(trip=>{
-weight+=Number(trip.weight_kg||0)
-})
-
-document.getElementById("totalWeight").innerText=weight
-
-let html=""
-
-data.slice(0,5).forEach(trip=>{
-
-html+=`
-
-<p>
-${trip.commodity} - ${trip.weight_kg} KG
-</p>
-
-`
-
-})
-
-document.getElementById("recentTrips").innerHTML=html
-
-}
-
-loadDashboard()
-
-</script></body></html>
+</html>

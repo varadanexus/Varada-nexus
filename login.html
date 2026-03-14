@@ -1,0 +1,81 @@
+<!DOCTYPE html><html><head><title>Login - Varada Nexus</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+}
+
+.card{
+background:white;
+padding:30px;
+border-radius:8px;
+box-shadow:0 2px 10px rgba(0,0,0,0.15);
+width:300px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-bottom:12px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+</style></head><body><div class="card"><h2>Varada Nexus Login</h2><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
+
+</div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+async function login(){
+
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+
+const {data,error}=await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
+})
+
+if(error){
+
+alert("Invalid login")
+return
+
+}
+
+/* FETCH USER ROLE */
+
+const {data:user}=await supabaseClient
+.from("users")
+.select("role")
+.eq("email",email)
+.single()
+
+localStorage.setItem("role",user.role)
+
+/* REDIRECT */
+
+window.location="dashboard.html"
+
+}
+
+</script></body>
+</html>

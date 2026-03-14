@@ -71,46 +71,52 @@ text-align:left;
 </div><div class="main"><h2>Master Data Management</h2><!-- COMMODITY --><div class="card"><h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name"><button onclick="addCommodity()">Save Commodity</button>
 
 <table><thead>
-<tr>
-<th>Commodity</th>
-</tr>
+<tr><th>Commodity</th></tr>
 </thead><tbody id="commodityTable"></tbody></table></div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
 <input id="destination" placeholder="Destination"><button onclick="addRoute()">Save Route</button>
 
-<table><thead><tr>
+<table><thead>
+<tr>
 <th>Route Code</th>
 <th>Origin</th>
 <th>Destination</th>
-</tr></thead><tbody id="routeTable"></tbody></table></div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
+</tr>
+</thead><tbody id="routeTable"></tbody></table></div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
 <input id="clientCompany" placeholder="Company">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email"><button onclick="addClient()">Save Client</button>
 
-<table><thead><tr>
+<table><thead>
+<tr>
 <th>Name</th>
 <th>Company</th>
 <th>Phone</th>
 <th>Email</th>
-</tr></thead><tbody id="clientTable"></tbody></table></div><!-- TRANSPORTER --><div class="card"><h3>Add Transporter / Owner</h3><input id="transporterName" placeholder="Owner Name">
+</tr>
+</thead><tbody id="clientTable"></tbody></table></div><!-- TRANSPORTER --><div class="card"><h3>Add Transporter / Owner</h3><input id="transporterName" placeholder="Owner Name">
 <input id="transporterCompany" placeholder="Company">
 <input id="transporterPhone" placeholder="Phone"><button onclick="addTransporter()">Save Transporter</button>
 
-<table><thead><tr>
+<table><thead>
+<tr>
 <th>Name</th>
 <th>Company</th>
 <th>Phone</th>
-</tr></thead><tbody id="transporterTable"></tbody></table></div><!-- TRUCK --><div class="card"><h3>Add Truck</h3><select id="ownerSelect">
+</tr>
+</thead><tbody id="transporterTable"></tbody></table></div><!-- TRUCK --><div class="card"><h3>Add Truck</h3><select id="ownerSelect">
 <option value="">Select Owner</option>
 </select><input id="truckNumber" placeholder="Truck Number">
 <input id="driverName" placeholder="Driver Name">
 <input id="driverPhone" placeholder="Driver Phone"><button onclick="addTruck()">Save Truck</button>
 
-<table><thead><tr>
+<table><thead>
+<tr>
 <th>Truck ID</th>
 <th>Truck Number</th>
 <th>Owner</th>
 <th>Driver</th>
-</tr></thead><tbody id="truckTable"></tbody></table></div></div><script>
+</tr>
+</thead><tbody id="truckTable"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -132,17 +138,8 @@ async function addCommodity(){
 
 let name=document.getElementById("commodityName").value.trim().toUpperCase()
 
-if(!name){
-alert("Enter commodity")
-return
-}
-
-let {data}=await supabaseClient.from("commodities").select("*")
-
-let exists=data.some(c=>c.name.toUpperCase()===name)
-
-if(exists){
-alert("Commodity already exists")
+if(name===""){
+alert("Enter commodity name")
 return
 }
 
@@ -154,20 +151,6 @@ loadCommodities()
 
 }
 
-async function loadCommodities(){
-
-let {data}=await supabaseClient.from("commodities").select("*")
-
-let html=""
-
-data.forEach(c=>{
-html+=`<tr><td>${c.name}</td></tr>`
-})
-
-document.getElementById("commodityTable").innerHTML=html
-
-}
-
 /* ROUTE */
 
 async function addRoute(){
@@ -175,16 +158,12 @@ async function addRoute(){
 let origin=document.getElementById("origin").value.trim().toUpperCase()
 let destination=document.getElementById("destination").value.trim().toUpperCase()
 
-let routeCode=origin.substring(0,4)+"-"+destination.substring(0,4)
-
-let {data}=await supabaseClient.from("routes").select("*")
-
-let exists=data.some(r=>r.route_code===routeCode)
-
-if(exists){
-alert("Route already exists")
+if(origin==="" || destination===""){
+alert("Enter origin and destination")
 return
 }
+
+let routeCode=origin.substring(0,4)+"-"+destination.substring(0,4)
 
 await supabaseClient.from("routes").insert([{
 route_code:routeCode,
@@ -199,37 +178,14 @@ loadRoutes()
 
 }
 
-async function loadRoutes(){
-
-let {data}=await supabaseClient.from("routes").select("*")
-
-let html=""
-
-data.forEach(r=>{
-html+=`
-<tr>
-<td>${r.route_code}</td>
-<td>${r.origin}</td>
-<td>${r.destination}</td>
-</tr>`
-})
-
-document.getElementById("routeTable").innerHTML=html
-
-}
-
 /* CLIENT */
 
 async function addClient(){
 
-let name=document.getElementById("clientName").value.trim().toUpperCase()
+let name=document.getElementById("clientName").value.trim()
 
-let {data}=await supabaseClient.from("clients").select("*")
-
-let exists=data.some(c=>c.client_name.toUpperCase()===name)
-
-if(exists){
-alert("Client exists")
+if(name===""){
+alert("Enter client name")
 return
 }
 
@@ -249,38 +205,14 @@ loadClients()
 
 }
 
-async function loadClients(){
-
-let {data}=await supabaseClient.from("clients").select("*")
-
-let html=""
-
-data.forEach(c=>{
-html+=`
-<tr>
-<td>${c.client_name}</td>
-<td>${c.company}</td>
-<td>${c.phone}</td>
-<td>${c.email}</td>
-</tr>`
-})
-
-document.getElementById("clientTable").innerHTML=html
-
-}
-
 /* TRANSPORTER */
 
 async function addTransporter(){
 
-let name=document.getElementById("transporterName").value.trim().toUpperCase()
+let name=document.getElementById("transporterName").value.trim()
 
-let {data}=await supabaseClient.from("transporters").select("*")
-
-let exists=data.some(t=>t.transporter_name.toUpperCase()===name)
-
-if(exists){
-alert("Transporter exists")
+if(name===""){
+alert("Enter transporter name")
 return
 }
 
@@ -299,71 +231,19 @@ loadOwnersDropdown()
 
 }
 
-async function loadTransporters(){
-
-let {data}=await supabaseClient.from("transporters").select("*")
-
-let html=""
-
-data.forEach(t=>{
-html+=`
-<tr>
-<td>${t.transporter_name}</td>
-<td>${t.company}</td>
-<td>${t.phone}</td>
-</tr>`
-})
-
-document.getElementById("transporterTable").innerHTML=html
-
-}
-
-/* OWNER DROPDOWN */
-
-async function loadOwnersDropdown(){
-
-let {data}=await supabaseClient.from("transporters").select("*")
-
-let select=document.getElementById("ownerSelect")
-
-select.innerHTML='<option value="">Select Owner</option>'
-
-data.forEach(o=>{
-let option=document.createElement("option")
-option.value=o.id
-option.text=o.transporter_name
-select.appendChild(option)
-})
-
-if(ownerDropdown){
-ownerDropdown.destroy()
-}
-
-ownerDropdown=new TomSelect("#ownerSelect",{
-create:false,
-placeholder:"Search Owner..."
-})
-
-}
-
 /* TRUCK */
 
 async function addTruck(){
 
 let owner=document.getElementById("ownerSelect").value
 let truckNumber=document.getElementById("truckNumber").value.toUpperCase()
-
-let {data}=await supabaseClient.from("trucks").select("*")
-
-let exists=data.some(t=>t.truck_number.toUpperCase()===truckNumber)
-
-if(exists){
-alert("Truck already exists")
-return
-}
-
 let driver=document.getElementById("driverName").value
 let phone=document.getElementById("driverPhone").value
+
+if(owner==="" || truckNumber==="" || driver===""){
+alert("Fill all truck details")
+return
+}
 
 let code=truckNumber.substring(4,6)
 let last=truckNumber.slice(-4)
@@ -387,33 +267,6 @@ ownerDropdown.clear()
 }
 
 loadTrucks()
-
-}
-
-async function loadTrucks(){
-
-let {data}=await supabaseClient
-.from("trucks")
-.select(`
-truck_id,
-truck_number,
-driver_name,
-transporters(transporter_name)
-`)
-
-let html=""
-
-data.forEach(t=>{
-html+=`
-<tr>
-<td>${t.truck_id}</td>
-<td>${t.truck_number}</td>
-<td>${t.transporters.transporter_name}</td>
-<td>${t.driver_name}</td>
-</tr>`
-})
-
-document.getElementById("truckTable").innerHTML=html
 
 }
 

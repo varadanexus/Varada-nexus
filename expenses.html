@@ -89,7 +89,7 @@ background:#eee;
 
 </div><table><thead>
 <tr>
-<th>Trip ID</th>
+<th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
 </tr>
@@ -100,21 +100,19 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
+let tripMap = {}
+
 async function loadTrips(){
 
-const { data, error } = await supabaseClient
+const { data } = await supabaseClient
 .from("trips")
-.select("trip_no")
+.select("id,trip_no")
 .order("created_at",{ascending:false})
-
-if(error){
-console.log(error)
-return
-}
 
 let html=""
 
 data.forEach(trip=>{
+tripMap[trip.trip_no]=trip.id
 html+=`<option value="${trip.trip_no}">${trip.trip_no}</option>`
 })
 
@@ -128,31 +126,32 @@ placeholder:"Search Trip ID"
 
 async function loadExpenses(){
 
-const { data, error } = await supabaseClient
+const { data } = await supabaseClient
 .from("expenses")
 .select("*")
 .order("created_at",{ascending:false})
 
-if(error){
-console.log(error)
-return
-}
-
 let html=""
 
-data.forEach(exp=>{
+for(const exp of data){
+
+const { data:trip } = await supabaseClient
+.from("trips")
+.select("trip_no")
+.eq("id",exp.trip_id)
+.single()
 
 html+=`
 
 <tr>
-<td>${exp.trip_id}</td>
+<td>${trip?.trip_no || "-"}</td>
 <td>${exp.expense_type}</td>
 <td>${exp.amount}</td>
 </tr>
 
 `
 
-})
+}
 
 document.getElementById("expenseTable").innerHTML=html
 
@@ -160,18 +159,20 @@ document.getElementById("expenseTable").innerHTML=html
 
 async function addExpense(){
 
-const tripId=document.getElementById("tripSelect").value
+const tripNo=document.getElementById("tripSelect").value
 const expenseType=document.getElementById("type").value
 const amount=document.getElementById("amount").value
+
+const tripUUID=tripMap[tripNo]
 
 const { error } = await supabaseClient
 .from("expenses")
 .insert([
 {
-trip_id: tripId,
+trip_id: tripUUID,
 expense_type: expenseType,
-amount: Number(amount),
-expense_date: new Date().toISOString()
+amount:Number(amount),
+expense_date:new Date().toISOString()
 }
 ])
 

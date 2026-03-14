@@ -1,0 +1,94 @@
+<!DOCTYPE html><html><head><title>Trip Finance</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:40px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:8px;
+max-width:600px;
+}
+
+h2{
+margin-top:0;
+}
+
+.row{
+margin:10px 0;
+}
+
+</style></head><body><div class="card"><h2>Trip Financial Summary</h2><div id="tripData"></div></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+const urlParams = new URLSearchParams(window.location.search)
+const tripId = urlParams.get("id")
+
+async function loadTripFinance(){
+
+// load trip
+const { data:trip } = await supabaseClient
+.from("trips")
+.select("*")
+.eq("id",tripId)
+.single()
+
+// load expenses
+const { data:expenses } = await supabaseClient
+.from("expenses")
+.select("amount")
+.eq("trip_id",tripId)
+
+let totalExpense = 0
+
+expenses.forEach(e=>{
+totalExpense += Number(e.amount)
+})
+
+let weightMT = trip.weight_kg / 1000
+
+let companyAmount =
+(trip.company_rate * weightMT) - totalExpense
+
+let transporterAmount =
+(trip.transporter_rate * weightMT) - totalExpense
+
+let profit =
+companyAmount - transporterAmount
+
+document.getElementById("tripData").innerHTML = `
+
+<div class="row"><b>Trip:</b> ${trip.trip_no}</div>
+
+<div class="row"><b>Weight:</b> ${weightMT} MT</div>
+
+<div class="row"><b>Company Rate:</b> ${trip.company_rate}</div>
+
+<div class="row"><b>Transporter Rate:</b> ${trip.transporter_rate}</div>
+
+<hr>
+
+<div class="row"><b>Total Expenses:</b> ₹ ${totalExpense}</div>
+
+<div class="row"><b>Company Amount:</b> ₹ ${companyAmount}</div>
+
+<div class="row"><b>Transporter Amount:</b> ₹ ${transporterAmount}</div>
+
+<hr>
+
+<div class="row"><b>Profit:</b> ₹ ${profit}</div>
+
+`
+
+}
+
+loadTripFinance()
+
+</script></body></html>

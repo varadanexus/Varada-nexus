@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html><html>
+<head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
@@ -38,6 +39,28 @@ margin-left:220px;
 padding:30px;
 }
 
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+input,select{
+padding:8px;
+margin:5px;
+width:220px;
+}
+
+button{
+padding:6px 12px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -54,29 +77,37 @@ th{
 background:#eee;
 }
 
-button{
-padding:6px 12px;
-background:#1f3c88;
-color:white;
-border:none;
-cursor:pointer;
-}
-
 </style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
-<a href="#">Trucks</a>
-<a href="#">Routes</a>
-<a href="#">Expenses</a>
-<a href="#">Client Payments</a>
-<a href="#">Transporter Payments</a>
+<a href="master-data.html">Master Data</a>
+<a href="rate-entry.html">Rates</a>
 
-</div><div class="main"><h1>Trips</h1><table><thead>
+</div><div class="main"><h1>Trips</h1><div class="card"><h3>Create Trip</h3><select id="commodity"></select>
+<select id="route"></select>
+<select id="truck"></select>
+<select id="client"></select>
+
+<br><input id="weight" placeholder="Weight (KG)" oninput="calculate()"><br><br>
+
+Company Amount: <span id="companyAmount">0</span>
+
+<br>Transporter Amount: <span id="transporterAmount">0</span>
+
+<br>Profit: <span id="profit">0</span>
+
+<br><br>
+
+<button onclick="saveTrip()">Save Trip</button>
+
+</div><table><thead>
 <tr>
+<th>Commodity</th>
 <th>Route</th>
 <th>Truck</th>
-<th>Commodity</th>
-<th>Weight</th>
-<th>Status</th>
+<th>Weight KG</th>
+<th>Company Amt</th>
+<th>Transporter Amt</th>
+<th>Profit</th>
 <th>Action</th>
 </tr>
 </thead><tbody id="tripTable"></tbody></table></div><script>
@@ -85,6 +116,129 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
+
+let companyRate=0
+let transporterRate=0
+
+init()
+
+async function init(){
+
+loadDropdowns()
+loadTrips()
+
+}
+
+/* LOAD DROPDOWNS */
+
+async function loadDropdowns(){
+
+let {data:commodities}=await supabaseClient.from("commodities").select("*")
+
+let {data:routes}=await supabaseClient.from("routes").select("*")
+
+let {data:trucks}=await supabaseClient.from("trucks").select("*")
+
+let {data:clients}=await supabaseClient.from("clients").select("*")
+
+commodities.forEach(c=>{
+commodity.innerHTML+=`<option value="${c.id}">${c.name}</option>`
+})
+
+routes.forEach(r=>{
+route.innerHTML+=`<option value="${r.id}">${r.route_code}</option>`
+})
+
+trucks.forEach(t=>{
+truck.innerHTML+=`<option value="${t.id}">${t.truck_id}</option>`
+})
+
+clients.forEach(c=>{
+client.innerHTML+=`<option value="${c.id}">${c.client_name}</option>`
+})
+
+}
+
+/* FETCH RATE */
+
+async function fetchRate(){
+
+let commodityId=commodity.value
+let routeId=route.value
+
+const {data}=await supabaseClient
+.from("rates")
+.select("*")
+.eq("commodity_id",commodityId)
+.eq("route_id",routeId)
+.single()
+
+if(data){
+
+companyRate=data.company_rate_per_mt
+transporterRate=data.transporter_rate_per_mt
+
+}
+
+}
+
+/* CALCULATE */
+
+async function calculate(){
+
+await fetchRate()
+
+let weightKG=document.getElementById("weight").value
+
+let weightMT=weightKG/1000
+
+let companyAmount=weightMT*companyRate
+let transporterAmount=weightMT*transporterRate
+
+let profit=companyAmount-transporterAmount
+
+document.getElementById("companyAmount").innerText=Math.round(companyAmount)
+
+document.getElementById("transporterAmount").innerText=Math.round(transporterAmount)
+
+document.getElementById("profit").innerText=Math.round(profit)
+
+}
+
+/* SAVE TRIP */
+
+async function saveTrip(){
+
+let weight=document.getElementById("weight").value
+
+let weightMT=weight/1000
+
+let companyAmount=weightMT*companyRate
+
+let transporterAmount=weightMT*transporterRate
+
+let profit=companyAmount-transporterAmount
+
+await supabaseClient.from("trips").insert({
+
+commodity:commodity.value,
+route:route.value,
+truck:truck.value,
+client:client.value,
+weight_kg:weight,
+company_amount:companyAmount,
+transporter_amount:transporterAmount,
+profit:profit
+
+})
+
+document.getElementById("weight").value=""
+
+loadTrips()
+
+}
+
+/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -101,11 +255,13 @@ html+=`
 
 <tr>
 
-<td>${trip.route ?? "-"}</td>
-<td>${trip.truck ?? "-"}</td>
 <td>${trip.commodity}</td>
+<td>${trip.route}</td>
+<td>${trip.truck}</td>
 <td>${trip.weight_kg}</td>
-<td>${trip.status ?? "-"}</td>
+<td>${trip.company_amount ?? "-"}</td>
+<td>${trip.transporter_amount ?? "-"}</td>
+<td>${trip.profit ?? "-"}</td>
 
 <td>
 <button onclick="editTrip('${trip.id}')">View</button>
@@ -121,12 +277,11 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-loadTrips()
-
 function editTrip(id){
 
 window.location.href="trip_detail.html?id="+id
 
 }
 
-</script></body></html>
+</script></body>
+</html>

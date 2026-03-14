@@ -46,6 +46,12 @@ margin-left:220px;
 padding:30px;
 }
 
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -53,7 +59,7 @@ background:white;
 }
 
 th,td{
-padding:12px;
+padding:10px;
 border-bottom:1px solid #ddd;
 }
 
@@ -68,18 +74,18 @@ margin:5px;
 
 button{
 padding:6px 12px;
-background:#1f3c88;
-color:white;
 border:none;
 cursor:pointer;
-}
-
-.deleteBtn{
-background:#d9534f;
+background:#1f3c88;
+color:white;
 }
 
 .editBtn{
 background:#5bc0de;
+}
+
+.deleteBtn{
+background:#d9534f;
 }
 
 </style>
@@ -89,6 +95,7 @@ background:#5bc0de;
 <body>
 
 <div class="sidebar">
+
 <h2>Varada Nexus</h2>
 
 <a href="dashboard.html">Dashboard</a>
@@ -99,12 +106,30 @@ background:#5bc0de;
 
 </div>
 
+
 <div class="main">
 
 <h1>Trips</h1>
 
+<div class="card">
+
+<h3>Create Trip</h3>
+
+<input id="route" placeholder="Route">
+<input id="truck" placeholder="Truck">
+<input id="commodity" placeholder="Commodity">
+<input id="weight" placeholder="Weight (KG)">
+<input id="tripDate" type="date">
+<input id="status" placeholder="Status">
+
+<button onclick="saveTrip()">Save Trip</button>
+
+</div>
+
+
 <input id="searchTrip" placeholder="Search Trip ID">
 <button onclick="searchTrip()">Search</button>
+
 
 <table>
 
@@ -129,6 +154,7 @@ background:#5bc0de;
 
 </div>
 
+
 <script>
 
 const supabaseClient = supabase.createClient(
@@ -137,8 +163,6 @@ const supabaseClient = supabase.createClient(
 )
 
 loadTrips()
-
-/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -151,8 +175,6 @@ renderTrips(data)
 
 }
 
-/* RENDER TABLE */
-
 function renderTrips(data){
 
 let html=""
@@ -160,22 +182,21 @@ let html=""
 data.forEach(trip=>{
 
 html+=`
-
 <tr>
 
 <td><b>${trip.trip_no}</b></td>
 
-<td>${trip.route ?? "-"}</td>
+<td>${trip.route}</td>
 
-<td>${trip.truck ?? "-"}</td>
+<td>${trip.truck}</td>
 
 <td>${trip.commodity}</td>
 
 <td>${trip.weight_kg}</td>
 
-<td>${trip.trip_date ?? "-"}</td>
+<td>${trip.trip_date ?? ""}</td>
 
-<td>${trip.status ?? "-"}</td>
+<td>${trip.status ?? ""}</td>
 
 <td>
 
@@ -186,7 +207,6 @@ html+=`
 </td>
 
 </tr>
-
 `
 
 })
@@ -195,7 +215,59 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-/* SEARCH */
+async function saveTrip(){
+
+let route=document.getElementById("route").value
+let truck=document.getElementById("truck").value
+let commodity=document.getElementById("commodity").value
+let weight=document.getElementById("weight").value
+let tripDate=document.getElementById("tripDate").value
+let status=document.getElementById("status").value
+
+let tripNo = await generateTripNo()
+
+await supabaseClient.from("trips").insert({
+
+trip_no:tripNo,
+route:route,
+truck:truck,
+commodity:commodity,
+weight_kg:weight,
+trip_date:tripDate,
+status:status
+
+})
+
+document.getElementById("route").value=""
+document.getElementById("truck").value=""
+document.getElementById("commodity").value=""
+document.getElementById("weight").value=""
+document.getElementById("tripDate").value=""
+document.getElementById("status").value=""
+
+loadTrips()
+
+}
+
+async function generateTripNo(){
+
+const now=new Date()
+
+let year=now.getFullYear().toString().slice(-2)
+let month=("0"+(now.getMonth()+1)).slice(-2)
+
+const { data } = await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no","TR"+year+month+"%")
+
+let seq=data.length+1
+
+let seqStr=seq.toString().padStart(4,"0")
+
+return "TR"+year+month+seqStr
+
+}
 
 async function searchTrip(){
 
@@ -210,11 +282,9 @@ renderTrips(data)
 
 }
 
-/* DELETE */
-
 async function deleteTrip(id){
 
-if(!confirm("Delete this trip?")) return
+if(!confirm("Delete trip?")) return
 
 await supabaseClient
 .from("trips")
@@ -225,8 +295,6 @@ loadTrips()
 
 }
 
-/* EDIT */
-
 async function editTrip(id){
 
 const { data } = await supabaseClient
@@ -236,7 +304,6 @@ const { data } = await supabaseClient
 .single()
 
 let weight=prompt("Edit Weight",data.weight_kg)
-
 let status=prompt("Edit Status",data.status)
 
 await supabaseClient
@@ -248,28 +315,6 @@ status:status
 .eq("id",id)
 
 loadTrips()
-
-}
-
-/* AUTO TRIP NUMBER GENERATOR */
-
-async function generateTripNo(){
-
-const now = new Date()
-
-let year = now.getFullYear().toString().slice(-2)
-let month = ("0"+(now.getMonth()+1)).slice(-2)
-
-const { data } = await supabaseClient
-.from("trips")
-.select("trip_no")
-.ilike("trip_no","TR"+year+month+"%")
-
-let seq = data.length + 1
-
-let seqStr = seq.toString().padStart(4,"0")
-
-return "TR"+year+month+seqStr
 
 }
 

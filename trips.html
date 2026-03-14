@@ -1,5 +1,4 @@
-<!DOCTYPE html><html>
-<head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
@@ -70,61 +69,58 @@ background:white;
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 th{
 background:#eee;
 }
 
+.resultBox{
+font-weight:bold;
+margin-top:10px;
+}
+
 </style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
+<a href="expenses.html">Expenses</a>
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
 </div><div class="main"><h1>Trips</h1><div class="card"><h3>Create Trip</h3><select id="commodity"></select>
 <select id="route"></select>
 <select id="truck"></select>
-<select id="client"></select>
 
-<br><input id="weight" placeholder="Weight (KG)" oninput="calculate()"><br><br>
-
+<br><input id="weightKg" placeholder="Weight (KG)" oninput="calculateAmounts()"><div class="resultBox">
 Company Amount: <span id="companyAmount">0</span>
+</div><div class="resultBox">
+Transporter Amount: <span id="transporterAmount">0</span>
+</div><div class="resultBox">
+Profit: <span id="profitAmount">0</span>
+</div><br><button onclick="saveTrip()">Save Trip</button>
 
-<br>Transporter Amount: <span id="transporterAmount">0</span>
-
-<br>Profit: <span id="profit">0</span>
-
-<br><br>
-
-<button onclick="saveTrip()">Save Trip</button>
-
-</div><table><thead>
-<tr>
+</div><table><thead><tr>
 <th>Commodity</th>
 <th>Route</th>
 <th>Truck</th>
-<th>Weight KG</th>
-<th>Company Amt</th>
-<th>Transporter Amt</th>
+<th>Weight (KG)</th>
+<th>Company</th>
+<th>Transporter</th>
 <th>Profit</th>
-<th>Action</th>
-</tr>
-</thead><tbody id="tripTable"></tbody></table></div><script>
+</tr></thead><tbody id="tripTable"></tbody></table></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-let companyRate=0
-let transporterRate=0
+let currentCompanyRate=0
+let currentTransporterRate=0
 
 init()
 
 async function init(){
 
-loadDropdowns()
+await loadDropdowns()
 loadTrips()
 
 }
@@ -134,12 +130,12 @@ loadTrips()
 async function loadDropdowns(){
 
 let {data:commodities}=await supabaseClient.from("commodities").select("*")
-
 let {data:routes}=await supabaseClient.from("routes").select("*")
-
 let {data:trucks}=await supabaseClient.from("trucks").select("*")
 
-let {data:clients}=await supabaseClient.from("clients").select("*")
+commodity.innerHTML='<option value="">Commodity</option>'
+route.innerHTML='<option value="">Route</option>'
+truck.innerHTML='<option value="">Truck</option>'
 
 commodities.forEach(c=>{
 commodity.innerHTML+=`<option value="${c.id}">${c.name}</option>`
@@ -153,30 +149,38 @@ trucks.forEach(t=>{
 truck.innerHTML+=`<option value="${t.id}">${t.truck_id}</option>`
 })
 
-clients.forEach(c=>{
-client.innerHTML+=`<option value="${c.id}">${c.client_name}</option>`
-})
-
 }
 
-/* FETCH RATE */
+/* FIND RATE */
 
-async function fetchRate(){
+async function getRate(){
 
 let commodityId=commodity.value
 let routeId=route.value
+let truckId=truck.value
 
-const {data}=await supabaseClient
+if(!commodityId || !routeId || !truckId) return
+
+let {data:truckData}=await supabaseClient
+.from("trucks")
+.select("transporter_id")
+.eq("id",truckId)
+.single()
+
+let transporterId=truckData.transporter_id
+
+let {data:rateData}=await supabaseClient
 .from("rates")
 .select("*")
 .eq("commodity_id",commodityId)
 .eq("route_id",routeId)
+.eq("transporter_id",transporterId)
 .single()
 
-if(data){
+if(rateData){
 
-companyRate=data.company_rate_per_mt
-transporterRate=data.transporter_rate_per_mt
+currentCompanyRate=rateData.company_rate_per_mt
+currentTransporterRate=rateData.transporter_rate_per_mt
 
 }
 
@@ -184,24 +188,24 @@ transporterRate=data.transporter_rate_per_mt
 
 /* CALCULATE */
 
-async function calculate(){
+async function calculateAmounts(){
 
-await fetchRate()
+await getRate()
 
-let weightKG=document.getElementById("weight").value
+let kg=document.getElementById("weightKg").value
 
-let weightMT=weightKG/1000
+if(!kg) return
 
-let companyAmount=weightMT*companyRate
-let transporterAmount=weightMT*transporterRate
+let mt=kg/1000
 
-let profit=companyAmount-transporterAmount
+let company=mt*currentCompanyRate
+let transporter=mt*currentTransporterRate
 
-document.getElementById("companyAmount").innerText=Math.round(companyAmount)
+let profit=company-transporter
 
-document.getElementById("transporterAmount").innerText=Math.round(transporterAmount)
-
-document.getElementById("profit").innerText=Math.round(profit)
+document.getElementById("companyAmount").innerText=Math.round(company)
+document.getElementById("transporterAmount").innerText=Math.round(transporter)
+document.getElementById("profitAmount").innerText=Math.round(profit)
 
 }
 
@@ -209,30 +213,30 @@ document.getElementById("profit").innerText=Math.round(profit)
 
 async function saveTrip(){
 
-let weight=document.getElementById("weight").value
+let commodityId=commodity.value
+let routeId=route.value
+let truckId=truck.value
+let kg=document.getElementById("weightKg").value
 
-let weightMT=weight/1000
+let mt=kg/1000
 
-let companyAmount=weightMT*companyRate
-
-let transporterAmount=weightMT*transporterRate
-
-let profit=companyAmount-transporterAmount
+let company=mt*currentCompanyRate
+let transporter=mt*currentTransporterRate
+let profit=company-transporter
 
 await supabaseClient.from("trips").insert({
 
-commodity:commodity.value,
-route:route.value,
-truck:truck.value,
-client:client.value,
-weight_kg:weight,
-company_amount:companyAmount,
-transporter_amount:transporterAmount,
+commodity_id:commodityId,
+route_id:routeId,
+truck_id:truckId,
+weight_kg:kg,
+company_amount:company,
+transporter_amount:transporter,
 profit:profit
 
 })
 
-document.getElementById("weight").value=""
+document.getElementById("weightKg").value=""
 
 loadTrips()
 
@@ -242,30 +246,26 @@ loadTrips()
 
 async function loadTrips(){
 
-const { data } = await supabaseClient
+let {data}=await supabaseClient
 .from("trips")
 .select("*")
 .order("created_at",{ascending:false})
 
 let html=""
 
-data.forEach(trip=>{
+data.forEach(t=>{
 
 html+=`
 
 <tr>
 
-<td>${trip.commodity}</td>
-<td>${trip.route}</td>
-<td>${trip.truck}</td>
-<td>${trip.weight_kg}</td>
-<td>${trip.company_amount ?? "-"}</td>
-<td>${trip.transporter_amount ?? "-"}</td>
-<td>${trip.profit ?? "-"}</td>
-
-<td>
-<button onclick="editTrip('${trip.id}')">View</button>
-</td>
+<td>${t.commodity_id}</td>
+<td>${t.route_id}</td>
+<td>${t.truck_id}</td>
+<td>${t.weight_kg}</td>
+<td>${Math.round(t.company_amount)}</td>
+<td>${Math.round(t.transporter_amount)}</td>
+<td>${Math.round(t.profit)}</td>
 
 </tr>
 
@@ -277,11 +277,4 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-function editTrip(id){
-
-window.location.href="trip_detail.html?id="+id
-
-}
-
-</script></body>
-</html>
+</script></body></html>

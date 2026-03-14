@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+
 <title>Trips - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -16,8 +16,6 @@ background:#f4f6f9;
 
 .sidebar{
 position:fixed;
-left:0;
-top:0;
 width:220px;
 height:100%;
 background:#1f3c88;
@@ -25,20 +23,15 @@ color:white;
 padding-top:20px;
 }
 
-.sidebar h2{
-text-align:center;
-margin-bottom:30px;
-}
-
 .sidebar a{
 display:block;
-color:white;
 padding:12px 20px;
+color:white;
 text-decoration:none;
 }
 
 .sidebar a:hover{
-background:#162c66;
+background:#162d63;
 }
 
 .main{
@@ -50,26 +43,13 @@ padding:30px;
 background:white;
 padding:20px;
 margin-bottom:20px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-}
-
-th{
-background:#eee;
+border-radius:8px;
 }
 
 input,select{
 padding:8px;
 margin:5px;
+width:180px;
 }
 
 button{
@@ -83,6 +63,20 @@ color:white;
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
 
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{background:#eee;}
+
 </style>
 
 </head>
@@ -90,19 +84,20 @@ color:white;
 <body>
 
 <div class="sidebar">
-<h2>Varada Nexus</h2>
+
+<h2 style="padding-left:20px;">Varada Nexus</h2>
 
 <a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
-</div>
 
+</div>
 
 <div class="main">
 
-<h1>Trips</h1>
+<h2>Trips</h2>
 
 <div class="card">
 
@@ -132,7 +127,9 @@ color:white;
 <table>
 
 <thead>
+
 <tr>
+
 <th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
@@ -146,7 +143,9 @@ color:white;
 <th>Date</th>
 <th>Status</th>
 <th>Action</th>
+
 </tr>
+
 </thead>
 
 <tbody id="tripTable"></tbody>
@@ -168,7 +167,8 @@ loadRoutes()
 loadTrucks()
 loadCommodities()
 
-/* ROUTES */
+
+/* LOAD ROUTES */
 
 async function loadRoutes(){
 
@@ -185,7 +185,7 @@ document.getElementById("route").innerHTML=html
 }
 
 
-/* TRUCKS */
+/* LOAD TRUCKS */
 
 async function loadTrucks(){
 
@@ -202,7 +202,7 @@ document.getElementById("truck").innerHTML=html
 }
 
 
-/* COMMODITIES */
+/* LOAD COMMODITIES */
 
 async function loadCommodities(){
 
@@ -219,7 +219,7 @@ document.getElementById("commodity").innerHTML=html
 }
 
 
-/* AUTO TRIP NUMBER */
+/* TRIP NUMBER */
 
 async function generateTripNo(){
 
@@ -253,20 +253,60 @@ let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
-let mt = weight/1000
+let mt=weight/1000
 
-const {data:rate}=await supabaseClient
-.from("rates")
-.select("*")
-.eq("route_id",route)
+
+/* GET TRUCK OWNER */
+
+const {data:truckData}=await supabaseClient
+.from("trucks")
+.select("transporter_id")
+.eq("truck_number",truck)
 .single()
 
-let companyRate=rate.company_rate_per_mt
-let transporterRate=rate.transporter_rate_per_mt
+let transporterId=truckData.transporter_id
 
-let revenue = companyRate * mt
-let transportCost = transporterRate * mt
-let profit = revenue - transportCost
+
+/* GET COMMODITY ID */
+
+const {data:commodityData}=await supabaseClient
+.from("commodities")
+.select("id")
+.eq("name",commodity)
+.single()
+
+let commodityId=commodityData.id
+
+
+/* GET ROUTE ID */
+
+const {data:routeData}=await supabaseClient
+.from("routes")
+.select("id")
+.eq("route_code",route)
+.single()
+
+let routeId=routeData.id
+
+
+/* GET RATE */
+
+const {data:rateData}=await supabaseClient
+.from("rates")
+.select("*")
+.eq("commodity_id",commodityId)
+.eq("route_id",routeId)
+.eq("transporter_id",transporterId)
+.single()
+
+let companyRate=rateData.company_rate_per_mt
+let transporterRate=rateData.transporter_rate_per_mt
+
+
+let revenue=companyRate*mt
+let cost=transporterRate*mt
+let profit=revenue-cost
+
 
 let tripNo=await generateTripNo()
 
@@ -304,9 +344,9 @@ data.forEach(trip=>{
 
 let mt=trip.weight_kg/1000
 
-let revenue = trip.company_rate * mt
-let cost = trip.transporter_rate * mt
-let profit = revenue - cost
+let revenue=trip.company_rate*mt
+let cost=trip.transporter_rate*mt
+let profit=revenue-cost
 
 html+=`
 
@@ -317,7 +357,6 @@ html+=`
 <td>${trip.route}</td>
 <td>${trip.truck}</td>
 <td>${trip.commodity}</td>
-
 <td>${trip.weight_kg}</td>
 
 <td>${trip.company_rate}</td>
@@ -331,8 +370,11 @@ html+=`
 <td>${trip.status ?? ""}</td>
 
 <td>
+
 <button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
+
 <button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
+
 </td>
 
 </tr>
@@ -357,7 +399,7 @@ const {data}=await supabaseClient
 .select("*")
 .ilike("trip_no","%"+text+"%")
 
-renderTrips(data)
+loadTrips(data)
 
 }
 

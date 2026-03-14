@@ -42,9 +42,7 @@ border-bottom:1px solid #ddd;
 text-align:left;
 }
 
-.pagination{
-margin-top:10px;
-}
+.pagination{margin-top:10px;}
 </style></head><body><div id="sidebar-container"></div><script>
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -65,20 +63,25 @@ document.getElementById("sidebar-container").innerHTML=data
 <button onclick="prevPage('commodity')">Prev</button>
 <span id="commodityPage"></span>
 <button onclick="nextPage('commodity')">Next</button>
-</div></div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
-<input id="destination" placeholder="Destination">
-<button class="saveBtn" onclick="addRoute()">Save</button><input placeholder="Search Route" onkeyup="searchTable('routeTable',this.value)"><table><thead>
+</div>
+</div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
+<input id="destination" placeholder="Destination"><button class="saveBtn" onclick="addRoute()">Save</button>
+
+<input placeholder="Search Route" onkeyup="searchTable('routeTable',this.value)"><table>
+<thead>
 <tr>
 <th>Code</th>
 <th>Origin</th>
 <th>Destination</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="routeTable"></tbody></table><div class="pagination">
+</thead><tbody id="routeTable"></tbody>
+</table><div class="pagination">
 <button onclick="prevPage('route')">Prev</button>
 <span id="routePage"></span>
 <button onclick="nextPage('route')">Next</button>
-</div></div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
+</div>
+</div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
 <input id="clientCompany" placeholder="Company">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email"><button class="saveBtn" onclick="addClient()">Save</button>
@@ -141,87 +144,58 @@ let pages={commodity:1,route:1,client:1,transporter:1,truck:1}
 
 window.onload = init
 
-
 async function init(){
-
 loadCommodities()
 loadRoutes()
 loadClients()
 loadTransporters()
 loadOwners()
 loadTrucks()
-
 }
 
+/* PAGINATION */
 
 function paginate(data,type){
-
 let start=(pages[type]-1)*pageSize
 let end=start+pageSize
-
 return data.slice(start,end)
-
 }
 
-
-function nextPage(type){
-pages[type]++
-reload(type)
-}
-
-function prevPage(type){
-if(pages[type]>1)pages[type]--
-reload(type)
-}
+function nextPage(type){pages[type]++;reload(type)}
+function prevPage(type){if(pages[type]>1)pages[type]--;reload(type)}
 
 function reload(type){
-
 if(type=="commodity")loadCommodities()
 if(type=="route")loadRoutes()
 if(type=="client")loadClients()
 if(type=="transporter")loadTransporters()
 if(type=="truck")loadTrucks()
-
 }
 
-
 function searchTable(table,input){
-
 let filter=input.toLowerCase()
 let rows=document.querySelectorAll(`#${table} tr`)
-
 rows.forEach(r=>{
 let txt=r.innerText.toLowerCase()
 r.style.display=txt.includes(filter)?"":"none"
 })
-
 }
-
 
 
 /* COMMODITIES */
 
 async function addCommodity(){
-
-let name=document.getElementById("commodityName").value
-
+let name=commodityName.value
 await supabaseClient.from("commodities").insert({name})
-
-document.getElementById("commodityName").value=""
-
+commodityName.value=""
 loadCommodities()
-
 }
 
-
 async function loadCommodities(){
-
 let {data}=await supabaseClient.from("commodities").select("*")
-
 let rows=paginate(data,"commodity")
 
 let html=""
-
 rows.forEach(c=>{
 html+=`
 <tr>
@@ -230,66 +204,42 @@ html+=`
 <button class="editBtn" onclick="editCommodity('${c.id}','${c.name}')">Edit</button>
 <button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button>
 </td>
-</tr>
-`
+</tr>`
 })
 
 commodityTable.innerHTML=html
 commodityPage.innerText="Page "+pages.commodity
-
 }
-
 
 async function editCommodity(id,name){
-
 let newName=prompt("Edit Commodity",name)
-
-await supabaseClient.from("commodities")
-.update({name:newName})
-.eq("id",id)
-
+await supabaseClient.from("commodities").update({name:newName}).eq("id",id)
 loadCommodities()
-
 }
 
-
 async function deleteCommodity(id){
-
 if(!confirm("Delete?"))return
-
-await supabaseClient.from("commodities")
-.delete()
-.eq("id",id)
-
+await supabaseClient.from("commodities").delete().eq("id",id)
 loadCommodities()
-
 }
 
 
 /* ROUTES */
 
 async function addRoute(){
+let o=origin.value
+let d=destination.value
+let code=o.substring(0,4).toUpperCase()+"-"+d.substring(0,4).toUpperCase()
 
-let origin=origin.value
-let destination=destination.value
-
-let code=origin.substring(0,4).toUpperCase()+"-"+destination.substring(0,4).toUpperCase()
-
-await supabaseClient.from("routes").insert({route_code:code,origin,destination})
-
+await supabaseClient.from("routes").insert({route_code:code,origin:o,destination:d})
 loadRoutes()
-
 }
 
-
 async function loadRoutes(){
-
 let {data}=await supabaseClient.from("routes").select("*")
-
 let rows=paginate(data,"route")
 
 let html=""
-
 rows.forEach(r=>{
 html+=`
 <tr>
@@ -297,23 +247,160 @@ html+=`
 <td>${r.origin}</td>
 <td>${r.destination}</td>
 <td>
-<button class="editBtn" onclick="deleteRoute('${r.id}')">Delete</button>
+<button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button>
 </td>
-</tr>
-`
+</tr>`
 })
 
 routeTable.innerHTML=html
 routePage.innerText="Page "+pages.route
+}
 
+async function deleteRoute(id){
+await supabaseClient.from("routes").delete().eq("id",id)
+loadRoutes()
 }
 
 
-async function deleteRoute(id){
+/* CLIENTS */
 
-await supabaseClient.from("routes").delete().eq("id",id)
+async function addClient(){
+await supabaseClient.from("clients").insert({
+client_name:clientName.value,
+company:clientCompany.value,
+phone:clientPhone.value,
+email:clientEmail.value
+})
+loadClients()
+}
 
-loadRoutes()
+async function loadClients(){
+let {data}=await supabaseClient.from("clients").select("*")
+let rows=paginate(data,"client")
+
+let html=""
+rows.forEach(c=>{
+html+=`
+<tr>
+<td>${c.client_name}</td>
+<td>${c.company}</td>
+<td>${c.phone}</td>
+<td>${c.email}</td>
+<td>
+<button class="editBtn" onclick="deleteClient('${c.id}')">Delete</button>
+</td>
+</tr>`
+})
+
+clientTable.innerHTML=html
+clientPage.innerText="Page "+pages.client
+}
+
+async function deleteClient(id){
+await supabaseClient.from("clients").delete().eq("id",id)
+loadClients()
+}
+
+
+/* TRANSPORTERS */
+
+async function addTransporter(){
+await supabaseClient.from("transporters").insert({
+transporter_name:transporterName.value,
+company:transporterCompany.value,
+phone:transporterPhone.value
+})
+loadTransporters()
+loadOwners()
+}
+
+async function loadTransporters(){
+let {data}=await supabaseClient.from("transporters").select("*")
+let rows=paginate(data,"transporter")
+
+let html=""
+rows.forEach(t=>{
+html+=`
+<tr>
+<td>${t.transporter_name}</td>
+<td>${t.company}</td>
+<td>${t.phone}</td>
+<td>
+<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
+</td>
+</tr>`
+})
+
+transporterTable.innerHTML=html
+transporterPage.innerText="Page "+pages.transporter
+}
+
+async function deleteTransporter(id){
+await supabaseClient.from("transporters").delete().eq("id",id)
+loadTransporters()
+}
+
+
+/* OWNER DROPDOWN */
+
+async function loadOwners(){
+let {data}=await supabaseClient.from("transporters").select("*")
+
+ownerSelect.innerHTML='<option value="">Select Owner</option>'
+
+data.forEach(o=>{
+let opt=document.createElement("option")
+opt.value=o.id
+opt.text=o.transporter_name
+ownerSelect.appendChild(opt)
+})
+}
+
+
+/* TRUCKS */
+
+async function addTruck(){
+
+await supabaseClient.from("trucks").insert({
+truck_number:truckNumber.value,
+transporter_id:ownerSelect.value,
+driver_name:driverName.value,
+driver_phone:driverPhone.value
+})
+
+loadTrucks()
+
+}
+
+async function loadTrucks(){
+
+let {data}=await supabaseClient
+.from("trucks")
+.select(`
+truck_number,
+driver_name,
+driver_phone,
+transporters(transporter_name)
+`)
+
+let rows=paginate(data,"truck")
+
+let html=""
+
+rows.forEach(t=>{
+html+=`
+<tr>
+<td>${t.truck_number}</td>
+<td>${t.truck_number}</td>
+<td>${t.transporters.transporter_name}</td>
+<td>${t.driver_name}</td>
+<td>${t.driver_phone}</td>
+<td></td>
+</tr>`
+})
+
+truckTable.innerHTML=html
+truckPage.innerText="Page "+pages.truck
 
 }
 

@@ -80,12 +80,13 @@ background:#1f3c88;
 color:white;
 }
 
-.editBtn{
-background:#5bc0de;
-}
+.editBtn{background:#5bc0de;}
+.deleteBtn{background:#d9534f;}
 
-.deleteBtn{
-background:#d9534f;
+.rateBox{
+background:#f2f2f2;
+padding:10px;
+margin-top:10px;
 }
 
 </style>
@@ -121,11 +122,25 @@ background:#d9534f;
 
 <select id="commodity"></select>
 
-<input id="weight" placeholder="Weight (KG)">
+<input id="weight" placeholder="Weight (KG)" oninput="calculateAmounts()">
 
 <input id="tripDate" type="date">
 
 <input id="status" placeholder="Status">
+
+
+<div class="rateBox">
+
+Company Rate / MT : <b id="companyRate">0</b> <br>
+
+Transporter Rate / MT : <b id="transporterRate">0</b> <br><br>
+
+Company Amount : <b id="companyAmount">0</b> <br>
+
+Transporter Amount : <b id="transporterAmount">0</b>
+
+</div>
+
 
 <button onclick="saveTrip()">Save Trip</button>
 
@@ -168,11 +183,15 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
+let companyRate=0
+let transporterRate=0
+
 
 loadTrips()
 loadRoutes()
 loadTrucks()
 loadCommodities()
+
 
 
 /* LOAD ROUTES */
@@ -186,14 +205,13 @@ const { data } = await supabaseClient
 let html='<option value="">Select Route</option>'
 
 data.forEach(r=>{
-
-html+=`<option value="${r.route_code}">${r.route_code}</option>`
-
+html+=`<option value="${r.id}">${r.route_code}</option>`
 })
 
 document.getElementById("route").innerHTML=html
 
 }
+
 
 
 /* LOAD TRUCKS */
@@ -202,19 +220,20 @@ async function loadTrucks(){
 
 const { data } = await supabaseClient
 .from("trucks")
-.select("*")
+.select(`id,truck_number,transporters(transporter_name)`)
 
 let html='<option value="">Select Truck</option>'
 
 data.forEach(t=>{
-
-html+=`<option value="${t.truck_number}">${t.truck_number}</option>`
-
+html+=`<option value="${t.id}" data-owner="${t.transporters?.transporter_name}">
+${t.truck_number}
+</option>`
 })
 
 document.getElementById("truck").innerHTML=html
 
 }
+
 
 
 /* LOAD COMMODITIES */
@@ -228,9 +247,7 @@ const { data } = await supabaseClient
 let html='<option value="">Select Commodity</option>'
 
 data.forEach(c=>{
-
-html+=`<option value="${c.name}">${c.name}</option>`
-
+html+=`<option value="${c.id}">${c.name}</option>`
 })
 
 document.getElementById("commodity").innerHTML=html
@@ -239,196 +256,67 @@ document.getElementById("commodity").innerHTML=html
 
 
 
-/* LOAD TRIPS */
+/* FETCH RATES */
 
-async function loadTrips(){
-
-const { data } = await supabaseClient
-.from("trips")
-.select("*")
-.order("created_at",{ascending:false})
-
-renderTrips(data)
-
-}
+document.getElementById("route").addEventListener("change",fetchRates)
+document.getElementById("commodity").addEventListener("change",fetchRates)
+document.getElementById("truck").addEventListener("change",fetchRates)
 
 
-
-/* RENDER TRIPS */
-
-function renderTrips(data){
-
-let html=""
-
-data.forEach(trip=>{
-
-html+=`
-
-<tr>
-
-<td><b>${trip.trip_no}</b></td>
-
-<td>${trip.route ?? ""}</td>
-
-<td>${trip.truck ?? ""}</td>
-
-<td>${trip.commodity ?? ""}</td>
-
-<td>${trip.weight_kg ?? ""}</td>
-
-<td>${trip.trip_date ?? ""}</td>
-
-<td>${trip.status ?? ""}</td>
-
-<td>
-
-<button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
-
-<button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
-
-</td>
-
-</tr>
-
-`
-
-})
-
-document.getElementById("tripTable").innerHTML=html
-
-}
-
-
-
-/* SAVE TRIP */
-
-async function saveTrip(){
+async function fetchRates(){
 
 let route=document.getElementById("route").value
-let truck=document.getElementById("truck").value
 let commodity=document.getElementById("commodity").value
-let weight=document.getElementById("weight").value
-let tripDate=document.getElementById("tripDate").value
-let status=document.getElementById("status").value
+let truck=document.getElementById("truck")
 
-if(!route || !truck || !commodity || !weight){
-alert("Please fill all fields")
-return
-}
+let transporterName=truck.options[truck.selectedIndex]?.dataset.owner
 
-let tripNo = await generateTripNo()
+if(!route || !commodity || !transporterName) return
 
-await supabaseClient.from("trips").insert({
-
-trip_no:tripNo,
-route:route,
-truck:truck,
-commodity:commodity,
-weight_kg:weight,
-trip_date:tripDate,
-status:status
-
-})
-
-
-document.getElementById("route").value=""
-document.getElementById("truck").value=""
-document.getElementById("commodity").value=""
-document.getElementById("weight").value=""
-document.getElementById("tripDate").value=""
-document.getElementById("status").value=""
-
-loadTrips()
-
-}
-
-
-
-/* AUTO TRIP NUMBER */
-
-async function generateTripNo(){
-
-const now=new Date()
-
-let year=now.getFullYear().toString().slice(-2)
-let month=("0"+(now.getMonth()+1)).slice(-2)
 
 const { data } = await supabaseClient
-.from("trips")
-.select("trip_no")
-.ilike("trip_no","TR"+year+month+"%")
+.from("rates")
+.select(`
+company_rate_per_mt,
+transporter_rate_per_mt,
+transporters(transporter_name)
+`)
+.eq("route_id",route)
+.eq("commodity_id",commodity)
 
-let seq=data.length+1
 
-let seqStr=seq.toString().padStart(4,"0")
+if(data.length>0){
 
-return "TR"+year+month+seqStr
+let row=data.find(r=>r.transporters.transporter_name==transporterName)
+
+if(row){
+
+companyRate=row.company_rate_per_mt
+transporterRate=row.transporter_rate_per_mt
+
+document.getElementById("companyRate").innerText=companyRate
+document.getElementById("transporterRate").innerText=transporterRate
+
+calculateAmounts()
+
+}
+
+}
 
 }
 
 
 
-/* SEARCH */
+/* CALCULATE AMOUNTS */
 
-async function searchTrip(){
+function calculateAmounts(){
 
-let text=document.getElementById("searchTrip").value
+let kg=document.getElementById("weight").value
 
-const { data } = await supabaseClient
-.from("trips")
-.select("*")
-.ilike("trip_no","%"+text+"%")
+let mt=kg/1000
 
-renderTrips(data)
+let company=mt*companyRate
+let transporter=mt*transporterRate
 
-}
-
-
-
-/* DELETE */
-
-async function deleteTrip(id){
-
-if(!confirm("Delete this trip?")) return
-
-await supabaseClient
-.from("trips")
-.delete()
-.eq("id",id)
-
-loadTrips()
-
-}
-
-
-
-/* EDIT */
-
-async function editTrip(id){
-
-const { data } = await supabaseClient
-.from("trips")
-.select("*")
-.eq("id",id)
-.single()
-
-let weight=prompt("Edit Weight",data.weight_kg)
-
-let status=prompt("Edit Status",data.status)
-
-await supabaseClient
-.from("trips")
-.update({
-weight_kg:weight,
-status:status
-})
-.eq("id",id)
-
-loadTrips()
-
-}
-
-</script>
-
-</body>
-</html>
+document.getElementById("companyAmount").innerText=company.toFixed(2)
+document.getElementById("transporterAmount

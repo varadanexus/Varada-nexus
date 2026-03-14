@@ -36,7 +36,36 @@ margin-top:10px;
 font-weight:bold;
 }
 
-</style></head><body><!-- GLOBAL SIDEBAR --><div id="sidebar-container"></div><script>
+.widget{
+background:white;
+margin-top:25px;
+padding:20px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.widget h3{
+margin-top:0;
+margin-bottom:15px;
+}
+
+.widget table{
+width:100%;
+border-collapse:collapse;
+}
+
+.widget th,
+.widget td{
+padding:8px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+.widget th{
+background:#eee;
+}
+
+</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -44,19 +73,34 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 
-</script><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
+</script><div class="main"><h1>Dashboard</h1><!-- MAIN SUMMARY --><div class="card-container"><div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
 </div><div class="card">
-<h3>Total Revenue</h3>
+<h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
 </div><div class="card">
-<h3>Total Transport Cost</h3>
+<h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
 </div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div></div><script>
+</div></div><!-- ROUTE PROFIT --><div class="widget"><h3>Profit by Route</h3><table><thead>
+<tr>
+<th>Route</th>
+<th>Profit</th>
+</tr>
+</thead><tbody id="routeProfit"></tbody></table></div><!-- TRUCK PROFIT --><div class="widget"><h3>Profit by Truck</h3><table><thead>
+<tr>
+<th>Truck</th>
+<th>Profit</th>
+</tr>
+</thead><tbody id="truckProfit"></tbody></table></div><!-- MONTHLY PROFIT --><div class="widget"><h3>Monthly Profit</h3><table><thead>
+<tr>
+<th>Month</th>
+<th>Profit</th>
+</tr>
+</thead><tbody id="monthlyProfit"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -69,18 +113,13 @@ loadDashboard()
 
 async function loadDashboard(){
 
-/* LOAD TRIPS */
-
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 
-/* LOAD EXPENSES */
-
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
-
 
 
 let totalTrips = trips.length
@@ -90,10 +129,7 @@ let totalCost = 0
 let totalProfit = 0
 
 
-
-/* CREATE EXPENSE MAP */
-
-let expenseMap = {}
+let expenseMap={}
 
 expenses.forEach(e=>{
 
@@ -104,31 +140,60 @@ expenseMap[e.trip_id]+=Number(e.amount)
 })
 
 
+let routeMap={}
+let truckMap={}
+let monthMap={}
 
-/* CALCULATE FINANCIALS */
+
 
 trips.forEach(trip=>{
 
 let mt = trip.weight_kg / 1000
 
-let revenue = trip.company_rate * mt
-
-let cost = trip.transporter_rate * mt
-
 let expense = expenseMap[trip.id] || 0
 
-let profit = revenue - cost - expense
+let companyAmount = (trip.company_rate * mt) - expense
+
+let transporterAmount = (trip.transporter_rate * mt) - expense
+
+let profit = companyAmount - transporterAmount
 
 
-totalRevenue += revenue
-totalCost += cost
+totalRevenue += companyAmount
+totalCost += transporterAmount
 totalProfit += profit
+
+
+
+/* ROUTE PROFIT */
+
+if(!routeMap[trip.route]) routeMap[trip.route]=0
+routeMap[trip.route]+=profit
+
+
+
+/* TRUCK PROFIT */
+
+if(!truckMap[trip.truck]) truckMap[trip.truck]=0
+truckMap[trip.truck]+=profit
+
+
+
+/* MONTHLY PROFIT */
+
+if(trip.trip_date){
+
+let month = trip.trip_date.substring(0,7)
+
+if(!monthMap[month]) monthMap[month]=0
+
+monthMap[month]+=profit
+
+}
 
 })
 
 
-
-/* DISPLAY */
 
 document.getElementById("totalTrips").innerText = totalTrips
 
@@ -140,6 +205,57 @@ document.getElementById("totalCost").innerText =
 
 document.getElementById("totalProfit").innerText =
 "₹ "+ totalProfit.toLocaleString()
+
+
+
+/* ROUTE TABLE */
+
+let routeHTML=""
+
+Object.keys(routeMap).forEach(route=>{
+routeHTML+=`
+<tr>
+<td>${route}</td>
+<td>₹ ${routeMap[route].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("routeProfit").innerHTML=routeHTML
+
+
+
+/* TRUCK TABLE */
+
+let truckHTML=""
+
+Object.keys(truckMap).forEach(truck=>{
+truckHTML+=`
+<tr>
+<td>${truck}</td>
+<td>₹ ${truckMap[truck].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("truckProfit").innerHTML=truckHTML
+
+
+
+/* MONTHLY TABLE */
+
+let monthHTML=""
+
+Object.keys(monthMap).forEach(month=>{
+monthHTML+=`
+<tr>
+<td>${month}</td>
+<td>₹ ${monthMap[month].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("monthlyProfit").innerHTML=monthHTML
 
 }
 

@@ -26,6 +26,13 @@ margin-top:10px;
 border-radius:5px;
 }
 
+.trip-id{
+font-size:18px;
+font-weight:bold;
+color:#1f3c88;
+margin-bottom:8px;
+}
+
 </style></head><body><h1>Varada Nexus Transport Management System</h1><h3>Add Trip</h3><input id="route" placeholder="Route">
 <input id="truck" placeholder="Truck Number">
 <input id="commodity" placeholder="Commodity">
@@ -93,11 +100,13 @@ html+=`
 
 <div class="trip">
 
-<b>${trip.trip_no}</b><br>
+<div class="trip-id">${trip.trip_no ?? "Trip ID Pending"}</div>
+
 Route: ${trip.route ?? "-"}<br>
 Truck: ${trip.truck ?? "-"}<br>
 Commodity: ${trip.commodity}<br>
 Weight: ${trip.weight_kg} KG<br>
+Date: ${trip.trip_date ?? "-"}<br>
 Status: ${trip.status ?? "-"}
 
 </div>

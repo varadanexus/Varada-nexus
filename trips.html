@@ -114,8 +114,6 @@ background:#eee;
 
 <input id="weight" placeholder="Weight (KG)">
 
-<input id="expense" placeholder="Expense">
-
 <input type="date" id="tripDate">
 
 <input id="status" placeholder="Status">
@@ -140,7 +138,7 @@ background:#eee;
 <th>Truck</th>
 <th>Commodity</th>
 <th>Weight</th>
-<th>Expense</th>
+<th>Total Expense</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
 <th>Revenue</th>
@@ -269,7 +267,6 @@ let routeId=document.getElementById("route").value
 let truckId=document.getElementById("truck").value
 let commodityId=document.getElementById("commodity").value
 let weight=document.getElementById("weight").value
-let expense=document.getElementById("expense").value || 0
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
@@ -297,12 +294,6 @@ return
 let companyRate=rate.company_rate_per_mt
 let transporterRate=rate.transporter_rate_per_mt
 
-let mt=weight/1000
-
-let revenue=(companyRate*mt)-expense
-let cost=(transporterRate*mt)-expense
-let profit=revenue-cost
-
 let tripNo=await generateTripNo()
 
 await supabaseClient.from("trips").insert({
@@ -317,8 +308,7 @@ weight_kg:weight,
 trip_date:date,
 status:status,
 company_rate:companyRate,
-transporter_rate:transporterRate,
-expense:expense
+transporter_rate:transporterRate
 
 })
 
@@ -326,28 +316,38 @@ loadTrips()
 
 }
 
-/* LOAD TRIPS */
+/* LOAD TRIPS + EXPENSES */
 
 async function loadTrips(){
 
-const {data}=await supabaseClient
+const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .order("created_at",{ascending:false})
 
-renderTrips(data)
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("trip_id,amount")
 
+let expenseMap={}
+
+expenses.forEach(e=>{
+
+if(!expenseMap[e.trip_id]){
+expenseMap[e.trip_id]=0
 }
 
-function renderTrips(data){
+expenseMap[e.trip_id]+=Number(e.amount)
+
+})
 
 let html=""
 
-data.forEach(trip=>{
+trips.forEach(trip=>{
 
 let mt=trip.weight_kg/1000
 
-let expense=trip.expense||0
+let expense=expenseMap[trip.trip_no] || 0
 
 let revenue=(trip.company_rate*mt)-expense
 let cost=(trip.transporter_rate*mt)-expense
@@ -358,16 +358,22 @@ html+=`
 <tr>
 
 <td><b>${trip.trip_no}</b></td>
+
 <td>${trip.route}</td>
 <td>${trip.truck}</td>
 <td>${trip.commodity}</td>
+
 <td>${trip.weight_kg}</td>
+
 <td>${expense}</td>
+
 <td>${trip.company_rate}</td>
 <td>${trip.transporter_rate}</td>
+
 <td>${revenue.toFixed(0)}</td>
 <td>${cost.toFixed(0)}</td>
 <td>${profit.toFixed(0)}</td>
+
 <td>${trip.trip_date ?? ""}</td>
 <td>${trip.status ?? ""}</td>
 
@@ -427,14 +433,10 @@ const {data}=await supabaseClient
 .single()
 
 let weight=prompt("Edit Weight",data.weight_kg)
-let expense=prompt("Edit Expense",data.expense)
 
 await supabaseClient
 .from("trips")
-.update({
-weight_kg:weight,
-expense:expense
-})
+.update({weight_kg:weight})
 .eq("id",id)
 
 loadTrips()

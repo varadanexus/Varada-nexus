@@ -90,7 +90,18 @@ text-align:left;
 <th>Phone</th>
 <th>Email</th>
 </tr>
-</thead><tbody id="clientTable"></tbody></table></div></div><script>
+</thead><tbody id="clientTable"></tbody></table></div><div class="card"><h3>Add Transporter / Truck</h3><input id="transporterName" placeholder="Transporter Name"><input id="transporterCompany" placeholder="Company"><input id="transporterPhone" placeholder="Phone"><input id="truckNumber" placeholder="Truck Number"><input id="driverName" placeholder="Driver Name"><input id="driverPhone" placeholder="Driver Phone"><button onclick="addTransporter()">Save Transporter</button>
+
+<table><thead>
+<tr>
+<th>Transporter</th>
+<th>Company</th>
+<th>Phone</th>
+<th>Truck</th>
+<th>Driver</th>
+<th>Driver Phone</th>
+</tr>
+</thead><tbody id="transporterTable"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -100,6 +111,7 @@ const supabaseClient = supabase.createClient(
 loadCommodities()
 loadRoutes()
 loadClients()
+loadTransporters()
 
 async function addCommodity(){
 
@@ -230,6 +242,62 @@ html+=`
 })
 
 document.getElementById("clientTable").innerHTML=html
+
+}
+
+async function addTransporter(){
+
+let name=document.getElementById("transporterName").value
+let company=document.getElementById("transporterCompany").value
+let phone=document.getElementById("transporterPhone").value
+let truck=document.getElementById("truckNumber").value
+let driver=document.getElementById("driverName").value
+let driverPhone=document.getElementById("driverPhone").value
+
+await supabaseClient
+.from("transporters")
+.insert([{
+transporter_name:name,
+company:company,
+phone:phone,
+truck_number:truck,
+driver_name:driver,
+driver_phone:driverPhone
+}])
+
+document.getElementById("transporterName").value=""
+document.getElementById("transporterCompany").value=""
+document.getElementById("transporterPhone").value=""
+document.getElementById("truckNumber").value=""
+document.getElementById("driverName").value=""
+document.getElementById("driverPhone").value=""
+
+loadTransporters()
+
+}
+
+async function loadTransporters(){
+
+let {data}=await supabaseClient
+.from("transporters")
+.select("*")
+
+let html=""
+
+data.forEach(t=>{
+html+=`
+<tr>
+<td>${t.transporter_name}</td>
+<td>${t.company}</td>
+<td>${t.phone}</td>
+<td>${t.truck_number}</td>
+<td>${t.driver_name}</td>
+<td>${t.driver_phone}</td>
+</tr>
+`
+})
+
+document.getElementById("transporterTable").innerHTML=html
 
 }
 

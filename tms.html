@@ -6,10 +6,6 @@ margin:40px;
 background:#f5f5f5;
 }
 
-h1{
-margin-bottom:30px;
-}
-
 input,button{
 padding:10px;
 margin:5px;
@@ -27,22 +23,19 @@ button:hover{
 background:#162c66;
 }
 
-#tripList{
-margin-top:20px;
-}
-
 .tripCard{
 background:white;
-padding:10px;
+padding:12px;
 margin-bottom:10px;
 border-radius:6px;
 box-shadow:0 1px 4px rgba(0,0,0,0.1);
 }
 
-</style></head><body><h1>Varada Nexus Transport Management System</h1><h2>Add Trip</h2><input id="route" placeholder="Route (Example: RATN-NAND)">
+</style></head><body><h1>Varada Nexus Transport Management System</h1><h2>Add Trip</h2><input id="route" placeholder="Route">
 <input id="truck" placeholder="Truck Number">
 <input id="commodity" placeholder="Commodity">
-<input id="weight" placeholder="Weight KG"><button onclick="addTrip()">Add Trip</button>
+<input id="weight" placeholder="Weight KG">
+<input id="tripdate" type="date"><button onclick="addTrip()">Add Trip</button>
 
 <h2>Trips</h2><div id="tripList"></div><script>
 
@@ -57,13 +50,16 @@ const route=document.getElementById("route").value
 const truck=document.getElementById("truck").value
 const commodity=document.getElementById("commodity").value
 const weight=document.getElementById("weight").value
+const tripdate=document.getElementById("tripdate").value
 
 await supabaseClient
 .from("trips")
 .insert([
 {
 commodity:commodity,
-weight_kg:weight
+weight_kg:weight,
+trip_date:tripdate,
+status:"created"
 }
 ])
 
@@ -92,7 +88,9 @@ html+=`
 <div class="tripCard">
 
 <b>Commodity:</b> ${trip.commodity}<br>
-<b>Weight:</b> ${trip.weight_kg} KG
+<b>Weight:</b> ${trip.weight_kg} KG<br>
+<b>Date:</b> ${trip.trip_date ?? "-"}<br>
+<b>Status:</b> ${trip.status ?? "-"}
 
 </div>
 

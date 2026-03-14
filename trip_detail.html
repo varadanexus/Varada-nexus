@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><title>Trip Details</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:40px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:6px;
+max-width:600px;
+}
+
+button{
+padding:10px 15px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+margin-top:10px;
+}
+
+</style></head><body><div class="card"><h2>Trip Details</h2><div id="tripInfo"></div><button onclick="markComplete()">Mark Completed</button>
+
+</div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+const urlParams = new URLSearchParams(window.location.search)
+const tripId = urlParams.get("id")
+
+async function loadTrip(){
+
+const { data } = await supabaseClient
+.from("trips")
+.select("*")
+.eq("id",tripId)
+.single()
+
+document.getElementById("tripInfo").innerHTML=`
+
+<b>Route:</b> ${data.route ?? "-"} <br><br>
+<b>Truck:</b> ${data.truck ?? "-"} <br><br>
+<b>Commodity:</b> ${data.commodity} <br><br>
+<b>Weight:</b> ${data.weight_kg} KG <br><br>
+<b>Status:</b> ${data.status ?? "-"}
+
+`
+
+}
+
+loadTrip()
+
+async function markComplete(){
+
+await supabaseClient
+.from("trips")
+.update({status:"Completed"})
+.eq("id",tripId)
+
+alert("Trip Completed")
+
+location.reload()
+
+}
+
+</script></body></html>

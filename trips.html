@@ -81,7 +81,8 @@ document.getElementById("sidebar-container").innerHTML = data
 <select id="truck"></select>
 <select id="commodity"></select>
 
-<input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
+<input id="weight" placeholder="Weight KG">
+<input type="date" id="tripDate"><select id="status">
 <option value="">Status</option>
 <option>LOADED</option>
 <option>Completed</option>
@@ -89,7 +90,8 @@ document.getElementById("sidebar-container").innerHTML = data
 </select></div><br><button onclick="saveTrip()">Save Trip</button>
 
 </div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID">
-<button onclick="searchTrip()">Search</button></div><table><thead><tr><th>Trip ID</th>
+<button onclick="searchTrip()">Search</button></div><table><thead><tr>
+<th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
@@ -97,12 +99,13 @@ document.getElementById("sidebar-container").innerHTML = data
 <th>Expense</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
-<th>Revenue</th>
-<th>Transport Cost</th>
+<th>Company Amount</th>
+<th>Transporter Amount</th>
 <th>Profit</th>
 <th>Date</th>
 <th>Status</th>
-<th>Action</th></tr></thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<th>Action</th>
+</tr></thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
 </div><script>
@@ -120,7 +123,9 @@ let trips=[]
 let page=1
 let pageSize=10
 
+
 init()
+
 
 async function init(){
 
@@ -130,6 +135,8 @@ await loadCommodities()
 await loadTrips()
 
 }
+
+
 
 /* LOAD ROUTES */
 
@@ -149,6 +156,8 @@ document.getElementById("route").innerHTML=html
 
 }
 
+
+
 /* LOAD TRUCKS */
 
 async function loadTrucks(){
@@ -167,6 +176,8 @@ document.getElementById("truck").innerHTML=html
 
 }
 
+
+
 /* LOAD COMMODITIES */
 
 async function loadCommodities(){
@@ -184,6 +195,8 @@ html+=`<option value="${c.id}">${c.name}</option>`
 document.getElementById("commodity").innerHTML=html
 
 }
+
+
 
 /* GENERATE TRIP NUMBER */
 
@@ -204,6 +217,8 @@ let seq=data.length+1
 return "TR"+year+month+seq.toString().padStart(4,"0")
 
 }
+
+
 
 /* SAVE TRIP */
 
@@ -241,6 +256,8 @@ loadTrips()
 
 }
 
+
+
 /* LOAD TRIPS */
 
 async function loadTrips(){
@@ -256,7 +273,9 @@ renderTrips()
 
 }
 
-/* RENDER */
+
+
+/* RENDER TRIPS */
 
 async function renderTrips(){
 
@@ -274,6 +293,7 @@ expenseMap[e.trip_id]+=Number(e.amount)
 
 })
 
+
 let start=(page-1)*pageSize
 let end=start+pageSize
 
@@ -283,38 +303,55 @@ let html=""
 
 pageTrips.forEach(trip=>{
 
-let mt=trip.weight_kg/1000
-let expense=expenseMap[trip.id]||0
-let revenue=(trip.company_rate*mt)
-let cost=(trip.transporter_rate*mt)
-let profit=revenue-cost-expense
+let mt = trip.weight_kg / 1000
+
+let expense = expenseMap[trip.id] || 0
+
+/* NEW BUSINESS LOGIC */
+
+let companyAmount = (trip.company_rate * mt) - expense
+
+let transporterAmount = (trip.transporter_rate * mt) - expense
+
+let profit = companyAmount - transporterAmount
+
 
 html+=`
 <tr>
+
 <td><b>${trip.trip_no}</b></td>
 <td>${trip.route}</td>
 <td>${trip.truck}</td>
 <td>${trip.commodity}</td>
 <td>${trip.weight_kg}</td>
+
 <td>${expense}</td>
+
 <td>${trip.company_rate}</td>
 <td>${trip.transporter_rate}</td>
-<td>${revenue.toFixed(0)}</td>
-<td>${cost.toFixed(0)}</td>
+
+<td>${companyAmount.toFixed(0)}</td>
+<td>${transporterAmount.toFixed(0)}</td>
 <td>${profit.toFixed(0)}</td>
+
 <td>${trip.trip_date || ""}</td>
 <td>${trip.status || ""}</td>
+
 <td>
 <button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
 </td>
+
 </tr>
 `
+
 })
 
 document.getElementById("tripTable").innerHTML=html
 
 }
+
+
 
 /* EDIT */
 
@@ -343,6 +380,8 @@ loadTrips()
 
 }
 
+
+
 /* DELETE */
 
 async function deleteTrip(id){
@@ -354,6 +393,8 @@ await supabaseClient.from("trips").delete().eq("id",id)
 loadTrips()
 
 }
+
+
 
 /* SEARCH */
 
@@ -368,6 +409,8 @@ trips=filtered
 renderTrips()
 
 }
+
+
 
 /* PAGINATION */
 

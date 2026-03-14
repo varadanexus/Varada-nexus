@@ -67,7 +67,7 @@ th{
 background:#eee;
 }
 
-input{
+input,select{
 padding:8px;
 margin:5px;
 }
@@ -115,11 +115,16 @@ background:#d9534f;
 
 <h3>Create Trip</h3>
 
-<input id="route" placeholder="Route">
-<input id="truck" placeholder="Truck">
-<input id="commodity" placeholder="Commodity">
+<select id="route"></select>
+
+<select id="truck"></select>
+
+<select id="commodity"></select>
+
 <input id="weight" placeholder="Weight (KG)">
+
 <input id="tripDate" type="date">
+
 <input id="status" placeholder="Status">
 
 <button onclick="saveTrip()">Save Trip</button>
@@ -128,6 +133,7 @@ background:#d9534f;
 
 
 <input id="searchTrip" placeholder="Search Trip ID">
+
 <button onclick="searchTrip()">Search</button>
 
 
@@ -162,7 +168,78 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
+
 loadTrips()
+loadRoutes()
+loadTrucks()
+loadCommodities()
+
+
+/* LOAD ROUTES */
+
+async function loadRoutes(){
+
+const { data } = await supabaseClient
+.from("routes")
+.select("*")
+
+let html='<option value="">Select Route</option>'
+
+data.forEach(r=>{
+
+html+=`<option value="${r.route_code}">${r.route_code}</option>`
+
+})
+
+document.getElementById("route").innerHTML=html
+
+}
+
+
+/* LOAD TRUCKS */
+
+async function loadTrucks(){
+
+const { data } = await supabaseClient
+.from("trucks")
+.select("*")
+
+let html='<option value="">Select Truck</option>'
+
+data.forEach(t=>{
+
+html+=`<option value="${t.truck_number}">${t.truck_number}</option>`
+
+})
+
+document.getElementById("truck").innerHTML=html
+
+}
+
+
+/* LOAD COMMODITIES */
+
+async function loadCommodities(){
+
+const { data } = await supabaseClient
+.from("commodities")
+.select("*")
+
+let html='<option value="">Select Commodity</option>'
+
+data.forEach(c=>{
+
+html+=`<option value="${c.name}">${c.name}</option>`
+
+})
+
+document.getElementById("commodity").innerHTML=html
+
+}
+
+
+
+/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -175,6 +252,10 @@ renderTrips(data)
 
 }
 
+
+
+/* RENDER TRIPS */
+
 function renderTrips(data){
 
 let html=""
@@ -182,17 +263,18 @@ let html=""
 data.forEach(trip=>{
 
 html+=`
+
 <tr>
 
 <td><b>${trip.trip_no}</b></td>
 
-<td>${trip.route}</td>
+<td>${trip.route ?? ""}</td>
 
-<td>${trip.truck}</td>
+<td>${trip.truck ?? ""}</td>
 
-<td>${trip.commodity}</td>
+<td>${trip.commodity ?? ""}</td>
 
-<td>${trip.weight_kg}</td>
+<td>${trip.weight_kg ?? ""}</td>
 
 <td>${trip.trip_date ?? ""}</td>
 
@@ -207,6 +289,7 @@ html+=`
 </td>
 
 </tr>
+
 `
 
 })
@@ -214,6 +297,10 @@ html+=`
 document.getElementById("tripTable").innerHTML=html
 
 }
+
+
+
+/* SAVE TRIP */
 
 async function saveTrip(){
 
@@ -223,6 +310,11 @@ let commodity=document.getElementById("commodity").value
 let weight=document.getElementById("weight").value
 let tripDate=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
+
+if(!route || !truck || !commodity || !weight){
+alert("Please fill all fields")
+return
+}
 
 let tripNo = await generateTripNo()
 
@@ -238,6 +330,7 @@ status:status
 
 })
 
+
 document.getElementById("route").value=""
 document.getElementById("truck").value=""
 document.getElementById("commodity").value=""
@@ -248,6 +341,10 @@ document.getElementById("status").value=""
 loadTrips()
 
 }
+
+
+
+/* AUTO TRIP NUMBER */
 
 async function generateTripNo(){
 
@@ -269,6 +366,10 @@ return "TR"+year+month+seqStr
 
 }
 
+
+
+/* SEARCH */
+
 async function searchTrip(){
 
 let text=document.getElementById("searchTrip").value
@@ -282,9 +383,13 @@ renderTrips(data)
 
 }
 
+
+
+/* DELETE */
+
 async function deleteTrip(id){
 
-if(!confirm("Delete trip?")) return
+if(!confirm("Delete this trip?")) return
 
 await supabaseClient
 .from("trips")
@@ -295,6 +400,10 @@ loadTrips()
 
 }
 
+
+
+/* EDIT */
+
 async function editTrip(id){
 
 const { data } = await supabaseClient
@@ -304,6 +413,7 @@ const { data } = await supabaseClient
 .single()
 
 let weight=prompt("Edit Weight",data.weight_kg)
+
 let status=prompt("Edit Status",data.status)
 
 await supabaseClient

@@ -79,10 +79,6 @@ th{
 background:#eee;
 }
 
-.searchBox{
-margin-bottom:15px;
-}
-
 </style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
@@ -90,16 +86,16 @@ margin-bottom:15px;
 <a href="rate-entry.html">Rates</a>
 
 </div><div class="main"><h1>Rate Master</h1><div class="card"><h3>Add Rate</h3><select id="commodity"></select>
-
 <select id="route"></select>
-
 <select id="transporter"></select>
 
-<br><input id="companyRate" placeholder="Company Rate / MT"><input id="transporterRate" placeholder="Transporter Rate / MT"><br><br>
+<br><input id="companyRate" placeholder="Company Rate / MT">
+<input id="transporterRate" placeholder="Transporter Rate / MT"><br><br>
 
 <button class="saveBtn" onclick="saveRate()">Save Rate</button>
 
-</div><div class="card"><h3>Search Rates</h3><input class="searchBox" id="searchCommodity" placeholder="Search Commodity"><input class="searchBox" id="searchTransporter" placeholder="Search Owner"><button onclick="loadRates()">Search</button>
+</div><div class="card"><h3>Search Rates</h3><input id="searchCommodity" placeholder="Search Commodity">
+<input id="searchOwner" placeholder="Search Owner"><button onclick="loadRates()">Search</button>
 
 <table><thead>
 <tr>
@@ -121,18 +117,22 @@ init()
 
 async function init(){
 
-loadDropdowns()
+await loadDropdowns()
 loadRates()
 
 }
 
-/* LOAD DROPDOWNS */
+/* DROPDOWNS */
 
 async function loadDropdowns(){
 
 let {data:commodities}=await supabaseClient.from("commodities").select("*")
 let {data:routes}=await supabaseClient.from("routes").select("*")
 let {data:transporters}=await supabaseClient.from("transporters").select("*")
+
+commodity.innerHTML='<option value="">Commodity</option>'
+route.innerHTML='<option value="">Route</option>'
+transporter.innerHTML='<option value="">Owner</option>'
 
 commodities.forEach(c=>{
 commodity.innerHTML+=`<option value="${c.id}">${c.name}</option>`
@@ -157,10 +157,10 @@ let routeId=route.value
 let transporterId=transporter.value
 
 let company=companyRate.value
-let transporterRateValue=transporterRate.value
+let transporterValue=transporterRate.value
 
-if(!commodityId||!routeId||!transporterId){
-alert("Select commodity, route and transporter")
+if(!commodityId || !routeId || !transporterId){
+alert("Please select Commodity, Route and Owner")
 return
 }
 
@@ -172,20 +172,23 @@ const {data:existing}=await supabaseClient
 .eq("transporter_id",transporterId)
 
 if(existing.length>0){
-alert("Rate already exists for this combination")
+alert("Rate already exists")
 return
 }
 
 await supabaseClient.from("rates").insert({
-
 commodity_id:commodityId,
 route_id:routeId,
 transporter_id:transporterId,
 company_rate_per_mt:company,
-transporter_rate_per_mt:transporterRateValue
-
+transporter_rate_per_mt:transporterValue
 })
 
+/* CLEAR INPUTS */
+
+commodity.value=""
+route.value=""
+transporter.value=""
 companyRate.value=""
 transporterRate.value=""
 
@@ -198,30 +201,39 @@ loadRates()
 async function loadRates(){
 
 let commoditySearch=document.getElementById("searchCommodity").value.toLowerCase()
-let transporterSearch=document.getElementById("searchTransporter").value.toLowerCase()
+let ownerSearch=document.getElementById("searchOwner").value.toLowerCase()
 
-let {data}=await supabaseClient
-.from("rates")
-.select(`
-id,
-company_rate_per_mt,
-transporter_rate_per_mt,
-commodities(name),
-routes(route_code),
-transporters(transporter_name)
-`)
+let {data}=await supabaseClient.from("rates").select("*")
 
 let html=""
 
-data.forEach(r=>{
+for(let r of data){
 
-let commodityName=r.commodities?.name ?? ""
-let transporterName=r.transporters?.transporter_name ?? ""
+let {data:commodityData}=await supabaseClient
+.from("commodities")
+.select("name")
+.eq("id",r.commodity_id)
+.single()
+
+let {data:routeData}=await supabaseClient
+.from("routes")
+.select("route_code")
+.eq("id",r.route_id)
+.single()
+
+let {data:ownerData}=await supabaseClient
+.from("transporters")
+.select("transporter_name")
+.eq("id",r.transporter_id)
+.single()
+
+let commodityName=commodityData?.name ?? ""
+let routeCode=routeData?.route_code ?? ""
+let ownerName=ownerData?.transporter_name ?? ""
 
 if(
-commodityName.toLowerCase().includes(commoditySearch)
-&&
-transporterName.toLowerCase().includes(transporterSearch)
+commodityName.toLowerCase().includes(commoditySearch) &&
+ownerName.toLowerCase().includes(ownerSearch)
 ){
 
 html+=`
@@ -229,16 +241,26 @@ html+=`
 <tr>
 
 <td>${commodityName}</td>
-<td>${r.routes?.route_code}</td>
-<td>${transporterName}</td>
+<td>${routeCode}</td>
+<td>${ownerName}</td>
 <td>${r.company_rate_per_mt}</td>
 <td>${r.transporter_rate_per_mt}</td>
 
 <td>
 
-<button class="editBtn" onclick="editRate('${r.id}','${r.company_rate_per_mt}','${r.transporter_rate_per_mt}')">Edit</button>
+<button class="editBtn"
+onclick="editRate('${r.id}','${r.company_rate_per_mt}','${r.transporter_rate_per_mt}')">
 
-<button class="deleteBtn" onclick="deleteRate('${r.id}')">Delete</button>
+Edit
+
+</button>
+
+<button class="deleteBtn"
+onclick="deleteRate('${r.id}')">
+
+Delete
+
+</button>
 
 </td>
 
@@ -248,17 +270,17 @@ html+=`
 
 }
 
-})
+}
 
 document.getElementById("rateTable").innerHTML=html
 
 }
 
-/* DELETE RATE */
+/* DELETE */
 
 async function deleteRate(id){
 
-if(!confirm("Delete this rate?")) return
+if(!confirm("Delete rate?")) return
 
 await supabaseClient
 .from("rates")
@@ -269,14 +291,14 @@ loadRates()
 
 }
 
-/* EDIT RATE */
+/* EDIT */
 
 async function editRate(id,company,transporter){
 
-let newCompany=prompt("Edit Company Rate",company)
-let newTransporter=prompt("Edit Transporter Rate",transporter)
+let newCompany=prompt("Company Rate",company)
+let newTransporter=prompt("Transporter Rate",transporter)
 
-if(!newCompany||!newTransporter) return
+if(!newCompany || !newTransporter) return
 
 await supabaseClient
 .from("rates")

@@ -24,24 +24,24 @@ text-decoration:none;
 .main{margin-left:220px;padding:30px;}
 
 .card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
+background:white;padding:20px;border-radius:8px;margin-bottom:20px;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
-background:white;
+width:100%;border-collapse:collapse;background:white;
 }
 
 th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
+padding:10px;border-bottom:1px solid #ddd;
 }
 
 th{background:#eee;}
+
+input,select{padding:6px;margin:5px;}
+
+button{
+padding:6px 12px;border:none;background:#1f3c88;color:white;cursor:pointer;
+}
 
 </style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
@@ -65,8 +65,8 @@ const supabaseClient = supabase.createClient(
 
 let currentTrip=null
 
-init()
 
+init()
 
 
 function getTripFromURL(){
@@ -78,12 +78,12 @@ return params.get("trip")
 }
 
 
-
 async function init(){
 
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
+
 
 let html=""
 
@@ -144,9 +144,7 @@ document.getElementById("expenseTable").innerHTML=html
 async function addExpense(){
 
 let tripId=document.getElementById("tripSelect").value
-
 let type=document.getElementById("expenseType").value
-
 let amount=document.getElementById("amount").value
 
 await supabaseClient.from("expenses").insert({

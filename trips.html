@@ -2,6 +2,7 @@
 <head>
 <title>Trips - Varada Nexus ERP</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 
 .sidebar{
@@ -18,41 +19,38 @@ display:block;color:white;padding:12px 20px;text-decoration:none;
 
 .main{margin-left:220px;padding:30px;}
 
-.card{
-background:white;padding:20px;border-radius:8px;margin-bottom:20px;
-}
-
 table{width:100%;border-collapse:collapse;background:white;}
 
-th,td{
-padding:10px;border-bottom:1px solid #ddd;text-align:left;
-}
+th,td{padding:12px;border-bottom:1px solid #ddd;}
 
 th{background:#eee;}
 
-input,select{padding:6px;margin:5px;}
+input{padding:6px;margin:5px;}
 
 button{
-padding:6px 12px;border:none;background:#1f3c88;color:white;cursor:pointer;
+padding:6px 12px;background:#1f3c88;color:white;border:none;cursor:pointer;
 }
 
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
 
-.expenseLink{
-background:#1f3c88;color:white;padding:3px 8px;border-radius:4px;text-decoration:none;
+.expenseBtn{
+background:#1f3c88;
+color:white;
+padding:3px 8px;
+border-radius:4px;
+text-decoration:none;
 }
 
-</style></head><body><div class="sidebar">
-<h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+</style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
-</div><div class="main"><h2>Trips</h2><div class="card"><input id="searchTrip" placeholder="Search Trip ID">
-<button onclick="searchTrips()">Search</button>
-<button onclick="loadTrips()">Reset</button></div><table><thead><tr><th>Trip ID</th>
+</div><div class="main"><h1>Trips</h1><input id="searchTrip" placeholder="Search Trip ID">
+<button onclick="searchTrip()">Search</button><table><thead><tr>
+<th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
@@ -65,7 +63,8 @@ background:#1f3c88;color:white;padding:3px 8px;border-radius:4px;text-decoration
 <th>Profit</th>
 <th>Date</th>
 <th>Status</th>
-<th>Action</th></tr></thead><tbody id="tripTable"></tbody></table></div><script>
+<th>Action</th>
+</tr></thead><tbody id="tripTable"></tbody></table></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -93,6 +92,7 @@ let expenseMap={}
 expenses.forEach(e=>{
 
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+
 expenseMap[e.trip_id]+=Number(e.amount)
 
 })
@@ -106,9 +106,9 @@ let mt=trip.weight_kg/1000
 
 let expense=expenseMap[trip.id]||0
 
-let revenue=trip.company_rate*mt
+let revenue=(trip.company_rate*mt)
 
-let cost=trip.transporter_rate*mt
+let cost=(trip.transporter_rate*mt)
 
 let profit=revenue-cost-expense
 
@@ -128,7 +128,7 @@ html+=`
 <td>${trip.weight_kg}</td>
 
 <td>
-<a class="expenseLink" href="expenses.html?trip=${trip.id}&trip_no=${trip.trip_no}">
+<a class="expenseBtn" href="expenses.html?trip=${trip.id}&trip_no=${trip.trip_no}">
 ${expense}
 </a>
 </td>
@@ -150,6 +150,7 @@ ${expense}
 <td>
 
 <button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
+
 <button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
 
 </td>
@@ -166,7 +167,7 @@ document.getElementById("tripTable").innerHTML=html
 
 
 
-async function searchTrips(){
+async function searchTrip(){
 
 let text=document.getElementById("searchTrip").value
 
@@ -178,6 +179,7 @@ const {data}=await supabaseClient
 renderTrips(data)
 
 }
+
 
 
 function renderTrips(data){
@@ -210,7 +212,7 @@ document.getElementById("tripTable").innerHTML=html
 
 async function deleteTrip(id){
 
-if(!confirm("Delete Trip?")) return
+if(!confirm("Delete this trip?")) return
 
 await supabaseClient
 .from("trips")

@@ -152,13 +152,14 @@ await loadExpenses()
 
 
 
-/* LOAD TRIPS */
+/* LOAD TRIPS (LATEST FIRST) */
 
 async function loadTrips(){
 
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
+.order("created_at",{ascending:false})
 
 trips=data
 
@@ -204,7 +205,10 @@ let tripId=document.getElementById("trip").value
 let type=document.getElementById("type").value
 let amount=document.getElementById("amount").value
 
-let tripNo=trips.find(t=>t.id==tripId).trip_no
+if(!tripId || !amount){
+alert("Enter Trip and Amount")
+return
+}
 
 let expenseId=await generateExpenseId()
 
@@ -218,6 +222,12 @@ expense_type:type,
 amount:amount
 
 })
+
+/* CLEAR FORM AFTER SAVE */
+
+document.getElementById("trip").value=""
+document.getElementById("type").value="Fuel"
+document.getElementById("amount").value=""
 
 loadExpenses()
 

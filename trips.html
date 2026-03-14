@@ -177,9 +177,10 @@ async function init(){
 await loadRoutes()
 await loadTrucks()
 await loadCommodities()
-loadTrips()
+await loadTrips()
 
 }
+
 
 /* LOAD ROUTES */
 
@@ -198,6 +199,7 @@ html+=`<option value="${r.id}">${r.route_code}</option>`
 document.getElementById("route").innerHTML=html
 
 }
+
 
 /* LOAD TRUCKS */
 
@@ -219,6 +221,7 @@ document.getElementById("truck").innerHTML=html
 
 }
 
+
 /* LOAD COMMODITIES */
 
 async function loadCommodities(){
@@ -237,7 +240,8 @@ document.getElementById("commodity").innerHTML=html
 
 }
 
-/* TRIP NUMBER */
+
+/* GENERATE TRIP NUMBER */
 
 async function generateTripNo(){
 
@@ -258,6 +262,7 @@ let seqStr=seq.toString().padStart(4,"0")
 return "TR"+year+month+seqStr
 
 }
+
 
 /* SAVE TRIP */
 
@@ -314,14 +319,27 @@ loadTrips()
 
 }
 
+
 /* LOAD TRIPS + EXPENSES */
 
-async function loadTrips(){
+async function loadTrips(tripsData=null){
 
-const {data:trips}=await supabaseClient
+let trips
+
+if(tripsData){
+
+trips=tripsData
+
+}else{
+
+const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .order("created_at",{ascending:false})
+
+trips=data
+
+}
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
@@ -393,6 +411,7 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
+
 /* SEARCH */
 
 async function searchTrip(){
@@ -404,9 +423,10 @@ const {data}=await supabaseClient
 .select("*")
 .ilike("trip_no","%"+text+"%")
 
-renderTrips(data)
+loadTrips(data)
 
 }
+
 
 /* DELETE */
 
@@ -419,6 +439,7 @@ await supabaseClient.from("trips").delete().eq("id",id)
 loadTrips()
 
 }
+
 
 /* EDIT */
 

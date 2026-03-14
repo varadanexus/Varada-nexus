@@ -1,37 +1,10 @@
-<!DOCTYPE html><html>
-<head><title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html><html><head>
+<title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
-}
-
-.sidebar{
-position:fixed;
-left:0;
-top:0;
-width:220px;
-height:100%;
-background:#1f3c88;
-color:white;
-padding-top:20px;
-}
-
-.sidebar h2{
-text-align:center;
-margin-bottom:30px;
-}
-
-.sidebar a{
-display:block;
-color:white;
-padding:12px 20px;
-text-decoration:none;
-}
-
-.sidebar a:hover{
-background:#162c66;
 }
 
 .main{
@@ -91,13 +64,13 @@ background:#eee;
 text-align:left;
 }
 
-</style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
-<a href="trips.html">Trips</a>
-<a href="expenses.html">Expenses</a>
-<a href="master-data.html">Master Data</a>
-<a href="rate-entry.html">Rates</a>
-
-</div><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
+</style></head><body><!-- GLOBAL SIDEBAR --><div id="sidebar-container"></div><script>
+fetch("sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+})
+</script><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
 
 <select id="type">
 <option>Fuel</option>
@@ -117,12 +90,14 @@ text-align:left;
 </select><button onclick="applyFilter()">Filter</button>
 <button onclick="clearFilter()">Clear</button>
 
-</div><table><thead><tr><th>Expense ID</th>
+</div><table><thead><tr>
+<th>Expense ID</th>
 <th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
 <th>Date</th>
-<th>Action</th></tr></thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<th>Action</th>
+</tr></thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
 </div><script>
@@ -138,7 +113,6 @@ let filtered=[]
 
 let page=1
 let pageSize=10
-
 
 
 init()
@@ -222,8 +196,6 @@ expense_type:type,
 amount:amount
 
 })
-
-/* CLEAR FORM AFTER SAVE */
 
 document.getElementById("trip").value=""
 document.getElementById("type").value="Fuel"
@@ -378,10 +350,8 @@ renderTable()
 function nextPage(){
 
 if(page*pageSize<filtered.length){
-
 page++
 renderTable()
-
 }
 
 }
@@ -389,10 +359,8 @@ renderTable()
 function prevPage(){
 
 if(page>1){
-
 page--
 renderTable()
-
 }
 
 }

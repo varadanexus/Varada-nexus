@@ -1,12 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-
-<title>Trips - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<style>
+<!DOCTYPE html><html>
+<head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
@@ -78,71 +71,28 @@ th{
 background:#eee;
 }
 
-.pagination button{
-margin:5px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="sidebar">
-
-<h2 style="padding-left:20px;">Varada Nexus</h2>
-
-<a href="dashboard.html">Dashboard</a>
+</style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
-</div>
-
-
-<div class="main">
-
-<h2>Trips</h2>
-
-<div class="card">
-
-<h3>Create Trip</h3>
-
-<select id="route"></select>
+</div><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><select id="route"></select>
 <select id="truck"></select>
 <select id="commodity"></select>
 
 <input id="weight" placeholder="Weight (KG)">
 <input type="date" id="tripDate">
-<input id="status" placeholder="Status">
+<input id="status" placeholder="Status"><button onclick="saveTrip()">Save Trip</button>
 
-<button onclick="saveTrip()">Save Trip</button>
-
-</div>
-
-
-<div class="card">
-
-<input id="searchTrip" placeholder="Search Trip ID">
-
-<select id="filterRoute"></select>
+</div><div class="card"><input id="searchTrip" placeholder="Search Trip ID"><select id="filterRoute"></select>
 <select id="filterTruck"></select>
 <select id="filterCommodity"></select>
 
 <button onclick="applyFilters()">Filter</button>
 <button onclick="clearFilters()">Clear</button>
 
-</div>
-
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>Trip ID</th>
+</div><table><thead><tr><th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
@@ -155,28 +105,10 @@ margin:5px;
 <th>Profit</th>
 <th>Date</th>
 <th>Status</th>
-<th>Action</th>
-
-</tr>
-
-</thead>
-
-<tbody id="tripTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage()">Previous</button>
-<span id="pageInfo"></span>
+<th>Action</th></tr></thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
-</div>
-
-</div>
-
-
-<script>
+</div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -187,9 +119,11 @@ let routes=[]
 let trucks=[]
 let commodities=[]
 let trips=[]
+let filteredTrips=[]
 
-let currentPage=1
+let page=1
 let pageSize=10
+
 
 init()
 
@@ -202,7 +136,8 @@ await loadTrips()
 
 }
 
-/* ROUTES */
+
+/* LOAD ROUTES */
 
 async function loadRoutes(){
 
@@ -223,7 +158,8 @@ document.getElementById("filterRoute").innerHTML=filter
 
 }
 
-/* TRUCKS */
+
+/* LOAD TRUCKS */
 
 async function loadTrucks(){
 
@@ -244,7 +180,8 @@ document.getElementById("filterTruck").innerHTML=filter
 
 }
 
-/* COMMODITIES */
+
+/* LOAD COMMODITIES */
 
 async function loadCommodities(){
 
@@ -265,7 +202,8 @@ document.getElementById("filterCommodity").innerHTML=filter
 
 }
 
-/* GENERATE TRIP ID */
+
+/* GENERATE TRIP NUMBER */
 
 async function generateTripNo(){
 
@@ -280,11 +218,11 @@ const {data}=await supabaseClient
 .ilike("trip_no","TR"+year+month+"%")
 
 let seq=data.length+1
-let seqStr=seq.toString().padStart(4,"0")
 
-return "TR"+year+month+seqStr
+return "TR"+year+month+seq.toString().padStart(4,"0")
 
 }
+
 
 /* SAVE TRIP */
 
@@ -337,6 +275,7 @@ loadTrips()
 
 }
 
+
 /* LOAD TRIPS */
 
 async function loadTrips(){
@@ -347,18 +286,20 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 trips=data
+filteredTrips=data
 
 renderTrips()
 
 }
 
-/* RENDER TRIPS */
+
+/* RENDER */
 
 async function renderTrips(){
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
-.select("trip,amount")
+.select("*")
 
 let expenseMap={}
 
@@ -367,10 +308,10 @@ if(!expenseMap[e.trip]) expenseMap[e.trip]=0
 expenseMap[e.trip]+=Number(e.amount)
 })
 
-let start=(currentPage-1)*pageSize
+let start=(page-1)*pageSize
 let end=start+pageSize
 
-let pageTrips=trips.slice(start,end)
+let pageTrips=filteredTrips.slice(start,end)
 
 let html=""
 
@@ -391,17 +332,13 @@ html+=`
 <td>${trip.route}</td>
 <td>${trip.truck}</td>
 <td>${trip.commodity}</td>
-
 <td>${trip.weight_kg}</td>
 <td>${expense}</td>
-
 <td>${trip.company_rate}</td>
 <td>${trip.transporter_rate}</td>
-
 <td>${revenue.toFixed(0)}</td>
 <td>${cost.toFixed(0)}</td>
 <td>${profit.toFixed(0)}</td>
-
 <td>${trip.trip_date||""}</td>
 <td>${trip.status||""}</td>
 
@@ -420,64 +357,67 @@ html+=`
 
 document.getElementById("tripTable").innerHTML=html
 
-document.getElementById("pageInfo").innerText=
-`Page ${currentPage} of ${Math.ceil(trips.length/pageSize)}`
-
 }
+
 
 /* PAGINATION */
 
 function nextPage(){
 
-if(currentPage*pageSize<trips.length){
-currentPage++
+if(page*pageSize<filteredTrips.length){
+
+page++
 renderTrips()
+
 }
 
 }
 
 function prevPage(){
 
-if(currentPage>1){
-currentPage--
+if(page>1){
+
+page--
 renderTrips()
+
 }
 
 }
+
 
 /* FILTER */
 
 function applyFilters(){
 
+let search=document.getElementById("searchTrip").value.toLowerCase()
 let route=document.getElementById("filterRoute").value
 let truck=document.getElementById("filterTruck").value
 let commodity=document.getElementById("filterCommodity").value
-let search=document.getElementById("searchTrip").value.toLowerCase()
 
-let filtered=trips.filter(t=>{
+filteredTrips=trips.filter(t=>{
 
 return (
-(!route||t.route===route) &&
-(!truck||t.truck===truck) &&
-(!commodity||t.commodity===commodity) &&
-(!search||t.trip_no.toLowerCase().includes(search))
+(!search || t.trip_no.toLowerCase().includes(search)) &&
+(!route || t.route==route) &&
+(!truck || t.truck==truck) &&
+(!commodity || t.commodity==commodity)
 )
 
 })
 
-trips=filtered
-currentPage=1
+page=1
 renderTrips()
 
 }
 
 function clearFilters(){
 
-document.getElementById("searchTrip").value=""
-
-loadTrips()
+filteredTrips=trips
+page=1
+renderTrips()
 
 }
+
 
 /* DELETE */
 
@@ -490,6 +430,7 @@ await supabaseClient.from("trips").delete().eq("id",id)
 loadTrips()
 
 }
+
 
 /* EDIT */
 
@@ -512,7 +453,5 @@ loadTrips()
 
 }
 
-</script>
-
-</body>
+</script></body>
 </html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html><html>
+<head>
+<title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.sidebar{
+position:fixed;
+left:0;
+top:0;
+width:220px;
+height:100%;
+background:#1f3c88;
+color:white;
+padding-top:20px;
+}
+.sidebar a{
+display:block;
+color:white;
+padding:12px 20px;
+text-decoration:none;
+}
+.sidebar a:hover{background:#162d63;}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+margin-bottom:20px;
+}
+
+input,select{
+padding:8px;
+margin:5px;
+width:200px;
+}
+
+button{
+padding:8px 15px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+</style></head><body><div class="sidebar">
+<h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+<a href="trips.html">Trips</a>
+<a href="expenses.html">Expenses</a>
+<a href="rates.html">Rates</a>
+
+</div><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><input id="commodity" placeholder="Commodity"><input id="route" placeholder="Route (Example RATN-NAND)"><input id="companyRate" placeholder="Company Rate / MT"><input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+
+</div><div class="card"><h3>Existing Rates</h3><table><thead>
+<tr>
+<th>Commodity</th>
+<th>Route</th>
+<th>Company Rate</th>
+<th>Transporter Rate</th>
+</tr>
+</thead><tbody id="rateTable"></tbody></table></div></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+loadRates()
+
+async function loadRates(){
+
+let {data,error}=await supabaseClient
+.from("rates")
+.select("*")
+.order("created_at",{ascending:false})
+
+let html=""
+
+data.forEach(r=>{
+html+=`
+<tr>
+<td>${r.commodity}</td>
+<td>${r.route}</td>
+<td>${r.your_rate_per_mt}</td>
+<td>${r.truck_rate_per_mt}</td>
+</tr>`
+})
+
+document.getElementById("rateTable").innerHTML=html
+
+}
+
+async function addRate(){
+
+let commodity=document.getElementById("commodity").value
+let route=document.getElementById("route").value
+let companyRate=document.getElementById("companyRate").value
+let truckRate=document.getElementById("truckRate").value
+
+let {error}=await supabaseClient
+.from("rates")
+.insert([{
+commodity:commodity,
+route:route,
+your_rate_per_mt:Number(companyRate),
+truck_rate_per_mt:Number(truckRate)
+}])
+
+if(error){
+alert("Error saving rate")
+console.log(error)
+return
+}
+
+alert("Rate Saved")
+
+document.getElementById("commodity").value=""
+document.getElementById("route").value=""
+document.getElementById("companyRate").value=""
+document.getElementById("truckRate").value=""
+
+loadRates()
+
+}
+
+</script></body>
+</html>

@@ -52,10 +52,17 @@ background:white;
 th,td{
 padding:10px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 th{background:#eee;}
+
+.expenseLink{
+background:#1f3c88;
+color:white;
+padding:4px 10px;
+border-radius:4px;
+text-decoration:none;
+}
 
 </style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
@@ -63,27 +70,15 @@ th{background:#eee;}
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
-</div><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><select id="route"></select>
-<select id="truck"></select>
-<select id="commodity"></select>
+</div><div class="main"><h2>Trips</h2><input id="searchTrip" placeholder="Search Trip ID">
+<button onclick="searchTrips()">Search</button><br><br>
 
-<input id="weight" placeholder="Weight (KG)">
-<input type="date" id="tripDate">
-<input id="status" placeholder="Status"><button onclick="saveTrip()">Save Trip</button>
-
-</div><div class="card"><input id="searchTrip" placeholder="Search Trip ID"><select id="filterRoute"></select>
-<select id="filterTruck"></select>
-<select id="filterCommodity"></select>
-
-<button onclick="applyFilters()">Filter</button>
-<button onclick="clearFilters()">Clear</button>
-
-</div><table><thead><tr><th>Trip ID</th>
+<table><thead><tr><th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
 <th>Weight</th>
-<th>Total Expense</th>
+<th>Expense</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
 <th>Revenue</th>
@@ -91,54 +86,28 @@ th{background:#eee;}
 <th>Profit</th>
 <th>Date</th>
 <th>Status</th>
-<th>Action</th></tr></thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-
-</div><script>
+<th>Action</th></tr></thead><tbody id="tripTable"></tbody></table></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-let trips=[]
-let filteredTrips=[]
-
-let page=1
-let pageSize=10
-
-
-init()
-
-async function init(){
-
 loadTrips()
-
-}
-
 
 
 async function loadTrips(){
 
-const {data}=await supabaseClient
+const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .order("created_at",{ascending:false})
 
-trips=data
-filteredTrips=data
-
-renderTrips()
-
-}
-
-
-
-async function renderTrips(){
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
+
 
 let expenseMap={}
 
@@ -151,22 +120,17 @@ expenseMap[e.trip_id]+=Number(e.amount)
 })
 
 
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageTrips=filteredTrips.slice(start,end)
-
 let html=""
 
-pageTrips.forEach(trip=>{
+trips.forEach(trip=>{
 
 let mt=trip.weight_kg/1000
 
 let expense=expenseMap[trip.id]||0
 
-let revenue=(trip.company_rate*mt)
+let revenue=trip.company_rate*mt
 
-let cost=(trip.transporter_rate*mt)
+let cost=trip.transporter_rate*mt
 
 let profit=revenue-cost-expense
 
@@ -176,23 +140,41 @@ html+=`
 <tr>
 
 <td><b>${trip.trip_no}</b></td>
+
 <td>${trip.route}</td>
+
 <td>${trip.truck}</td>
+
 <td>${trip.commodity}</td>
 
 <td>${trip.weight_kg}</td>
 
-<td>${expense}</td>
+
+<td>
+
+<a class="expenseLink" href="expenses.html?trip=${trip.id}&trip_no=${trip.trip_no}">
+
+${expense}
+
+</a>
+
+</td>
+
 
 <td>${trip.company_rate}</td>
+
 <td>${trip.transporter_rate}</td>
 
 <td>${revenue.toFixed(0)}</td>
+
 <td>${cost.toFixed(0)}</td>
+
 <td>${profit.toFixed(0)}</td>
 
-<td>${trip.trip_date || ""}</td>
-<td>${trip.status || ""}</td>
+<td>${trip.trip_date||""}</td>
+
+<td>${trip.status||""}</td>
+
 
 <td>
 
@@ -214,54 +196,44 @@ document.getElementById("tripTable").innerHTML=html
 
 
 
-function nextPage(){
+async function searchTrips(){
 
-if(page*pageSize<filteredTrips.length){
+let text=document.getElementById("searchTrip").value
 
-page++
-renderTrips()
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.ilike("trip_no","%"+text+"%")
 
-}
-
-}
-
-
-
-function prevPage(){
-
-if(page>1){
-
-page--
-renderTrips()
-
-}
+renderTrips(data)
 
 }
 
 
 
-function applyFilters(){
+function renderTrips(data){
 
-let search=document.getElementById("searchTrip").value.toLowerCase()
+let html=""
 
-filteredTrips=trips.filter(t=>
+data.forEach(trip=>{
 
-t.trip_no.toLowerCase().includes(search)
+html+=`
 
-)
+<tr>
 
-page=1
-renderTrips()
+<td>${trip.trip_no}</td>
+<td>${trip.route}</td>
+<td>${trip.truck}</td>
+<td>${trip.commodity}</td>
+<td>${trip.weight_kg}</td>
 
-}
+</tr>
 
+`
 
+})
 
-function clearFilters(){
-
-filteredTrips=trips
-page=1
-renderTrips()
+document.getElementById("tripTable").innerHTML=html
 
 }
 

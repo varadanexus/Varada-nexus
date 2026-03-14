@@ -69,17 +69,15 @@ text-align:left;
 
 </div><div class="main"><h2>Master Data Management</h2><div class="card"><h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name"><button onclick="addCommodity()">Save Commodity</button>
 
-<table>
-<thead>
+<table><thead>
 <tr>
 <th>Commodity</th>
 </tr>
-</thead><tbody id="commodityTable"></tbody></table></div><div class="card"><h3>Add Route</h3><input id="routeCode" placeholder="Route Code"><input id="origin" placeholder="Origin"><input id="destination" placeholder="Destination"><button onclick="addRoute()">Save Route</button>
+</thead><tbody id="commodityTable"></tbody></table></div><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin"><input id="destination" placeholder="Destination"><button onclick="addRoute()">Save Route</button>
 
-<table>
-<thead>
+<table><thead>
 <tr>
-<th>Route</th>
+<th>Route Code</th>
 <th>Origin</th>
 <th>Destination</th>
 </tr>
@@ -125,21 +123,33 @@ document.getElementById("commodityTable").innerHTML=html
 
 async function addRoute(){
 
-let code=document.getElementById("routeCode").value
-let origin=document.getElementById("origin").value
-let destination=document.getElementById("destination").value
+let origin=document.getElementById("origin").value.trim()
+let destination=document.getElementById("destination").value.trim()
+
+if(!origin || !destination){
+alert("Enter Origin and Destination")
+return
+}
+
+/* AUTO GENERATE ROUTE CODE */
+
+let originCode=origin.substring(0,4).toUpperCase()
+let destinationCode=destination.substring(0,4).toUpperCase()
+
+let routeCode=originCode + "-" + destinationCode
 
 await supabaseClient
 .from("routes")
 .insert([{
-route_code:code,
+route_code:routeCode,
 origin:origin,
 destination:destination
 }])
 
-document.getElementById("routeCode").value=""
 document.getElementById("origin").value=""
 document.getElementById("destination").value=""
+
+alert("Route Created : " + routeCode)
 
 loadRoutes()
 

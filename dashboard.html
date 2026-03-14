@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><style>
+<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
@@ -31,16 +31,19 @@ font-size:18px;
 }
 
 .card p{
-font-size:24px;
+font-size:26px;
 margin-top:10px;
+font-weight:bold;
 }
 
-</style></head><body><!-- Sidebar Loader --><div id="sidebar-container"></div><script>
+</style></head><body><!-- GLOBAL SIDEBAR --><div id="sidebar-container"></div><script>
+
 fetch("sidebar.html")
-.then(res => res.text())
-.then(data => {
-document.getElementById("sidebar-container").innerHTML = data
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
 })
+
 </script><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
@@ -53,4 +56,91 @@ document.getElementById("sidebar-container").innerHTML = data
 </div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div></div></body></html>
+</div></div></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+loadDashboard()
+
+
+
+async function loadDashboard(){
+
+/* LOAD TRIPS */
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+
+/* LOAD EXPENSES */
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+
+
+let totalTrips = trips.length
+
+let totalRevenue = 0
+let totalCost = 0
+let totalProfit = 0
+
+
+
+/* CREATE EXPENSE MAP */
+
+let expenseMap = {}
+
+expenses.forEach(e=>{
+
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+
+expenseMap[e.trip_id]+=Number(e.amount)
+
+})
+
+
+
+/* CALCULATE FINANCIALS */
+
+trips.forEach(trip=>{
+
+let mt = trip.weight_kg / 1000
+
+let revenue = trip.company_rate * mt
+
+let cost = trip.transporter_rate * mt
+
+let expense = expenseMap[trip.id] || 0
+
+let profit = revenue - cost - expense
+
+
+totalRevenue += revenue
+totalCost += cost
+totalProfit += profit
+
+})
+
+
+
+/* DISPLAY */
+
+document.getElementById("totalTrips").innerText = totalTrips
+
+document.getElementById("totalRevenue").innerText =
+"₹ "+ totalRevenue.toLocaleString()
+
+document.getElementById("totalCost").innerText =
+"₹ "+ totalCost.toLocaleString()
+
+document.getElementById("totalProfit").innerText =
+"₹ "+ totalProfit.toLocaleString()
+
+}
+
+</script></body></html>

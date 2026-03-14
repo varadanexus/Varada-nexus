@@ -48,7 +48,7 @@ margin-bottom:20px;
 
 .form-grid{
 display:grid;
-grid-template-columns: repeat(4,1fr);
+grid-template-columns:repeat(4,1fr);
 gap:10px;
 }
 
@@ -117,12 +117,14 @@ text-align:left;
 </select><button onclick="applyFilter()">Filter</button>
 <button onclick="clearFilter()">Clear</button>
 
-</div><table><thead><tr><th>Expense ID</th>
+</div><table><thead><tr>
+<th>Expense ID</th>
 <th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
 <th>Date</th>
-<th>Action</th></tr></thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<th>Action</th>
+</tr></thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
 </div><script>
@@ -143,6 +145,8 @@ let pageSize=10
 
 init()
 
+
+
 async function init(){
 
 await loadTrips()
@@ -160,11 +164,11 @@ const {data}=await supabaseClient
 .from("trips")
 .select("*")
 
-trips=data
+trips=data || []
 
 let html='<option value="">Select Trip</option>'
 
-data.forEach(t=>{
+trips.forEach(t=>{
 html+=`<option value="${t.id}">${t.trip_no}</option>`
 })
 
@@ -188,7 +192,7 @@ const {data}=await supabaseClient
 .select("expense_id")
 .ilike("expense_id","EXP"+year+month+"%")
 
-let seq=data.length+1
+let seq=(data?.length || 0)+1
 
 return "EXP"+year+month+seq.toString().padStart(4,"0")
 
@@ -204,7 +208,12 @@ let tripId=document.getElementById("trip").value
 let type=document.getElementById("type").value
 let amount=document.getElementById("amount").value
 
-let tripNo=trips.find(t=>t.id==tripId).trip_no
+if(!tripId || !amount){
+
+alert("Select trip and enter amount")
+return
+
+}
 
 let expenseId=await generateExpenseId()
 
@@ -215,9 +224,11 @@ await supabaseClient
 expense_id:expenseId,
 trip_id:tripId,
 expense_type:type,
-amount:amount
+amount:Number(amount)
 
 })
+
+document.getElementById("amount").value=""
 
 loadExpenses()
 
@@ -234,8 +245,9 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-expenses=data
-filtered=data
+expenses=data || []
+
+filtered=[...expenses]
 
 renderTable()
 
@@ -300,9 +312,11 @@ const {data}=await supabaseClient
 
 let amount=prompt("Edit Amount",data.amount)
 
+if(!amount) return
+
 await supabaseClient
 .from("expenses")
-.update({amount:amount})
+.update({amount:Number(amount)})
 .eq("id",id)
 
 loadExpenses()
@@ -339,24 +353,34 @@ filtered=expenses.filter(e=>{
 
 let trip=trips.find(t=>t.id==e.trip_id)
 
+let tripNo=trip ? trip.trip_no.toLowerCase() : ""
+
 return(
-(!search || trip.trip_no.toLowerCase().includes(search)) &&
-(!type || e.expense_type==type)
+(!search || tripNo.includes(search)) &&
+(!type || e.expense_type===type)
 )
 
 })
 
 page=1
+
 renderTable()
 
 }
 
 
 
+/* CLEAR FILTER */
+
 function clearFilter(){
 
-filtered=expenses
+document.getElementById("search").value=""
+document.getElementById("filterType").value=""
+
+filtered=[...expenses]
+
 page=1
+
 renderTable()
 
 }

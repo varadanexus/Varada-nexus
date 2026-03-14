@@ -36,7 +36,8 @@ margin-bottom:8px;
 </style></head><body><h1>Varada Nexus Transport Management System</h1><h3>Add Trip</h3><input id="route" placeholder="Route">
 <input id="truck" placeholder="Truck Number">
 <input id="commodity" placeholder="Commodity">
-<input id="weight" placeholder="Weight KG"><button onclick="addTrip()">Add Trip</button>
+<input id="weight" placeholder="Weight KG">
+<input type="date" id="trip_date"><button onclick="addTrip()">Add Trip</button>
 
 <h3>Trips</h3><div id="tripList"></div><script>
 
@@ -65,6 +66,7 @@ const route=document.getElementById("route").value
 const truck=document.getElementById("truck").value
 const commodity=document.getElementById("commodity").value
 const weight=document.getElementById("weight").value
+const trip_date=document.getElementById("trip_date").value
 
 const tripNo = await generateTripNumber()
 
@@ -76,6 +78,7 @@ route:route,
 truck:truck,
 commodity:commodity,
 weight_kg:weight,
+trip_date:trip_date,
 status:"created"
 }])
 

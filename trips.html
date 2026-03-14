@@ -237,7 +237,7 @@ document.getElementById("commodity").innerHTML=html
 
 }
 
-/* GENERATE TRIP NUMBER */
+/* TRIP NUMBER */
 
 async function generateTripNo(){
 
@@ -275,8 +275,6 @@ let truck=trucks.find(t=>t.id==truckId).truck_number
 let commodity=commodities.find(c=>c.id==commodityId).name
 
 let transporterId=trucks.find(t=>t.id==truckId).transporter_id
-
-/* GET RATE */
 
 const {data:rate}=await supabaseClient
 .from("rates")
@@ -327,17 +325,17 @@ const {data:trips}=await supabaseClient
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
-.select("trip_id,amount")
+.select("trip,amount")
 
 let expenseMap={}
 
 expenses.forEach(e=>{
 
-if(!expenseMap[e.trip_id]){
-expenseMap[e.trip_id]=0
+if(!expenseMap[e.trip]){
+expenseMap[e.trip]=0
 }
 
-expenseMap[e.trip_id]+=Number(e.amount)
+expenseMap[e.trip]+=Number(e.amount)
 
 })
 

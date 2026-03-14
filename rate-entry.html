@@ -1,11 +1,10 @@
-<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/><script src="https://code.jquery.com/jquery-3.6.0.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><style>
+<!DOCTYPE html><html>
+<head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 
 .sidebar{
 position:fixed;
-left:0;
-top:0;
 width:220px;
 height:100%;
 background:#1f3c88;
@@ -20,7 +19,9 @@ color:white;
 text-decoration:none;
 }
 
-.sidebar a:hover{background:#162d63;}
+.sidebar a:hover{
+background:#162d63;
+}
 
 .main{
 margin-left:220px;
@@ -32,143 +33,149 @@ background:white;
 padding:20px;
 border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
-margin-bottom:20px;
 }
 
 input,select{
 padding:8px;
 margin:5px;
-width:250px;
+width:220px;
 }
 
 button{
-padding:8px 14px;
-background:#1f3c88;
-color:white;
+padding:6px 12px;
 border:none;
 cursor:pointer;
 }
 
+.saveBtn{background:#1f3c88;color:white;}
+.deleteBtn{background:#d9534f;color:white;}
+
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:20px;
-background:white;
+margin-top:10px;
 }
 
 th,td{
-padding:10px;
+padding:8px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
-</style></head><body><div class="sidebar"><h2 style="padding-left:20px">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+</style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="rate-entry.html">Rates</a>
 <a href="master-data.html">Master Data</a>
 
-</div><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><select id="commoditySelect" style="width:300px"></select>
+</div><div class="main"><h2>Rate Management</h2><div class="card"><h3>Add Rate</h3><select id="commoditySelect"></select>
+<select id="routeSelect"></select>
 
-<select id="routeSelect" style="width:300px"></select>
+<input id="companyRate" placeholder="Company Rate / MT">
+<input id="transporterRate" placeholder="Transporter Rate / MT"><button class="saveBtn" onclick="addRate()">Save Rate</button>
 
-<input id="companyRate" placeholder="Company Rate / MT"><input id="transporterRate" placeholder="Transporter Rate / MT"><br><br>
-
-<button onclick="saveRate()">Save Rate</button>
-
-</div><div class="card"><h3>Existing Rates</h3><table><thead>
+<table><thead>
 <tr>
 <th>Commodity</th>
 <th>Route</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
+<th>Action</th>
 </tr>
 </thead><tbody id="rateTable"></tbody></table></div></div><script>
 
-const supabaseClient = supabase.createClient(
+const supabaseClient=supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-$(document).ready(function(){
+init()
+
+async function init(){
 
 loadCommodities()
 loadRoutes()
 loadRates()
 
-})
+}
+
+/* LOAD COMMODITIES */
 
 async function loadCommodities(){
 
-let {data}=await supabaseClient
-.from("commodities")
-.select("*")
+let {data}=await supabaseClient.from("commodities").select("*")
 
-let options=""
+let select=document.getElementById("commoditySelect")
+
+select.innerHTML='<option value="">Select Commodity</option>'
 
 data.forEach(c=>{
-options+=`<option value="${c.id}">${c.name}</option>`
-})
 
-$("#commoditySelect").html(options)
+let opt=document.createElement("option")
+opt.value=c.id
+opt.text=c.name
 
-$("#commoditySelect").select2({
-placeholder:"Select Commodity",
-allowClear:true
+select.appendChild(opt)
+
 })
 
 }
+
+/* LOAD ROUTES */
 
 async function loadRoutes(){
 
-let {data}=await supabaseClient
-.from("routes")
-.select("*")
+let {data}=await supabaseClient.from("routes").select("*")
 
-let options=""
+let select=document.getElementById("routeSelect")
+
+select.innerHTML='<option value="">Select Route</option>'
 
 data.forEach(r=>{
-options+=`<option value="${r.id}">${r.route_code} (${r.origin}-${r.destination})</option>`
-})
 
-$("#routeSelect").html(options)
+let opt=document.createElement("option")
+opt.value=r.id
+opt.text=r.route_code
 
-$("#routeSelect").select2({
-placeholder:"Select Route",
-allowClear:true
+select.appendChild(opt)
+
 })
 
 }
 
-async function saveRate(){
+/* ADD RATE */
+
+async function addRate(){
 
 let commodity=document.getElementById("commoditySelect").value
 let route=document.getElementById("routeSelect").value
-let companyRate=document.getElementById("companyRate").value
-let transporterRate=document.getElementById("transporterRate").value
+let company=document.getElementById("companyRate").value
+let transporter=document.getElementById("transporterRate").value
 
-await supabaseClient
-.from("rates")
-.insert([{
+if(!commodity||!route)return
+
+await supabaseClient.from("rates").insert({
+
 commodity_id:commodity,
 route_id:route,
-company_rate_per_mt:Number(companyRate),
-transporter_rate_per_mt:Number(transporterRate)
-}])
+company_rate:company,
+transporter_rate:transporter
 
-alert("Rate Saved")
+})
 
 loadRates()
 
 }
+
+/* LOAD RATES */
 
 async function loadRates(){
 
 let {data}=await supabaseClient
 .from("rates")
 .select(`
-company_rate_per_mt,
-transporter_rate_per_mt,
+id,
+company_rate,
+transporter_rate,
 commodities(name),
 routes(route_code)
 `)
@@ -181,8 +188,11 @@ html+=`
 <tr>
 <td>${r.commodities.name}</td>
 <td>${r.routes.route_code}</td>
-<td>${r.company_rate_per_mt}</td>
-<td>${r.transporter_rate_per_mt}</td>
+<td>${r.company_rate}</td>
+<td>${r.transporter_rate}</td>
+<td>
+<button class="deleteBtn" onclick="deleteRate('${r.id}')">Delete</button>
+</td>
 </tr>
 `
 
@@ -192,4 +202,13 @@ document.getElementById("rateTable").innerHTML=html
 
 }
 
-</script></body></html>
+async function deleteRate(id){
+
+await supabaseClient.from("rates").delete().eq("id",id)
+
+loadRates()
+
+}
+
+</script></body>
+</html>

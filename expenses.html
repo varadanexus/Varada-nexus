@@ -146,7 +146,7 @@ html+=`
 
 <tr>
 <td>${exp.trip_id}</td>
-<td>${exp.type}</td>
+<td>${exp.expense_type}</td>
 <td>${exp.amount}</td>
 </tr>
 
@@ -161,19 +161,22 @@ document.getElementById("expenseTable").innerHTML=html
 async function addExpense(){
 
 const tripId=document.getElementById("tripSelect").value
-const type=document.getElementById("type").value
+const expenseType=document.getElementById("type").value
 const amount=document.getElementById("amount").value
 
 const { error } = await supabaseClient
 .from("expenses")
-.insert([{
-trip_id:tripId,
-type:type,
-amount:amount
-}])
+.insert([
+{
+trip_id: tripId,
+expense_type: expenseType,
+amount: Number(amount),
+expense_date: new Date().toISOString()
+}
+])
 
 if(error){
-alert("Error saving expense")
+alert(error.message)
 console.log(error)
 return
 }

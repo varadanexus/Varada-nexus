@@ -1,30 +1,12 @@
 <!DOCTYPE html><html>
-<head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<head>
+<title>Trips - Varada Nexus ERP</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
-}
-
-.sidebar{
-position:fixed;
-width:220px;
-height:100%;
-background:#1f3c88;
-color:white;
-padding-top:20px;
-}
-
-.sidebar a{
-display:block;
-padding:12px 20px;
-color:white;
-text-decoration:none;
-}
-
-.sidebar a:hover{
-background:#162c66;
 }
 
 .main{
@@ -89,16 +71,14 @@ border:1px solid #ccc;
 border-radius:4px;
 }
 
-</style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
-<a href="trips.html">Trips</a>
-<a href="expenses.html">Expenses</a>
-<a href="master-data.html">Master Data</a>
-<a href="rate-entry.html">Rates</a>
-
-</div><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
-
+</style></head><body><!-- Sidebar Loader --><div id="sidebar-container"></div><script>
+fetch("sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+})
+</script><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
 <select id="truck"></select>
-
 <select id="commodity"></select>
 
 <input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
@@ -108,9 +88,8 @@ border-radius:4px;
 <option>Pending</option>
 </select></div><br><button onclick="saveTrip()">Save Trip</button>
 
-</div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID"><button onclick="searchTrip()">Search</button>
-
-</div><table><thead><tr><th>Trip ID</th>
+</div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID">
+<button onclick="searchTrip()">Search</button></div><table><thead><tr><th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
@@ -141,8 +120,6 @@ let trips=[]
 let page=1
 let pageSize=10
 
-
-
 init()
 
 async function init(){
@@ -153,8 +130,6 @@ await loadCommodities()
 await loadTrips()
 
 }
-
-
 
 /* LOAD ROUTES */
 
@@ -174,8 +149,6 @@ document.getElementById("route").innerHTML=html
 
 }
 
-
-
 /* LOAD TRUCKS */
 
 async function loadTrucks(){
@@ -194,8 +167,6 @@ document.getElementById("truck").innerHTML=html
 
 }
 
-
-
 /* LOAD COMMODITIES */
 
 async function loadCommodities(){
@@ -213,8 +184,6 @@ html+=`<option value="${c.id}">${c.name}</option>`
 document.getElementById("commodity").innerHTML=html
 
 }
-
-
 
 /* GENERATE TRIP NUMBER */
 
@@ -235,8 +204,6 @@ let seq=data.length+1
 return "TR"+year+month+seq.toString().padStart(4,"0")
 
 }
-
-
 
 /* SAVE TRIP */
 
@@ -274,8 +241,6 @@ loadTrips()
 
 }
 
-
-
 /* LOAD TRIPS */
 
 async function loadTrips(){
@@ -290,8 +255,6 @@ trips=data
 renderTrips()
 
 }
-
-
 
 /* RENDER */
 
@@ -311,7 +274,6 @@ expenseMap[e.trip_id]+=Number(e.amount)
 
 })
 
-
 let start=(page-1)*pageSize
 let end=start+pageSize
 
@@ -322,59 +284,39 @@ let html=""
 pageTrips.forEach(trip=>{
 
 let mt=trip.weight_kg/1000
-
 let expense=expenseMap[trip.id]||0
-
 let revenue=(trip.company_rate*mt)
-
 let cost=(trip.transporter_rate*mt)
-
 let profit=revenue-cost-expense
 
-
 html+=`
-
 <tr>
-
 <td><b>${trip.trip_no}</b></td>
 <td>${trip.route}</td>
 <td>${trip.truck}</td>
 <td>${trip.commodity}</td>
 <td>${trip.weight_kg}</td>
-
 <td>${expense}</td>
-
 <td>${trip.company_rate}</td>
 <td>${trip.transporter_rate}</td>
-
 <td>${revenue.toFixed(0)}</td>
 <td>${cost.toFixed(0)}</td>
 <td>${profit.toFixed(0)}</td>
-
 <td>${trip.trip_date || ""}</td>
 <td>${trip.status || ""}</td>
-
 <td>
-
 <button class="editBtn" onclick="editTrip('${trip.id}')">Edit</button>
-
 <button class="deleteBtn" onclick="deleteTrip('${trip.id}')">Delete</button>
-
 </td>
-
 </tr>
-
 `
-
 })
 
 document.getElementById("tripTable").innerHTML=html
 
 }
 
-
-
-/* EDIT TRIP */
+/* EDIT */
 
 async function editTrip(id){
 
@@ -401,8 +343,6 @@ loadTrips()
 
 }
 
-
-
 /* DELETE */
 
 async function deleteTrip(id){
@@ -414,8 +354,6 @@ await supabaseClient.from("trips").delete().eq("id",id)
 loadTrips()
 
 }
-
-
 
 /* SEARCH */
 
@@ -431,17 +369,13 @@ renderTrips()
 
 }
 
-
-
 /* PAGINATION */
 
 function nextPage(){
 
 if(page*pageSize<trips.length){
-
 page++
 renderTrips()
-
 }
 
 }
@@ -449,10 +383,8 @@ renderTrips()
 function prevPage(){
 
 if(page>1){
-
 page--
 renderTrips()
-
 }
 
 }

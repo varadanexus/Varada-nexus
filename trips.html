@@ -1,0 +1,121 @@
+<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.sidebar{
+position:fixed;
+left:0;
+top:0;
+width:220px;
+height:100%;
+background:#1f3c88;
+color:white;
+padding-top:20px;
+}
+
+.sidebar h2{
+text-align:center;
+margin-bottom:30px;
+}
+
+.sidebar a{
+display:block;
+color:white;
+padding:12px 20px;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#162c66;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#eee;
+}
+
+button{
+padding:6px 12px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+</style></head><body><div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+<a href="trips.html">Trips</a>
+<a href="#">Trucks</a>
+<a href="#">Routes</a>
+<a href="#">Expenses</a>
+<a href="#">Client Payments</a>
+<a href="#">Transporter Payments</a>
+
+</div><div class="main"><h1>Trips</h1><table><thead>
+<tr>
+<th>Route</th>
+<th>Truck</th>
+<th>Commodity</th>
+<th>Weight</th>
+<th>Status</th>
+</tr>
+</thead><tbody id="tripTable"></tbody></table></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+)
+
+async function loadTrips(){
+
+const { data } = await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+
+let html=""
+
+data.forEach(trip=>{
+
+html+=`
+
+<tr>
+
+<td>${trip.route ?? "-"}</td>
+<td>${trip.truck ?? "-"}</td>
+<td>${trip.commodity}</td>
+<td>${trip.weight_kg}</td>
+<td>${trip.status ?? "-"}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("tripTable").innerHTML=html
+
+}
+
+loadTrips()
+
+</script></body></html>

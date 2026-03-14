@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Trip Expenses</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html><html><head><title>Trip Expenses</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><!-- Select2 for searchable dropdown --><link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /><script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><style>
 
 body{
 margin:0;
@@ -48,6 +48,7 @@ margin-bottom:20px;
 input,select{
 padding:8px;
 margin:5px;
+width:200px;
 }
 
 button{
@@ -77,7 +78,7 @@ background:#eee;
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 
-</div><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><select id="tripSelect"></select>
+</div><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><select id="tripSelect" style="width:250px"></select>
 
 <select id="type">
 <option>Fuel</option>
@@ -102,6 +103,7 @@ async function loadTrips(){
 const { data } = await supabaseClient
 .from("trips")
 .select("trip_no")
+.order("created_at",{ascending:false})
 
 let html=""
 
@@ -110,6 +112,10 @@ html+=`<option value="${trip.trip_no}">${trip.trip_no}</option>`
 })
 
 document.getElementById("tripSelect").innerHTML=html
+
+$('#tripSelect').select2({
+placeholder:"Search Trip ID"
+})
 
 }
 

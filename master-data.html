@@ -53,7 +53,8 @@ document.getElementById("sidebar-container").innerHTML = data
 })
 </script><div class="main"><h2>Master Data Management</h2><!-- COMMODITY --><div class="card"><h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name"><button class="saveBtn" onclick="addCommodity()">Save</button>
 
-<input id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable',this.value)"><table><thead>
+<input id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable',this.value)"><table>
+<thead>
 <tr>
 <th>Commodity</th>
 <th>Action</th>
@@ -126,8 +127,6 @@ document.getElementById("sidebar-container").innerHTML = data
 <button onclick="nextPage('truck')">Next</button>
 </div></div></div><script>
 
-/* YOUR ENTIRE JAVASCRIPT BELOW IS UNCHANGED */
-
 const supabaseClient=supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
@@ -136,15 +135,19 @@ const supabaseClient=supabase.createClient(
 let pageSize=10
 let pages={commodity:1,route:1,client:1,transporter:1,truck:1}
 
-init()
+/* FIXED INITIALIZATION */
+
+window.onload = init
 
 async function init(){
+
 loadCommodities()
 loadRoutes()
 loadClients()
 loadTransporters()
 loadOwners()
 loadTrucks()
+
 }
 
 function paginate(data,type){
@@ -183,7 +186,7 @@ r.style.display=txt.includes(filter)?"":"none"
 
 }
 
-/* REMAINING FUNCTIONS UNCHANGED */
+/* YOUR REMAINING FUNCTIONS CONTINUE EXACTLY SAME */
 
 </script></body>
 </html>

@@ -1,6 +1,5 @@
 <!DOCTYPE html><html>
-<head>
-<title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 
@@ -37,7 +36,7 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-input{
+input,select{
 padding:8px;
 margin:5px;
 width:220px;
@@ -45,19 +44,13 @@ width:220px;
 
 button{
 padding:6px 12px;
-background:#1f3c88;
-color:white;
 border:none;
 cursor:pointer;
 }
 
-.deleteBtn{
-background:#d9534f;
-}
-
-.editBtn{
-background:#5bc0de;
-}
+.saveBtn{background:#1f3c88;color:white;}
+.editBtn{background:#5bc0de;color:white;}
+.deleteBtn{background:#d9534f;color:white;}
 
 table{
 width:100%;
@@ -78,21 +71,38 @@ text-align:left;
 <a href="master-data.html">Master Data</a>
 
 </div><div class="main"><h2>Master Data Management</h2><!-- COMMODITY --><div class="card"><h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name">
-<button onclick="addCommodity()">Save Commodity</button><table><thead>
+<button class="saveBtn" onclick="addCommodity()">Save Commodity</button><table><thead>
 <tr>
 <th>Commodity</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="commodityTable"></tbody></table></div></div><script>
+</thead><tbody id="commodityTable"></tbody></table></div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
+<input id="destination" placeholder="Destination"><button class="saveBtn" onclick="addRoute()">Save Route</button>
+
+<table><thead>
+<tr>
+<th>Route Code</th>
+<th>Origin</th>
+<th>Destination</th>
+<th>Action</th>
+</tr>
+</thead><tbody id="routeTable"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-loadCommodities()
+init()
 
-/* ADD */
+async function init(){
+
+loadCommodities()
+loadRoutes()
+
+}
+
+/* COMMODITY */
 
 async function addCommodity(){
 
@@ -110,8 +120,6 @@ document.getElementById("commodityName").value=""
 loadCommodities()
 
 }
-
-/* LOAD */
 
 async function loadCommodities(){
 
@@ -143,13 +151,9 @@ document.getElementById("commodityTable").innerHTML=html
 
 }
 
-/* DELETE */
-
 async function deleteCommodity(id){
 
-let confirmDelete=confirm("Delete this commodity?")
-
-if(!confirmDelete)return
+if(!confirm("Delete commodity?"))return
 
 await supabaseClient.from("commodities").delete().eq("id",id)
 
@@ -157,20 +161,109 @@ loadCommodities()
 
 }
 
-/* EDIT */
+async function editCommodity(id,name){
 
-async function editCommodity(id,currentName){
-
-let newName=prompt("Edit Commodity Name",currentName)
+let newName=prompt("Edit Commodity",name)
 
 if(!newName)return
 
-await supabaseClient
-.from("commodities")
+await supabaseClient.from("commodities")
 .update({name:newName})
 .eq("id",id)
 
 loadCommodities()
+
+}
+
+/* ROUTE */
+
+async function addRoute(){
+
+let origin=document.getElementById("origin").value.trim()
+let destination=document.getElementById("destination").value.trim()
+
+if(origin===""||destination===""){
+alert("Enter origin and destination")
+return
+}
+
+let routeCode=origin.substring(0,4).toUpperCase()+"-"+destination.substring(0,4).toUpperCase()
+
+await supabaseClient.from("routes").insert([{
+
+route_code:routeCode,
+origin:origin,
+destination:destination
+
+}])
+
+document.getElementById("origin").value=""
+document.getElementById("destination").value=""
+
+loadRoutes()
+
+}
+
+async function loadRoutes(){
+
+let {data}=await supabaseClient.from("routes").select("*")
+
+let html=""
+
+data.forEach(r=>{
+
+html+=`
+<tr>
+
+<td>${r.route_code}</td>
+<td>${r.origin}</td>
+<td>${r.destination}</td>
+
+<td>
+
+<button class="editBtn" onclick="editRoute('${r.id}','${r.origin}','${r.destination}')">Edit</button>
+
+<button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button>
+
+</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("routeTable").innerHTML=html
+
+}
+
+async function deleteRoute(id){
+
+if(!confirm("Delete route?"))return
+
+await supabaseClient.from("routes").delete().eq("id",id)
+
+loadRoutes()
+
+}
+
+async function editRoute(id,origin,destination){
+
+let newOrigin=prompt("Edit Origin",origin)
+let newDestination=prompt("Edit Destination",destination)
+
+if(!newOrigin||!newDestination)return
+
+let routeCode=newOrigin.substring(0,4).toUpperCase()+"-"+newDestination.substring(0,4).toUpperCase()
+
+await supabaseClient.from("routes")
+.update({
+origin:newOrigin,
+destination:newDestination,
+route_code:routeCode
+})
+.eq("id",id)
+
+loadRoutes()
 
 }
 

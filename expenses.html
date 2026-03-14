@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Trip Expenses</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /><script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Trip Expenses</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/><script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><style>
 
 body{
 margin:0;
@@ -100,8 +100,6 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
 
-let tripMap = {}
-
 async function loadTrips(){
 
 const { data } = await supabaseClient
@@ -112,8 +110,7 @@ const { data } = await supabaseClient
 let html=""
 
 data.forEach(trip=>{
-tripMap[trip.trip_no]=trip.id
-html+=`<option value="${trip.trip_no}">${trip.trip_no}</option>`
+html+=`<option value="${trip.id}">${trip.trip_no}</option>`
 })
 
 document.getElementById("tripSelect").innerHTML=html
@@ -128,30 +125,22 @@ async function loadExpenses(){
 
 const { data } = await supabaseClient
 .from("expenses")
-.select("*")
+.select("*,trips(trip_no)")
 .order("created_at",{ascending:false})
 
 let html=""
 
-for(const exp of data){
-
-const { data:trip } = await supabaseClient
-.from("trips")
-.select("trip_no")
-.eq("id",exp.trip_id)
-.single()
+data.forEach(exp=>{
 
 html+=`
-
 <tr>
-<td>${trip?.trip_no || "-"}</td>
+<td>${exp.trips?.trip_no || "-"}</td>
 <td>${exp.expense_type}</td>
 <td>${exp.amount}</td>
 </tr>
-
 `
 
-}
+})
 
 document.getElementById("expenseTable").innerHTML=html
 
@@ -159,11 +148,9 @@ document.getElementById("expenseTable").innerHTML=html
 
 async function addExpense(){
 
-const tripNo=document.getElementById("tripSelect").value
+const tripUUID=document.getElementById("tripSelect").value
 const expenseType=document.getElementById("type").value
 const amount=document.getElementById("amount").value
-
-const tripUUID=tripMap[tripNo]
 
 const { error } = await supabaseClient
 .from("expenses")
@@ -178,7 +165,6 @@ expense_date:new Date().toISOString()
 
 if(error){
 alert(error.message)
-console.log(error)
 return
 }
 

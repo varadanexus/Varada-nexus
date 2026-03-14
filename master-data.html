@@ -1,6 +1,4 @@
-<!DOCTYPE html><html>
-<head>
-<title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+<!DOCTYPE html><html><head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script><style>
 
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -64,76 +62,55 @@ border-bottom:1px solid #ddd;
 text-align:left;
 }
 
-</style></head><body><div class="sidebar">
-<h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
+</style></head><body><div class="sidebar"><h2 style="padding-left:20px;">Varada Nexus</h2><a href="dashboard.html">Dashboard</a>
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
 <a href="rate-entry.html">Rates</a>
 <a href="master-data.html">Master Data</a>
 
-</div><div class="main"><h2>Master Data Management</h2><!-- COMMODITY --><div class="card">
-<h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name">
-<button onclick="addCommodity()">Save Commodity</button><table>
-<thead>
-<tr><th>Commodity</th></tr>
-</thead>
-<tbody id="commodityTable"></tbody>
-</table></div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
-<input id="destination" placeholder="Destination">
-<button onclick="addRoute()">Save Route</button><table>
-<thead>
+</div><div class="main"><h2>Master Data Management</h2><!-- COMMODITY --><div class="card"><h3>Add Commodity</h3><input id="commodityName" placeholder="Commodity Name"><button onclick="addCommodity()">Save Commodity</button>
+
+<table><thead>
 <tr>
+<th>Commodity</th>
+</tr>
+</thead><tbody id="commodityTable"></tbody></table></div><!-- ROUTE --><div class="card"><h3>Add Route</h3><input id="origin" placeholder="Origin">
+<input id="destination" placeholder="Destination"><button onclick="addRoute()">Save Route</button>
+
+<table><thead><tr>
 <th>Route Code</th>
 <th>Origin</th>
 <th>Destination</th>
-</tr>
-</thead>
-<tbody id="routeTable"></tbody>
-</table></div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
+</tr></thead><tbody id="routeTable"></tbody></table></div><!-- CLIENT --><div class="card"><h3>Add Client</h3><input id="clientName" placeholder="Client Name">
 <input id="clientCompany" placeholder="Company">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email"><button onclick="addClient()">Save Client</button>
 
-<table>
-<thead>
-<tr>
+<table><thead><tr>
 <th>Name</th>
 <th>Company</th>
 <th>Phone</th>
 <th>Email</th>
-</tr>
-</thead>
-<tbody id="clientTable"></tbody>
-</table></div><!-- TRANSPORTER --><div class="card"><h3>Add Transporter / Owner</h3><input id="transporterName" placeholder="Owner Name">
+</tr></thead><tbody id="clientTable"></tbody></table></div><!-- TRANSPORTER --><div class="card"><h3>Add Transporter / Owner</h3><input id="transporterName" placeholder="Owner Name">
 <input id="transporterCompany" placeholder="Company">
 <input id="transporterPhone" placeholder="Phone"><button onclick="addTransporter()">Save Transporter</button>
 
-<table>
-<thead>
-<tr>
+<table><thead><tr>
 <th>Name</th>
 <th>Company</th>
 <th>Phone</th>
-</tr>
-</thead>
-<tbody id="transporterTable"></tbody>
-</table></div><!-- TRUCK --><div class="card"><h3>Add Truck</h3><select id="ownerSelect">
+</tr></thead><tbody id="transporterTable"></tbody></table></div><!-- TRUCK --><div class="card"><h3>Add Truck</h3><select id="ownerSelect">
 <option value="">Select Owner</option>
 </select><input id="truckNumber" placeholder="Truck Number">
 <input id="driverName" placeholder="Driver Name">
 <input id="driverPhone" placeholder="Driver Phone"><button onclick="addTruck()">Save Truck</button>
 
-<table>
-<thead>
-<tr>
+<table><thead><tr>
 <th>Truck ID</th>
 <th>Truck Number</th>
 <th>Owner</th>
 <th>Driver</th>
-</tr>
-</thead>
-<tbody id="truckTable"></tbody>
-</table></div></div><script>
+</tr></thead><tbody id="truckTable"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -153,16 +130,18 @@ loadTrucks()
 
 async function addCommodity(){
 
-let name=document.getElementById("commodityName").value.trim()
+let name=document.getElementById("commodityName").value.trim().toUpperCase()
 
 if(!name){
-alert("Enter commodity name")
+alert("Enter commodity")
 return
 }
 
-let {data}=await supabaseClient.from("commodities").select("*").eq("name",name)
+let {data}=await supabaseClient.from("commodities").select("*")
 
-if(data.length>0){
+let exists=data.some(c=>c.name.toUpperCase()===name)
+
+if(exists){
 alert("Commodity already exists")
 return
 }
@@ -193,17 +172,16 @@ document.getElementById("commodityTable").innerHTML=html
 
 async function addRoute(){
 
-let origin=document.getElementById("origin").value.trim()
-let destination=document.getElementById("destination").value.trim()
+let origin=document.getElementById("origin").value.trim().toUpperCase()
+let destination=document.getElementById("destination").value.trim().toUpperCase()
 
-let originCode=origin.substring(0,4).toUpperCase()
-let destCode=destination.substring(0,4).toUpperCase()
+let routeCode=origin.substring(0,4)+"-"+destination.substring(0,4)
 
-let routeCode=originCode+"-"+destCode
+let {data}=await supabaseClient.from("routes").select("*")
 
-let {data}=await supabaseClient.from("routes").select("*").eq("route_code",routeCode)
+let exists=data.some(r=>r.route_code===routeCode)
 
-if(data.length>0){
+if(exists){
 alert("Route already exists")
 return
 }
@@ -244,12 +222,14 @@ document.getElementById("routeTable").innerHTML=html
 
 async function addClient(){
 
-let name=document.getElementById("clientName").value.trim()
+let name=document.getElementById("clientName").value.trim().toUpperCase()
 
-let {data}=await supabaseClient.from("clients").select("*").eq("client_name",name)
+let {data}=await supabaseClient.from("clients").select("*")
 
-if(data.length>0){
-alert("Client already exists")
+let exists=data.some(c=>c.client_name.toUpperCase()===name)
+
+if(exists){
+alert("Client exists")
 return
 }
 
@@ -269,16 +249,38 @@ loadClients()
 
 }
 
-/* TRANSPORTERS */
+async function loadClients(){
+
+let {data}=await supabaseClient.from("clients").select("*")
+
+let html=""
+
+data.forEach(c=>{
+html+=`
+<tr>
+<td>${c.client_name}</td>
+<td>${c.company}</td>
+<td>${c.phone}</td>
+<td>${c.email}</td>
+</tr>`
+})
+
+document.getElementById("clientTable").innerHTML=html
+
+}
+
+/* TRANSPORTER */
 
 async function addTransporter(){
 
-let name=document.getElementById("transporterName").value.trim()
+let name=document.getElementById("transporterName").value.trim().toUpperCase()
 
-let {data}=await supabaseClient.from("transporters").select("*").eq("transporter_name",name)
+let {data}=await supabaseClient.from("transporters").select("*")
 
-if(data.length>0){
-alert("Transporter already exists")
+let exists=data.some(t=>t.transporter_name.toUpperCase()===name)
+
+if(exists){
+alert("Transporter exists")
 return
 }
 
@@ -351,9 +353,11 @@ async function addTruck(){
 let owner=document.getElementById("ownerSelect").value
 let truckNumber=document.getElementById("truckNumber").value.toUpperCase()
 
-let {data}=await supabaseClient.from("trucks").select("*").eq("truck_number",truckNumber)
+let {data}=await supabaseClient.from("trucks").select("*")
 
-if(data.length>0){
+let exists=data.some(t=>t.truck_number.toUpperCase()===truckNumber)
+
+if(exists){
 alert("Truck already exists")
 return
 }

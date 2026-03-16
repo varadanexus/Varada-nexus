@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Correct Supabase CDN --><script src="https://unpkg.com/@supabase/supabase-js@2"></script><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Correct browser build --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><style>
 
 .login-container{
 display:flex;
@@ -61,8 +61,6 @@ const supabaseClient = supabase.createClient(
 
 async function login(){
 
-alert("Login clicked")
-
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 
@@ -76,8 +74,6 @@ alert(error.message)
 return
 }
 
-/* FIND USER */
-
 const { data: userRecord, error: userError } = await supabaseClient
 .from("users")
 .select("id")
@@ -85,11 +81,9 @@ const { data: userRecord, error: userError } = await supabaseClient
 .single()
 
 if(userError){
-alert("User not registered")
+alert("User not registered in system")
 return
 }
-
-/* GET ROLE */
 
 const { data: roleData } = await supabaseClient
 .from("user_roles")

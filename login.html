@@ -54,7 +54,9 @@ cursor:pointer;
 &copy; 2025 Varada Nexus Private Limited
 </footer><script>
 
-const supabaseClient = window.supabase.createClient(
+const { createClient } = supabase
+
+const supabaseClient = createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -64,9 +66,9 @@ async function login(){
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 
-const {data,error}=await supabaseClient.auth.signInWithPassword({
-email:email,
-password:password
+const { data, error } = await supabaseClient.auth.signInWithPassword({
+email: email,
+password: password
 })
 
 if(error){
@@ -76,10 +78,10 @@ return
 
 /* FIND USER */
 
-const {data:userRecord,error:userError}=await supabaseClient
+const { data: userRecord, error: userError } = await supabaseClient
 .from("users")
 .select("id")
-.eq("auth_id",data.user.id)
+.eq("auth_id", data.user.id)
 .single()
 
 if(userError){
@@ -89,13 +91,13 @@ return
 
 /* GET ROLE */
 
-const {data:roleData}=await supabaseClient
+const { data: roleData } = await supabaseClient
 .from("user_roles")
 .select(`roles(role_name)`)
-.eq("user_id",userRecord.id)
+.eq("user_id", userRecord.id)
 .single()
 
-localStorage.setItem("role",roleData.roles.role_name)
+localStorage.setItem("role", roleData.roles.role_name)
 
 window.location="dashboard.html"
 

@@ -1,4 +1,12 @@
-<!DOCTYPE html><html><head><title>Transporter Ledger</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Transporter Ledger</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -13,7 +21,7 @@ margin-left:220px;
 padding:40px;
 }
 
-/* Fix page title only */
+/* Page title */
 
 .main h2{
 color:#1f3c88;
@@ -50,21 +58,48 @@ font-weight:bold;
 font-weight:bold;
 }
 
-</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script><div class="main"><h2>Transporter Ledger</h2><table><thead>
+</script>
+
+
+<div class="main">
+
+<h2>Transporter Ledger</h2>
+
+<table>
+
+<thead>
 <tr>
 <th>Date</th>
 <th>Description</th>
 <th>Credit (Earnings)</th>
-<th>Debit (Payment)</th>
+<th>Debit (Payment / Expense)</th>
 <th>Balance</th>
 </tr>
-</thead><tbody id="ledgerTable"></tbody></table></div><script>
+</thead>
+
+<tbody id="ledgerTable"></tbody>
+
+</table>
+
+</div>
+
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -87,14 +122,14 @@ let authId=data.session.user.id
 
 /* FIND TRANSPORTER */
 
-const {data:transporter,error:transporterError}=await supabaseClient
+const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
-if(transporterError){
-console.log(transporterError)
+if(!transporter){
+alert("Transporter not found")
 return
 }
 
@@ -104,27 +139,43 @@ let transporterName=transporter.transporter_name
 
 /* GET TRIPS */
 
-const {data:trips,error:tripError}=await supabaseClient
+const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 .order("trip_date",{ascending:true})
 
-if(tripError){
-console.log(tripError)
-}
-
 
 /* GET PAYMENTS */
 
-const {data:payments,error:paymentError}=await supabaseClient
+const {data:payments}=await supabaseClient
 .from("transporter_payments")
 .select("*")
 .eq("transporter_name",transporterName)
 .order("payment_date",{ascending:true})
 
-if(paymentError){
-console.log(paymentError)
+
+/* GET EXPENSES */
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+
+/* BUILD EXPENSE MAP */
+
+let expenseMap={}
+
+if(expenses){
+
+expenses.forEach(e=>{
+
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+
+expenseMap[e.trip_id]+=Number(e.amount || 0)
+
+})
+
 }
 
 
@@ -133,34 +184,65 @@ console.log(paymentError)
 let ledger=[]
 
 
-/* ADD TRIPS (EARNINGS) */
+/* TRIP EARNINGS */
+
+if(trips){
 
 trips.forEach(t=>{
 
-let earnings=((t.weight_kg || 0)/1000) * (t.transporter_rate || 0)
+let freight=((t.weight_kg || 0)/1000) * (t.transporter_rate || 0)
+
+let tripExpenses = expenseMap[t.id] || 0
+
+let netEarnings = freight - tripExpenses
 
 ledger.push({
+
 date:t.trip_date,
 description:"Trip "+(t.trip_no || ""),
-credit:earnings,
+credit:netEarnings,
 debit:0
-})
 
 })
 
+/* ADD EXPENSE ENTRY */
 
-/* ADD PAYMENTS */
+if(tripExpenses>0){
+
+ledger.push({
+
+date:t.trip_date,
+description:"Trip Expense",
+credit:0,
+debit:tripExpenses
+
+})
+
+}
+
+})
+
+}
+
+
+/* PAYMENTS */
+
+if(payments){
 
 payments.forEach(p=>{
 
 ledger.push({
+
 date:p.payment_date,
 description:"Payment "+(p.transaction_id || ""),
 credit:0,
 debit:Number(p.amount || 0)
+
 })
 
 })
+
+}
 
 
 /* SORT BY DATE */
@@ -168,24 +250,32 @@ debit:Number(p.amount || 0)
 ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
 
-/* CALCULATE BALANCE */
+/* CALCULATE RUNNING BALANCE */
 
 let balance=0
 let html=""
 
 ledger.forEach(l=>{
 
-balance+=l.credit
-balance-=l.debit
+balance += l.credit
+balance -= l.debit
 
 html+=`
+
 <tr>
+
 <td>${l.date || ""}</td>
+
 <td>${l.description}</td>
+
 <td class="credit">${l.credit ? "₹ "+l.credit.toFixed(2) : ""}</td>
+
 <td class="debit">${l.debit ? "₹ "+l.debit.toFixed(2) : ""}</td>
+
 <td class="balance">₹ ${balance.toFixed(2)}</td>
+
 </tr>
+
 `
 
 })
@@ -194,5 +284,7 @@ document.getElementById("ledgerTable").innerHTML=html
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

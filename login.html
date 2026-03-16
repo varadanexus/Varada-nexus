@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Correct Supabase UMD Library --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Supabase Library --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
 
 .login-container{
 display:flex;
@@ -63,17 +63,19 @@ async function login(){
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 
-const {data,error}=await supabaseClient.auth.signInWithPassword({
-email:email,
-password:password
+const { data, error } = await supabaseClient.auth.signInWithPassword({
+email: email,
+password: password
 })
 
 if(error){
-
 alert(error.message)
 return
-
 }
+
+/* SAVE LOGIN SESSION */
+
+localStorage.setItem("supabaseSession", JSON.stringify(data.session))
 
 alert("Login Successful")
 

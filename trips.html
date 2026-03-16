@@ -212,6 +212,26 @@ document.getElementById("searchCommodity").innerHTML=search
 
 }
 
+/* GENERATE TRIP NUMBER */
+
+async function generateTripNo(){
+
+const now=new Date()
+
+let year=now.getFullYear().toString().slice(-2)
+let month=("0"+(now.getMonth()+1)).slice(-2)
+
+const {data}=await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no","TR"+year+month+"%")
+
+let seq=data.length+1
+
+return "TR"+year+month+seq.toString().padStart(4,"0")
+
+}
+
 /* SAVE TRIP */
 
 async function saveTrip(){
@@ -228,8 +248,11 @@ let route=routes.find(r=>r.id==routeId)?.route_code
 let truck=trucks.find(t=>t.id==truckId)?.truck_number
 let commodity=commodities.find(c=>c.id==commodityId)?.name
 
+let tripNo=await generateTripNo()
+
 await supabaseClient.from("trips").insert({
 
+trip_no:tripNo,
 route:route,
 truck:truck,
 commodity:commodity,
@@ -353,8 +376,6 @@ page=1
 renderTrips()
 
 }
-
-/* CLEAR SEARCH */
 
 function clearSearch(){
 

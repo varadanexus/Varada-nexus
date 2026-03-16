@@ -1,320 +1,39 @@
-<!DOCTYPE html>
-<html>
-<head>
+<!DOCTYPE html><html><head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script></head><body><script>
 
-<title>Master Data</title>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+)
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+checkLogin()
 
-<style>
+async function checkLogin(){
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
+const {data}=await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
 }
 
-.main{
-margin-left:220px;
-padding:30px;
 }
 
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
+</script><div id="sidebar-container"></div><script>
 
-input,select{
-padding:8px;
-margin:5px;
-width:220px;
-}
-
-button{
-padding:6px 12px;
-border:none;
-cursor:pointer;
-margin:2px;
-}
-
-.saveBtn{
-background:#1f3c88;
-color:white;
-}
-
-.editBtn{
-background:#5bc0de;
-color:white;
-}
-
-.deleteBtn{
-background:#d9534f;
-color:white;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-th,td{
-padding:8px;
-border-bottom:1px solid #ddd;
-text-align:left;
-}
-
-.pagination{
-margin-top:10px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<!-- LOGIN SECURITY -->
-<script>
-if(!localStorage.getItem("role")){
-window.location="login.html"
-}
-</script>
-
-<div id="sidebar-container"></div>
-
-<script>
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script>
 
-<div class="main">
+</script><div style="margin-left:220px;padding:30px"><h1>Master Data</h1><p>Manage commodities, routes, clients, transporters and trucks here.</p></div><script>
 
-<h2>Master Data Management</h2>
+async function logout(){
 
-<!-- COMMODITY -->
+await supabaseClient.auth.signOut()
 
-<div class="card">
+window.location.href="login.html"
 
-<h3>Add Commodity</h3>
+}
 
-<input id="commodityName" placeholder="Commodity Name">
-
-<button class="saveBtn" onclick="addCommodity()">Save</button>
-
-<input id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable',this.value)">
-
-<table>
-
-<thead>
-<tr>
-<th>Commodity</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="commodityTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage('commodity')">Prev</button>
-<span id="commodityPage"></span>
-<button onclick="nextPage('commodity')">Next</button>
-
-</div>
-
-</div>
-
-<!-- ROUTE -->
-
-<div class="card">
-
-<h3>Add Route</h3>
-
-<input id="origin" placeholder="Origin">
-<input id="destination" placeholder="Destination">
-
-<button class="saveBtn" onclick="addRoute()">Save</button>
-
-<input placeholder="Search Route" onkeyup="searchTable('routeTable',this.value)">
-
-<table>
-
-<thead>
-<tr>
-<th>Code</th>
-<th>Origin</th>
-<th>Destination</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="routeTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage('route')">Prev</button>
-<span id="routePage"></span>
-<button onclick="nextPage('route')">Next</button>
-
-</div>
-
-</div>
-
-<!-- CLIENT -->
-
-<div class="card">
-
-<h3>Add Client</h3>
-
-<input id="clientName" placeholder="Client Name">
-<input id="clientCompany" placeholder="Company">
-<input id="clientPhone" placeholder="Phone">
-<input id="clientEmail" placeholder="Email">
-
-<button class="saveBtn" onclick="addClient()">Save</button>
-
-<input placeholder="Search Client" onkeyup="searchTable('clientTable',this.value)">
-
-<table>
-
-<thead>
-<tr>
-<th>Name</th>
-<th>Company</th>
-<th>Phone</th>
-<th>Email</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="clientTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage('client')">Prev</button>
-<span id="clientPage"></span>
-<button onclick="nextPage('client')">Next</button>
-
-</div>
-
-</div>
-
-<!-- TRANSPORTER -->
-
-<div class="card">
-
-<h3>Add Transporter</h3>
-
-<input id="transporterName" placeholder="Owner Name">
-<input id="transporterCompany" placeholder="Company">
-<input id="transporterPhone" placeholder="Phone">
-
-<button class="saveBtn" onclick="addTransporter()">Save</button>
-
-<input placeholder="Search Transporter" onkeyup="searchTable('transporterTable',this.value)">
-
-<table>
-
-<thead>
-<tr>
-<th>Name</th>
-<th>Company</th>
-<th>Phone</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="transporterTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage('transporter')">Prev</button>
-<span id="transporterPage"></span>
-<button onclick="nextPage('transporter')">Next</button>
-
-</div>
-
-</div>
-
-<!-- TRUCK -->
-
-<div class="card">
-
-<h3>Add Truck</h3>
-
-<select id="ownerSelect">
-<option value="">Select Owner</option>
-</select>
-
-<input id="truckNumber" placeholder="Truck Number">
-<input id="driverName" placeholder="Driver Name">
-<input id="driverPhone" placeholder="Driver Phone">
-
-<button class="saveBtn" onclick="addTruck()">Save</button>
-
-<input placeholder="Search Truck" onkeyup="searchTable('truckTable',this.value)">
-
-<table>
-
-<thead>
-<tr>
-<th>Truck ID</th>
-<th>Truck</th>
-<th>Owner</th>
-<th>Driver</th>
-<th>Phone</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="truckTable"></tbody>
-
-</table>
-
-<div class="pagination">
-
-<button onclick="prevPage('truck')">Prev</button>
-<span id="truckPage"></span>
-<button onclick="nextPage('truck')">Next</button>
-
-</div>
-
-</div>
-
-</div>
-
-<script>
-
-/* YOUR ENTIRE ORIGINAL SCRIPT REMAINS EXACTLY SAME */
-
-const supabaseClient=supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
-)
-
-let pageSize=10
-let pages={commodity:1,route:1,client:1,transporter:1,truck:1}
-
-window.onload=init
-
-/* rest of your script continues exactly the same */
-
-</script>
-
-</body>
+</script></body>
 </html>

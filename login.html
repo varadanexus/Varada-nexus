@@ -1,13 +1,70 @@
 <!DOCTYPE html><html>
 <head>
-<title>Login Test</title>
-</head><body><h2>Login Test</h2><input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
+<title>Varada Nexus Login</title><link rel="stylesheet" href="style.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
 
-<script>
+.login-container{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-top:100px;
+}
 
-function login(){
-alert("Button works");
+.card{
+background:white;
+padding:30px;
+border-radius:8px;
+box-shadow:0 2px 10px rgba(0,0,0,0.15);
+width:320px;
+}
+
+.card input{
+width:100%;
+padding:10px;
+margin-bottom:12px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+.card button{
+width:100%;
+padding:10px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+</style></head><body><div class="login-container"><div class="card"><h2>Varada Nexus Login</h2><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
+
+</div></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+async function login(){
+
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+
+const {data,error}=await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
+})
+
+if(error){
+
+alert(error.message)
+return
+
+}
+
+alert("Login Successful")
+
+window.location="dashboard.html"
+
 }
 
 </script></body>

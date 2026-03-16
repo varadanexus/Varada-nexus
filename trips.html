@@ -1,6 +1,4 @@
-<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
-
-body{
+<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
@@ -103,15 +101,17 @@ document.getElementById("sidebar-container").innerHTML = data
 <select id="commodity"></select>
 
 <input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
+
 <option value="">Status</option>
 <option>LOADED</option>
 <option>Completed</option>
 <option>Pending</option>
-</select></div><br><button onclick="saveTrip()">Save Trip</button>
+</select></div><br><button onclick="saveTrip()">Save Trip</button></div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No"><select class="searchBox" id="searchRoute"></select>
+<select class="searchBox" id="searchTruck"></select>
+<select class="searchBox" id="searchCommodity"></select>
 
-</div><div class="card"><input class="searchBox" id="searchRoute" placeholder="Search Route">
-<input class="searchBox" id="searchTruck" placeholder="Search Truck">
-<input class="searchBox" id="searchCommodity" placeholder="Search Commodity"><button onclick="searchTrips()">Search</button>
+<button onclick="searchTrips()">Search</button>
+<button onclick="clearSearch()">Clear</button>
 
 </div><table><thead>
 <tr>
@@ -125,14 +125,11 @@ document.getElementById("sidebar-container").innerHTML = data
 <th>Action</th>
 </tr>
 </thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-
-</div><script>
-
-let routes=[]
+<button onclick="nextPage()">Next</button></div><script>let routes=[]
 let trucks=[]
 let commodities=[]
 let trips=[]
+let originalTrips=[]
 
 let page=1
 let pageSize=10
@@ -157,12 +154,15 @@ const {data}=await supabaseClient.from("routes").select("*")
 routes=data
 
 let html='<option value="">Select Route</option>'
+let search='<option value="">All Routes</option>'
 
 data.forEach(r=>{
-html+=`<option value="${r.id}">${r.route_code}</option>`
+html+="<option value="${r.id}">${r.route_code}</option>"
+search+="<option value="${r.route_code}">${r.route_code}</option>"
 })
 
 document.getElementById("route").innerHTML=html
+document.getElementById("searchRoute").innerHTML=search
 
 }
 
@@ -175,12 +175,15 @@ const {data}=await supabaseClient.from("trucks").select("*")
 trucks=data
 
 let html='<option value="">Select Truck</option>'
+let search='<option value="">All Trucks</option>'
 
 data.forEach(t=>{
-html+=`<option value="${t.id}">${t.truck_number}</option>`
+html+="<option value="${t.id}">${t.truck_number}</option>"
+search+="<option value="${t.truck_number}">${t.truck_number}</option>"
 })
 
 document.getElementById("truck").innerHTML=html
+document.getElementById("searchTruck").innerHTML=search
 
 }
 
@@ -193,12 +196,15 @@ const {data}=await supabaseClient.from("commodities").select("*")
 commodities=data
 
 let html='<option value="">Select Commodity</option>'
+let search='<option value="">All Commodities</option>'
 
 data.forEach(c=>{
-html+=`<option value="${c.id}">${c.name}</option>`
+html+="<option value="${c.id}">${c.name}</option>"
+search+="<option value="${c.name}">${c.name}</option>"
 })
 
 document.getElementById("commodity").innerHTML=html
+document.getElementById("searchCommodity").innerHTML=search
 
 }
 
@@ -243,6 +249,7 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 trips=data
+originalTrips=data
 
 renderTrips()
 
@@ -262,6 +269,7 @@ let html=""
 pageTrips.forEach(t=>{
 
 html+=`
+
 <tr>
 <td>${t.trip_no || ""}</td>
 <td>${t.route}</td>
@@ -275,9 +283,7 @@ html+=`
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
 </td>
 </tr>
-`
-
-})
+`})
 
 document.getElementById("tripTable").innerHTML=html
 
@@ -294,7 +300,8 @@ const {data}=await supabaseClient
 .single()
 
 let weight=prompt("Edit Weight",data.weight_kg)
-let status=prompt("Edit Status",data.status)
+
+let status=prompt("Enter Status (LOADED / Completed / Pending)",data.status)
 
 await supabaseClient
 .from("trips")
@@ -324,20 +331,33 @@ loadTrips()
 
 function searchTrips(){
 
+let tripNo=document.getElementById("searchTripNo").value.toLowerCase()
 let route=document.getElementById("searchRoute").value.toLowerCase()
 let truck=document.getElementById("searchTruck").value.toLowerCase()
 let commodity=document.getElementById("searchCommodity").value.toLowerCase()
 
-let filtered=trips.filter(t=>
+trips=originalTrips.filter(t=>
 
-(!route || t.route.toLowerCase().includes(route)) &&
-(!truck || t.truck.toLowerCase().includes(truck)) &&
-(!commodity || t.commodity.toLowerCase().includes(commodity))
+(!tripNo || (t.trip_no||"").toLowerCase().includes(tripNo)) &&
+(!route || (t.route||"").toLowerCase().includes(route)) &&
+(!truck || (t.truck||"").toLowerCase().includes(truck)) &&
+(!commodity || (t.commodity||"").toLowerCase().includes(commodity))
 
 )
 
-trips=filtered
 page=1
+renderTrips()
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchTripNo").value=""
+document.getElementById("searchRoute").value=""
+document.getElementById("searchTruck").value=""
+document.getElementById("searchCommodity").value=""
+
+trips=originalTrips
 renderTrips()
 
 }
@@ -373,4 +393,5 @@ window.location.href="login.html"
 }
 
 </script></body>
+
 </html>

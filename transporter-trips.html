@@ -14,9 +14,8 @@ h2{
 color:#1f3c88;
 }
 
-.filterBox{
-margin-top:20px;
-margin-bottom:10px;
+.filters{
+margin-bottom:15px;
 }
 
 select{
@@ -31,13 +30,14 @@ color:white;
 border:none;
 border-radius:4px;
 cursor:pointer;
+margin-right:6px;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
 background:white;
-margin-top:20px;
+margin-top:15px;
 }
 
 th,td{
@@ -50,7 +50,11 @@ th{
 background:#eee;
 }
 
-</style></head><body><div class="main"><h2>My Trips</h2><div class="filterBox"><select id="routeFilter"></select>
+.pagination{
+margin-top:10px;
+}
+
+</style></head><body><div class="main"><h2>My Trips</h2><div class="filters"><select id="routeFilter"></select>
 <select id="truckFilter"></select>
 <select id="commodityFilter"></select>
 
@@ -59,6 +63,8 @@ background:#eee;
 
 <button onclick="downloadPDF()">Download PDF</button>
 
+<button onclick="logout()">Logout</button>
+
 </div><table><thead>
 <tr>
 <th>Trip No</th>
@@ -66,14 +72,15 @@ background:#eee;
 <th>Truck</th>
 <th>Commodity</th>
 <th>Weight (KG)</th>
+<th>Cost / MT</th>
 <th>Date</th>
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</thead><tbody id="tripTable"></tbody></table><div class="pagination">
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
-
-</div><script>
+</div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -81,7 +88,8 @@ const supabaseClient = supabase.createClient(
 )
 
 let allTrips=[]
-let trips=[]
+let filteredTrips=[]
+
 let page=1
 let pageSize=10
 
@@ -118,11 +126,10 @@ const {data}=await supabaseClient
 
 
 allTrips=data
-trips=data
+filteredTrips=data
 
 
 buildFilters()
-
 renderTrips()
 
 }
@@ -157,7 +164,7 @@ let route=document.getElementById("routeFilter").value
 let truck=document.getElementById("truckFilter").value
 let commodity=document.getElementById("commodityFilter").value
 
-trips=allTrips.filter(t=>
+filteredTrips=allTrips.filter(t=>
 
 (!route || t.route==route) &&
 (!truck || t.truck==truck) &&
@@ -166,6 +173,7 @@ trips=allTrips.filter(t=>
 )
 
 page=1
+
 renderTrips()
 
 }
@@ -174,11 +182,11 @@ renderTrips()
 
 function clearFilters(){
 
+filteredTrips=allTrips
+
 document.getElementById("routeFilter").value=""
 document.getElementById("truckFilter").value=""
 document.getElementById("commodityFilter").value=""
-
-trips=allTrips
 
 renderTrips()
 
@@ -191,23 +199,26 @@ function renderTrips(){
 let start=(page-1)*pageSize
 let end=start+pageSize
 
-let pageTrips=trips.slice(start,end)
+let pageTrips=filteredTrips.slice(start,end)
 
 let html=""
 
 pageTrips.forEach(t=>{
 
-let earnings=((t.weight_kg/1000) * (t.transporter_rate || 0)).toFixed(2)
+let rate=t.transporter_rate || 0
+
+let earnings=((t.weight_kg/1000) * rate).toFixed(2)
 
 html+=`
 <tr>
-<td>${t.trip_no}</td>
-<td>${t.route}</td>
-<td>${t.truck}</td>
-<td>${t.commodity}</td>
-<td>${t.weight_kg}</td>
-<td>${t.trip_date}</td>
-<td>${t.status}</td>
+<td>${t.trip_no || ""}</td>
+<td>${t.route || ""}</td>
+<td>${t.truck || ""}</td>
+<td>${t.commodity || ""}</td>
+<td>${t.weight_kg || ""}</td>
+<td>${rate}</td>
+<td>${t.trip_date || ""}</td>
+<td>${t.status || ""}</td>
 <td>${earnings}</td>
 </tr>
 `
@@ -222,9 +233,11 @@ document.getElementById("tripTable").innerHTML=html
 
 function nextPage(){
 
-if(page*pageSize<trips.length){
+if(page*pageSize<filteredTrips.length){
+
 page++
 renderTrips()
+
 }
 
 }
@@ -234,8 +247,10 @@ renderTrips()
 function prevPage(){
 
 if(page>1){
+
 page--
 renderTrips()
+
 }
 
 }
@@ -250,9 +265,10 @@ let doc=new jsPDF()
 
 let rows=[]
 
-trips.forEach(t=>{
+filteredTrips.forEach(t=>{
 
-let earnings=((t.weight_kg/1000) * (t.transporter_rate || 0)).toFixed(2)
+let rate=t.transporter_rate || 0
+let earnings=((t.weight_kg/1000)*rate).toFixed(2)
 
 rows.push([
 t.trip_no,
@@ -260,6 +276,7 @@ t.route,
 t.truck,
 t.commodity,
 t.weight_kg,
+rate,
 t.trip_date,
 t.status,
 earnings
@@ -270,7 +287,7 @@ earnings
 doc.text("Transporter Trips",14,15)
 
 doc.autoTable({
-head:[["Trip No","Route","Truck","Commodity","Weight","Date","Status","Earnings"]],
+head:[["Trip No","Route","Truck","Commodity","Weight","Cost/MT","Date","Status","Earnings"]],
 body:rows,
 startY:20
 })
@@ -279,5 +296,14 @@ doc.save("transporter-trips.pdf")
 
 }
 
-</script></body>
-</html>
+
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+</script></body></html>

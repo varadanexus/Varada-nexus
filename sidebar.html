@@ -4,6 +4,8 @@
 <a href="master-data.html">Master Data</a>
 <a href="rate-entry.html">Rates</a>
 
+<hr><a href="#" onclick="logout()">Logout</a>
+
 </div><style>
 
 .sidebar{
@@ -34,4 +36,14 @@ font-size:14px;
 background:#162c66;
 }
 
-</style>
+</style><script>
+
+function logout(){
+
+localStorage.removeItem("supabaseSession")
+
+window.location.href="login.html"
+
+}
+
+</script>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <title>Varada Nexus Login</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -9,7 +10,7 @@
 
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial, Helvetica, sans-serif;
 background:#f4f6f9;
 display:flex;
 justify-content:center;
@@ -17,51 +18,99 @@ align-items:center;
 height:100vh;
 }
 
+/* Login Card */
+
 .login-card{
 background:white;
-padding:35px;
-border-radius:8px;
-box-shadow:0 3px 10px rgba(0,0,0,0.15);
-width:360px;
+padding:40px;
+border-radius:10px;
+box-shadow:0 6px 18px rgba(0,0,0,0.12);
+width:380px;
 text-align:center;
 }
+
+/* Title */
 
 h2{
 margin-bottom:25px;
 color:#1f3c88;
+font-weight:600;
 }
 
-select,input{
+/* Inputs */
+
+select,
+input{
 width:100%;
-padding:10px;
-margin-bottom:15px;
+padding:11px;
+margin-bottom:16px;
 border:1px solid #ccc;
-border-radius:4px;
+border-radius:5px;
 font-size:14px;
+transition:0.2s;
 }
+
+/* Input focus */
+
+select:focus,
+input:focus{
+border-color:#1f3c88;
+outline:none;
+box-shadow:0 0 4px rgba(31,60,136,0.3);
+}
+
+/* Password container */
+
+.password-wrapper{
+position:relative;
+}
+
+.password-wrapper input{
+margin-bottom:0;
+}
+
+/* Show password button */
+
+.show-password{
+position:absolute;
+right:10px;
+top:50%;
+transform:translateY(-50%);
+cursor:pointer;
+font-size:13px;
+color:#1f3c88;
+user-select:none;
+}
+
+/* Button */
 
 button{
 width:100%;
-padding:10px;
+padding:12px;
 background:#1f3c88;
 color:white;
 border:none;
-border-radius:4px;
+border-radius:5px;
 font-size:15px;
 cursor:pointer;
+margin-top:15px;
+transition:0.2s;
 }
 
 button:hover{
 background:#162f6d;
 }
 
+/* Error */
+
 .error{
 color:#d9534f;
-margin-top:12px;
+margin-top:14px;
 font-size:14px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -76,7 +125,14 @@ font-size:14px;
 </select>
 
 <input type="email" id="email" placeholder="Email">
+
+<div class="password-wrapper">
+
 <input type="password" id="password" placeholder="Password">
+
+<span class="show-password" onclick="togglePassword()">Show</span>
+
+</div>
 
 <button onclick="login()">Login</button>
 
@@ -92,6 +148,23 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* SHOW PASSWORD */
+
+function togglePassword(){
+
+let pass=document.getElementById("password")
+let btn=document.querySelector(".show-password")
+
+if(pass.type==="password"){
+pass.type="text"
+btn.innerText="Hide"
+}else{
+pass.type="password"
+btn.innerText="Show"
+}
+
+}
 
 async function login(){
 
@@ -117,7 +190,7 @@ return
 
 let authId=data.user.id
 
-/* GET ROLE FROM user_roles */
+/* GET ROLE */
 
 const {data:userRole,error:roleError}=await supabaseClient
 .from("user_roles")

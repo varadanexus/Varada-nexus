@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Correct browser build --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Supabase browser build --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
 
 .login-container{
 display:flex;
@@ -54,12 +54,14 @@ cursor:pointer;
 &copy; 2025 Varada Nexus Private Limited
 </footer><script>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+const supabaseUrl = "https://ticsgbtxfhhihamejiss.supabase.co"
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
 
 async function login(){
+
+alert("Login clicked")
 
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
@@ -74,16 +76,11 @@ alert(error.message)
 return
 }
 
-const { data: userRecord, error: userError } = await supabaseClient
+const { data: userRecord } = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id", data.user.id)
 .single()
-
-if(userError){
-alert("User not registered in system")
-return
-}
 
 const { data: roleData } = await supabaseClient
 .from("user_roles")
@@ -93,7 +90,7 @@ const { data: roleData } = await supabaseClient
 
 localStorage.setItem("role", roleData.roles.role_name)
 
-window.location="dashboard.html"
+window.location = "dashboard.html"
 
 }
 

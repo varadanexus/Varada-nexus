@@ -1,4 +1,13 @@
-<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Rate Entry</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -46,22 +55,75 @@ border-bottom:1px solid #ddd;
 text-align:left;
 }
 
-</style></head><body><!-- GLOBAL SIDEBAR --><div id="sidebar-container"></div><script>
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN SECURITY -->
+<script>
+if(!localStorage.getItem("role")){
+window.location="login.html"
+}
+</script>
+
+<!-- GLOBAL SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 fetch("sidebar.html")
 .then(res => res.text())
 .then(data => {
 document.getElementById("sidebar-container").innerHTML = data
 })
-</script><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><input id="commodity" placeholder="Commodity"><input id="route" placeholder="Route (Example RATN-NAND)"><input id="companyRate" placeholder="Company Rate / MT"><input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+</script>
 
-</div><div class="card"><h3>Existing Rates</h3><table><thead>
+<div class="main">
+
+<h2>Rate Entry</h2>
+
+<div class="card">
+
+<h3>Add Rate</h3>
+
+<input id="commodity" placeholder="Commodity">
+
+<input id="route" placeholder="Route (Example RATN-NAND)">
+
+<input id="companyRate" placeholder="Company Rate / MT">
+
+<input id="truckRate" placeholder="Transporter Rate / MT">
+
+<button onclick="addRate()">Save Rate</button>
+
+</div>
+
+<div class="card">
+
+<h3>Existing Rates</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Commodity</th>
 <th>Route</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
 </tr>
-</thead><tbody id="rateTable"></tbody></table></div></div><script>
+</thead>
+
+<tbody id="rateTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -126,5 +188,7 @@ loadRates()
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

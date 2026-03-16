@@ -42,7 +42,7 @@ border-radius:4px;
 }
 
 button{
-padding:10px 14px;
+padding:8px 12px;
 background:#1f3c88;
 color:white;
 border:none;
@@ -52,6 +52,15 @@ cursor:pointer;
 
 button:hover{
 background:#162c66;
+}
+
+.edit-btn{
+background:#f0ad4e;
+margin-right:5px;
+}
+
+.delete-btn{
+background:#d9534f;
 }
 
 table{
@@ -70,17 +79,11 @@ th{
 background:#eee;
 }
 
-.delete-btn{
-background:#d9534f;
-}
-
 </style>
 
 </head>
 
 <body>
-
-<!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
 
@@ -128,14 +131,10 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
-/* SUPABASE */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
-/* EDGE FUNCTION */
 
 const EDGE_FUNCTION =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user"
@@ -143,21 +142,20 @@ const EDGE_FUNCTION =
 
 /* LOAD ROLES */
 
+let rolesCache=[]
+
 async function loadRoles(){
 
-const {data,error} = await supabaseClient
+const {data,error}=await supabaseClient
 .from("roles")
 .select("*")
 
-if(error){
-console.log(error)
-return
-}
+rolesCache=data
 
 let html=""
 
-data.forEach(role=>{
-html+=`<option value="${role.id}">${role.role_name}</option>`
+data.forEach(r=>{
+html+=`<option value="${r.id}">${r.role_name}</option>`
 })
 
 document.getElementById("role").innerHTML=html
@@ -169,16 +167,12 @@ document.getElementById("role").innerHTML=html
 
 async function loadUsers(){
 
-const {data:users} = await supabaseClient
+const {data:users}=await supabaseClient
 .from("users")
 .select("*")
 
-const {data:userRoles} = await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
-.select("*")
-
-const {data:roles} = await supabaseClient
-.from("roles")
 .select("*")
 
 let html=""
@@ -187,13 +181,15 @@ users.forEach(user=>{
 
 let roleName="Not Assigned"
 
-let ur=userRoles.find(r=>r.user_id===user.id)
+let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
 
 if(ur){
 
-let role=roles.find(r=>r.id===ur.role_id)
+let role=rolesCache.find(r=>String(r.id)===String(ur.role_id))
 
-if(role) roleName=role.role_name
+if(role){
+roleName=role.role_name
+}
 
 }
 
@@ -202,7 +198,11 @@ html+=`
 <td>${user.email}</td>
 <td>${roleName}</td>
 <td>
+
+<button class="edit-btn" onclick="editRole('${user.id}')">Edit</button>
+
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
+
 </td>
 </tr>
 `
@@ -253,6 +253,24 @@ loadUsers()
 }
 
 
+/* EDIT ROLE */
+
+async function editRole(userId){
+
+let newRole=prompt("Enter Role ID")
+
+if(!newRole) return
+
+await supabaseClient
+.from("user_roles")
+.update({role_id:newRole})
+.eq("user_id",userId)
+
+loadUsers()
+
+}
+
+
 /* DELETE USER */
 
 async function deleteUser(id){
@@ -276,8 +294,7 @@ loadUsers()
 
 /* INIT */
 
-loadRoles()
-loadUsers()
+loadRoles().then(loadUsers)
 
 </script>
 

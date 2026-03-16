@@ -1,6 +1,4 @@
-<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
-
-body{margin:0;font-family:Arial;background:#f4f6f9;}
+<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{padding:40px;}
 h2{color:#1f3c88;}
 .filters{margin-bottom:15px;}
@@ -57,6 +55,7 @@ font-weight:bold;
 <th>Commodity</th>
 <th>Weight (KG)</th>
 <th>Cost / MT</th>
+<th>Expenses</th>
 <th>Date</th>
 <th>Status</th>
 <th>Earnings</th>
@@ -64,9 +63,7 @@ font-weight:bold;
 </thead><tbody id="tripTable"></tbody></table><div class="pagination">
 <button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
-</div></div><script>
-
-const supabaseClient = supabase.createClient(
+</div></div><script>const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -76,6 +73,8 @@ let filteredTrips=[]
 
 let page=1
 let pageSize=10
+
+let expensesMap={}
 
 init()
 
@@ -100,6 +99,17 @@ if(!transporter){
 document.getElementById("message").innerText="Transporter record not found."
 return
 }
+
+/* LOAD EXPENSES */
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+expenses.forEach(e=>{
+if(!expensesMap[e.trip_id]) expensesMap[e.trip_id]=0
+expensesMap[e.trip_id]+=Number(e.amount || 0)
+})
 
 /* TRY transporter_id */
 
@@ -142,9 +152,9 @@ let routeHTML='<option value="">All Routes</option>'
 let truckHTML='<option value="">All Trucks</option>'
 let commodityHTML='<option value="">All Commodities</option>'
 
-routes.forEach(r=>routeHTML+=`<option>${r}</option>`)
-trucks.forEach(t=>truckHTML+=`<option>${t}</option>`)
-commodities.forEach(c=>commodityHTML+=`<option>${c}</option>`)
+routes.forEach(r=>routeHTML+="<option>${r}</option>")
+trucks.forEach(t=>truckHTML+="<option>${t}</option>")
+commodities.forEach(c=>commodityHTML+="<option>${c}</option>")
 
 document.getElementById("routeFilter").innerHTML=routeHTML
 document.getElementById("truckFilter").innerHTML=truckHTML
@@ -193,9 +203,14 @@ let html=""
 pageTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
-let earnings=((t.weight_kg/1000)*rate).toFixed(2)
+let freight=((t.weight_kg/1000)*rate)
+
+let expenseTotal=expensesMap[t.id] || 0
+
+let earnings=(freight-expenseTotal).toFixed(2)
 
 html+=`
+
 <tr>
 <td>${t.trip_no || ""}</td>
 <td>${t.route || ""}</td>
@@ -203,14 +218,13 @@ html+=`
 <td>${t.commodity || ""}</td>
 <td>${t.weight_kg || ""}</td>
 <td>${rate}</td>
+<td>${expenseTotal}</td>
 <td>${t.trip_date || ""}</td>
 <td>${t.status || ""}</td>
 <td>${earnings}</td>
 </tr>
 `
-})
-
-document.getElementById("tripTable").innerHTML=html
+})document.getElementById("tripTable").innerHTML=html
 
 }
 
@@ -238,7 +252,9 @@ let rows=[]
 filteredTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
-let earnings=((t.weight_kg/1000)*rate).toFixed(2)
+let freight=((t.weight_kg/1000)*rate)
+let expenseTotal=expensesMap[t.id] || 0
+let earnings=(freight-expenseTotal).toFixed(2)
 
 rows.push([
 t.trip_no,
@@ -247,6 +263,7 @@ t.truck,
 t.commodity,
 t.weight_kg,
 rate,
+expenseTotal,
 t.trip_date,
 t.status,
 earnings
@@ -257,7 +274,7 @@ earnings
 doc.text("Transporter Trips",14,15)
 
 doc.autoTable({
-head:[["Trip No","Route","Truck","Commodity","Weight","Cost/MT","Date","Status","Earnings"]],
+head:[["Trip No","Route","Truck","Commodity","Weight","Cost/MT","Expenses","Date","Status","Earnings"]],
 body:rows,
 startY:20
 })

@@ -47,7 +47,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* CHECK IF USER ALREADY LOGGED IN */
+/* CHECK SESSION */
 
 checkSession()
 
@@ -61,7 +61,7 @@ window.location.href="dashboard.html"
 
 }
 
-/* LOGIN FUNCTION */
+/* LOGIN */
 
 async function login(){
 

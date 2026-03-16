@@ -11,6 +11,40 @@ margin-left:220px;
 padding:30px;
 }
 
+.card{
+background:white;
+padding:25px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.form-grid{
+display:grid;
+grid-template-columns: repeat(6,1fr);
+gap:12px;
+align-items:center;
+}
+
+.form-grid select,
+.form-grid input{
+padding:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:8px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+.editBtn{background:#5bc0de;}
+.deleteBtn{background:#d9534f;}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -24,6 +58,14 @@ border-bottom:1px solid #ddd;
 
 th{
 background:#eee;
+text-align:left;
+}
+
+.searchBox{
+padding:10px;
+width:220px;
+border:1px solid #ccc;
+border-radius:4px;
 }
 
 </style></head><body><script>
@@ -32,6 +74,8 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* LOGIN CHECK */
 
 checkLogin()
 
@@ -45,25 +89,144 @@ window.location.href="login.html"
 
 }
 
-</script><div id="sidebar-container"></div><script>
+</script><!-- Sidebar --><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
 })
 
-</script><div class="main"><h1>Trips</h1><table><thead>
-<tr>
-<th>Trip No</th>
+</script><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
+<select id="truck"></select>
+<select id="commodity"></select>
+
+<input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
+<option value="">Status</option>
+<option>LOADED</option>
+<option>Completed</option>
+<option>Pending</option>
+</select></div><br><button onclick="saveTrip()">Save Trip</button>
+
+</div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID"><button onclick="searchTrip()">Search</button>
+
+</div><table><thead><tr>
+<th>Trip ID</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
 <th>Weight</th>
-</tr>
-</thead><tbody id="tripTable"></tbody></table></div><script>
+<th>Company Rate</th>
+<th>Transporter Rate</th>
+<th>Date</th>
+<th>Status</th>
+<th>Action</th>
+</tr></thead><tbody id="tripTable"></tbody></table></div><script>
+
+let routes=[]
+let trucks=[]
+let commodities=[]
+let trips=[]
+
+init()
+
+async function init(){
+
+await loadRoutes()
+await loadTrucks()
+await loadCommodities()
+await loadTrips()
+
+}
+
+/* ROUTES */
+
+async function loadRoutes(){
+
+const {data}=await supabaseClient.from("routes").select("*")
+
+routes=data
+
+let html='<option value="">Select Route</option>'
+
+data.forEach(r=>{
+html+=`<option value="${r.id}">${r.route_code}</option>`
+})
+
+document.getElementById("route").innerHTML=html
+
+}
+
+/* TRUCKS */
+
+async function loadTrucks(){
+
+const {data}=await supabaseClient.from("trucks").select("*")
+
+trucks=data
+
+let html='<option value="">Select Truck</option>'
+
+data.forEach(t=>{
+html+=`<option value="${t.id}">${t.truck_number}</option>`
+})
+
+document.getElementById("truck").innerHTML=html
+
+}
+
+/* COMMODITIES */
+
+async function loadCommodities(){
+
+const {data}=await supabaseClient.from("commodities").select("*")
+
+commodities=data
+
+let html='<option value="">Select Commodity</option>'
+
+data.forEach(c=>{
+html+=`<option value="${c.id}">${c.name}</option>`
+})
+
+document.getElementById("commodity").innerHTML=html
+
+}
+
+/* SAVE TRIP */
+
+async function saveTrip(){
+
+let routeId=document.getElementById("route").value
+let truckId=document.getElementById("truck").value
+let commodityId=document.getElementById("commodity").value
+
+let weight=document.getElementById("weight").value
+let date=document.getElementById("tripDate").value
+let status=document.getElementById("status").value
+
+let route=routes.find(r=>r.id==routeId)?.route_code
+let truck=trucks.find(t=>t.id==truckId)?.truck_number
+let commodity=commodities.find(c=>c.id==commodityId)?.name
+
+await supabaseClient.from("trips").insert({
+
+route:route,
+truck:truck,
+commodity:commodity,
+weight_kg:weight,
+trip_date:date,
+status:status,
+company_rate:200,
+transporter_rate:170
+
+})
 
 loadTrips()
+
+}
+
+/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -72,23 +235,89 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
+trips=data
+
 let html=""
 
 data.forEach(t=>{
+
 html+=`
 <tr>
-<td>${t.trip_no}</td>
+<td>${t.trip_no || ""}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>
 <td>${t.commodity}</td>
 <td>${t.weight_kg}</td>
+<td>${t.company_rate}</td>
+<td>${t.transporter_rate}</td>
+<td>${t.trip_date || ""}</td>
+<td>${t.status || ""}</td>
+<td>
+<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+</td>
 </tr>
 `
+
 })
 
 document.getElementById("tripTable").innerHTML=html
 
 }
+
+/* DELETE */
+
+async function deleteTrip(id){
+
+if(!confirm("Delete Trip?")) return
+
+await supabaseClient.from("trips").delete().eq("id",id)
+
+loadTrips()
+
+}
+
+/* SEARCH */
+
+function searchTrip(){
+
+let text=document.getElementById("searchTrip").value.toLowerCase()
+
+let filtered=trips.filter(t=>t.trip_no?.toLowerCase().includes(text))
+
+renderFiltered(filtered)
+
+}
+
+function renderFiltered(data){
+
+let html=""
+
+data.forEach(t=>{
+
+html+=`
+<tr>
+<td>${t.trip_no || ""}</td>
+<td>${t.route}</td>
+<td>${t.truck}</td>
+<td>${t.commodity}</td>
+<td>${t.weight_kg}</td>
+<td>${t.company_rate}</td>
+<td>${t.transporter_rate}</td>
+<td>${t.trip_date || ""}</td>
+<td>${t.status || ""}</td>
+<td>
+<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("tripTable").innerHTML=html
+
+}
+
+/* LOGOUT */
 
 async function logout(){
 

@@ -19,7 +19,7 @@ margin-bottom:20px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-input{
+input,select{
 padding:8px;
 margin-right:10px;
 border:1px solid #ccc;
@@ -35,9 +35,8 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{
-background:#d9534f;
-}
+.editBtn{background:#5bc0de;}
+.deleteBtn{background:#d9534f;}
 
 table{
 width:100%;
@@ -59,7 +58,7 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 checkLogin()
@@ -75,58 +74,51 @@ window.location.href="login.html"
 }
 
 </script><div id="sidebar-container"></div><script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-
 </script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="routeCode" placeholder="Route Code (HYD-VJA)">
-<button onclick="addRoute()">Add Route</button><table>
-<thead>
+<button onclick="addRoute()">Add Route</button><table><thead>
 <tr>
 <th>Route</th>
 <th>Action</th>
 </tr>
-</thead>
-<tbody id="routeTable"></tbody>
-</table></div><!-- TRANSPORTERS --><div class="card"><h3>Transporters</h3><input id="transporterName" placeholder="Transporter Name">
-<button onclick="addTransporter()">Add Transporter</button><table>
-<thead>
+</thead><tbody id="routeTable"></tbody></table></div><!-- TRANSPORTERS --><div class="card"><h3>Transporters</h3><input id="transporterName" placeholder="Transporter Name">
+<input id="transporterContact" placeholder="Contact Number">
+<input id="transporterCompany" placeholder="Company Name">
+<input id="transporterPAN" placeholder="PAN Number"><button onclick="addTransporter()">Add Transporter</button>
+
+<table><thead>
 <tr>
-<th>Transporter</th>
+<th>Name</th>
+<th>Contact</th>
+<th>Company</th>
+<th>PAN</th>
 <th>Action</th>
 </tr>
-</thead>
-<tbody id="transporterTable"></tbody>
-</table></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number"><select id="truckTransporter"></select>
+</thead><tbody id="transporterTable"></tbody></table></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number"><select id="truckTransporter"></select>
 
 <button onclick="addTruck()">Add Truck</button>
 
-<table>
-<thead>
+<table><thead>
 <tr>
 <th>Truck</th>
 <th>Transporter</th>
 <th>Action</th>
 </tr>
-</thead>
-<tbody id="truckTable"></tbody>
-</table></div><!-- COMMODITIES --><div class="card"><h3>Commodities</h3><input id="commodityName" placeholder="Commodity Name">
-<button onclick="addCommodity()">Add Commodity</button><table>
-<thead>
+</thead><tbody id="truckTable"></tbody></table></div><!-- COMMODITIES --><div class="card"><h3>Commodities</h3><input id="commodityName" placeholder="Commodity Name">
+<button onclick="addCommodity()">Add Commodity</button><table><thead>
 <tr>
 <th>Commodity</th>
 <th>Action</th>
 </tr>
-</thead>
-<tbody id="commodityTable"></tbody>
-</table></div></div><script>
-
-/* LOAD MASTER DATA */
+</thead><tbody id="commodityTable"></tbody></table></div></div><script>
 
 init()
+
+let transporters=[]
 
 async function init(){
 
@@ -136,6 +128,7 @@ loadTrucks()
 loadCommodities()
 
 }
+
 
 /* ROUTES */
 
@@ -149,7 +142,10 @@ data.forEach(r=>{
 html+=`
 <tr>
 <td>${r.route_code}</td>
-<td><button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button></td>
+<td>
+<button class="editBtn" onclick="editRoute('${r.id}','${r.route_code}')">Edit</button>
+<button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button>
+</td>
 </tr>
 `
 })
@@ -170,6 +166,19 @@ loadRoutes()
 
 }
 
+async function editRoute(id,current){
+
+let newRoute=prompt("Edit Route",current)
+
+await supabaseClient
+.from("routes")
+.update({route_code:newRoute})
+.eq("id",id)
+
+loadRoutes()
+
+}
+
 async function deleteRoute(id){
 
 await supabaseClient.from("routes").delete().eq("id",id)
@@ -178,24 +187,36 @@ loadRoutes()
 
 }
 
+
+
 /* TRANSPORTERS */
 
 async function loadTransporters(){
 
 const {data}=await supabaseClient.from("transporters").select("*")
 
+transporters=data
+
 let html=""
 let dropdown='<option value="">Select Transporter</option>'
 
 data.forEach(t=>{
+
 html+=`
 <tr>
 <td>${t.transporter_name}</td>
-<td><button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button></td>
+<td>${t.contact_number || ""}</td>
+<td>${t.company_name || ""}</td>
+<td>${t.pan_number || ""}</td>
+<td>
+<button class="editBtn" onclick="editTransporter('${t.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
+</td>
 </tr>
 `
 
 dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
+
 })
 
 document.getElementById("transporterTable").innerHTML=html
@@ -206,10 +227,44 @@ document.getElementById("truckTransporter").innerHTML=dropdown
 async function addTransporter(){
 
 let name=document.getElementById("transporterName").value
+let contact=document.getElementById("transporterContact").value
+let company=document.getElementById("transporterCompany").value
+let pan=document.getElementById("transporterPAN").value
 
-await supabaseClient.from("transporters").insert({transporter_name:name})
+await supabaseClient.from("transporters").insert({
+
+transporter_name:name,
+contact_number:contact,
+company_name:company,
+pan_number:pan
+
+})
 
 document.getElementById("transporterName").value=""
+document.getElementById("transporterContact").value=""
+document.getElementById("transporterCompany").value=""
+document.getElementById("transporterPAN").value=""
+
+loadTransporters()
+
+}
+
+async function editTransporter(id){
+
+let name=prompt("Transporter Name")
+let contact=prompt("Contact Number")
+let company=prompt("Company Name")
+let pan=prompt("PAN Number")
+
+await supabaseClient
+.from("transporters")
+.update({
+transporter_name:name,
+contact_number:contact,
+company_name:company,
+pan_number:pan
+})
+.eq("id",id)
 
 loadTransporters()
 
@@ -223,6 +278,8 @@ loadTransporters()
 
 }
 
+
+
 /* TRUCKS */
 
 async function loadTrucks(){
@@ -233,11 +290,16 @@ let html=""
 
 data.forEach(t=>{
 
+let transporter=transporters.find(x=>x.id==t.transporter_id)
+
 html+=`
 <tr>
 <td>${t.truck_number}</td>
-<td>${t.transporter_id}</td>
-<td><button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button></td>
+<td>${transporter ? transporter.transporter_name : ""}</td>
+<td>
+<button class="editBtn" onclick="editTruck('${t.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button>
+</td>
 </tr>
 `
 
@@ -265,6 +327,19 @@ loadTrucks()
 
 }
 
+async function editTruck(id){
+
+let number=prompt("Truck Number")
+
+await supabaseClient
+.from("trucks")
+.update({truck_number:number})
+.eq("id",id)
+
+loadTrucks()
+
+}
+
 async function deleteTruck(id){
 
 await supabaseClient.from("trucks").delete().eq("id",id)
@@ -272,6 +347,8 @@ await supabaseClient.from("trucks").delete().eq("id",id)
 loadTrucks()
 
 }
+
+
 
 /* COMMODITIES */
 
@@ -285,7 +362,10 @@ data.forEach(c=>{
 html+=`
 <tr>
 <td>${c.name}</td>
-<td><button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button></td>
+<td>
+<button class="editBtn" onclick="editCommodity('${c.id}','${c.name}')">Edit</button>
+<button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button>
+</td>
 </tr>
 `
 })
@@ -306,6 +386,19 @@ loadCommodities()
 
 }
 
+async function editCommodity(id,current){
+
+let newName=prompt("Edit Commodity",current)
+
+await supabaseClient
+.from("commodities")
+.update({name:newName})
+.eq("id",id)
+
+loadCommodities()
+
+}
+
 async function deleteCommodity(id){
 
 await supabaseClient.from("commodities").delete().eq("id",id)
@@ -314,4 +407,5 @@ loadCommodities()
 
 }
 
-</script></body></html>
+</script></body>
+</html>

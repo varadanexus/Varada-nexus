@@ -63,9 +63,10 @@ text-align:left;
 
 .searchBox{
 padding:10px;
-width:220px;
+width:200px;
 border:1px solid #ccc;
 border-radius:4px;
+margin-right:10px;
 }
 
 </style></head><body><script>
@@ -108,25 +109,33 @@ document.getElementById("sidebar-container").innerHTML = data
 <option>Pending</option>
 </select></div><br><button onclick="saveTrip()">Save Trip</button>
 
-</div><div class="card"><input class="searchBox" id="searchTrip" placeholder="Search Trip ID"><button onclick="searchTrip()">Search</button>
+</div><div class="card"><input class="searchBox" id="searchRoute" placeholder="Search Route">
+<input class="searchBox" id="searchTruck" placeholder="Search Truck">
+<input class="searchBox" id="searchCommodity" placeholder="Search Commodity"><button onclick="searchTrips()">Search</button>
 
-</div><table><thead><tr>
-<th>Trip ID</th>
+</div><table><thead>
+<tr>
+<th>Trip No</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
 <th>Weight</th>
-<th>Company Rate</th>
-<th>Transporter Rate</th>
 <th>Date</th>
 <th>Status</th>
 <th>Action</th>
-</tr></thead><tbody id="tripTable"></tbody></table></div><script>
+</tr>
+</thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+
+</div><script>
 
 let routes=[]
 let trucks=[]
 let commodities=[]
 let trips=[]
+
+let page=1
+let pageSize=10
 
 init()
 
@@ -216,9 +225,7 @@ truck:truck,
 commodity:commodity,
 weight_kg:weight,
 trip_date:date,
-status:status,
-company_rate:200,
-transporter_rate:170
+status:status
 
 })
 
@@ -237,9 +244,22 @@ const {data}=await supabaseClient
 
 trips=data
 
+renderTrips()
+
+}
+
+/* RENDER */
+
+function renderTrips(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let pageTrips=trips.slice(start,end)
+
 let html=""
 
-data.forEach(t=>{
+pageTrips.forEach(t=>{
 
 html+=`
 <tr>
@@ -248,11 +268,10 @@ html+=`
 <td>${t.truck}</td>
 <td>${t.commodity}</td>
 <td>${t.weight_kg}</td>
-<td>${t.company_rate}</td>
-<td>${t.transporter_rate}</td>
 <td>${t.trip_date || ""}</td>
 <td>${t.status || ""}</td>
 <td>
+<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
 </td>
 </tr>
@@ -261,6 +280,31 @@ html+=`
 })
 
 document.getElementById("tripTable").innerHTML=html
+
+}
+
+/* EDIT */
+
+async function editTrip(id){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("id",id)
+.single()
+
+let weight=prompt("Edit Weight",data.weight_kg)
+let status=prompt("Edit Status",data.status)
+
+await supabaseClient
+.from("trips")
+.update({
+weight_kg:weight,
+status:status
+})
+.eq("id",id)
+
+loadTrips()
 
 }
 
@@ -278,42 +322,43 @@ loadTrips()
 
 /* SEARCH */
 
-function searchTrip(){
+function searchTrips(){
 
-let text=document.getElementById("searchTrip").value.toLowerCase()
+let route=document.getElementById("searchRoute").value.toLowerCase()
+let truck=document.getElementById("searchTruck").value.toLowerCase()
+let commodity=document.getElementById("searchCommodity").value.toLowerCase()
 
-let filtered=trips.filter(t=>t.trip_no?.toLowerCase().includes(text))
+let filtered=trips.filter(t=>
 
-renderFiltered(filtered)
+(!route || t.route.toLowerCase().includes(route)) &&
+(!truck || t.truck.toLowerCase().includes(truck)) &&
+(!commodity || t.commodity.toLowerCase().includes(commodity))
+
+)
+
+trips=filtered
+page=1
+renderTrips()
 
 }
 
-function renderFiltered(data){
+/* PAGINATION */
 
-let html=""
+function nextPage(){
 
-data.forEach(t=>{
+if(page*pageSize<trips.length){
+page++
+renderTrips()
+}
 
-html+=`
-<tr>
-<td>${t.trip_no || ""}</td>
-<td>${t.route}</td>
-<td>${t.truck}</td>
-<td>${t.commodity}</td>
-<td>${t.weight_kg}</td>
-<td>${t.company_rate}</td>
-<td>${t.transporter_rate}</td>
-<td>${t.trip_date || ""}</td>
-<td>${t.status || ""}</td>
-<td>
-<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
-</td>
-</tr>
-`
+}
 
-})
+function prevPage(){
 
-document.getElementById("tripTable").innerHTML=html
+if(page>1){
+page--
+renderTrips()
+}
 
 }
 

@@ -1,0 +1,112 @@
+<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+padding:40px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:20px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#eee;
+}
+
+</style></head><body><div class="main"><h2>My Trips</h2><table><thead><tr>
+<th>Trip No</th>
+<th>Route</th>
+<th>Truck</th>
+<th>Commodity</th>
+<th>Weight</th>
+<th>Date</th>
+<th>Status</th>
+<th>Earnings</th>
+</tr></thead><tbody id="tripTable"></tbody></table></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+init()
+
+async function init(){
+
+/* GET SESSION */
+
+const {data}=await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
+return
+}
+
+let authId=data.session.user.id
+
+/* FIND TRANSPORTER */
+
+const {data:transporter}=await supabaseClient
+.from("transporters")
+.select("*")
+.eq("auth_id",authId)
+.single()
+
+let transporterId=transporter.id
+
+/* GET TRIPS */
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+.order("created_at",{ascending:false})
+
+renderTrips(trips)
+
+}
+
+function renderTrips(trips){
+
+let html=""
+
+trips.forEach(t=>{
+
+html+=`
+<tr>
+<td>${t.trip_no || ""}</td>
+<td>${t.route || ""}</td>
+<td>${t.truck || ""}</td>
+<td>${t.commodity || ""}</td>
+<td>${t.weight_kg || ""}</td>
+<td>${t.trip_date || ""}</td>
+<td>${t.status || ""}</td>
+<td>${t.transporter_rate || 0}</td>
+</tr>
+`
+
+})
+
+document.getElementById("tripTable").innerHTML=html
+
+}
+
+</script></body></html>

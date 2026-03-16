@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Rates - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -16,14 +16,42 @@ background:white;
 padding:20px;
 border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
+margin-bottom:20px;
+}
+
+input{
+padding:8px;
+margin:5px;
+width:200px;
 }
 
 button{
-padding:10px 20px;
+padding:8px 15px;
 background:#1f3c88;
 color:white;
 border:none;
 cursor:pointer;
+}
+
+.editBtn{
+background:#5bc0de;
+}
+
+.deleteBtn{
+background:#d9534f;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
 }
 
 </style></head><body><script>
@@ -32,6 +60,8 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
 )
+
+/* LOGIN CHECK */
 
 checkLogin()
 
@@ -45,12 +75,186 @@ window.location.href="login.html"
 
 }
 
-</script><div id="sidebar-container"></div><script>
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script><div class="main"><h1>Rates</h1><div class="card"><p>Manage all transport pricing here.</p><br><button onclick="window.location='rate-entry.html'">
-Open Rate Management
-</button></div></div></body></html>
+
+</script><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><input id="commodity" placeholder="Commodity"><input id="route" placeholder="Route (Example HYD-VJA)"><input id="companyRate" placeholder="Company Rate / MT"><input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+
+</div><div class="card"><h3>Search Rates</h3><input id="searchCommodity" placeholder="Search Commodity"><input id="searchRoute" placeholder="Search Route"><button onclick="searchRates()">Search</button>
+<button onclick="clearSearch()">Clear</button>
+
+</div><div class="card"><h3>Existing Rates</h3><table><thead>
+<tr>
+<th>Commodity</th>
+<th>Route</th>
+<th>Company Rate</th>
+<th>Transporter Rate</th>
+<th>Action</th>
+</tr>
+</thead><tbody id="rateTable"></tbody></table><br><button onclick="downloadPDF()">Download PDF</button>
+
+</div></div><script>
+
+let rates=[]
+let allRates=[]
+
+loadRates()
+
+async function loadRates(){
+
+let {data,error}=await supabaseClient
+.from("rates")
+.select("*")
+.order("created_at",{ascending:false})
+
+rates=data
+allRates=data
+
+renderRates()
+
+}
+
+function renderRates(){
+
+let html=""
+
+rates.forEach(r=>{
+html+=`
+<tr>
+<td>${r.commodity}</td>
+<td>${r.route}</td>
+<td>${r.your_rate_per_mt}</td>
+<td>${r.truck_rate_per_mt}</td>
+<td>
+<button class="editBtn" onclick="editRate('${r.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteRate('${r.id}')">Delete</button>
+</td>
+</tr>`
+})
+
+document.getElementById("rateTable").innerHTML=html
+
+}
+
+async function addRate(){
+
+let commodity=document.getElementById("commodity").value
+let route=document.getElementById("route").value
+let companyRate=document.getElementById("companyRate").value
+let truckRate=document.getElementById("truckRate").value
+
+await supabaseClient
+.from("rates")
+.insert([{
+commodity:commodity,
+route:route,
+your_rate_per_mt:Number(companyRate),
+truck_rate_per_mt:Number(truckRate)
+}])
+
+document.getElementById("commodity").value=""
+document.getElementById("route").value=""
+document.getElementById("companyRate").value=""
+document.getElementById("truckRate").value=""
+
+loadRates()
+
+}
+
+async function editRate(id){
+
+const {data}=await supabaseClient
+.from("rates")
+.select("*")
+.eq("id",id)
+.single()
+
+let companyRate=prompt("Edit Company Rate",data.your_rate_per_mt)
+let truckRate=prompt("Edit Truck Rate",data.truck_rate_per_mt)
+
+await supabaseClient
+.from("rates")
+.update({
+your_rate_per_mt:Number(companyRate),
+truck_rate_per_mt:Number(truckRate)
+})
+.eq("id",id)
+
+loadRates()
+
+}
+
+async function deleteRate(id){
+
+if(!confirm("Delete Rate?")) return
+
+await supabaseClient
+.from("rates")
+.delete()
+.eq("id",id)
+
+loadRates()
+
+}
+
+function searchRates(){
+
+let commodity=document.getElementById("searchCommodity").value.toLowerCase()
+let route=document.getElementById("searchRoute").value.toLowerCase()
+
+rates=allRates.filter(r=>
+
+(!commodity || r.commodity.toLowerCase().includes(commodity)) &&
+(!route || r.route.toLowerCase().includes(route))
+
+)
+
+renderRates()
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchCommodity").value=""
+document.getElementById("searchRoute").value=""
+
+rates=allRates
+renderRates()
+
+}
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+rates.forEach(r=>{
+rows.push([
+r.commodity,
+r.route,
+r.your_rate_per_mt,
+r.truck_rate_per_mt
+])
+})
+
+doc.text("Varada Nexus - Rate Sheet",14,15)
+
+doc.autoTable({
+head:[["Commodity","Route","Company Rate","Truck Rate"]],
+body:rows,
+startY:20
+})
+
+doc.save("rate-sheet.pdf")
+
+}
+
+</script></body></html>

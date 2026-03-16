@@ -6,14 +6,26 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
+/* Fix sidebar title */
+
+.sidebar h2{
+color:white;
+text-align:center;
+margin-bottom:30px;
+}
+
+/* Main layout */
+
 .main{
 margin-left:220px;
 padding:30px;
 }
 
-h2{
+.main h2{
 color:#1f3c88;
 }
+
+/* Filters */
 
 .filters{
 margin-bottom:15px;
@@ -24,6 +36,8 @@ padding:8px;
 margin-right:10px;
 }
 
+/* Buttons */
+
 button{
 padding:8px 14px;
 background:#1f3c88;
@@ -33,6 +47,8 @@ border-radius:4px;
 cursor:pointer;
 margin-right:6px;
 }
+
+/* Table */
 
 table{
 width:100%;
@@ -51,6 +67,8 @@ th{
 background:#eee;
 }
 
+/* Profit colors */
+
 .profit{
 color:green;
 font-weight:bold;
@@ -61,11 +79,13 @@ color:red;
 font-weight:bold;
 }
 
+/* Pagination */
+
 .pagination{
 margin-top:10px;
 }
 
-</style></head><body><div id="sidebar-container"></div><script>
+</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -91,9 +111,9 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Net Profit</th>
 <th>Profit %</th>
 </tr>
-</thead><tbody id="profitTable"></tbody></table><div class="pagination">
-<button onclick="prevPage()">Previous</button>
+</thead><tbody id="profitTable"></tbody></table><div class="pagination"><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
+
 </div></div><script>
 
 const supabaseClient = supabase.createClient(
@@ -108,7 +128,9 @@ let expenseMap={}
 let page=1
 let pageSize=10
 
+
 init()
+
 
 async function init(){
 
@@ -121,33 +143,52 @@ return
 
 let authId=data.session.user.id
 
+
+/* FIND TRANSPORTER */
+
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
+
+/* GET TRIPS */
+
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
 
+
+/* GET EXPENSES */
+
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
+
 expenses.forEach(e=>{
+
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+
 expenseMap[e.trip_id]+=Number(e.amount||0)
+
 })
+
 
 allTrips=trips
 filteredTrips=trips
+
 
 buildFilters()
 renderTable()
 
 }
+
+
+
+/* BUILD FILTER OPTIONS */
 
 function buildFilters(){
 
@@ -169,6 +210,10 @@ document.getElementById("commodityFilter").innerHTML=commodityHTML
 
 }
 
+
+
+/* APPLY FILTERS */
+
 function applyFilters(){
 
 let route=document.getElementById("routeFilter").value
@@ -176,15 +221,22 @@ let truck=document.getElementById("truckFilter").value
 let commodity=document.getElementById("commodityFilter").value
 
 filteredTrips=allTrips.filter(t=>
+
 (!route || t.route==route) &&
 (!truck || t.truck==truck) &&
 (!commodity || t.commodity==commodity)
+
 )
 
 page=1
+
 renderTable()
 
 }
+
+
+
+/* CLEAR FILTERS */
 
 function clearFilters(){
 
@@ -197,6 +249,10 @@ document.getElementById("commodityFilter").value=""
 renderTable()
 
 }
+
+
+
+/* RENDER TABLE */
 
 function renderTable(){
 
@@ -220,15 +276,21 @@ let profit=freight-expenses
 let profitPercent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
 
 html+=`
+
 <tr>
 
 <td>${t.trip_no}</td>
+
 <td>${t.route}</td>
+
 <td>${t.truck}</td>
+
 <td>${t.commodity}</td>
+
 <td>${t.weight_kg}</td>
 
 <td>₹ ${freight.toFixed(2)}</td>
+
 <td>₹ ${expenses.toFixed(2)}</td>
 
 <td class="${profit>=0?'profit':'loss'}">
@@ -238,6 +300,7 @@ html+=`
 <td>${profitPercent}%</td>
 
 </tr>
+
 `
 
 })
@@ -246,19 +309,37 @@ document.getElementById("profitTable").innerHTML=html
 
 }
 
+
+
+/* PAGINATION */
+
 function nextPage(){
+
 if(page*pageSize<filteredTrips.length){
+
 page++
+
 renderTable()
+
 }
+
 }
 
 function prevPage(){
+
 if(page>1){
+
 page--
+
 renderTable()
+
 }
+
 }
+
+
+
+/* DOWNLOAD PDF */
 
 function downloadPDF(){
 
@@ -271,9 +352,13 @@ let rows=[]
 filteredTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
+
 let freight=(t.weight_kg/1000)*rate
+
 let expenses=expenseMap[t.id] || 0
+
 let profit=freight-expenses
+
 let percent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
 
 rows.push([
@@ -302,9 +387,16 @@ doc.save("trip-profit-report.pdf")
 
 }
 
+
+
+/* LOGOUT */
+
 async function logout(){
+
 await supabaseClient.auth.signOut()
+
 window.location.href="login.html"
+
 }
 
 </script></body></html>

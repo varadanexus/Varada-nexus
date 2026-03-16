@@ -61,6 +61,8 @@ font-size:14px;
 
 <div id="error" class="error"></div></div><script>
 
+/* SUPABASE CONNECTION */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -74,7 +76,7 @@ let loginType=document.getElementById("loginType").value
 
 document.getElementById("error").innerText=""
 
-/* SUPABASE LOGIN */
+/* LOGIN */
 
 const {data,error}=await supabaseClient.auth.signInWithPassword({
 email:email,
@@ -90,30 +92,15 @@ return
 
 let authId=data.user.id
 
-/* GET USER FROM USERS TABLE */
+/* GET ROLE FROM user_roles */
 
-const {data:user,error:userError}=await supabaseClient
-.from("users")
-.select("*")
-.eq("auth_id",authId)
-.single()
-
-if(userError || !user){
-
-document.getElementById("error").innerText="User not registered in system"
-return
-
-}
-
-/* GET USER ROLE */
-
-const {data:userRole}=await supabaseClient
+const {data:userRole,error:roleError}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",user.id)
+.eq("user_id",authId)
 .single()
 
-if(!userRole){
+if(roleError || !userRole){
 
 document.getElementById("error").innerText="User role not assigned"
 return

@@ -6,7 +6,7 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
-/* allows sidebar later without breaking UI */
+/* sidebar layout */
 
 .main{
 margin-left:220px;
@@ -43,7 +43,13 @@ font-weight:bold;
 margin-top:10px;
 }
 
-</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="cards"><div class="card">
+</style></head><body><!-- Transporter Sidebar --><div id="sidebar-container"></div><script>
+fetch("transporter-sidebar.html")
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
+})
+</script><div class="main"><h2>Transporter Dashboard</h2><div class="cards"><div class="card">
 Total Trips
 <div class="stat" id="tripCount">0</div>
 </div><div class="card">

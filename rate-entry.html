@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -33,13 +33,8 @@ border:none;
 cursor:pointer;
 }
 
-.editBtn{
-background:#5bc0de;
-}
-
-.deleteBtn{
-background:#d9534f;
-}
+.editBtn{background:#5bc0de;}
+.deleteBtn{background:#d9534f;}
 
 table{
 width:100%;
@@ -77,24 +72,39 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><select id="commodity"></select>
-
 <select id="route"></select>
+<select id="transporter"></select>
 
-<input id="companyRate" placeholder="Company Rate / MT"><input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+<input id="companyRate" placeholder="Company Rate / MT">
+<input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+
+</div><div class="card"><h3>Search Rates</h3><input id="searchCommodity" placeholder="Search Commodity">
+<input id="searchRoute" placeholder="Search Route"><button onclick="searchRates()">Search</button>
+<button onclick="clearSearch()">Clear</button>
 
 </div><div class="card"><h3>Existing Rates</h3><table><thead>
 <tr>
 <th>Commodity</th>
 <th>Route</th>
+<th>Transporter</th>
 <th>Company Rate</th>
 <th>Transporter Rate</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="rateTable"></tbody></table></div></div><script>
+</thead><tbody id="rateTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+</div></div><script>
 
 let commodities=[]
 let routes=[]
+let transporters=[]
 let rates=[]
+let filteredRates=[]
+
+let page=1
+let pageSize=10
 
 init()
 
@@ -102,6 +112,7 @@ async function init(){
 
 await loadCommodities()
 await loadRoutes()
+await loadTransporters()
 await loadRates()
 
 }
@@ -142,6 +153,24 @@ document.getElementById("route").innerHTML=html
 
 }
 
+/* LOAD TRANSPORTERS */
+
+async function loadTransporters(){
+
+const {data}=await supabaseClient.from("transporters").select("*")
+
+transporters=data
+
+let html='<option value="">Select Transporter</option>'
+
+data.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporter").innerHTML=html
+
+}
+
 /* LOAD RATES */
 
 async function loadRates(){
@@ -152,6 +181,7 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 rates=data
+filteredRates=data
 
 renderRates()
 
@@ -161,17 +191,24 @@ renderRates()
 
 function renderRates(){
 
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let pageRates=filteredRates.slice(start,end)
+
 let html=""
 
-rates.forEach(r=>{
+pageRates.forEach(r=>{
 
 let commodity=commodities.find(c=>c.id==r.commodity_id)?.name
 let route=routes.find(rt=>rt.id==r.route_id)?.route_code
+let transporter=transporters.find(t=>t.id==r.transporter_id)?.transporter_name
 
 html+=`
 <tr>
 <td>${commodity}</td>
 <td>${route}</td>
+<td>${transporter}</td>
 <td>${r.company_rate_per_mt}</td>
 <td>${r.transporter_rate_per_mt}</td>
 <td>
@@ -193,6 +230,8 @@ async function addRate(){
 
 let commodity=document.getElementById("commodity").value
 let route=document.getElementById("route").value
+let transporter=document.getElementById("transporter").value
+
 let companyRate=document.getElementById("companyRate").value
 let truckRate=document.getElementById("truckRate").value
 
@@ -201,16 +240,106 @@ await supabaseClient
 .insert({
 commodity_id:commodity,
 route_id:route,
+transporter_id:transporter,
 company_rate_per_mt:Number(companyRate),
 transporter_rate_per_mt:Number(truckRate)
 })
 
 document.getElementById("commodity").value=""
 document.getElementById("route").value=""
+document.getElementById("transporter").value=""
 document.getElementById("companyRate").value=""
 document.getElementById("truckRate").value=""
 
 loadRates()
+
+}
+
+/* SEARCH */
+
+function searchRates(){
+
+let commodity=document.getElementById("searchCommodity").value.toLowerCase()
+let route=document.getElementById("searchRoute").value.toLowerCase()
+
+filteredRates=rates.filter(r=>{
+
+let commodityName=commodities.find(c=>c.id==r.commodity_id)?.name.toLowerCase()
+let routeName=routes.find(rt=>rt.id==r.route_id)?.route_code.toLowerCase()
+
+return(
+(!commodity || commodityName.includes(commodity)) &&
+(!route || routeName.includes(route))
+)
+
+})
+
+page=1
+renderRates()
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchCommodity").value=""
+document.getElementById("searchRoute").value=""
+
+filteredRates=rates
+renderRates()
+
+}
+
+/* PAGINATION */
+
+function nextPage(){
+if(page*pageSize<filteredRates.length){
+page++
+renderRates()
+}
+}
+
+function prevPage(){
+if(page>1){
+page--
+renderRates()
+}
+}
+
+/* PDF EXPORT */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+filteredRates.forEach(r=>{
+
+let commodity=commodities.find(c=>c.id==r.commodity_id)?.name
+let route=routes.find(rt=>rt.id==r.route_id)?.route_code
+let transporter=transporters.find(t=>t.id==r.transporter_id)?.transporter_name
+
+rows.push([
+commodity,
+route,
+transporter,
+r.company_rate_per_mt,
+r.transporter_rate_per_mt
+])
+
+})
+
+doc.text("Varada Nexus - Rate Sheet",14,15)
+
+doc.autoTable({
+head:[["Commodity","Route","Transporter","Company Rate","Transporter Rate"]],
+body:rows,
+startY:20
+})
+
+doc.save("rate-sheet.pdf")
 
 }
 

@@ -1,0 +1,163 @@
+<!DOCTYPE html><html><head><title>Trip Profit Analysis</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:20px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#eee;
+}
+
+.profit{
+color:green;
+font-weight:bold;
+}
+
+.loss{
+color:red;
+font-weight:bold;
+}
+
+</style></head><body><div id="sidebar-container"></div><script>
+fetch("transporter-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script><div class="main"><h2>Trip Profit Analysis</h2><table><thead>
+<tr>
+<th>Trip No</th>
+<th>Route</th>
+<th>Truck</th>
+<th>Commodity</th>
+<th>Weight</th>
+<th>Freight</th>
+<th>Expenses</th>
+<th>Net Profit</th>
+<th>Profit %</th>
+</tr>
+</thead><tbody id="profitTable"></tbody></table></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+init()
+
+async function init(){
+
+const {data}=await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
+return
+}
+
+let authId=data.session.user.id
+
+const {data:transporter}=await supabaseClient
+.from("transporters")
+.select("*")
+.eq("auth_id",authId)
+.single()
+
+let transporterId=transporter.id
+
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+
+let expenseMap={}
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
+
+
+let html=""
+
+trips.forEach(t=>{
+
+let rate=t.transporter_rate || 0
+
+let freight=(t.weight_kg/1000)*rate
+
+let tripExpenses=expenseMap[t.id] || 0
+
+let profit=freight-tripExpenses
+
+let profitPercent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
+
+html+=`
+
+<tr>
+
+<td>${t.trip_no}</td>
+<td>${t.route}</td>
+<td>${t.truck}</td>
+<td>${t.commodity}</td>
+<td>${t.weight_kg}</td>
+
+<td>₹ ${freight.toFixed(2)}</td>
+
+<td>₹ ${tripExpenses.toFixed(2)}</td>
+
+<td class="${profit>=0?'profit':'loss'}">
+₹ ${profit.toFixed(2)}
+</td>
+
+<td>${profitPercent}%</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("profitTable").innerHTML=html
+
+}
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+</script></body></html>

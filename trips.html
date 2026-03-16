@@ -88,29 +88,33 @@ window.location.href="login.html"
 
 }
 
-</script><!-- Sidebar --><div id="sidebar-container"></div><script>
-
+</script><div id="sidebar-container"></div><script>
 fetch("sidebar.html")
 .then(res => res.text())
 .then(data => {
 document.getElementById("sidebar-container").innerHTML = data
 })
-
 </script><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
+
 <select id="truck"></select>
+
 <select id="commodity"></select>
 
 <input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
-
 <option value="">Status</option>
 <option>LOADED</option>
 <option>Completed</option>
 <option>Pending</option>
-</select></div><br><button onclick="saveTrip()">Save Trip</button></div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No"><select class="searchBox" id="searchRoute"></select>
+</select></div><br><button onclick="saveTrip()">Save Trip</button>
+
+</div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No"><select class="searchBox" id="searchRoute"></select>
+
 <select class="searchBox" id="searchTruck"></select>
+
 <select class="searchBox" id="searchCommodity"></select>
 
 <button onclick="searchTrips()">Search</button>
+
 <button onclick="clearSearch()">Clear</button>
 
 </div><table><thead>
@@ -125,11 +129,15 @@ document.getElementById("sidebar-container").innerHTML = data
 <th>Action</th>
 </tr>
 </thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button></div><script>let routes=[]
+<button onclick="nextPage()">Next</button>
+
+</div><script>
+
+let routes=[]
 let trucks=[]
 let commodities=[]
 let trips=[]
-let originalTrips=[]
+let allTrips=[]
 
 let page=1
 let pageSize=10
@@ -157,8 +165,8 @@ let html='<option value="">Select Route</option>'
 let search='<option value="">All Routes</option>'
 
 data.forEach(r=>{
-html+="<option value="${r.id}">${r.route_code}</option>"
-search+="<option value="${r.route_code}">${r.route_code}</option>"
+html+=`<option value="${r.id}">${r.route_code}</option>`
+search+=`<option value="${r.route_code}">${r.route_code}</option>`
 })
 
 document.getElementById("route").innerHTML=html
@@ -178,8 +186,8 @@ let html='<option value="">Select Truck</option>'
 let search='<option value="">All Trucks</option>'
 
 data.forEach(t=>{
-html+="<option value="${t.id}">${t.truck_number}</option>"
-search+="<option value="${t.truck_number}">${t.truck_number}</option>"
+html+=`<option value="${t.id}">${t.truck_number}</option>`
+search+=`<option value="${t.truck_number}">${t.truck_number}</option>`
 })
 
 document.getElementById("truck").innerHTML=html
@@ -199,8 +207,8 @@ let html='<option value="">Select Commodity</option>'
 let search='<option value="">All Commodities</option>'
 
 data.forEach(c=>{
-html+="<option value="${c.id}">${c.name}</option>"
-search+="<option value="${c.name}">${c.name}</option>"
+html+=`<option value="${c.id}">${c.name}</option>`
+search+=`<option value="${c.name}">${c.name}</option>`
 })
 
 document.getElementById("commodity").innerHTML=html
@@ -249,7 +257,7 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 trips=data
-originalTrips=data
+allTrips=data
 
 renderTrips()
 
@@ -269,7 +277,6 @@ let html=""
 pageTrips.forEach(t=>{
 
 html+=`
-
 <tr>
 <td>${t.trip_no || ""}</td>
 <td>${t.route}</td>
@@ -283,7 +290,9 @@ html+=`
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
 </td>
 </tr>
-`})
+`
+
+})
 
 document.getElementById("tripTable").innerHTML=html
 
@@ -336,12 +345,12 @@ let route=document.getElementById("searchRoute").value.toLowerCase()
 let truck=document.getElementById("searchTruck").value.toLowerCase()
 let commodity=document.getElementById("searchCommodity").value.toLowerCase()
 
-trips=originalTrips.filter(t=>
+trips=allTrips.filter(t=>
 
 (!tripNo || (t.trip_no||"").toLowerCase().includes(tripNo)) &&
-(!route || (t.route||"").toLowerCase().includes(route)) &&
-(!truck || (t.truck||"").toLowerCase().includes(truck)) &&
-(!commodity || (t.commodity||"").toLowerCase().includes(commodity))
+(!route || t.route.toLowerCase().includes(route)) &&
+(!truck || t.truck.toLowerCase().includes(truck)) &&
+(!commodity || t.commodity.toLowerCase().includes(commodity))
 
 )
 
@@ -350,6 +359,8 @@ renderTrips()
 
 }
 
+/* CLEAR SEARCH */
+
 function clearSearch(){
 
 document.getElementById("searchTripNo").value=""
@@ -357,7 +368,7 @@ document.getElementById("searchRoute").value=""
 document.getElementById("searchTruck").value=""
 document.getElementById("searchCommodity").value=""
 
-trips=originalTrips
+trips=allTrips
 renderTrips()
 
 }
@@ -393,5 +404,4 @@ window.location.href="login.html"
 }
 
 </script></body>
-
 </html>

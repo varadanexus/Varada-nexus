@@ -1,0 +1,122 @@
+<!DOCTYPE html><html><head><title>Transporter Dashboard</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+padding:40px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+button{
+padding:10px 18px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+margin-right:10px;
+}
+
+.stat{
+font-size:28px;
+font-weight:bold;
+margin-top:10px;
+}
+
+</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="card">Total Trips
+
+<div class="stat" id="tripCount">0</div></div><div class="card">Total Earnings
+
+<div class="stat" id="earnings">0</div></div><div class="card">Payments Received
+
+<div class="stat" id="payments">0</div></div><div class="card">Balance
+
+<div class="stat" id="balance">0</div></div><br><button onclick="window.location.href='transporter-trips.html'">
+My Trips
+</button><button onclick="logout()">
+Logout
+</button></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+init()
+
+async function init(){
+
+const {data}=await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
+return
+}
+
+let authId=data.session.user.id
+
+/* FIND TRANSPORTER */
+
+const {data:transporter}=await supabaseClient
+.from("transporters")
+.select("*")
+.eq("auth_id",authId)
+.single()
+
+let transporterId=transporter.id
+
+/* GET TRIPS */
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+
+let earnings=0
+
+trips.forEach(t=>{
+earnings+=Number(t.transporter_rate || 0)
+})
+
+/* GET PAYMENTS */
+
+const {data:payments}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("transporter_name",transporter.transporter_name)
+
+let paid=0
+
+payments.forEach(p=>{
+paid+=Number(p.amount)
+})
+
+document.getElementById("tripCount").innerText=trips.length
+document.getElementById("earnings").innerText=earnings
+document.getElementById("payments").innerText=paid
+document.getElementById("balance").innerText=earnings-paid
+
+}
+
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+</script></body></html>

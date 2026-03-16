@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -12,6 +12,25 @@ padding:40px;
 
 h2{
 color:#1f3c88;
+}
+
+.filterBox{
+margin-top:20px;
+margin-bottom:10px;
+}
+
+select{
+padding:8px;
+margin-right:10px;
+}
+
+button{
+padding:8px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
 }
 
 table{
@@ -31,7 +50,16 @@ th{
 background:#eee;
 }
 
-</style></head><body><div class="main"><h2>My Trips</h2><table><thead>
+</style></head><body><div class="main"><h2>My Trips</h2><div class="filterBox"><select id="routeFilter"></select>
+<select id="truckFilter"></select>
+<select id="commodityFilter"></select>
+
+<button onclick="applyFilters()">Search</button>
+<button onclick="clearFilters()">Clear</button>
+
+<button onclick="downloadPDF()">Download PDF</button>
+
+</div><table><thead>
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -42,19 +70,25 @@ background:#eee;
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table></div><script>
+</thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+
+</div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+let allTrips=[]
+let trips=[]
+let page=1
+let pageSize=10
+
 init()
 
 
 async function init(){
-
-/* GET SESSION */
 
 const {data}=await supabaseClient.auth.getSession()
 
@@ -66,47 +100,114 @@ return
 let authId=data.session.user.id
 
 
-/* FIND TRANSPORTER */
-
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
+
 let transporterId=transporter.id
 
 
-/* GET TRIPS */
-
-const {data:trips}=await supabaseClient
+const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 .order("created_at",{ascending:false})
 
-renderTrips(trips)
+
+allTrips=data
+trips=data
+
+
+buildFilters()
+
+renderTrips()
 
 }
 
 
-function renderTrips(trips){
+
+function buildFilters(){
+
+let routes=[...new Set(allTrips.map(t=>t.route))]
+let trucks=[...new Set(allTrips.map(t=>t.truck))]
+let commodities=[...new Set(allTrips.map(t=>t.commodity))]
+
+let routeHTML='<option value="">All Routes</option>'
+let truckHTML='<option value="">All Trucks</option>'
+let commodityHTML='<option value="">All Commodities</option>'
+
+routes.forEach(r=>routeHTML+=`<option>${r}</option>`)
+trucks.forEach(t=>truckHTML+=`<option>${t}</option>`)
+commodities.forEach(c=>commodityHTML+=`<option>${c}</option>`)
+
+document.getElementById("routeFilter").innerHTML=routeHTML
+document.getElementById("truckFilter").innerHTML=truckHTML
+document.getElementById("commodityFilter").innerHTML=commodityHTML
+
+}
+
+
+
+function applyFilters(){
+
+let route=document.getElementById("routeFilter").value
+let truck=document.getElementById("truckFilter").value
+let commodity=document.getElementById("commodityFilter").value
+
+trips=allTrips.filter(t=>
+
+(!route || t.route==route) &&
+(!truck || t.truck==truck) &&
+(!commodity || t.commodity==commodity)
+
+)
+
+page=1
+renderTrips()
+
+}
+
+
+
+function clearFilters(){
+
+document.getElementById("routeFilter").value=""
+document.getElementById("truckFilter").value=""
+document.getElementById("commodityFilter").value=""
+
+trips=allTrips
+
+renderTrips()
+
+}
+
+
+
+function renderTrips(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let pageTrips=trips.slice(start,end)
 
 let html=""
 
-trips.forEach(t=>{
+pageTrips.forEach(t=>{
 
 let earnings=((t.weight_kg/1000) * (t.transporter_rate || 0)).toFixed(2)
 
 html+=`
 <tr>
-<td>${t.trip_no || ""}</td>
-<td>${t.route || ""}</td>
-<td>${t.truck || ""}</td>
-<td>${t.commodity || ""}</td>
-<td>${t.weight_kg || ""}</td>
-<td>${t.trip_date || ""}</td>
-<td>${t.status || ""}</td>
+<td>${t.trip_no}</td>
+<td>${t.route}</td>
+<td>${t.truck}</td>
+<td>${t.commodity}</td>
+<td>${t.weight_kg}</td>
+<td>${t.trip_date}</td>
+<td>${t.status}</td>
 <td>${earnings}</td>
 </tr>
 `
@@ -117,4 +218,66 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-</script></body></html>
+
+
+function nextPage(){
+
+if(page*pageSize<trips.length){
+page++
+renderTrips()
+}
+
+}
+
+
+
+function prevPage(){
+
+if(page>1){
+page--
+renderTrips()
+}
+
+}
+
+
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+trips.forEach(t=>{
+
+let earnings=((t.weight_kg/1000) * (t.transporter_rate || 0)).toFixed(2)
+
+rows.push([
+t.trip_no,
+t.route,
+t.truck,
+t.commodity,
+t.weight_kg,
+t.trip_date,
+t.status,
+earnings
+])
+
+})
+
+doc.text("Transporter Trips",14,15)
+
+doc.autoTable({
+head:[["Trip No","Route","Truck","Commodity","Weight","Date","Status","Earnings"]],
+body:rows,
+startY:20
+})
+
+doc.save("transporter-trips.pdf")
+
+}
+
+</script></body>
+</html>

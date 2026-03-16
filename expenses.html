@@ -1,5 +1,12 @@
-<!DOCTYPE html><html><head>
-<title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Trip Expenses - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -64,13 +71,42 @@ background:#eee;
 text-align:left;
 }
 
-</style></head><body><!-- GLOBAL SIDEBAR --><div id="sidebar-container"></div><script>
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN SECURITY -->
+<script>
+if(!localStorage.getItem("role")){
+window.location="login.html"
+}
+</script>
+
+<!-- GLOBAL SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 fetch("sidebar.html")
 .then(res => res.text())
 .then(data => {
 document.getElementById("sidebar-container").innerHTML = data
 })
-</script><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
+</script>
+
+<div class="main">
+
+<h1>Trip Expenses</h1>
+
+<div class="card">
+
+<h3>Add Expense</h3>
+
+<div class="form-grid">
+
+<select id="trip"></select>
 
 <select id="type">
 <option>Fuel</option>
@@ -78,29 +114,59 @@ document.getElementById("sidebar-container").innerHTML = data
 <option>Driver</option>
 <option>Maintenance</option>
 <option>Other</option>
-</select><input id="amount" placeholder="Amount"><button onclick="saveExpense()">Add Expense</button>
+</select>
 
-</div></div><div class="card"><input id="search" placeholder="Search Trip ID"><select id="filterType">
+<input id="amount" placeholder="Amount">
+
+<button onclick="saveExpense()">Add Expense</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<input id="search" placeholder="Search Trip ID">
+
+<select id="filterType">
 <option value="">All Types</option>
 <option>Fuel</option>
 <option>Toll</option>
 <option>Driver</option>
 <option>Maintenance</option>
 <option>Other</option>
-</select><button onclick="applyFilter()">Filter</button>
+</select>
+
+<button onclick="applyFilter()">Filter</button>
 <button onclick="clearFilter()">Clear</button>
 
-</div><table><thead><tr>
+</div>
+
+<table>
+
+<thead>
+<tr>
 <th>Expense ID</th>
 <th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
 <th>Date</th>
 <th>Action</th>
-</tr></thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</tr>
+</thead>
+
+<tbody id="expenseTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
-</div><script>
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -114,7 +180,6 @@ let filtered=[]
 let page=1
 let pageSize=10
 
-
 init()
 
 async function init(){
@@ -124,9 +189,7 @@ await loadExpenses()
 
 }
 
-
-
-/* LOAD TRIPS (LATEST FIRST) */
+/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -147,8 +210,6 @@ document.getElementById("trip").innerHTML=html
 
 }
 
-
-
 /* GENERATE EXPENSE ID */
 
 async function generateExpenseId(){
@@ -168,8 +229,6 @@ let seq=data.length+1
 return "EXP"+year+month+seq.toString().padStart(4,"0")
 
 }
-
-
 
 /* SAVE EXPENSE */
 
@@ -205,8 +264,6 @@ loadExpenses()
 
 }
 
-
-
 /* LOAD EXPENSES */
 
 async function loadExpenses(){
@@ -222,8 +279,6 @@ filtered=data
 renderTable()
 
 }
-
-
 
 /* RENDER TABLE */
 
@@ -268,8 +323,6 @@ document.getElementById("expenseTable").innerHTML=html
 
 }
 
-
-
 /* EDIT */
 
 async function editExpense(id){
@@ -291,8 +344,6 @@ loadExpenses()
 
 }
 
-
-
 /* DELETE */
 
 async function deleteExpense(id){
@@ -307,8 +358,6 @@ await supabaseClient
 loadExpenses()
 
 }
-
-
 
 /* FILTER */
 
@@ -333,8 +382,6 @@ renderTable()
 
 }
 
-
-
 function clearFilter(){
 
 filtered=expenses
@@ -342,8 +389,6 @@ page=1
 renderTable()
 
 }
-
-
 
 /* PAGINATION */
 
@@ -365,5 +410,7 @@ renderTable()
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

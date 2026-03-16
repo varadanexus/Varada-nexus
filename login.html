@@ -1,4 +1,13 @@
-<!DOCTYPE html><html><head><title>Login - Varada Nexus</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Login - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
 
 body{
 font-family:Arial;
@@ -35,13 +44,28 @@ border-radius:4px;
 cursor:pointer;
 }
 
-</style></head><body><div class="card"><h2>Varada Nexus Login</h2><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
+</style>
 
-</div><script>
+</head>
 
-const supabaseClient = supabase.createClient(
+<body>
+
+<div class="card">
+
+<h2>Varada Nexus Login</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<script>
+
+const supabaseClient = window.supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 async function login(){
@@ -61,15 +85,41 @@ return
 
 }
 
-/* FETCH USER ROLE */
+/* GET AUTH USER */
 
-const {data:user}=await supabaseClient
+const user=data.user
+
+/* FIND USER IN USERS TABLE */
+
+const {data:userRecord,error:userError}=await supabaseClient
 .from("users")
-.select("role")
-.eq("email",email)
+.select("id")
+.eq("auth_id",user.id)
 .single()
 
-localStorage.setItem("role",user.role)
+if(userError){
+alert("User not found in system")
+return
+}
+
+/* FETCH USER ROLE */
+
+const {data:roleData,error:roleError}=await supabaseClient
+.from("user_roles")
+.select(`
+roles(role_name)
+`)
+.eq("user_id",userRecord.id)
+.single()
+
+if(roleError){
+alert("Role not assigned")
+return
+}
+
+const role=roleData.roles.role_name
+
+localStorage.setItem("role",role)
 
 /* REDIRECT */
 
@@ -77,5 +127,7 @@ window.location="dashboard.html"
 
 }
 
-</script></body>
+</script>
+
+</body>
 </html>

@@ -1,4 +1,6 @@
-<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>body{
+<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+
+body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
@@ -67,9 +69,7 @@ border-radius:4px;
 margin-right:10px;
 }
 
-</style></head><body><script>
-
-const supabaseClient = supabase.createClient(
+</style></head><body><script>const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -95,9 +95,7 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML = data
 })
 </script><div class="main"><h2>Trips</h2><div class="card"><h3>Create Trip</h3><div class="form-grid"><select id="route"></select>
-
 <select id="truck"></select>
-
 <select id="commodity"></select>
 
 <input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
@@ -108,13 +106,10 @@ document.getElementById("sidebar-container").innerHTML = data
 </select></div><br><button onclick="saveTrip()">Save Trip</button>
 
 </div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No"><select class="searchBox" id="searchRoute"></select>
-
 <select class="searchBox" id="searchTruck"></select>
-
 <select class="searchBox" id="searchCommodity"></select>
 
 <button onclick="searchTrips()">Search</button>
-
 <button onclick="clearSearch()">Clear</button>
 
 </div><table><thead>
@@ -130,6 +125,7 @@ document.getElementById("sidebar-container").innerHTML = data
 </tr>
 </thead><tbody id="tripTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
+<button onclick="downloadPDF()">Download PDF</button>
 
 </div><script>
 
@@ -309,7 +305,6 @@ const {data}=await supabaseClient
 .single()
 
 let weight=prompt("Edit Weight",data.weight_kg)
-
 let status=prompt("Enter Status (LOADED / Completed / Pending)",data.status)
 
 await supabaseClient
@@ -390,6 +385,45 @@ if(page>1){
 page--
 renderTrips()
 }
+
+}
+
+/* PDF DOWNLOAD */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc = new jsPDF()
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let pageTrips=trips.slice(start,end)
+
+let rows=[]
+
+pageTrips.forEach(t=>{
+rows.push([
+t.trip_no || "",
+t.route,
+t.truck,
+t.commodity,
+t.weight_kg,
+t.trip_date || "",
+t.status || ""
+])
+})
+
+doc.text("Varada Nexus - Trip Report",14,15)
+
+doc.autoTable({
+head:[["Trip No","Route","Truck","Commodity","Weight","Date","Status"]],
+body:rows,
+startY:20
+})
+
+doc.save("trip-report.pdf")
 
 }
 

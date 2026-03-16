@@ -42,12 +42,13 @@ border-radius:4px;
 }
 
 button{
-padding:8px 12px;
+padding:10px 14px;
 background:#1f3c88;
 color:white;
 border:none;
 border-radius:4px;
 cursor:pointer;
+margin-right:5px;
 }
 
 button:hover{
@@ -56,7 +57,6 @@ background:#162c66;
 
 .edit-btn{
 background:#f0ad4e;
-margin-right:5px;
 }
 
 .delete-btn{
@@ -84,6 +84,8 @@ background:#eee;
 </head>
 
 <body>
+
+<!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
 
@@ -131,10 +133,14 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
+/* SUPABASE */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* EDGE FUNCTION */
 
 const EDGE_FUNCTION =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user"
@@ -142,20 +148,21 @@ const EDGE_FUNCTION =
 
 /* LOAD ROLES */
 
-let rolesCache=[]
-
 async function loadRoles(){
 
-const {data,error}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("roles")
 .select("*")
 
-rolesCache=data
+if(error){
+console.log(error)
+return
+}
 
 let html=""
 
-data.forEach(r=>{
-html+=`<option value="${r.id}">${r.role_name}</option>`
+data.forEach(role=>{
+html+=`<option value="${role.id}">${role.role_name}</option>`
 })
 
 document.getElementById("role").innerHTML=html
@@ -167,12 +174,16 @@ document.getElementById("role").innerHTML=html
 
 async function loadUsers(){
 
-const {data:users}=await supabaseClient
+const {data:users} = await supabaseClient
 .from("users")
 .select("*")
 
-const {data:userRoles}=await supabaseClient
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
+.select("*")
+
+const {data:roles} = await supabaseClient
+.from("roles")
 .select("*")
 
 let html=""
@@ -185,7 +196,7 @@ let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
 
 if(ur){
 
-let role=rolesCache.find(r=>String(r.id)===String(ur.role_id))
+let role=roles.find(r=>String(r.id)===String(ur.role_id))
 
 if(role){
 roleName=role.role_name
@@ -199,7 +210,7 @@ html+=`
 <td>${roleName}</td>
 <td>
 
-<button class="edit-btn" onclick="editRole('${user.id}')">Edit</button>
+<button class="edit-btn" onclick="editUser('${user.id}')">Edit</button>
 
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
 
@@ -253,11 +264,11 @@ loadUsers()
 }
 
 
-/* EDIT ROLE */
+/* EDIT USER ROLE */
 
-async function editRole(userId){
+async function editUser(userId){
 
-let newRole=prompt("Enter Role ID")
+const newRole=prompt("Enter Role ID")
 
 if(!newRole) return
 
@@ -294,7 +305,8 @@ loadUsers()
 
 /* INIT */
 
-loadRoles().then(loadUsers)
+loadRoles()
+loadUsers()
 
 </script>
 

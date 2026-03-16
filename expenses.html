@@ -67,7 +67,7 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 /* LOGIN CHECK */
@@ -209,8 +209,6 @@ expense_date:new Date()
 
 })
 
-/* CLEAR FORM */
-
 document.getElementById("trip").value=""
 document.getElementById("type").value="Fuel"
 document.getElementById("amount").value=""
@@ -326,7 +324,7 @@ filtered=expenses.filter(e=>{
 let trip=trips.find(t=>t.id==e.trip_id)
 
 return(
-(!search || trip.trip_no.toLowerCase().includes(search)) &&
+(!search || (trip?.trip_no || "").toLowerCase().includes(search)) &&
 (!type || e.expense_type==type)
 )
 

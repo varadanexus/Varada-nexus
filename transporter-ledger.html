@@ -1,12 +1,5 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-<title>Transporter Ledger</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<style>
+<!DOCTYPE html><html><head>
+<title>Transporter Ledger</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -14,24 +7,39 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
-/* Sidebar layout */
-
 .main{
 margin-left:220px;
 padding:40px;
 }
 
-/* Page title */
-
 .main h2{
 color:#1f3c88;
+}
+
+.filters{
+margin-bottom:20px;
+}
+
+.filters input{
+padding:8px;
+margin-right:10px;
+}
+
+button{
+padding:8px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+margin-right:6px;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
 background:white;
-margin-top:20px;
+margin-top:15px;
 }
 
 th,td{
@@ -58,31 +66,22 @@ font-weight:bold;
 font-weight:bold;
 }
 
-</style>
-</head>
+.pagination{
+margin-top:15px;
+}
 
-<body>
-
-<!-- SIDEBAR -->
-
-<div id="sidebar-container"></div>
-
-<script>
+</style></head><body><div id="sidebar-container"></div><script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script>
+</script><div class="main"><h2>Transporter Ledger</h2><div class="filters"><input type="date" id="fromDate">
+<input type="date" id="toDate"><button onclick="applyFilter()">Search</button>
+<button onclick="clearFilter()">Clear</button>
+<button onclick="downloadPDF()">Download PDF</button>
 
-
-<div class="main">
-
-<h2>Transporter Ledger</h2>
-
-<table>
-
-<thead>
+</div><table><thead>
 <tr>
 <th>Date</th>
 <th>Description</th>
@@ -90,21 +89,21 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Debit (Payment / Expense)</th>
 <th>Balance</th>
 </tr>
-</thead>
-
-<tbody id="ledgerTable"></tbody>
-
-</table>
-
-</div>
-
-
-<script>
+</thead><tbody id="ledgerTable"></tbody></table><div class="pagination">
+<button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+</div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
+
+let fullLedger=[]
+let filteredLedger=[]
+
+let page=1
+let pageSize=10
 
 init()
 
@@ -119,50 +118,30 @@ return
 
 let authId=data.session.user.id
 
-
-/* FIND TRANSPORTER */
-
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
-if(!transporter){
-alert("Transporter not found")
-return
-}
-
 let transporterId=transporter.id
 let transporterName=transporter.transporter_name
 
-
-/* GET TRIPS */
 
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-.order("trip_date",{ascending:true})
-
-
-/* GET PAYMENTS */
 
 const {data:payments}=await supabaseClient
 .from("transporter_payments")
 .select("*")
 .eq("transporter_name",transporterName)
-.order("payment_date",{ascending:true})
-
-
-/* GET EXPENSES */
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
-
-/* BUILD EXPENSE MAP */
 
 let expenseMap={}
 
@@ -172,110 +151,90 @@ expenses.forEach(e=>{
 
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 
-expenseMap[e.trip_id]+=Number(e.amount || 0)
+expenseMap[e.trip_id]+=Number(e.amount||0)
 
 })
 
 }
 
-
-/* BUILD LEDGER */
 
 let ledger=[]
 
 
-/* TRIP EARNINGS */
-
-if(trips){
-
 trips.forEach(t=>{
 
-let freight=((t.weight_kg || 0)/1000) * (t.transporter_rate || 0)
+let freight=((t.weight_kg||0)/1000)*(t.transporter_rate||0)
 
-let tripExpenses = expenseMap[t.id] || 0
+let tripExpense=expenseMap[t.id]||0
 
-let netEarnings = freight - tripExpenses
+let net=freight-tripExpense
 
 ledger.push({
-
 date:t.trip_date,
-description:"Trip "+(t.trip_no || ""),
-credit:netEarnings,
+description:"Trip "+(t.trip_no||""),
+credit:net,
 debit:0
-
 })
 
-/* ADD EXPENSE ENTRY */
-
-if(tripExpenses>0){
+if(tripExpense>0){
 
 ledger.push({
-
 date:t.trip_date,
 description:"Trip Expense",
 credit:0,
-debit:tripExpenses
-
+debit:tripExpense
 })
 
 }
 
 })
 
-}
-
-
-/* PAYMENTS */
-
-if(payments){
 
 payments.forEach(p=>{
 
 ledger.push({
-
 date:p.payment_date,
-description:"Payment "+(p.transaction_id || ""),
+description:"Payment "+(p.transaction_id||""),
 credit:0,
-debit:Number(p.amount || 0)
-
+debit:Number(p.amount||0)
 })
 
 })
+
+
+ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+fullLedger=ledger
+filteredLedger=ledger
+
+renderLedger()
 
 }
 
 
-/* SORT BY DATE */
+function renderLedger(){
 
-ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
+let start=(page-1)*pageSize
+let end=start+pageSize
 
-
-/* CALCULATE RUNNING BALANCE */
+let pageData=filteredLedger.slice(start,end)
 
 let balance=0
 let html=""
 
-ledger.forEach(l=>{
+pageData.forEach(l=>{
 
-balance += l.credit
-balance -= l.debit
+balance+=l.credit
+balance-=l.debit
 
 html+=`
-
 <tr>
-
-<td>${l.date || ""}</td>
-
+<td>${l.date}</td>
 <td>${l.description}</td>
-
-<td class="credit">${l.credit ? "₹ "+l.credit.toFixed(2) : ""}</td>
-
-<td class="debit">${l.debit ? "₹ "+l.debit.toFixed(2) : ""}</td>
-
+<td class="credit">${l.credit? "₹ "+l.credit.toFixed(2):""}</td>
+<td class="debit">${l.debit? "₹ "+l.debit.toFixed(2):""}</td>
 <td class="balance">₹ ${balance.toFixed(2)}</td>
-
 </tr>
-
 `
 
 })
@@ -284,7 +243,93 @@ document.getElementById("ledgerTable").innerHTML=html
 
 }
 
-</script>
 
-</body>
+function applyFilter(){
+
+let from=document.getElementById("fromDate").value
+let to=document.getElementById("toDate").value
+
+filteredLedger=fullLedger.filter(l=>{
+
+let d=new Date(l.date)
+
+return (!from || d>=new Date(from)) &&
+(!to || d<=new Date(to))
+
+})
+
+page=1
+renderLedger()
+
+}
+
+
+function clearFilter(){
+
+filteredLedger=fullLedger
+
+document.getElementById("fromDate").value=""
+document.getElementById("toDate").value=""
+
+renderLedger()
+
+}
+
+
+function nextPage(){
+
+if(page*pageSize<filteredLedger.length){
+
+page++
+renderLedger()
+
+}
+
+}
+
+
+function prevPage(){
+
+if(page>1){
+
+page--
+renderLedger()
+
+}
+
+}
+
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+filteredLedger.forEach(l=>{
+
+rows.push([
+l.date,
+l.description,
+l.credit? l.credit.toFixed(2):"",
+l.debit? l.debit.toFixed(2):""
+])
+
+})
+
+doc.text("Transporter Ledger",14,15)
+
+doc.autoTable({
+head:[["Date","Description","Credit","Debit"]],
+body:rows,
+startY:20
+})
+
+doc.save("transporter-ledger.pdf")
+
+}
+
+</script></body>
 </html>

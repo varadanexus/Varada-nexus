@@ -1,112 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
 
-<title>Varada Nexus Login</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Login - Varada Nexus</title>
+
+<link rel="stylesheet" href="style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <style>
 
-body{
-margin:0;
-font-family:Arial, Helvetica, sans-serif;
-background:#f4f6f9;
+/* LOGIN AREA */
+
+.login-container{
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
+padding:80px 20px;
 }
-
-/* Login Card */
 
 .login-card{
 background:white;
-padding:40px;
+padding:35px;
 border-radius:10px;
-box-shadow:0 6px 18px rgba(0,0,0,0.12);
+box-shadow:0 8px 22px rgba(0,0,0,0.12);
 width:380px;
 text-align:center;
 }
 
-/* Title */
-
-h2{
-margin-bottom:25px;
+.login-card h2{
 color:#1f3c88;
-font-weight:600;
+margin-bottom:25px;
 }
 
-/* Inputs */
-
-select,
-input{
+.login-card select,
+.login-card input{
 width:100%;
-padding:11px;
-margin-bottom:16px;
+padding:10px;
+margin-bottom:15px;
 border:1px solid #ccc;
-border-radius:5px;
+border-radius:4px;
 font-size:14px;
-transition:0.2s;
 }
 
-/* Input focus */
-
-select:focus,
-input:focus{
-border-color:#1f3c88;
-outline:none;
-box-shadow:0 0 4px rgba(31,60,136,0.3);
-}
-
-/* Password container */
+/* PASSWORD FIELD */
 
 .password-wrapper{
 position:relative;
 }
 
 .password-wrapper input{
-margin-bottom:0;
+padding-right:60px;
 }
-
-/* Show password button */
 
 .show-password{
 position:absolute;
-right:10px;
+right:12px;
 top:50%;
 transform:translateY(-50%);
 cursor:pointer;
 font-size:13px;
 color:#1f3c88;
-user-select:none;
 }
 
-/* Button */
+/* BUTTON */
 
-button{
+.login-card button{
 width:100%;
-padding:12px;
+padding:11px;
 background:#1f3c88;
 color:white;
 border:none;
-border-radius:5px;
+border-radius:4px;
 font-size:15px;
 cursor:pointer;
-margin-top:15px;
-transition:0.2s;
 }
 
-button:hover{
+.login-card button:hover{
 background:#162f6d;
 }
 
-/* Error */
-
 .error{
 color:#d9534f;
-margin-top:14px;
-font-size:14px;
+margin-top:12px;
 }
 
 </style>
@@ -115,9 +95,30 @@ font-size:14px;
 
 <body>
 
+<header>
+
+<div class="logo-wrapper">
+<img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
+<h1>Varada Nexus Private Limited</h1>
+</div>
+
+<nav>
+<a href="index.html">Home</a>
+<a href="founder.html">Founder</a>
+<a href="services.html">Services</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Login</a>
+</nav>
+
+</header>
+
+<main>
+
+<div class="login-container">
+
 <div class="login-card">
 
-<h2>Varada Nexus Login</h2>
+<h2>Portal Login</h2>
 
 <select id="loginType">
 <option value="staff">Staff Login</option>
@@ -140,13 +141,21 @@ font-size:14px;
 
 </div>
 
+</div>
+
+</main>
+
+<footer>
+&copy; 2025 Varada Nexus Private Limited
+</footer>
+
 <script>
 
 /* SUPABASE CONNECTION */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 /* SHOW PASSWORD */
@@ -174,38 +183,23 @@ let loginType=document.getElementById("loginType").value
 
 document.getElementById("error").innerText=""
 
-/* LOGIN */
-
 const {data,error}=await supabaseClient.auth.signInWithPassword({
 email:email,
 password:password
 })
 
 if(error){
-
 document.getElementById("error").innerText=error.message
 return
-
 }
 
 let authId=data.user.id
 
-/* GET ROLE */
-
-const {data:userRole,error:roleError}=await supabaseClient
+const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",authId)
 .single()
-
-if(roleError || !userRole){
-
-document.getElementById("error").innerText="User role not assigned"
-return
-
-}
-
-/* GET ROLE NAME */
 
 const {data:role}=await supabaseClient
 .from("roles")
@@ -215,14 +209,10 @@ const {data:role}=await supabaseClient
 
 let roleName=role.role_name.toLowerCase()
 
-/* VALIDATE LOGIN TYPE */
-
 if(loginType==="transporter" && roleName!=="transporter"){
 
 document.getElementById("error").innerText="This account is not a customer"
-
 await supabaseClient.auth.signOut()
-
 return
 
 }
@@ -230,23 +220,15 @@ return
 if(loginType==="staff" && roleName==="transporter"){
 
 document.getElementById("error").innerText="Customers must use customer login"
-
 await supabaseClient.auth.signOut()
-
 return
 
 }
 
-/* REDIRECT */
-
 if(roleName==="transporter"){
-
 window.location.href="transporter-dashboard.html"
-
 }else{
-
 window.location.href="dashboard.html"
-
 }
 
 }

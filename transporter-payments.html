@@ -77,6 +77,16 @@ window.location.href="login.html"
 
 }
 
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
 </script><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
@@ -89,16 +99,14 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <input type="number" id="amount" placeholder="Amount"><input id="transactionId" placeholder="Transaction ID"><input type="date" id="paymentDate"><input id="remarks" placeholder="Remarks"><button onclick="addPayment()">Save Payment</button>
 
-</div><div class="card"><h3>Payment History</h3><table><thead>
-<tr>
+</div><div class="card"><h3>Payment History</h3><table><thead><tr>
 <th>Date</th>
 <th>Transporter</th>
 <th>Amount</th>
 <th>Transaction ID</th>
 <th>Remarks</th>
 <th>Action</th>
-</tr>
-</thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</tr></thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
 </div></div><script>
@@ -108,7 +116,9 @@ let payments=[]
 let page=1
 let pageSize=10
 
+
 init()
+
 
 async function init(){
 
@@ -117,13 +127,19 @@ await loadPayments()
 
 }
 
+
 /* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("transporters")
 .select("*")
+
+if(error){
+alert(error.message)
+return
+}
 
 transporters=data
 
@@ -138,6 +154,7 @@ ${t.transporter_name}
 document.getElementById("transporter").innerHTML=html
 
 }
+
 
 /* ADD PAYMENT */
 
@@ -180,20 +197,27 @@ loadPayments()
 
 }
 
+
 /* LOAD PAYMENTS */
 
 async function loadPayments(){
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("transporter_payments")
 .select("*")
 .order("payment_date",{ascending:false})
+
+if(error){
+alert(error.message)
+return
+}
 
 payments=data
 
 renderPayments()
 
 }
+
 
 /* RENDER TABLE */
 
@@ -228,21 +252,27 @@ document.getElementById("paymentTable").innerHTML=html
 
 }
 
+
 /* PAGINATION */
 
 function nextPage(){
+
 if(page*pageSize<payments.length){
 page++
 renderPayments()
 }
+
 }
 
 function prevPage(){
+
 if(page>1){
 page--
 renderPayments()
 }
+
 }
+
 
 /* DELETE */
 
@@ -258,6 +288,7 @@ await supabaseClient
 loadPayments()
 
 }
+
 
 /* EDIT */
 
@@ -284,4 +315,5 @@ loadPayments()
 
 }
 
-</script></body></html>
+</script></body>
+</html>

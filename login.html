@@ -5,7 +5,7 @@
 display:flex;
 justify-content:center;
 align-items:center;
-margin-top:80px;
+margin-top:100px;
 }
 
 .card{
@@ -41,7 +41,13 @@ cursor:pointer;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
+{
+auth:{
+persistSession:true,
+autoRefreshToken:true
+}
+}
 )
 
 async function login(){
@@ -49,9 +55,9 @@ async function login(){
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 
-const { error } = await supabaseClient.auth.signInWithPassword({
-email: email,
-password: password
+const {error} = await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
 })
 
 if(error){

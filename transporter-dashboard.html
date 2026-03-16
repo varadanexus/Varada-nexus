@@ -88,13 +88,30 @@ const {data:trips}=await supabaseClient
 
 let earnings=0
 
-trips.forEach(t=>{
+/* FIXED EARNINGS CALCULATION (EXPENSES REMOVED) */
+
+for (const t of trips){
 
 let tripEarnings=(t.weight_kg/1000) * (t.transporter_rate || 0)
 
-earnings += tripEarnings
+/* GET EXPENSES FOR THIS TRIP */
 
+const {data:tripExpenses}=await supabaseClient
+.from("expenses")
+.select("*")
+.eq("trip_id",t.id)
+
+let expenseTotal=0
+
+if(tripExpenses){
+tripExpenses.forEach(e=>{
+expenseTotal += Number(e.amount || 0)
 })
+}
+
+earnings += (tripEarnings - expenseTotal)
+
+}
 
 /* GET PAYMENTS */
 

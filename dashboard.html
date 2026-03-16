@@ -25,28 +25,12 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card h3{
-margin:0;
-font-size:18px;
-}
-
-.card p{
-font-size:26px;
-margin-top:10px;
-font-weight:bold;
-}
-
 .widget{
 background:white;
 margin-top:25px;
 padding:20px;
 border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.widget h3{
-margin-top:0;
-margin-bottom:15px;
 }
 
 .widget table{
@@ -58,7 +42,6 @@ border-collapse:collapse;
 .widget td{
 padding:8px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 .widget th{
@@ -72,13 +55,11 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* LOGIN CHECK */
-
 checkLogin()
 
 async function checkLogin(){
 
-const { data } = await supabaseClient.auth.getSession()
+const {data}=await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.href="login.html"
@@ -86,7 +67,7 @@ window.location.href="login.html"
 
 }
 
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</script><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -106,22 +87,7 @@ document.getElementById("sidebar-container").innerHTML=data
 </div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div><div class="widget"><h3>Profit by Route</h3><table><thead>
-<tr>
-<th>Route</th>
-<th>Profit</th>
-</tr>
-</thead><tbody id="routeProfit"></tbody></table></div><div class="widget"><h3>Profit by Truck</h3><table><thead>
-<tr>
-<th>Truck</th>
-<th>Profit</th>
-</tr>
-</thead><tbody id="truckProfit"></tbody></table></div><div class="widget"><h3>Monthly Profit</h3><table><thead>
-<tr>
-<th>Month</th>
-<th>Profit</th>
-</tr>
-</thead><tbody id="monthlyProfit"></tbody></table></div></div><script>
+</div></div></div><script>
 
 loadDashboard()
 
@@ -135,99 +101,40 @@ const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
-let totalTrips = trips.length
-let totalRevenue = 0
-let totalCost = 0
-let totalProfit = 0
+let totalTrips=trips.length
+let totalRevenue=0
+let totalCost=0
+let totalProfit=0
 
 let expenseMap={}
 
 expenses.forEach(e=>{
-
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount)
-
 })
-
-let routeMap={}
-let truckMap={}
-let monthMap={}
 
 trips.forEach(trip=>{
 
-let mt = trip.weight_kg / 1000
-let expense = expenseMap[trip.id] || 0
+let mt=trip.weight_kg/1000
+let expense=expenseMap[trip.id]||0
 
-let companyAmount = (trip.company_rate * mt) - expense
-let transporterAmount = (trip.transporter_rate * mt) - expense
+let companyAmount=(trip.company_rate*mt)-expense
+let transporterAmount=(trip.transporter_rate*mt)-expense
 
-let profit = companyAmount - transporterAmount
+let profit=companyAmount-transporterAmount
 
-totalRevenue += companyAmount
-totalCost += transporterAmount
-totalProfit += profit
+totalRevenue+=companyAmount
+totalCost+=transporterAmount
+totalProfit+=profit
 
-if(!routeMap[trip.route]) routeMap[trip.route]=0
-routeMap[trip.route]+=profit
+})
 
-if(!truckMap[trip.truck]) truckMap[trip.truck]=0
-truckMap[trip.truck]+=profit
-
-if(trip.trip_date){
-
-let month = trip.trip_date.substring(0,7)
-
-if(!monthMap[month]) monthMap[month]=0
-monthMap[month]+=profit
+document.getElementById("totalTrips").innerText=totalTrips
+document.getElementById("totalRevenue").innerText="₹ "+totalRevenue.toLocaleString()
+document.getElementById("totalCost").innerText="₹ "+totalCost.toLocaleString()
+document.getElementById("totalProfit").innerText="₹ "+totalProfit.toLocaleString()
 
 }
 
-})
-
-document.getElementById("totalTrips").innerText = totalTrips
-document.getElementById("totalRevenue").innerText = "₹ "+ totalRevenue.toLocaleString()
-document.getElementById("totalCost").innerText = "₹ "+ totalCost.toLocaleString()
-document.getElementById("totalProfit").innerText = "₹ "+ totalProfit.toLocaleString()
-
-let routeHTML=""
-
-Object.keys(routeMap).forEach(route=>{
-routeHTML+=`
-<tr>
-<td>${route}</td>
-<td>₹ ${routeMap[route].toLocaleString()}</td>
-</tr>
-`
-})
-
-document.getElementById("routeProfit").innerHTML=routeHTML
-
-let truckHTML=""
-
-Object.keys(truckMap).forEach(truck=>{
-truckHTML+=`
-<tr>
-<td>${truck}</td>
-<td>₹ ${truckMap[truck].toLocaleString()}</td>
-</tr>
-`
-})
-
-document.getElementById("truckProfit").innerHTML=truckHTML
-
-let monthHTML=""
-
-Object.keys(monthMap).forEach(month=>{
-monthHTML+=`
-<tr>
-<td>${month}</td>
-<td>₹ ${monthMap[month].toLocaleString()}</td>
-</tr>
-`
-})
-
-document.getElementById("monthlyProfit").innerHTML=monthHTML
-
-}
-
-</script></body></html>
+</script></body>
+</html>

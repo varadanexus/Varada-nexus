@@ -1,6 +1,4 @@
-<!DOCTYPE html><html><head><title>Transporter Dashboard</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
-
-body{
+<!DOCTYPE html><html><head><title>Transporter Dashboard</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
@@ -36,6 +34,7 @@ margin-top:10px;
 
 </style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="card">
 Total Trips
+
 <div class="stat" id="tripCount">0</div>
 </div><div class="card">
 Total Earnings
@@ -48,11 +47,11 @@ Balance
 <div class="stat" id="balance">0</div>
 </div><br><button onclick="window.location.href='transporter-trips.html'">
 My Trips
+</button><button onclick="window.location.href='transporter-ledger.html'">
+Ledger
 </button><button onclick="logout()">
 Logout
-</button></div><script>
-
-const supabaseClient = supabase.createClient(
+</button></div><script>const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -70,7 +69,6 @@ return
 
 let authId=data.session.user.id
 
-
 /* FIND TRANSPORTER */
 
 const {data:transporter}=await supabaseClient
@@ -81,14 +79,12 @@ const {data:transporter}=await supabaseClient
 
 let transporterId=transporter.id
 
-
 /* GET TRIPS */
 
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-
 
 let earnings=0
 
@@ -100,7 +96,6 @@ earnings += tripEarnings
 
 })
 
-
 /* GET PAYMENTS */
 
 const {data:payments}=await supabaseClient
@@ -108,13 +103,11 @@ const {data:payments}=await supabaseClient
 .select("*")
 .eq("transporter_name",transporter.transporter_name)
 
-
 let paid=0
 
 payments.forEach(p=>{
 paid += Number(p.amount || 0)
 })
-
 
 document.getElementById("tripCount").innerText = trips.length
 
@@ -128,7 +121,6 @@ document.getElementById("balance").innerText =
 (earnings-paid).toFixed(2)
 
 }
-
 
 /* LOGOUT */
 

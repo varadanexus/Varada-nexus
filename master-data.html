@@ -147,6 +147,11 @@ let transporters=[]
 let trucks=[]
 let commodities=[]
 
+let allRoutes=[]
+let allTransporters=[]
+let allTrucks=[]
+let allCommodities=[]
+
 let routePage=1
 let transporterPage=1
 
@@ -174,6 +179,7 @@ document.getElementById("routeCode").value=o+"-"+d
 
 }
 
+
 /* ROUTES */
 
 async function loadRoutes(){
@@ -181,6 +187,7 @@ async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
 
 routes=data
+allRoutes=data
 
 renderRoutes()
 
@@ -215,14 +222,20 @@ function searchRoutes(){
 
 let val=document.getElementById("routeSearch").value.toLowerCase()
 
-routes=routes.filter(r=>r.route_code.toLowerCase().includes(val))
+routes = allRoutes.filter(r =>
+r.route_code.toLowerCase().includes(val) ||
+r.origin.toLowerCase().includes(val) ||
+r.destination.toLowerCase().includes(val)
+)
 
+routePage=1
 renderRoutes()
 
 }
 
 function nextRoute(){routePage++;renderRoutes()}
 function prevRoute(){if(routePage>1){routePage--;renderRoutes()}}
+
 
 /* TRANSPORTERS */
 
@@ -231,8 +244,17 @@ async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
 
 transporters=data
+allTransporters=data
 
 renderTransporters()
+
+let dropdown='<option value="">Select Transporter</option>'
+
+data.forEach(t=>{
+dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
 
@@ -266,8 +288,12 @@ function searchTransporters(){
 
 let val=document.getElementById("transporterSearch").value.toLowerCase()
 
-transporters=transporters.filter(t=>t.transporter_name.toLowerCase().includes(val))
+transporters = allTransporters.filter(t =>
+t.transporter_name.toLowerCase().includes(val) ||
+(t.company||"").toLowerCase().includes(val)
+)
 
+transporterPage=1
 renderTransporters()
 
 }

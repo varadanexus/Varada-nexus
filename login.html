@@ -1,4 +1,11 @@
-<!DOCTYPE html><html><head><title>Varada Nexus Login</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Varada Nexus Login</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -54,12 +61,30 @@ margin-top:12px;
 font-size:14px;
 }
 
-</style></head><body><div class="login-card"><h2>Varada Nexus Login</h2><select id="loginType">
-<option value="staff">Staff Login</option>
-<option value="transporter">Transporter Login</option>
-</select><input type="email" id="email" placeholder="Email"><input type="password" id="password" placeholder="Password"><button onclick="login()">Login</button>
+</style>
+</head>
 
-<div id="error" class="error"></div></div><script>
+<body>
+
+<div class="login-card">
+
+<h2>Varada Nexus Login</h2>
+
+<select id="loginType">
+<option value="staff">Staff Login</option>
+<option value="transporter">Customer Login</option>
+</select>
+
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<div id="error" class="error"></div>
+
+</div>
+
+<script>
 
 /* SUPABASE CONNECTION */
 
@@ -121,7 +146,7 @@ let roleName=role.role_name.toLowerCase()
 
 if(loginType==="transporter" && roleName!=="transporter"){
 
-document.getElementById("error").innerText="This account is not a transporter"
+document.getElementById("error").innerText="This account is not a customer"
 
 await supabaseClient.auth.signOut()
 
@@ -131,7 +156,7 @@ return
 
 if(loginType==="staff" && roleName==="transporter"){
 
-document.getElementById("error").innerText="Transporter must use transporter login"
+document.getElementById("error").innerText="Customers must use customer login"
 
 await supabaseClient.auth.signOut()
 
@@ -153,4 +178,7 @@ window.location.href="dashboard.html"
 
 }
 
-</script></body></html>
+</script>
+
+</body>
+</html>

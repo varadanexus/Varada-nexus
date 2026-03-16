@@ -1,4 +1,13 @@
-<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Dashboard - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -65,7 +74,24 @@ text-align:left;
 background:#eee;
 }
 
-</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN SECURITY -->
+<script>
+if(!localStorage.getItem("role")){
+window.location="login.html"
+}
+</script>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -73,34 +99,104 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 
-</script><div class="main"><h1>Dashboard</h1><!-- MAIN SUMMARY --><div class="card-container"><div class="card">
+</script>
+
+<div class="main">
+
+<h1>Dashboard</h1>
+
+<!-- MAIN SUMMARY -->
+
+<div class="card-container">
+
+<div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div><!-- ROUTE PROFIT --><div class="widget"><h3>Profit by Route</h3><table><thead>
+</div>
+
+</div>
+
+<!-- ROUTE PROFIT -->
+
+<div class="widget">
+
+<h3>Profit by Route</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Route</th>
 <th>Profit</th>
 </tr>
-</thead><tbody id="routeProfit"></tbody></table></div><!-- TRUCK PROFIT --><div class="widget"><h3>Profit by Truck</h3><table><thead>
+</thead>
+
+<tbody id="routeProfit"></tbody>
+
+</table>
+
+</div>
+
+<!-- TRUCK PROFIT -->
+
+<div class="widget">
+
+<h3>Profit by Truck</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Truck</th>
 <th>Profit</th>
 </tr>
-</thead><tbody id="truckProfit"></tbody></table></div><!-- MONTHLY PROFIT --><div class="widget"><h3>Monthly Profit</h3><table><thead>
+</thead>
+
+<tbody id="truckProfit"></tbody>
+
+</table>
+
+</div>
+
+<!-- MONTHLY PROFIT -->
+
+<div class="widget">
+
+<h3>Monthly Profit</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Month</th>
 <th>Profit</th>
 </tr>
-</thead><tbody id="monthlyProfit"></tbody></table></div></div><script>
+</thead>
+
+<tbody id="monthlyProfit"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -108,8 +204,6 @@ const supabaseClient = supabase.createClient(
 )
 
 loadDashboard()
-
-
 
 async function loadDashboard(){
 
@@ -121,79 +215,54 @@ const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
-
 let totalTrips = trips.length
-
 let totalRevenue = 0
 let totalCost = 0
 let totalProfit = 0
-
 
 let expenseMap={}
 
 expenses.forEach(e=>{
 
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-
 expenseMap[e.trip_id]+=Number(e.amount)
 
 })
-
 
 let routeMap={}
 let truckMap={}
 let monthMap={}
 
-
-
 trips.forEach(trip=>{
 
 let mt = trip.weight_kg / 1000
-
 let expense = expenseMap[trip.id] || 0
 
 let companyAmount = (trip.company_rate * mt) - expense
-
 let transporterAmount = (trip.transporter_rate * mt) - expense
 
 let profit = companyAmount - transporterAmount
-
 
 totalRevenue += companyAmount
 totalCost += transporterAmount
 totalProfit += profit
 
-
-
-/* ROUTE PROFIT */
-
 if(!routeMap[trip.route]) routeMap[trip.route]=0
 routeMap[trip.route]+=profit
 
-
-
-/* TRUCK PROFIT */
-
 if(!truckMap[trip.truck]) truckMap[trip.truck]=0
 truckMap[trip.truck]+=profit
-
-
-
-/* MONTHLY PROFIT */
 
 if(trip.trip_date){
 
 let month = trip.trip_date.substring(0,7)
 
 if(!monthMap[month]) monthMap[month]=0
-
 monthMap[month]+=profit
 
 }
 
 })
-
-
 
 document.getElementById("totalTrips").innerText = totalTrips
 
@@ -205,10 +274,6 @@ document.getElementById("totalCost").innerText =
 
 document.getElementById("totalProfit").innerText =
 "₹ "+ totalProfit.toLocaleString()
-
-
-
-/* ROUTE TABLE */
 
 let routeHTML=""
 
@@ -223,10 +288,6 @@ routeHTML+=`
 
 document.getElementById("routeProfit").innerHTML=routeHTML
 
-
-
-/* TRUCK TABLE */
-
 let truckHTML=""
 
 Object.keys(truckMap).forEach(truck=>{
@@ -239,10 +300,6 @@ truckHTML+=`
 })
 
 document.getElementById("truckProfit").innerHTML=truckHTML
-
-
-
-/* MONTHLY TABLE */
 
 let monthHTML=""
 
@@ -259,4 +316,7 @@ document.getElementById("monthlyProfit").innerHTML=monthHTML
 
 }
 
-</script></body></html>
+</script>
+
+</body>
+</html>

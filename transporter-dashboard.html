@@ -27,16 +27,6 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-button{
-padding:10px 18px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-margin-right:10px;
-}
-
 .stat{
 font-size:28px;
 font-weight:bold;
@@ -61,13 +51,7 @@ Payments Received
 </div><div class="card">
 Balance
 <div class="stat" id="balance">0</div>
-</div></div><button onclick="window.location.href='transporter-trips.html'">
-My Trips
-</button><button onclick="window.location.href='transporter-ledger.html'">
-Ledger
-</button><button onclick="logout()">
-Logout
-</button></div><script>
+</div></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",

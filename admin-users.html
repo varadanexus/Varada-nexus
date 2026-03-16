@@ -24,14 +24,14 @@ h2{
 color:#1f3c88;
 }
 
-/* FORM */
+/* form */
 
 .form-box{
 background:white;
 padding:20px;
 border-radius:6px;
 width:420px;
-margin-bottom:30px;
+margin-bottom:25px;
 }
 
 input,select{
@@ -55,7 +55,7 @@ button:hover{
 background:#162c66;
 }
 
-/* TABLE */
+/* table */
 
 table{
 width:100%;
@@ -66,6 +66,7 @@ background:white;
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
+text-align:left;
 }
 
 th{
@@ -100,17 +101,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <input type="email" id="email" placeholder="Email">
 
-<input type="password" id="password" placeholder="Password">
-
-<select id="role">
-
-<option value="admin">Admin</option>
-<option value="manager">Manager</option>
-<option value="operator">Operator</option>
-<option value="accounts">Accounts</option>
-<option value="customer">Customer</option>
-
-</select>
+<select id="role"></select>
 
 <button onclick="createUser()">Create User</button>
 
@@ -135,18 +126,35 @@ document.getElementById("sidebar-container").innerHTML=data
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* LOAD USERS */
+/* LOAD ROLES */
 
-loadUsers()
+async function loadRoles(){
+
+const {data}=await supabaseClient
+.from("roles")
+.select("*")
+
+let html=""
+
+data.forEach(r=>{
+html+=`<option value="${r.id}">${r.role_name}</option>`
+})
+
+document.getElementById("role").innerHTML=html
+
+}
+
+/* LOAD USERS */
 
 async function loadUsers(){
 
 const {data,error}=await supabaseClient
 .from("users")
 .select(`
+id,
 email,
 user_roles(
 roles(role_name)
@@ -186,66 +194,49 @@ document.getElementById("usersTable").innerHTML=html
 async function createUser(){
 
 let email=document.getElementById("email").value
-let password=document.getElementById("password").value
-let role=document.getElementById("role").value
+let roleId=document.getElementById("role").value
 
-if(!email || !password){
-alert("Enter email and password")
+if(!email){
+alert("Enter email")
 return
 }
 
-/* CREATE AUTH USER */
+/* insert user */
 
-const {data,error}=await supabaseClient.auth.signUp({
-
-email:email,
-password:password
-
+const {data,error}=await supabaseClient
+.from("users")
+.insert({
+email:email
 })
+.select()
+.single()
 
 if(error){
 alert(error.message)
 return
 }
 
-let authId=data.user.id
-
-/* INSERT INTO USERS TABLE */
-
-const {data:userData}=await supabaseClient
-.from("users")
-.insert({
-email:email,
-auth_id:authId
-})
-.select()
-.single()
-
-/* GET ROLE ID */
-
-const {data:roleData}=await supabaseClient
-.from("roles")
-.select("id")
-.eq("role_name",role)
-.single()
-
-/* INSERT USER ROLE */
+/* assign role */
 
 await supabaseClient
 .from("user_roles")
 .insert({
-user_id:userData.id,
-role_id:roleData.id
+user_id:data.id,
+role_id:roleId
 })
 
-alert("User Created")
+alert("User Added")
 
 loadUsers()
 
 }
 
+/* INIT */
+
+loadRoles()
+loadUsers()
+
 </script>
 
 </body>
-
 </html>

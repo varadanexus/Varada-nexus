@@ -77,9 +77,9 @@ margin-top:10px;
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table><div class="pagination">
-<button onclick="prevPage()">Previous</button>
+</thead><tbody id="tripTable"></tbody></table><div class="pagination"><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
+
 </div></div><script>
 
 const supabaseClient = supabase.createClient(
@@ -92,6 +92,7 @@ let filteredTrips=[]
 
 let page=1
 let pageSize=10
+
 
 init()
 
@@ -108,26 +109,31 @@ return
 let authId=data.session.user.id
 
 
-const {data:transporter}=await supabaseClient
+const {data:transporter,error:transporterError}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
+if(transporterError){
+console.log(transporterError)
+return
+}
 
-let transporterId=transporter.id
 
-
-const {data}=await supabaseClient
+const {data:trips,error}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporterId)
+.eq("transporter_name", transporter.transporter_name)
 .order("created_at",{ascending:false})
 
+if(error){
+console.log(error)
+}
 
-allTrips=data
-filteredTrips=data
 
+allTrips=trips || []
+filteredTrips=trips || []
 
 buildFilters()
 renderTrips()
@@ -173,7 +179,6 @@ filteredTrips=allTrips.filter(t=>
 )
 
 page=1
-
 renderTrips()
 
 }
@@ -207,7 +212,7 @@ pageTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
 
-let earnings=((t.weight_kg/1000) * rate).toFixed(2)
+let earnings=((t.weight_kg/1000)*rate).toFixed(2)
 
 html+=`
 <tr>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -15,7 +15,7 @@ padding:30px;
 background:white;
 padding:25px;
 border-radius:8px;
-margin-bottom:20px;
+margin-bottom:25px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
@@ -51,14 +51,17 @@ border-bottom:1px solid #ddd;
 
 th{
 background:#eee;
-text-align:left;
+}
+
+.pagination{
+margin-top:10px;
 }
 
 </style></head><body><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 checkLogin()
@@ -81,21 +84,24 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 
-</script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="routeCode" placeholder="Route Code (HYD-VJA)">
-<button onclick="addRoute()">Add Route</button><table>
+</script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="routeCode" placeholder="Route Code">
+<button onclick="addRoute()">Add Route</button><input id="routeSearch" placeholder="Search Route" onkeyup="searchRoutes()"><table>
 <thead>
 <tr>
 <th>Route</th>
 <th>Action</th>
 </tr>
-</thead>
-<tbody id="routeTable"></tbody>
-</table></div><!-- TRANSPORTERS --><div class="card"><h3>Transporters</h3><input id="transporterName" placeholder="Transporter Name">
-<input id="transporterContact" placeholder="Contact Number">
-<input id="transporterCompany" placeholder="Company Name">
-<input id="transporterPAN" placeholder="PAN"><button onclick="addTransporter()">Add Transporter</button>
+</thead><tbody id="routeTable"></tbody></table><div class="pagination">
+<button onclick="prevRoute()">Prev</button>
+<button onclick="nextRoute()">Next</button>
+<button onclick="routePDF()">Download PDF</button>
+</div></div><!-- TRANSPORTERS --><div class="card"><h3>Transporters</h3><input id="tName" placeholder="Name">
+<input id="tPhone" placeholder="Contact">
+<input id="tCompany" placeholder="Company">
+<input id="tPAN" placeholder="PAN"><button onclick="addTransporter()">Add</button>
 
-<table><thead>
+<input id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTransporters()"><table>
+<thead>
 <tr>
 <th>Name</th>
 <th>Contact</th>
@@ -103,25 +109,46 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>PAN</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="transporterTable"></tbody></table></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number"><select id="truckTransporter"></select>
+</thead><tbody id="transporterTable"></tbody></table><div class="pagination">
+<button onclick="prevTransporter()">Prev</button>
+<button onclick="nextTransporter()">Next</button>
+<button onclick="transporterPDF()">Download PDF</button>
+</div></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number">
+<select id="truckTransporter"></select><button onclick="addTruck()">Add Truck</button>
 
-<button onclick="addTruck()">Add Truck</button>
-
-<table><thead>
+<input id="truckSearch" placeholder="Search Truck" onkeyup="searchTrucks()"><table><thead>
 <tr>
 <th>Truck</th>
 <th>Transporter</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="truckTable"></tbody></table></div><!-- COMMODITIES --><div class="card"><h3>Commodities</h3><input id="commodityName" placeholder="Commodity Name">
-<button onclick="addCommodity()">Add Commodity</button><table><thead>
+</thead><tbody id="truckTable"></tbody></table><div class="pagination">
+<button onclick="prevTruck()">Prev</button>
+<button onclick="nextTruck()">Next</button>
+<button onclick="truckPDF()">Download PDF</button>
+</div></div><!-- COMMODITIES --><div class="card"><h3>Commodities</h3><input id="commodityName" placeholder="Commodity">
+<button onclick="addCommodity()">Add Commodity</button><input id="commoditySearch" placeholder="Search Commodity" onkeyup="searchCommodities()"><table><thead>
 <tr>
 <th>Commodity</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="commodityTable"></tbody></table></div></div><script>
+</thead><tbody id="commodityTable"></tbody></table><div class="pagination">
+<button onclick="prevCommodity()">Prev</button>
+<button onclick="nextCommodity()">Next</button>
+<button onclick="commodityPDF()">Download PDF</button>
+</div></div></div><script>
 
+let routes=[]
 let transporters=[]
+let trucks=[]
+let commodities=[]
+
+let routePage=1
+let transporterPage=1
+let truckPage=1
+let commodityPage=1
+
+const pageSize=10
 
 init()
 
@@ -134,18 +161,24 @@ await loadCommodities()
 
 }
 
-
-
-/* ROUTES */
-
 async function loadRoutes(){
 
 const {data}=await supabaseClient.from("routes").select("*")
 
+routes=data
+
+renderRoutes()
+
+}
+
+function renderRoutes(){
+
+let start=(routePage-1)*pageSize
+let page=routes.slice(start,start+pageSize)
+
 let html=""
 
-data.forEach(r=>{
-
+page.forEach(r=>{
 html+=`
 <tr>
 <td>${r.route_code}</td>
@@ -155,30 +188,31 @@ html+=`
 </td>
 </tr>
 `
-
 })
 
 document.getElementById("routeTable").innerHTML=html
 
 }
 
-async function addRoute(){
+function searchRoutes(){
 
-let route=document.getElementById("routeCode").value
+let val=document.getElementById("routeSearch").value.toLowerCase()
 
-await supabaseClient.from("routes").insert({route_code:route})
+routes=routes.filter(r=>r.route_code.toLowerCase().includes(val))
 
-document.getElementById("routeCode").value=""
+routePage=1
 
-loadRoutes()
+renderRoutes()
 
 }
 
-async function editRoute(id,current){
+async function addRoute(){
 
-let value=prompt("Edit Route",current)
+let code=document.getElementById("routeCode").value
 
-await supabaseClient.from("routes").update({route_code:value}).eq("id",id)
+await supabaseClient.from("routes").insert({route_code:code})
+
+document.getElementById("routeCode").value=""
 
 loadRoutes()
 
@@ -192,9 +226,31 @@ loadRoutes()
 
 }
 
+function nextRoute(){routePage++;renderRoutes()}
+function prevRoute(){if(routePage>1)routePage--;renderRoutes()}
+
+function routePDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+routes.forEach(r=>{
+rows.push([r.route_code])
+})
+
+doc.autoTable({
+head:[["Route"]],
+body:rows
+})
+
+doc.save("routes.pdf")
+
+}
 
 
-/* TRANSPORTERS */
 
 async function loadTransporters(){
 
@@ -202,11 +258,26 @@ const {data}=await supabaseClient.from("transporters").select("*")
 
 transporters=data
 
-let html=""
 let dropdown='<option value="">Select Transporter</option>'
 
 data.forEach(t=>{
+dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
 
+document.getElementById("truckTransporter").innerHTML=dropdown
+
+renderTransporters()
+
+}
+
+function renderTransporters(){
+
+let start=(transporterPage-1)*pageSize
+let page=transporters.slice(start,start+pageSize)
+
+let html=""
+
+page.forEach(t=>{
 html+=`
 <tr>
 <td>${t.transporter_name}</td>
@@ -214,64 +285,75 @@ html+=`
 <td>${t.company_name||""}</td>
 <td>${t.pan_number||""}</td>
 <td>
-<button class="editBtn" onclick="editTransporter('${t.id}')">Edit</button>
+<button class="editBtn">Edit</button>
 <button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
 </td>
 </tr>
 `
-
-dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
-
 })
 
 document.getElementById("transporterTable").innerHTML=html
-document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
 
 async function addTransporter(){
 
-let name=document.getElementById("transporterName").value
-let contact=document.getElementById("transporterContact").value
-let company=document.getElementById("transporterCompany").value
-let pan=document.getElementById("transporterPAN").value
+let name=document.getElementById("tName").value
+let phone=document.getElementById("tPhone").value
+let company=document.getElementById("tCompany").value
+let pan=document.getElementById("tPAN").value
 
 await supabaseClient.from("transporters").insert({
 
 transporter_name:name,
-contact_number:contact,
+contact_number:phone,
 company_name:company,
 pan_number:pan
 
 })
 
-document.getElementById("transporterName").value=""
-document.getElementById("transporterContact").value=""
-document.getElementById("transporterCompany").value=""
-document.getElementById("transporterPAN").value=""
+loadTransporters()
+
+}
+
+async function deleteTransporter(id){
+
+await supabaseClient.from("transporters").delete().eq("id",id)
 
 loadTransporters()
 
 }
 
+function nextTransporter(){transporterPage++;renderTransporters()}
+function prevTransporter(){if(transporterPage>1)transporterPage--;renderTransporters()}
 
 
-/* TRUCKS */
 
 async function loadTrucks(){
 
 const {data}=await supabaseClient.from("trucks").select("*")
 
+trucks=data
+
+renderTrucks()
+
+}
+
+function renderTrucks(){
+
+let start=(truckPage-1)*pageSize
+let page=trucks.slice(start,start+pageSize)
+
 let html=""
 
-data.forEach(t=>{
+page.forEach(t=>{
 
 let transporter=transporters.find(x=>x.id==t.transporter_id)
 
 html+=`
 <tr>
 <td>${t.truck_number}</td>
-<td>${transporter ? transporter.transporter_name : ""}</td>
+<td>${transporter?transporter.transporter_name:""}</td>
 <td>
 <button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button>
 </td>
@@ -296,8 +378,6 @@ transporter_id:transporter
 
 })
 
-document.getElementById("truckNumber").value=""
-
 loadTrucks()
 
 }
@@ -310,18 +390,29 @@ loadTrucks()
 
 }
 
+function nextTruck(){truckPage++;renderTrucks()}
+function prevTruck(){if(truckPage>1)truckPage--;renderTrucks()}
 
 
-/* COMMODITIES */
 
 async function loadCommodities(){
 
 const {data}=await supabaseClient.from("commodities").select("*")
 
+commodities=data
+
+renderCommodities()
+
+}
+
+function renderCommodities(){
+
+let start=(commodityPage-1)*pageSize
+let page=commodities.slice(start,start+pageSize)
+
 let html=""
 
-data.forEach(c=>{
-
+page.forEach(c=>{
 html+=`
 <tr>
 <td>${c.name}</td>
@@ -330,7 +421,6 @@ html+=`
 </td>
 </tr>
 `
-
 })
 
 document.getElementById("commodityTable").innerHTML=html
@@ -342,8 +432,6 @@ async function addCommodity(){
 let name=document.getElementById("commodityName").value
 
 await supabaseClient.from("commodities").insert({name:name})
-
-document.getElementById("commodityName").value=""
 
 loadCommodities()
 
@@ -357,4 +445,8 @@ loadCommodities()
 
 }
 
-</script></body></html>
+function nextCommodity(){commodityPage++;renderCommodities()}
+function prevCommodity(){if(commodityPage>1)commodityPage--;renderCommodities()}
+
+</script></body>
+</html>

@@ -67,14 +67,12 @@ background:#eee;
 
 </style></head><body><script>
 
-/* SUPABASE CONNECTION */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* CHECK LOGIN */
+/* LOGIN CHECK */
 
 checkLogin()
 
@@ -108,20 +106,17 @@ document.getElementById("sidebar-container").innerHTML=data
 </div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div><div class="widget"><h3>Profit by Route</h3><table>
-<thead>
+</div></div><div class="widget"><h3>Profit by Route</h3><table><thead>
 <tr>
 <th>Route</th>
 <th>Profit</th>
 </tr>
-</thead><tbody id="routeProfit"></tbody></table></div><div class="widget"><h3>Profit by Truck</h3><table>
-<thead>
+</thead><tbody id="routeProfit"></tbody></table></div><div class="widget"><h3>Profit by Truck</h3><table><thead>
 <tr>
 <th>Truck</th>
 <th>Profit</th>
 </tr>
-</thead><tbody id="truckProfit"></tbody></table></div><div class="widget"><h3>Monthly Profit</h3><table>
-<thead>
+</thead><tbody id="truckProfit"></tbody></table></div><div class="widget"><h3>Monthly Profit</h3><table><thead>
 <tr>
 <th>Month</th>
 <th>Profit</th>
@@ -148,8 +143,10 @@ let totalProfit = 0
 let expenseMap={}
 
 expenses.forEach(e=>{
+
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount)
+
 })
 
 let routeMap={}

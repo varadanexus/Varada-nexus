@@ -10,20 +10,60 @@
 <style>
 
 body{
+margin:0;
 font-family:Arial;
 background:#f4f6f9;
-padding:40px;
+}
+
+/* PAGE */
+
+.main{
+margin-left:220px;
+padding:30px;
 }
 
 h2{
 color:#1f3c88;
-margin-bottom:20px;
 }
+
+/* FORM */
+
+.form-box{
+background:white;
+padding:20px;
+border-radius:6px;
+margin-top:20px;
+width:400px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+button:hover{
+background:#162c66;
+}
+
+/* TABLE */
 
 table{
 width:100%;
 border-collapse:collapse;
 background:white;
+margin-top:20px;
 }
 
 th,td{
@@ -36,63 +76,83 @@ th{
 background:#eee;
 }
 
-button{
-padding:6px 10px;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-.delete{
-background:#d9534f;
-color:white;
-}
-
-.reset{
-background:#1f3c88;
-color:white;
-}
-
 </style>
 
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
 <h2>Users</h2>
+
+<!-- CREATE USER -->
+
+<div class="form-box">
+
+<h3>Create User</h3>
+
+<input type="email" id="email" placeholder="Email">
+
+<input type="password" id="password" placeholder="Password">
+
+<select id="role">
+
+<option value="admin">Admin</option>
+<option value="manager">Manager</option>
+<option value="operator">Operator</option>
+<option value="accounts">Accounts</option>
+<option value="customer">Customer</option>
+
+</select>
+
+<button onclick="createUser()">Create User</button>
+
+</div>
+
+<!-- USERS TABLE -->
 
 <table>
 
 <thead>
-
 <tr>
-
 <th>Email</th>
 <th>Role</th>
-<th>Actions</th>
-
 </tr>
-
 </thead>
 
 <tbody id="usersTable"></tbody>
 
 </table>
 
+</div>
+
 <script>
 
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"PASTE_SERVICE_ROLE_KEY_HERE"
+"YOUR_SERVICE_ROLE_KEY"
 )
 
 loadUsers()
 
 async function loadUsers(){
 
-const {data:users}=await supabase.auth.admin.listUsers()
+const {data:users}=await supabaseClient.auth.admin.listUsers()
 
-const {data:userRoles}=await supabase
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select(`
 user_id,
@@ -105,7 +165,7 @@ users.users.forEach(u=>{
 
 let role=userRoles.find(r=>r.user_id===u.id)
 
-let roleName=role ? role.roles.role_name : "Unknown"
+let roleName=role ? role.roles.role_name : "Not Assigned"
 
 html+=`
 
@@ -114,14 +174,6 @@ html+=`
 <td>${u.email}</td>
 
 <td>${roleName}</td>
-
-<td>
-
-<button class="reset" onclick="resetPassword('${u.id}')">Reset Password</button>
-
-<button class="delete" onclick="deleteUser('${u.id}')">Delete</button>
-
-</td>
 
 </tr>
 
@@ -133,38 +185,50 @@ document.getElementById("usersTable").innerHTML=html
 
 }
 
-/* RESET PASSWORD */
+async function createUser(){
 
-async function resetPassword(userId){
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+let role=document.getElementById("role").value
 
-let newPassword=prompt("Enter new password")
+if(!email || !password){
 
-if(!newPassword) return
-
-await supabase.auth.admin.updateUserById(userId,{
-
-password:newPassword
-
-})
-
-alert("Password updated")
+alert("Enter email and password")
+return
 
 }
 
-/* DELETE USER */
+const {data,error}=await supabaseClient.auth.admin.createUser({
 
-async function deleteUser(userId){
+email:email,
+password:password,
+email_confirm:true
 
-if(!confirm("Delete this user?")) return
+})
 
-await supabase.auth.admin.deleteUser(userId)
+if(error){
 
-await supabase
+alert(error.message)
+return
+
+}
+
+let userId=data.user.id
+
+const {data:roleData}=await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name",role)
+.single()
+
+await supabaseClient
 .from("user_roles")
-.delete()
-.eq("user_id",userId)
+.insert({
+user_id:userId,
+role_id:roleData.id
+})
 
-alert("User deleted")
+alert("User created")
 
 loadUsers()
 

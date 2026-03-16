@@ -1,85 +1,210 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Supabase Library --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
 
-.login-container{
-display:flex;
-justify-content:center;
-align-items:center;
-margin-top:80px;
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card-container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+margin-top:20px;
 }
 
 .card{
 background:white;
-padding:30px;
+padding:20px;
 border-radius:8px;
-box-shadow:0 2px 10px rgba(0,0,0,0.15);
-width:320px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card h2{
-margin-bottom:20px;
+.card h3{
+margin:0;
+font-size:18px;
 }
 
-.card input{
+.card p{
+font-size:26px;
+margin-top:10px;
+font-weight:bold;
+}
+
+.widget{
+background:white;
+margin-top:25px;
+padding:20px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.widget h3{
+margin-top:0;
+margin-bottom:15px;
+}
+
+.widget table{
 width:100%;
-padding:10px;
-margin-bottom:12px;
-border:1px solid #ccc;
-border-radius:4px;
+border-collapse:collapse;
 }
 
-.card button{
-width:100%;
-padding:10px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
+.widget th,
+.widget td{
+padding:8px;
+border-bottom:1px solid #ddd;
+text-align:left;
 }
 
-</style></head><body><header><div class="logo-wrapper">
-<img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
-<h1>Varada Nexus Private Limited</h1>
-</div><nav>
-<a href="index.html">Home</a>
-<a href="founder.html">Founder</a>
-<a href="services.html">Services</a>
-<a href="contact.html">Contact</a>
-<a href="login.html">Login</a>
-</nav></header><main><div class="login-container"><div class="card"><h2>Varada Nexus Login</h2><input id="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
+.widget th{
+background:#eee;
+}
 
-</div></div></main><footer>
-&copy; 2025 Varada Nexus Private Limited
-</footer><script>
+</style></head><body><!-- LOGIN PROTECTION --><script>
+
+if(!localStorage.getItem("supabaseSession")){
+window.location.href="login.html"
+}
+
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+
+</script><div class="main"><h1>Dashboard</h1><!-- SUMMARY CARDS --><div class="card-container"><div class="card">
+<h3>Total Trips</h3>
+<p id="totalTrips">0</p>
+</div><div class="card">
+<h3>Total Company Amount</h3>
+<p id="totalRevenue">0</p>
+</div><div class="card">
+<h3>Total Transporter Amount</h3>
+<p id="totalCost">0</p>
+</div><div class="card">
+<h3>Total Profit</h3>
+<p id="totalProfit">0</p>
+</div></div><!-- ROUTE PROFIT --><div class="widget"><h3>Profit by Route</h3><table><thead><tr>
+<th>Route</th>
+<th>Profit</th>
+</tr></thead><tbody id="routeProfit"></tbody></table></div><!-- TRUCK PROFIT --><div class="widget"><h3>Profit by Truck</h3><table><thead><tr>
+<th>Truck</th>
+<th>Profit</th>
+</tr></thead><tbody id="truckProfit"></tbody></table></div><!-- MONTHLY PROFIT --><div class="widget"><h3>Monthly Profit</h3><table><thead><tr>
+<th>Month</th>
+<th>Profit</th>
+</tr></thead><tbody id="monthlyProfit"></tbody></table></div></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-async function login(){
+loadDashboard()
 
-let email=document.getElementById("email").value
-let password=document.getElementById("password").value
+async function loadDashboard(){
 
-const { data, error } = await supabaseClient.auth.signInWithPassword({
-email: email,
-password: password
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+let totalTrips = trips.length
+let totalRevenue = 0
+let totalCost = 0
+let totalProfit = 0
+
+let expenseMap={}
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount)
 })
 
-if(error){
-alert(error.message)
-return
+let routeMap={}
+let truckMap={}
+let monthMap={}
+
+trips.forEach(trip=>{
+
+let mt = trip.weight_kg / 1000
+let expense = expenseMap[trip.id] || 0
+
+let companyAmount = (trip.company_rate * mt) - expense
+let transporterAmount = (trip.transporter_rate * mt) - expense
+let profit = companyAmount - transporterAmount
+
+totalRevenue += companyAmount
+totalCost += transporterAmount
+totalProfit += profit
+
+if(!routeMap[trip.route]) routeMap[trip.route]=0
+routeMap[trip.route]+=profit
+
+if(!truckMap[trip.truck]) truckMap[trip.truck]=0
+truckMap[trip.truck]+=profit
+
+if(trip.trip_date){
+let month = trip.trip_date.substring(0,7)
+if(!monthMap[month]) monthMap[month]=0
+monthMap[month]+=profit
 }
 
-/* SAVE LOGIN SESSION */
+})
 
-localStorage.setItem("supabaseSession", JSON.stringify(data.session))
+document.getElementById("totalTrips").innerText = totalTrips
+document.getElementById("totalRevenue").innerText = "₹ "+ totalRevenue.toLocaleString()
+document.getElementById("totalCost").innerText = "₹ "+ totalCost.toLocaleString()
+document.getElementById("totalProfit").innerText = "₹ "+ totalProfit.toLocaleString()
 
-alert("Login Successful")
+let routeHTML=""
 
-window.location.href="dashboard.html"
+Object.keys(routeMap).forEach(route=>{
+routeHTML+=`
+<tr>
+<td>${route}</td>
+<td>₹ ${routeMap[route].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("routeProfit").innerHTML=routeHTML
+
+let truckHTML=""
+
+Object.keys(truckMap).forEach(truck=>{
+truckHTML+=`
+<tr>
+<td>${truck}</td>
+<td>₹ ${truckMap[truck].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("truckProfit").innerHTML=truckHTML
+
+let monthHTML=""
+
+Object.keys(monthMap).forEach(month=>{
+monthHTML+=`
+<tr>
+<td>${month}</td>
+<td>₹ ${monthMap[month].toLocaleString()}</td>
+</tr>
+`
+})
+
+document.getElementById("monthlyProfit").innerHTML=monthHTML
 
 }
 

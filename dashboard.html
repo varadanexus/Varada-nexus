@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Dashboard - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<style>
+<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
 
 body{
 margin:0;
@@ -74,24 +65,30 @@ text-align:left;
 background:#eee;
 }
 
-</style>
+</style></head><body><script>
 
-</head>
+/* SUPABASE CONNECTION */
 
-<body>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
 
-<!-- LOGIN SECURITY -->
-<script>
-if(!localStorage.getItem("role")){
-window.location="login.html"
+/* CHECK LOGIN */
+
+checkLogin()
+
+async function checkLogin(){
+
+const { data } = await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
 }
-</script>
 
-<!-- SIDEBAR -->
+}
 
-<div id="sidebar-container"></div>
-
-<script>
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -99,109 +96,37 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 
-</script>
-
-<div class="main">
-
-<h1>Dashboard</h1>
-
-<!-- MAIN SUMMARY -->
-
-<div class="card-container">
-
-<div class="card">
+</script><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div>
-
-</div>
-
-<!-- ROUTE PROFIT -->
-
-<div class="widget">
-
-<h3>Profit by Route</h3>
-
-<table>
-
+</div></div><div class="widget"><h3>Profit by Route</h3><table>
 <thead>
 <tr>
 <th>Route</th>
 <th>Profit</th>
 </tr>
-</thead>
-
-<tbody id="routeProfit"></tbody>
-
-</table>
-
-</div>
-
-<!-- TRUCK PROFIT -->
-
-<div class="widget">
-
-<h3>Profit by Truck</h3>
-
-<table>
-
+</thead><tbody id="routeProfit"></tbody></table></div><div class="widget"><h3>Profit by Truck</h3><table>
 <thead>
 <tr>
 <th>Truck</th>
 <th>Profit</th>
 </tr>
-</thead>
-
-<tbody id="truckProfit"></tbody>
-
-</table>
-
-</div>
-
-<!-- MONTHLY PROFIT -->
-
-<div class="widget">
-
-<h3>Monthly Profit</h3>
-
-<table>
-
+</thead><tbody id="truckProfit"></tbody></table></div><div class="widget"><h3>Monthly Profit</h3><table>
 <thead>
 <tr>
 <th>Month</th>
 <th>Profit</th>
 </tr>
-</thead>
-
-<tbody id="monthlyProfit"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-<script>
-
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
-)
+</thead><tbody id="monthlyProfit"></tbody></table></div></div><script>
 
 loadDashboard()
 
@@ -223,10 +148,8 @@ let totalProfit = 0
 let expenseMap={}
 
 expenses.forEach(e=>{
-
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount)
-
 })
 
 let routeMap={}
@@ -265,15 +188,9 @@ monthMap[month]+=profit
 })
 
 document.getElementById("totalTrips").innerText = totalTrips
-
-document.getElementById("totalRevenue").innerText =
-"₹ "+ totalRevenue.toLocaleString()
-
-document.getElementById("totalCost").innerText =
-"₹ "+ totalCost.toLocaleString()
-
-document.getElementById("totalProfit").innerText =
-"₹ "+ totalProfit.toLocaleString()
+document.getElementById("totalRevenue").innerText = "₹ "+ totalRevenue.toLocaleString()
+document.getElementById("totalCost").innerText = "₹ "+ totalCost.toLocaleString()
+document.getElementById("totalProfit").innerText = "₹ "+ totalProfit.toLocaleString()
 
 let routeHTML=""
 
@@ -316,7 +233,4 @@ document.getElementById("monthlyProfit").innerHTML=monthHTML
 
 }
 
-</script>
-
-</body>
-</html>
+</script></body></html>

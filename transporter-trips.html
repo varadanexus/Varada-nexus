@@ -6,14 +6,10 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
-/* sidebar layout */
-
 .main{
 margin-left:220px;
 padding:30px;
 }
-
-/* FIXED: only affect page title */
 
 .main h2{
 color:#1f3c88;
@@ -65,7 +61,7 @@ margin-top:10px;
 font-weight:bold;
 }
 
-</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</style></head><body><div id="sidebar-container"></div><script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -92,9 +88,30 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table><div class="pagination">
-<button onclick="prevPage()">Previous</button>
+</thead><tbody id="tripTable"></tbody></table><div class="pagination"><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
+
+</div></div><!-- EXPENSE POPUP --><div id="expensePopup" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+"><div style="
+background:white;
+width:420px;
+margin:120px auto;
+padding:20px;
+border-radius:6px;
+"><h3 id="expenseTitle"></h3><table style="width:100%;border-collapse:collapse"><thead>
+<tr>
+<th>Expense Type</th>
+<th>Amount</th>
+</tr>
+</thead><tbody id="expenseTable"></tbody></table><br><button onclick="closeExpenses()">Close</button>
+
 </div></div><script>
 
 const supabaseClient = supabase.createClient(
@@ -155,8 +172,6 @@ document.getElementById("message").innerText="No trips found for this transporte
 allTrips=trips || []
 filteredTrips=trips || []
 
-/* LOAD EXPENSES */
-
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
@@ -174,6 +189,7 @@ buildFilters()
 renderTrips()
 
 }
+
 
 function buildFilters(){
 
@@ -195,6 +211,7 @@ document.getElementById("commodityFilter").innerHTML=commodityHTML
 
 }
 
+
 function applyFilters(){
 
 let route=document.getElementById("routeFilter").value
@@ -212,6 +229,7 @@ renderTrips()
 
 }
 
+
 function clearFilters(){
 
 filteredTrips=allTrips
@@ -223,6 +241,7 @@ document.getElementById("commodityFilter").value=""
 renderTrips()
 
 }
+
 
 function renderTrips(){
 
@@ -244,7 +263,11 @@ let earnings=(freight-expenses).toFixed(2)
 
 html+=`
 <tr>
-<td>${t.trip_no || ""}</td>
+<td onclick="showExpenses('${t.id}','${t.trip_no}')"
+style="cursor:pointer;color:#1f3c88;font-weight:bold">
+${t.trip_no || ""}
+</td>
+
 <td>${t.route || ""}</td>
 <td>${t.truck || ""}</td>
 <td>${t.commodity || ""}</td>
@@ -263,6 +286,7 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
+
 function nextPage(){
 if(page*pageSize<filteredTrips.length){
 page++
@@ -276,6 +300,7 @@ page--
 renderTrips()
 }
 }
+
 
 function downloadPDF(){
 
@@ -317,6 +342,48 @@ startY:20
 doc.save("transporter-trips.pdf")
 
 }
+
+
+/* EXPENSE VIEW */
+
+async function showExpenses(tripId,tripNo){
+
+document.getElementById("expensePopup").style.display="block"
+
+document.getElementById("expenseTitle").innerText="Expenses for "+tripNo
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("*")
+.eq("trip_id",tripId)
+
+let html=""
+
+if(data && data.length>0){
+
+data.forEach(e=>{
+html+=`
+<tr>
+<td>${e.expense_type || "Expense"}</td>
+<td>₹ ${e.amount}</td>
+</tr>
+`
+})
+
+}else{
+
+html="<tr><td colspan='2'>No expenses found</td></tr>"
+
+}
+
+document.getElementById("expenseTable").innerHTML=html
+
+}
+
+function closeExpenses(){
+document.getElementById("expensePopup").style.display="none"
+}
+
 
 async function logout(){
 await supabaseClient.auth.signOut()

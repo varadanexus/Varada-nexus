@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en">
-<head><meta charset="UTF-8">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
 
@@ -36,22 +35,33 @@ border-radius:4px;
 cursor:pointer;
 }
 
-</style></head><body><header>
-<div class="logo-wrapper">
+</style></head><body><header><div class="logo-wrapper">
 <img src="images/logo.png" class="logo">
-<h1>Varada Nexus Private Limited</h1>
-</div>
-</header><main><div class="login-container">
-<div class="card"><h2>Login</h2><input id="email" placeholder="Email">
+<h1>Varada Nexus Private Limited</h1></div></header><main><div class="login-container"><div class="card"><h2>Login</h2><input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password"><button onclick="login()">Login</button>
 
-</div>
-</div></main><script>
+</div></div></main><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* CHECK IF USER ALREADY LOGGED IN */
+
+checkSession()
+
+async function checkSession(){
+
+const { data } = await supabaseClient.auth.getSession()
+
+if(data.session){
+window.location.href="dashboard.html"
+}
+
+}
+
+/* LOGIN FUNCTION */
 
 async function login(){
 
@@ -72,5 +82,4 @@ window.location.href="dashboard.html"
 
 }
 
-</script></body>
-</html>
+</script></body></html>

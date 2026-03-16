@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Varada Nexus</title><link rel="stylesheet" href="style.css"><!-- Correct Supabase CDN --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 
 .login-container{
 display:flex;
@@ -52,23 +52,19 @@ cursor:pointer;
 
 </div></div></main><footer>
 &copy; 2025 Varada Nexus Private Limited
-</footer><script type="module">
+</footer><script>
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+const supabaseUrl = "https://ticsgbtxfhhihamejiss.supabase.co"
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 
-const supabase = createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
 
-document.getElementById("loginBtn").addEventListener("click", login)
-
-async function login(){
+document.getElementById("loginBtn").addEventListener("click", async () => {
 
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 
-const { data, error } = await supabase.auth.signInWithPassword({
+const { data, error } = await supabaseClient.auth.signInWithPassword({
 email: email,
 password: password
 })
@@ -78,23 +74,11 @@ alert(error.message)
 return
 }
 
-const { data:userRecord } = await supabase
-.from("users")
-.select("id")
-.eq("auth_id", data.user.id)
-.single()
-
-const { data:roleData } = await supabase
-.from("user_roles")
-.select(`roles(role_name)`)
-.eq("user_id", userRecord.id)
-.single()
-
-localStorage.setItem("role", roleData.roles.role_name)
+alert("Login successful")
 
 window.location="dashboard.html"
 
-}
+})
 
 </script></body>
 </html>

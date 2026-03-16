@@ -1,5 +1,4 @@
-<!DOCTYPE html><html><head>
-<title>Transporter Ledger</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Transporter Ledger</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -70,7 +69,7 @@ font-weight:bold;
 margin-top:15px;
 }
 
-</style></head><body><div id="sidebar-container"></div><script>
+</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -105,7 +104,9 @@ let filteredLedger=[]
 let page=1
 let pageSize=10
 
+
 init()
+
 
 async function init(){
 
@@ -118,6 +119,9 @@ return
 
 let authId=data.session.user.id
 
+
+/* FIND TRANSPORTER */
+
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("*")
@@ -128,20 +132,30 @@ let transporterId=transporter.id
 let transporterName=transporter.transporter_name
 
 
+/* GET TRIPS */
+
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
+
+
+/* GET PAYMENTS */
 
 const {data:payments}=await supabaseClient
 .from("transporter_payments")
 .select("*")
 .eq("transporter_name",transporterName)
 
+
+/* GET EXPENSES */
+
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
+
+/* EXPENSE MAP */
 
 let expenseMap={}
 
@@ -158,6 +172,8 @@ expenseMap[e.trip_id]+=Number(e.amount||0)
 }
 
 
+/* BUILD LEDGER */
+
 let ledger=[]
 
 
@@ -165,9 +181,9 @@ trips.forEach(t=>{
 
 let freight=((t.weight_kg||0)/1000)*(t.transporter_rate||0)
 
-let tripExpense=expenseMap[t.id]||0
+let exp=expenseMap[t.id]||0
 
-let net=freight-tripExpense
+let net=freight-exp
 
 ledger.push({
 date:t.trip_date,
@@ -176,13 +192,13 @@ credit:net,
 debit:0
 })
 
-if(tripExpense>0){
+if(exp>0){
 
 ledger.push({
 date:t.trip_date,
 description:"Trip Expense",
 credit:0,
-debit:tripExpense
+debit:exp
 })
 
 }
@@ -204,6 +220,7 @@ debit:Number(p.amount||0)
 
 ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
+
 fullLedger=ledger
 filteredLedger=ledger
 
@@ -212,24 +229,37 @@ renderLedger()
 }
 
 
+
+/* RENDER */
+
 function renderLedger(){
 
 let start=(page-1)*pageSize
 let end=start+pageSize
 
-let pageData=filteredLedger.slice(start,end)
+let rows=filteredLedger.slice(start,end)
 
 let balance=0
 let html=""
 
-pageData.forEach(l=>{
+filteredLedger.forEach(l=>{
+
+balance+=l.credit
+balance-=l.debit
+
+})
+
+balance=0
+
+
+rows.forEach(l=>{
 
 balance+=l.credit
 balance-=l.debit
 
 html+=`
 <tr>
-<td>${l.date}</td>
+<td>${l.date||""}</td>
 <td>${l.description}</td>
 <td class="credit">${l.credit? "₹ "+l.credit.toFixed(2):""}</td>
 <td class="debit">${l.debit? "₹ "+l.debit.toFixed(2):""}</td>
@@ -243,6 +273,9 @@ document.getElementById("ledgerTable").innerHTML=html
 
 }
 
+
+
+/* FILTER */
 
 function applyFilter(){
 
@@ -276,6 +309,9 @@ renderLedger()
 }
 
 
+
+/* PAGINATION */
+
 function nextPage(){
 
 if(page*pageSize<filteredLedger.length){
@@ -286,7 +322,6 @@ renderLedger()
 }
 
 }
-
 
 function prevPage(){
 
@@ -299,6 +334,9 @@ renderLedger()
 
 }
 
+
+
+/* PDF */
 
 function downloadPDF(){
 
@@ -313,8 +351,8 @@ filteredLedger.forEach(l=>{
 rows.push([
 l.date,
 l.description,
-l.credit? l.credit.toFixed(2):"",
-l.debit? l.debit.toFixed(2):""
+l.credit?l.credit.toFixed(2):"",
+l.debit?l.debit.toFixed(2):""
 ])
 
 })
@@ -328,6 +366,18 @@ startY:20
 })
 
 doc.save("transporter-ledger.pdf")
+
+}
+
+
+
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
 
 }
 

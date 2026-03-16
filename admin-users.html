@@ -24,7 +24,7 @@ h2{
 color:#1f3c88;
 }
 
-/* form */
+/* CREATE USER FORM */
 
 .form-box{
 background:white;
@@ -32,6 +32,7 @@ padding:20px;
 border-radius:6px;
 width:420px;
 margin-bottom:25px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 input,select{
@@ -55,7 +56,7 @@ button:hover{
 background:#162c66;
 }
 
-/* table */
+/* TABLE */
 
 table{
 width:100%;
@@ -71,6 +72,11 @@ text-align:left;
 
 th{
 background:#eee;
+}
+
+.delete-btn{
+background:#d9534f;
+margin-left:5px;
 }
 
 </style>
@@ -113,6 +119,7 @@ document.getElementById("sidebar-container").innerHTML=data
 <tr>
 <th>Email</th>
 <th>Role</th>
+<th>Actions</th>
 </tr>
 </thead>
 
@@ -124,9 +131,11 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
+/* SUPABASE CONNECTION */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_PUBLIC_KEY"
 )
 
 /* LOAD ROLES */
@@ -156,8 +165,10 @@ const {data,error}=await supabaseClient
 .select(`
 id,
 email,
-user_roles(
-roles(role_name)
+user_roles (
+roles (
+role_name
+)
 )
 `)
 
@@ -180,6 +191,9 @@ html+=`
 <tr>
 <td>${u.email}</td>
 <td>${role}</td>
+<td>
+<button class="delete-btn" onclick="deleteUser('${u.id}')">Delete</button>
+</td>
 </tr>
 `
 
@@ -201,8 +215,6 @@ alert("Enter email")
 return
 }
 
-/* insert user */
-
 const {data,error}=await supabaseClient
 .from("users")
 .insert({
@@ -216,8 +228,6 @@ alert(error.message)
 return
 }
 
-/* assign role */
-
 await supabaseClient
 .from("user_roles")
 .insert({
@@ -225,7 +235,27 @@ user_id:data.id,
 role_id:roleId
 })
 
-alert("User Added")
+alert("User Created")
+
+loadUsers()
+
+}
+
+/* DELETE USER */
+
+async function deleteUser(id){
+
+if(!confirm("Delete user?")) return
+
+await supabaseClient
+.from("user_roles")
+.delete()
+.eq("user_id",id)
+
+await supabaseClient
+.from("users")
+.delete()
+.eq("id",id)
 
 loadUsers()
 
@@ -239,4 +269,5 @@ loadUsers()
 </script>
 
 </body>
+
 </html>

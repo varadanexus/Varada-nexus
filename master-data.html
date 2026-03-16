@@ -58,7 +58,7 @@ background:#eee;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"PASTE_YOUR_FULL_SUPABASE_ANON_KEY_HERE"
 )
 
 checkLogin()
@@ -74,11 +74,13 @@ window.location.href="login.html"
 }
 
 </script><div id="sidebar-container"></div><script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
+
 </script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="origin" placeholder="Origin">
 <input id="destination" placeholder="Destination">
 <input id="routeCode" placeholder="Route Code" readonly><button onclick="generateRoute()">Generate</button>
@@ -159,6 +161,7 @@ const pageSize=10
 
 init()
 
+
 async function init(){
 
 await loadTransporters()
@@ -167,6 +170,7 @@ await loadTrucks()
 await loadCommodities()
 
 }
+
 
 /* ROUTE CODE */
 
@@ -184,7 +188,9 @@ document.getElementById("routeCode").value=o+"-"+d
 
 async function loadRoutes(){
 
-const {data}=await supabaseClient.from("routes").select("*")
+const {data,error}=await supabaseClient.from("routes").select("*")
+
+if(error){console.log(error);return}
 
 routes=data
 allRoutes=data
@@ -192,6 +198,7 @@ allRoutes=data
 renderRoutes()
 
 }
+
 
 function renderRoutes(){
 
@@ -201,6 +208,7 @@ let page=routes.slice(start,start+pageSize)
 let html=""
 
 page.forEach(r=>{
+
 html+=`
 <tr>
 <td>${r.origin}</td>
@@ -212,17 +220,19 @@ html+=`
 </td>
 </tr>
 `
+
 })
 
 document.getElementById("routeTable").innerHTML=html
 
 }
 
+
 function searchRoutes(){
 
 let val=document.getElementById("routeSearch").value.toLowerCase()
 
-routes = allRoutes.filter(r =>
+routes=allRoutes.filter(r=>
 r.route_code.toLowerCase().includes(val) ||
 r.origin.toLowerCase().includes(val) ||
 r.destination.toLowerCase().includes(val)
@@ -237,11 +247,14 @@ function nextRoute(){routePage++;renderRoutes()}
 function prevRoute(){if(routePage>1){routePage--;renderRoutes()}}
 
 
+
 /* TRANSPORTERS */
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient.from("transporters").select("*")
+const {data,error}=await supabaseClient.from("transporters").select("*")
+
+if(error){console.log(error);return}
 
 transporters=data
 allTransporters=data
@@ -258,6 +271,7 @@ document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
 
+
 function renderTransporters(){
 
 let start=(transporterPage-1)*pageSize
@@ -266,6 +280,7 @@ let page=transporters.slice(start,start+pageSize)
 let html=""
 
 page.forEach(t=>{
+
 html+=`
 <tr>
 <td>${t.transporter_name}</td>
@@ -278,17 +293,19 @@ html+=`
 </td>
 </tr>
 `
+
 })
 
 document.getElementById("transporterTable").innerHTML=html
 
 }
 
+
 function searchTransporters(){
 
 let val=document.getElementById("transporterSearch").value.toLowerCase()
 
-transporters = allTransporters.filter(t =>
+transporters=allTransporters.filter(t=>
 t.transporter_name.toLowerCase().includes(val) ||
 (t.company||"").toLowerCase().includes(val)
 )
@@ -302,7 +319,89 @@ function nextTransporter(){transporterPage++;renderTransporters()}
 function prevTransporter(){if(transporterPage>1){transporterPage--;renderTransporters()}}
 
 
-/* PDF DOWNLOAD */
+
+/* TRUCKS */
+
+async function loadTrucks(){
+
+const {data,error}=await supabaseClient.from("trucks").select("*")
+
+if(error){console.log(error);return}
+
+trucks=data
+allTrucks=data
+
+renderTrucks()
+
+}
+
+
+function renderTrucks(){
+
+let html=""
+
+trucks.forEach(t=>{
+
+let transporter=transporters.find(x=>x.id==t.transporter_id)
+
+html+=`
+<tr>
+<td>${t.truck_number}</td>
+<td>${transporter?transporter.transporter_name:""}</td>
+<td>
+<button class="deleteBtn">Delete</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("truckTable").innerHTML=html
+
+}
+
+
+
+/* COMMODITIES */
+
+async function loadCommodities(){
+
+const {data,error}=await supabaseClient.from("commodities").select("*")
+
+if(error){console.log(error);return}
+
+commodities=data
+allCommodities=data
+
+renderCommodities()
+
+}
+
+
+function renderCommodities(){
+
+let html=""
+
+commodities.forEach(c=>{
+
+html+=`
+<tr>
+<td>${c.name}</td>
+<td>
+<button class="deleteBtn">Delete</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("commodityTable").innerHTML=html
+
+}
+
+
+
+/* PDF */
 
 function downloadRoutePDF(){
 

@@ -31,16 +31,18 @@ th{
 background:#eee;
 }
 
-</style></head><body><div class="main"><h2>My Trips</h2><table><thead><tr>
+</style></head><body><div class="main"><h2>My Trips</h2><table><thead>
+<tr>
 <th>Trip No</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
-<th>Weight</th>
+<th>Weight (KG)</th>
 <th>Date</th>
 <th>Status</th>
 <th>Earnings</th>
-</tr></thead><tbody id="tripTable"></tbody></table></div><script>
+</tr>
+</thead><tbody id="tripTable"></tbody></table></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -48,6 +50,7 @@ const supabaseClient = supabase.createClient(
 )
 
 init()
+
 
 async function init(){
 
@@ -62,6 +65,7 @@ return
 
 let authId=data.session.user.id
 
+
 /* FIND TRANSPORTER */
 
 const {data:transporter}=await supabaseClient
@@ -71,6 +75,7 @@ const {data:transporter}=await supabaseClient
 .single()
 
 let transporterId=transporter.id
+
 
 /* GET TRIPS */
 
@@ -84,11 +89,14 @@ renderTrips(trips)
 
 }
 
+
 function renderTrips(trips){
 
 let html=""
 
 trips.forEach(t=>{
+
+let earnings=((t.weight_kg/1000) * (t.transporter_rate || 0)).toFixed(2)
 
 html+=`
 <tr>
@@ -99,7 +107,7 @@ html+=`
 <td>${t.weight_kg || ""}</td>
 <td>${t.trip_date || ""}</td>
 <td>${t.status || ""}</td>
-<td>${t.transporter_rate || 0}</td>
+<td>${earnings}</td>
 </tr>
 `
 

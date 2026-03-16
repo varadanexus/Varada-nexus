@@ -1,9 +1,30 @@
 <!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{padding:40px;}
-h2{color:#1f3c88;}
-.filters{margin-bottom:15px;}
-select{padding:8px;margin-right:10px;}
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+/* sidebar layout */
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+.filters{
+margin-bottom:15px;
+}
+
+select{
+padding:8px;
+margin-right:10px;
+}
 
 button{
 padding:8px 14px;
@@ -28,26 +49,35 @@ border-bottom:1px solid #ddd;
 text-align:left;
 }
 
-th{background:#eee;}
+th{
+background:#eee;
+}
 
-.pagination{margin-top:10px;}
+.pagination{
+margin-top:10px;
+}
 
 .message{
 color:red;
 margin-top:10px;
 font-weight:bold;
 }
-</style></head><body><div class="main"><h2>My Trips</h2><div class="filters"><select id="routeFilter"></select>
+
+</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+fetch("transporter-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script><div class="main"><h2>My Trips</h2><div class="filters"><select id="routeFilter"></select>
 <select id="truckFilter"></select>
 <select id="commodityFilter"></select>
 
 <button onclick="applyFilters()">Search</button>
 <button onclick="clearFilters()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
-<button onclick="logout()">Logout</button>
 
-</div><div class="message" id="message"></div><table>
-<thead>
+</div><div class="message" id="message"></div><table><thead>
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -60,9 +90,7 @@ font-weight:bold;
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead>
-<tbody id="tripTable"></tbody>
-</table><div class="pagination">
+</thead><tbody id="tripTable"></tbody></table><div class="pagination">
 <button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 </div></div><script>
@@ -125,7 +153,7 @@ document.getElementById("message").innerText="No trips found for this transporte
 allTrips=trips || []
 filteredTrips=trips || []
 
-/* LOAD EXPENSES FOR THESE TRIPS */
+/* LOAD EXPENSES */
 
 const {data:expenses}=await supabaseClient
 .from("expenses")

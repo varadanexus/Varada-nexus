@@ -3,16 +3,24 @@
 <h2>Varada Nexus</h2>
 
 <a href="dashboard.html">Dashboard</a>
+
+<hr>
+
 <a href="trips.html">Trips</a>
 <a href="expenses.html">Expenses</a>
-<a href="master-data.html">Master Data</a>
-<a href="rate-entry.html">Rates</a>
 <a href="transporter-payments.html">Transporter Payments</a>
 
 <hr>
 
+<a href="master-data.html">Master Data</a>
+<a href="rate-entry.html">Rates</a>
+
+<hr>
+
 <a href="admin-users.html">Users</a>
-<a href="clients.html">Clients</a>
+
+<hr>
+
 <a href="profit-analysis.html">Profit Analysis</a>
 
 <hr>
@@ -60,7 +68,7 @@ margin:10px 0;
 .sidebar a.active{
 background:#162c66;
 font-weight:bold;
-border-left:4px solid #ffffff;
+border-left:4px solid white;
 }
 
 </style>
@@ -70,13 +78,9 @@ border-left:4px solid #ffffff;
 const links=document.querySelectorAll(".sidebar a")
 
 links.forEach(link=>{
-
 if(link.href===window.location.href){
-
 link.classList.add("active")
-
 }
-
 })
 
 </script>

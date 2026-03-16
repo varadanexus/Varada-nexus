@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Trip Expenses</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -9,6 +9,42 @@ background:#f4f6f9;
 .main{
 margin-left:220px;
 padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+.form-grid{
+display:grid;
+grid-template-columns: repeat(4,1fr);
+gap:10px;
+}
+
+input,select{
+padding:8px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:8px 12px;
+background:#1f3c88;
+color:white;
+border:none;
+cursor:pointer;
+border-radius:4px;
+}
+
+.editBtn{
+background:#5bc0de;
+}
+
+.deleteBtn{
+background:#d9534f;
 }
 
 table{
@@ -24,14 +60,17 @@ border-bottom:1px solid #ddd;
 
 th{
 background:#eee;
+text-align:left;
 }
 
 </style></head><body><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
+
+/* LOGIN CHECK */
 
 checkLogin()
 
@@ -46,23 +85,141 @@ window.location.href="login.html"
 }
 
 </script><div id="sidebar-container"></div><script>
-
 fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(res => res.text())
+.then(data => {
+document.getElementById("sidebar-container").innerHTML = data
 })
+</script><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
 
-</script><div class="main"><h1>Trip Expenses</h1><table><thead>
+<select id="type">
+<option>Fuel</option>
+<option>Toll</option>
+<option>Driver</option>
+<option>Maintenance</option>
+<option>Other</option>
+</select><input id="amount" placeholder="Amount"><button onclick="saveExpense()">Add Expense</button>
+
+</div></div><div class="card"><input id="searchTrip" placeholder="Search Trip No"><select id="filterType">
+<option value="">All Types</option>
+<option>Fuel</option>
+<option>Toll</option>
+<option>Driver</option>
+<option>Maintenance</option>
+<option>Other</option>
+</select><button onclick="applyFilter()">Filter</button>
+<button onclick="clearFilter()">Clear</button>
+
+</div><table><thead>
 <tr>
 <th>Expense ID</th>
 <th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
+<th>Date</th>
+<th>Action</th>
 </tr>
-</thead><tbody id="expenseTable"></tbody></table></div><script>
+</thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+</div><script>
+
+let trips=[]
+let expenses=[]
+let filtered=[]
+
+let page=1
+let pageSize=10
+
+init()
+
+async function init(){
+
+await loadTrips()
+await loadExpenses()
+
+}
+
+/* LOAD TRIPS */
+
+async function loadTrips(){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+
+trips=data
+
+let html='<option value="">Select Trip</option>'
+
+data.forEach(t=>{
+html+=`<option value="${t.id}">${t.trip_no}</option>`
+})
+
+document.getElementById("trip").innerHTML=html
+
+}
+
+/* GENERATE EXPENSE ID */
+
+async function generateExpenseId(){
+
+const now=new Date()
+
+let year=now.getFullYear().toString().slice(-2)
+let month=("0"+(now.getMonth()+1)).slice(-2)
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("expense_id")
+.ilike("expense_id","EXP"+year+month+"%")
+
+let seq=data.length+1
+
+return "EXP"+year+month+seq.toString().padStart(4,"0")
+
+}
+
+/* SAVE EXPENSE */
+
+async function saveExpense(){
+
+let tripId=document.getElementById("trip").value
+let type=document.getElementById("type").value
+let amount=document.getElementById("amount").value
+
+if(!tripId || !amount){
+alert("Enter Trip and Amount")
+return
+}
+
+let expenseId=await generateExpenseId()
+
+await supabaseClient
+.from("expenses")
+.insert({
+
+expense_id:expenseId,
+trip_id:tripId,
+expense_type:type,
+amount:amount,
+expense_date:new Date()
+
+})
+
+/* CLEAR FORM */
+
+document.getElementById("trip").value=""
+document.getElementById("type").value="Fuel"
+document.getElementById("amount").value=""
 
 loadExpenses()
+
+}
+
+/* LOAD EXPENSES */
 
 async function loadExpenses(){
 
@@ -71,22 +228,180 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
+expenses=data
+filtered=data
+
+renderTable()
+
+}
+
+/* RENDER TABLE */
+
+function renderTable(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let rows=filtered.slice(start,end)
+
 let html=""
 
-data.forEach(e=>{
+rows.forEach(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
 html+=`
+
 <tr>
-<td>${e.expense_id}</td>
-<td>${e.trip_id}</td>
+
+<td>${e.expense_id || ""}</td>
+<td>${trip ? trip.trip_no : ""}</td>
 <td>${e.expense_type}</td>
 <td>${e.amount}</td>
+<td>${e.expense_date || ""}</td>
+
+<td>
+
+<button class="editBtn" onclick="editExpense('${e.id}')">Edit</button>
+
+<button class="deleteBtn" onclick="deleteExpense('${e.id}')">Delete</button>
+
+</td>
+
 </tr>
+
 `
+
 })
 
 document.getElementById("expenseTable").innerHTML=html
 
 }
+
+/* EDIT */
+
+async function editExpense(id){
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("*")
+.eq("id",id)
+.single()
+
+let amount=prompt("Edit Amount",data.amount)
+
+await supabaseClient
+.from("expenses")
+.update({amount:amount})
+.eq("id",id)
+
+loadExpenses()
+
+}
+
+/* DELETE */
+
+async function deleteExpense(id){
+
+if(!confirm("Delete expense?")) return
+
+await supabaseClient
+.from("expenses")
+.delete()
+.eq("id",id)
+
+loadExpenses()
+
+}
+
+/* FILTER */
+
+function applyFilter(){
+
+let search=document.getElementById("searchTrip").value.toLowerCase()
+let type=document.getElementById("filterType").value
+
+filtered=expenses.filter(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+return(
+(!search || trip.trip_no.toLowerCase().includes(search)) &&
+(!type || e.expense_type==type)
+)
+
+})
+
+page=1
+renderTable()
+
+}
+
+function clearFilter(){
+
+filtered=expenses
+page=1
+renderTable()
+
+}
+
+/* PAGINATION */
+
+function nextPage(){
+
+if(page*pageSize<filtered.length){
+page++
+renderTable()
+}
+
+}
+
+function prevPage(){
+
+if(page>1){
+page--
+renderTable()
+}
+
+}
+
+/* PDF REPORT */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+filtered.forEach(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+rows.push([
+e.expense_id,
+trip ? trip.trip_no : "",
+e.expense_type,
+e.amount,
+e.expense_date
+])
+
+})
+
+doc.text("Varada Nexus - Expense Report",14,15)
+
+doc.autoTable({
+head:[["Expense ID","Trip","Type","Amount","Date"]],
+body:rows,
+startY:20
+})
+
+doc.save("expense-report.pdf")
+
+}
+
+/* LOGOUT */
 
 async function logout(){
 
@@ -96,5 +411,4 @@ window.location.href="login.html"
 
 }
 
-</script></body>
-</html>
+</script></body></html>

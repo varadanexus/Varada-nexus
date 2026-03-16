@@ -6,11 +6,16 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
+/* Sidebar layout */
+
 .main{
+margin-left:220px;
 padding:40px;
 }
 
-h2{
+/* Fix page title only */
+
+.main h2{
 color:#1f3c88;
 }
 
@@ -45,18 +50,13 @@ font-weight:bold;
 font-weight:bold;
 }
 
-button{
-padding:10px 16px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-margin-top:20px;
-margin-right:10px;
-}
-
-</style></head><body><div class="main"><h2>Transporter Ledger</h2><table><thead>
+</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+fetch("transporter-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script><div class="main"><h2>Transporter Ledger</h2><table><thead>
 <tr>
 <th>Date</th>
 <th>Description</th>
@@ -64,11 +64,7 @@ margin-right:10px;
 <th>Debit (Payment)</th>
 <th>Balance</th>
 </tr>
-</thead><tbody id="ledgerTable"></tbody></table><br><button onclick="window.location.href='transporter-dashboard.html'">
-Back to Dashboard
-</button><button onclick="logout()">
-Logout
-</button></div><script>
+</thead><tbody id="ledgerTable"></tbody></table></div><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -198,15 +194,5 @@ document.getElementById("ledgerTable").innerHTML=html
 
 }
 
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
-}
-
-</script></body></html>
+</script></body>
+</html>

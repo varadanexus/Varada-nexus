@@ -15,8 +15,6 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
-/* PAGE LAYOUT */
-
 .main{
 margin-left:220px;
 padding:30px;
@@ -26,15 +24,14 @@ h2{
 color:#1f3c88;
 }
 
-/* CREATE USER FORM */
+/* FORM */
 
 .form-box{
 background:white;
 padding:20px;
 border-radius:6px;
-margin-top:20px;
 width:420px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+margin-bottom:30px;
 }
 
 input,select{
@@ -64,13 +61,11 @@ table{
 width:100%;
 border-collapse:collapse;
 background:white;
-margin-top:25px;
 }
 
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 th{
@@ -99,8 +94,6 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <h2>Users</h2>
 
-<!-- CREATE USER -->
-
 <div class="form-box">
 
 <h3>Create User</h3>
@@ -110,18 +103,18 @@ document.getElementById("sidebar-container").innerHTML=data
 <input type="password" id="password" placeholder="Password">
 
 <select id="role">
+
 <option value="admin">Admin</option>
 <option value="manager">Manager</option>
 <option value="operator">Operator</option>
 <option value="accounts">Accounts</option>
 <option value="customer">Customer</option>
+
 </select>
 
 <button onclick="createUser()">Create User</button>
 
 </div>
-
-<!-- USERS TABLE -->
 
 <table>
 
@@ -140,11 +133,9 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
-/* SUPABASE CONNECTION */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_PUBLIC_KEY"
+"YOUR_ANON_KEY"
 )
 
 /* LOAD USERS */
@@ -154,11 +145,12 @@ loadUsers()
 async function loadUsers(){
 
 const {data,error}=await supabaseClient
-.from("user_roles")
+.from("users")
 .select(`
-user_id,
-users(email),
+email,
+user_roles(
 roles(role_name)
+)
 `)
 
 if(error){
@@ -170,10 +162,16 @@ let html=""
 
 data.forEach(u=>{
 
+let role="Not Assigned"
+
+if(u.user_roles.length>0){
+role=u.user_roles[0].roles.role_name
+}
+
 html+=`
 <tr>
-<td>${u.users.email}</td>
-<td>${u.roles.role_name}</td>
+<td>${u.email}</td>
+<td>${role}</td>
 </tr>
 `
 
@@ -182,7 +180,6 @@ html+=`
 document.getElementById("usersTable").innerHTML=html
 
 }
-
 
 /* CREATE USER */
 
@@ -211,16 +208,18 @@ alert(error.message)
 return
 }
 
-let userId=data.user.id
+let authId=data.user.id
 
 /* INSERT INTO USERS TABLE */
 
-await supabaseClient
+const {data:userData}=await supabaseClient
 .from("users")
 .insert({
-id:userId,
-email:email
+email:email,
+auth_id:authId
 })
+.select()
+.single()
 
 /* GET ROLE ID */
 
@@ -235,7 +234,7 @@ const {data:roleData}=await supabaseClient
 await supabaseClient
 .from("user_roles")
 .insert({
-user_id:userId,
+user_id:userData.id,
 role_id:roleData.id
 })
 
@@ -248,4 +247,5 @@ loadUsers()
 </script>
 
 </body>
+
 </html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html><html><head><title>Transporter Ledger</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+padding:40px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:20px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#eee;
+}
+
+.credit{
+color:green;
+}
+
+.debit{
+color:red;
+}
+
+.balance{
+font-weight:bold;
+}
+
+button{
+padding:10px 16px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+margin-top:20px;
+}
+
+</style></head><body><div class="main"><h2>Transporter Ledger</h2><table><thead>
+<tr>
+<th>Date</th>
+<th>Description</th>
+<th>Credit (Earnings)</th>
+<th>Debit (Payment)</th>
+<th>Balance</th>
+</tr>
+</thead><tbody id="ledgerTable"></tbody></table><br><button onclick="window.location.href='transporter-dashboard.html'">
+Back to Dashboard
+</button></div><script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+init()
+
+async function init(){
+
+const {data}=await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
+return
+}
+
+let authId=data.session.user.id
+
+/* FIND TRANSPORTER */
+
+const {data:transporter}=await supabaseClient
+.from("transporters")
+.select("*")
+.eq("auth_id",authId)
+.single()
+
+let transporterId=transporter.id
+let transporterName=transporter.transporter_name
+
+/* GET TRIPS */
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+
+/* GET PAYMENTS */
+
+const {data:payments}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("transporter_name",transporterName)
+
+/* BUILD LEDGER */
+
+let ledger=[]
+
+trips.forEach(t=>{
+
+ledger.push({
+date:t.trip_date,
+description:"Trip "+(t.trip_no||""),
+credit:Number(t.transporter_rate||0),
+debit:0
+})
+
+})
+
+payments.forEach(p=>{
+
+ledger.push({
+date:p.payment_date,
+description:"Payment",
+credit:0,
+debit:Number(p.amount)
+})
+
+})
+
+ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+let balance=0
+let html=""
+
+ledger.forEach(l=>{
+
+balance+=l.credit
+balance-=l.debit
+
+html+=`
+<tr>
+<td>${l.date||""}</td>
+<td>${l.description}</td>
+<td class="credit">${l.credit||""}</td>
+<td class="debit">${l.debit||""}</td>
+<td class="balance">${balance}</td>
+</tr>
+`
+
+})
+
+document.getElementById("ledgerTable").innerHTML=html
+
+}
+
+</script></body></html>

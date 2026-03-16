@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Create User</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:40px;
+}
+
+.card{
+background:white;
+padding:30px;
+width:400px;
+border-radius:8px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+background:#1f3c88;
+color:white;
+border:none;
+padding:10px;
+width:100%;
+border-radius:4px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Create User</h2>
+
+<input id="name" placeholder="Name">
+
+<input id="email" placeholder="Email">
+
+<input id="password" placeholder="Password">
+
+<select id="role">
+<option value="staff">Staff</option>
+<option value="transporter">Customer</option>
+</select>
+
+<button onclick="createUser()">Create User</button>
+
+<div id="msg"></div>
+
+</div>
+
+<script>
+
+const supabase = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_SERVICE_ROLE_KEY"
+)
+
+async function createUser(){
+
+let name=document.getElementById("name").value
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+let role=document.getElementById("role").value
+
+/* CREATE AUTH USER */
+
+const {data,error}=await supabase.auth.admin.createUser({
+
+email:email,
+password:password,
+email_confirm:true
+
+})
+
+if(error){
+
+document.getElementById("msg").innerText=error.message
+return
+
+}
+
+let userId=data.user.id
+
+/* GET ROLE ID */
+
+const {data:roleData}=await supabase
+.from("roles")
+.select("*")
+.eq("role_name",role)
+.single()
+
+/* INSERT ROLE */
+
+await supabase
+.from("user_roles")
+.insert({
+
+user_id:userId,
+role_id:roleData.id
+
+})
+
+/* CREATE TRANSPORTER RECORD */
+
+if(role==="transporter"){
+
+await supabase
+.from("transporters")
+.insert({
+
+transporter_name:name,
+auth_id:userId
+
+})
+
+}
+
+document.getElementById("msg").innerText="User created successfully"
+
+}
+
+</script>
+
+</body>
+
+</html>

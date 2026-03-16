@@ -1,18 +1,29 @@
-<!DOCTYPE html><html><head><title>Transporter Dashboard</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>body{
+<!DOCTYPE html><html><head><title>Transporter Dashboard</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+
+body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
 }
 
+/* allows sidebar later without breaking UI */
+
 .main{
-padding:40px;
+margin-left:220px;
+padding:30px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin-bottom:20px;
 }
 
 .card{
 background:white;
 padding:25px;
 border-radius:8px;
-margin-bottom:20px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
@@ -32,9 +43,8 @@ font-weight:bold;
 margin-top:10px;
 }
 
-</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="card">
+</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="cards"><div class="card">
 Total Trips
-
 <div class="stat" id="tripCount">0</div>
 </div><div class="card">
 Total Earnings
@@ -45,13 +55,15 @@ Payments Received
 </div><div class="card">
 Balance
 <div class="stat" id="balance">0</div>
-</div><br><button onclick="window.location.href='transporter-trips.html'">
+</div></div><button onclick="window.location.href='transporter-trips.html'">
 My Trips
 </button><button onclick="window.location.href='transporter-ledger.html'">
 Ledger
 </button><button onclick="logout()">
 Logout
-</button></div><script>const supabaseClient = supabase.createClient(
+</button></div><script>
+
+const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -88,13 +100,13 @@ const {data:trips}=await supabaseClient
 
 let earnings=0
 
-/* FIXED EARNINGS CALCULATION (EXPENSES REMOVED) */
+if(trips){
 
 for (const t of trips){
 
 let tripEarnings=(t.weight_kg/1000) * (t.transporter_rate || 0)
 
-/* GET EXPENSES FOR THIS TRIP */
+/* GET EXPENSES */
 
 const {data:tripExpenses}=await supabaseClient
 .from("expenses")
@@ -113,6 +125,8 @@ earnings += (tripEarnings - expenseTotal)
 
 }
 
+}
+
 /* GET PAYMENTS */
 
 const {data:payments}=await supabaseClient
@@ -122,11 +136,13 @@ const {data:payments}=await supabaseClient
 
 let paid=0
 
+if(payments){
 payments.forEach(p=>{
 paid += Number(p.amount || 0)
 })
+}
 
-document.getElementById("tripCount").innerText = trips.length
+document.getElementById("tripCount").innerText = trips ? trips.length : 0
 
 document.getElementById("earnings").innerText =
 earnings.toFixed(2)
@@ -149,4 +165,5 @@ window.location.href="login.html"
 
 }
 
-</script></body></html>
+</script></body>
+</html>

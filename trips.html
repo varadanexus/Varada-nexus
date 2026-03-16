@@ -1,6 +1,4 @@
-<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
-
-body{
+<!DOCTYPE html><html><head><title>Trips - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
@@ -69,12 +67,14 @@ border-radius:4px;
 margin-right:10px;
 }
 
-</style></head><body><script>const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+</style></head><body>
 
-/* LOGIN CHECK */
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+)
 
 checkLogin()
 
@@ -98,18 +98,18 @@ document.getElementById("sidebar-container").innerHTML = data
 <select id="truck"></select>
 <select id="commodity"></select>
 
-<input id="weight" placeholder="Weight KG"><input type="date" id="tripDate"><select id="status">
+<input id="weight" placeholder="Weight KG">
+<input type="date" id="tripDate"><select id="status">
 <option value="">Status</option>
 <option>LOADED</option>
 <option>Completed</option>
 <option>Pending</option>
 </select></div><br><button onclick="saveTrip()">Save Trip</button>
 
-</div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No"><select class="searchBox" id="searchRoute"></select>
+</div><div class="card"><input class="searchBox" id="searchTripNo" placeholder="Trip No">
+<select class="searchBox" id="searchRoute"></select>
 <select class="searchBox" id="searchTruck"></select>
-<select class="searchBox" id="searchCommodity"></select>
-
-<button onclick="searchTrips()">Search</button>
+<select class="searchBox" id="searchCommodity"></select><button onclick="searchTrips()">Search</button>
 <button onclick="clearSearch()">Clear</button>
 
 </div><table><thead>
@@ -232,7 +232,7 @@ return "TR"+year+month+seq.toString().padStart(4,"0")
 
 }
 
-/* SAVE TRIP */
+/* SAVE TRIP WITH AUTO RATE */
 
 async function saveTrip(){
 
@@ -245,10 +245,26 @@ let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
 let route=routes.find(r=>r.id==routeId)?.route_code
-let truck=trucks.find(t=>t.id==truckId)?.truck_number
+let truckObj=trucks.find(t=>t.id==truckId)
+let truck=truckObj?.truck_number
+let transporterId=truckObj?.transporter_id
+
 let commodity=commodities.find(c=>c.id==commodityId)?.name
 
 let tripNo=await generateTripNo()
+
+/* FIND RATE */
+
+const {data:rate}=await supabaseClient
+.from("rates")
+.select("*")
+.eq("route_id",routeId)
+.eq("commodity_id",commodityId)
+.eq("transporter_id",transporterId)
+.single()
+
+let companyRate=rate?.company_rate_per_mt || 0
+let transporterRate=rate?.transporter_rate_per_mt || 0
 
 await supabaseClient.from("trips").insert({
 
@@ -258,7 +274,9 @@ truck:truck,
 commodity:commodity,
 weight_kg:weight,
 trip_date:date,
-status:status
+status:status,
+company_rate:companyRate,
+transporter_rate:transporterRate
 
 })
 
@@ -270,8 +288,6 @@ document.getElementById("commodity").value=""
 document.getElementById("weight").value=""
 document.getElementById("tripDate").value=""
 document.getElementById("status").value=""
-
-/* RELOAD TABLE */
 
 loadTrips()
 
@@ -469,5 +485,4 @@ window.location.href="login.html"
 
 }
 
-</script></body>
-</html>
+</script></body></html>

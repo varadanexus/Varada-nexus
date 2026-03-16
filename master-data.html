@@ -77,18 +77,19 @@ window.location.href="login.html"
 }
 
 </script><div id="sidebar-container"></div><script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
+</script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="origin" placeholder="Origin City"><input id="destination" placeholder="Destination City"><input id="routeCode" placeholder="Route Code" readonly><button onclick="generateRoute()">Generate Code</button>
+<button onclick="addRoute()">Add Route</button>
 
-</script><div class="main"><h1>Master Data</h1><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="routeCode" placeholder="Route Code">
-<button onclick="addRoute()">Add Route</button><input id="routeSearch" placeholder="Search Route" onkeyup="searchRoutes()"><table>
-<thead>
+<input id="routeSearch" placeholder="Search Route" onkeyup="searchRoutes()"><table><thead>
 <tr>
-<th>Route</th>
+<th>Origin</th>
+<th>Destination</th>
+<th>Route Code</th>
 <th>Action</th>
 </tr>
 </thead><tbody id="routeTable"></tbody></table><div class="pagination">
@@ -100,8 +101,7 @@ document.getElementById("sidebar-container").innerHTML=data
 <input id="tCompany" placeholder="Company">
 <input id="tPAN" placeholder="PAN"><button onclick="addTransporter()">Add</button>
 
-<input id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTransporters()"><table>
-<thead>
+<input id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTransporters()"><table><thead>
 <tr>
 <th>Name</th>
 <th>Contact</th>
@@ -113,8 +113,9 @@ document.getElementById("sidebar-container").innerHTML=data
 <button onclick="prevTransporter()">Prev</button>
 <button onclick="nextTransporter()">Next</button>
 <button onclick="transporterPDF()">Download PDF</button>
-</div></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number">
-<select id="truckTransporter"></select><button onclick="addTruck()">Add Truck</button>
+</div></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number"><select id="truckTransporter"></select>
+
+<button onclick="addTruck()">Add Truck</button>
 
 <input id="truckSearch" placeholder="Search Truck" onkeyup="searchTrucks()"><table><thead>
 <tr>
@@ -161,6 +162,22 @@ await loadCommodities()
 
 }
 
+/* ROUTE CODE GENERATOR */
+
+function generateRoute(){
+
+let origin=document.getElementById("origin").value
+let destination=document.getElementById("destination").value
+
+let o=origin.substring(0,4).toUpperCase()
+let d=destination.substring(0,4).toUpperCase()
+
+document.getElementById("routeCode").value=o+"-"+d
+
+}
+
+/* ROUTES */
+
 async function loadRoutes(){
 
 const {data}=await supabaseClient.from("routes").select("*")
@@ -181,9 +198,10 @@ let html=""
 page.forEach(r=>{
 html+=`
 <tr>
+<td>${r.origin}</td>
+<td>${r.destination}</td>
 <td>${r.route_code}</td>
 <td>
-<button class="editBtn" onclick="editRoute('${r.id}','${r.route_code}')">Edit</button>
 <button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button>
 </td>
 </tr>
@@ -201,17 +219,26 @@ let val=document.getElementById("routeSearch").value.toLowerCase()
 routes=routes.filter(r=>r.route_code.toLowerCase().includes(val))
 
 routePage=1
-
 renderRoutes()
 
 }
 
 async function addRoute(){
 
+let origin=document.getElementById("origin").value
+let destination=document.getElementById("destination").value
 let code=document.getElementById("routeCode").value
 
-await supabaseClient.from("routes").insert({route_code:code})
+await supabaseClient.from("routes").insert({
 
+origin:origin,
+destination:destination,
+route_code:code
+
+})
+
+document.getElementById("origin").value=""
+document.getElementById("destination").value=""
 document.getElementById("routeCode").value=""
 
 loadRoutes()
@@ -229,28 +256,7 @@ loadRoutes()
 function nextRoute(){routePage++;renderRoutes()}
 function prevRoute(){if(routePage>1)routePage--;renderRoutes()}
 
-function routePDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-routes.forEach(r=>{
-rows.push([r.route_code])
-})
-
-doc.autoTable({
-head:[["Route"]],
-body:rows
-})
-
-doc.save("routes.pdf")
-
-}
-
-
+/* TRANSPORTERS */
 
 async function loadTransporters(){
 
@@ -285,7 +291,6 @@ html+=`
 <td>${t.company_name||""}</td>
 <td>${t.pan_number||""}</td>
 <td>
-<button class="editBtn">Edit</button>
 <button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
 </td>
 </tr>
@@ -327,7 +332,7 @@ loadTransporters()
 function nextTransporter(){transporterPage++;renderTransporters()}
 function prevTransporter(){if(transporterPage>1)transporterPage--;renderTransporters()}
 
-
+/* TRUCKS */
 
 async function loadTrucks(){
 
@@ -393,7 +398,7 @@ loadTrucks()
 function nextTruck(){truckPage++;renderTrucks()}
 function prevTruck(){if(truckPage>1)truckPage--;renderTrucks()}
 
-
+/* COMMODITIES */
 
 async function loadCommodities(){
 

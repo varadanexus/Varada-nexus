@@ -33,10 +33,12 @@ background:#eee;
 
 .credit{
 color:green;
+font-weight:bold;
 }
 
 .debit{
 color:red;
+font-weight:bold;
 }
 
 .balance{
@@ -51,6 +53,7 @@ border:none;
 border-radius:4px;
 cursor:pointer;
 margin-top:20px;
+margin-right:10px;
 }
 
 </style></head><body><div class="main"><h2>Transporter Ledger</h2><table><thead>
@@ -63,6 +66,8 @@ margin-top:20px;
 </tr>
 </thead><tbody id="ledgerTable"></tbody></table><br><button onclick="window.location.href='transporter-dashboard.html'">
 Back to Dashboard
+</button><button onclick="logout()">
+Logout
 </button></div><script>
 
 const supabaseClient = supabase.createClient(
@@ -83,58 +88,91 @@ return
 
 let authId=data.session.user.id
 
+
 /* FIND TRANSPORTER */
 
-const {data:transporter}=await supabaseClient
+const {data:transporter,error:transporterError}=await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
+if(transporterError){
+console.log(transporterError)
+return
+}
+
 let transporterId=transporter.id
 let transporterName=transporter.transporter_name
 
+
 /* GET TRIPS */
 
-const {data:trips}=await supabaseClient
+const {data:trips,error:tripError}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
+.order("trip_date",{ascending:true})
+
+if(tripError){
+console.log(tripError)
+}
+
 
 /* GET PAYMENTS */
 
-const {data:payments}=await supabaseClient
+const {data:payments,error:paymentError}=await supabaseClient
 .from("transporter_payments")
 .select("*")
 .eq("transporter_name",transporterName)
+.order("payment_date",{ascending:true})
+
+if(paymentError){
+console.log(paymentError)
+}
+
 
 /* BUILD LEDGER */
 
 let ledger=[]
 
+
+/* ADD TRIPS (EARNINGS) */
+
 trips.forEach(t=>{
+
+let earnings=((t.weight_kg || 0)/1000) * (t.transporter_rate || 0)
 
 ledger.push({
 date:t.trip_date,
-description:"Trip "+(t.trip_no||""),
-credit:Number(t.transporter_rate||0),
+description:"Trip "+(t.trip_no || ""),
+credit:earnings,
 debit:0
 })
 
 })
 
+
+/* ADD PAYMENTS */
+
 payments.forEach(p=>{
 
 ledger.push({
 date:p.payment_date,
-description:"Payment",
+description:"Payment "+(p.transaction_id || ""),
 credit:0,
-debit:Number(p.amount)
+debit:Number(p.amount || 0)
 })
 
 })
+
+
+/* SORT BY DATE */
 
 ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+
+/* CALCULATE BALANCE */
 
 let balance=0
 let html=""
@@ -146,17 +184,28 @@ balance-=l.debit
 
 html+=`
 <tr>
-<td>${l.date||""}</td>
+<td>${l.date || ""}</td>
 <td>${l.description}</td>
-<td class="credit">${l.credit||""}</td>
-<td class="debit">${l.debit||""}</td>
-<td class="balance">${balance}</td>
+<td class="credit">${l.credit ? "₹ "+l.credit.toFixed(2) : ""}</td>
+<td class="debit">${l.debit ? "₹ "+l.debit.toFixed(2) : ""}</td>
+<td class="balance">₹ ${balance.toFixed(2)}</td>
 </tr>
 `
 
 })
 
 document.getElementById("ledgerTable").innerHTML=html
+
+}
+
+
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
 
 }
 

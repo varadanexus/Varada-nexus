@@ -1,57 +1,79 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
-<title>Create User - Varada Nexus ERP</title>
+<title>Users - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
 body{
+margin:0;
 font-family:Arial;
 background:#f4f6f9;
-padding:40px;
 }
 
-.card{
-background:white;
+/* PAGE CONTENT */
+
+.main{
+margin-left:220px;
 padding:30px;
-width:420px;
-border-radius:8px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
 h2{
-margin-bottom:20px;
 color:#1f3c88;
+}
+
+/* TABLE */
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:20px;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#eee;
+}
+
+/* FORM */
+
+.form-box{
+background:white;
+padding:20px;
+border-radius:6px;
+margin-top:20px;
+width:400px;
 }
 
 input,select{
 width:100%;
 padding:10px;
-margin-bottom:15px;
+margin-bottom:10px;
 border:1px solid #ccc;
 border-radius:4px;
 }
 
 button{
+padding:10px 14px;
 background:#1f3c88;
 color:white;
 border:none;
-padding:11px;
-width:100%;
 border-radius:4px;
 cursor:pointer;
 }
 
 button:hover{
-background:#162f6d;
-}
-
-.message{
-margin-top:15px;
-font-size:14px;
+background:#162c66;
 }
 
 </style>
@@ -60,57 +82,125 @@ font-size:14px;
 
 <body>
 
-<div class="card">
+<!-- SIDEBAR -->
 
-<h2>Create User</h2>
+<div id="sidebar"></div>
 
-<input id="name" placeholder="Full Name">
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar").innerHTML=data
+})
+</script>
 
-<input id="email" placeholder="Email">
+<div class="main">
 
-<input id="password" placeholder="Password">
+<h2>Users</h2>
+
+<!-- CREATE USER -->
+
+<div class="form-box">
+
+<h3>Create User</h3>
+
+<input type="email" id="email" placeholder="Email">
+
+<input type="password" id="password" placeholder="Password">
 
 <select id="role">
-
 <option value="admin">Admin</option>
-
 <option value="manager">Manager</option>
-
 <option value="operator">Operator</option>
-
 <option value="accounts">Accounts</option>
-
 <option value="customer">Customer</option>
-
 </select>
 
 <button onclick="createUser()">Create User</button>
 
-<div id="msg" class="message"></div>
+</div>
+
+<!-- USERS TABLE -->
+
+<table>
+
+<thead>
+
+<tr>
+<th>Email</th>
+<th>Role</th>
+</tr>
+
+</thead>
+
+<tbody id="usersTable"></tbody>
+
+</table>
 
 </div>
 
 <script>
 
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"PASTE_SERVICE_ROLE_KEY_HERE"
+"YOUR_SERVICE_ROLE_KEY"
 )
+
+loadUsers()
+
+async function loadUsers(){
+
+const {data:users}=await supabaseClient.auth.admin.listUsers()
+
+const {data:userRoles}=await supabaseClient
+.from("user_roles")
+.select(`
+user_id,
+roles(role_name)
+`)
+
+let html=""
+
+users.users.forEach(u=>{
+
+let role=userRoles.find(r=>r.user_id===u.id)
+
+let roleName=role ? role.roles.role_name : "Not Assigned"
+
+html+=`
+
+<tr>
+
+<td>${u.email}</td>
+
+<td>${roleName}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("usersTable").innerHTML=html
+
+}
+
+/* CREATE USER */
 
 async function createUser(){
 
-let name=document.getElementById("name").value
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 let role=document.getElementById("role").value
 
-document.getElementById("msg").innerText="Creating user..."
+if(!email || !password){
 
-try{
+alert("Enter email and password")
+return
 
-/* CREATE AUTH USER */
+}
 
-const {data,error}=await supabase.auth.admin.createUser({
+const {data,error}=await supabaseClient.auth.admin.createUser({
 
 email:email,
 password:password,
@@ -120,7 +210,7 @@ email_confirm:true
 
 if(error){
 
-document.getElementById("msg").innerText=error.message
+alert(error.message)
 return
 
 }
@@ -129,55 +219,22 @@ let userId=data.user.id
 
 /* GET ROLE ID */
 
-const {data:roleData,error:roleError}=await supabase
+const {data:roleData}=await supabaseClient
 .from("roles")
-.select("*")
+.select("id")
 .eq("role_name",role)
 .single()
 
-if(roleError){
-
-document.getElementById("msg").innerText="Role not found"
-return
-
-}
-
-/* INSERT USER ROLE */
-
-await supabase
+await supabaseClient
 .from("user_roles")
 .insert({
-
 user_id:userId,
 role_id:roleData.id
-
 })
 
-/* CREATE TRANSPORTER RECORD IF CUSTOMER */
+alert("User created")
 
-if(role==="customer"){
-
-await supabase
-.from("transporters")
-.insert({
-
-transporter_name:name,
-auth_id:userId
-
-})
-
-}
-
-/* SUCCESS */
-
-document.getElementById("msg").innerText="User created successfully"
-
-}
-catch(err){
-
-document.getElementById("msg").innerText="Error creating user"
-
-}
+loadUsers()
 
 }
 

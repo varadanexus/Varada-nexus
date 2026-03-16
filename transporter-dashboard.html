@@ -34,15 +34,19 @@ font-weight:bold;
 margin-top:10px;
 }
 
-</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="card">Total Trips
-
-<div class="stat" id="tripCount">0</div></div><div class="card">Total Earnings
-
-<div class="stat" id="earnings">0</div></div><div class="card">Payments Received
-
-<div class="stat" id="payments">0</div></div><div class="card">Balance
-
-<div class="stat" id="balance">0</div></div><br><button onclick="window.location.href='transporter-trips.html'">
+</style></head><body><div class="main"><h2>Transporter Dashboard</h2><div class="card">
+Total Trips
+<div class="stat" id="tripCount">0</div>
+</div><div class="card">
+Total Earnings
+<div class="stat" id="earnings">0</div>
+</div><div class="card">
+Payments Received
+<div class="stat" id="payments">0</div>
+</div><div class="card">
+Balance
+<div class="stat" id="balance">0</div>
+</div><br><button onclick="window.location.href='transporter-trips.html'">
 My Trips
 </button><button onclick="logout()">
 Logout
@@ -66,6 +70,7 @@ return
 
 let authId=data.session.user.id
 
+
 /* FIND TRANSPORTER */
 
 const {data:transporter}=await supabaseClient
@@ -76,6 +81,7 @@ const {data:transporter}=await supabaseClient
 
 let transporterId=transporter.id
 
+
 /* GET TRIPS */
 
 const {data:trips}=await supabaseClient
@@ -83,11 +89,17 @@ const {data:trips}=await supabaseClient
 .select("*")
 .eq("transporter_id",transporterId)
 
+
 let earnings=0
 
 trips.forEach(t=>{
-earnings+=Number(t.transporter_rate || 0)
+
+let tripEarnings=(t.weight_kg/1000) * (t.transporter_rate || 0)
+
+earnings += tripEarnings
+
 })
+
 
 /* GET PAYMENTS */
 
@@ -96,18 +108,27 @@ const {data:payments}=await supabaseClient
 .select("*")
 .eq("transporter_name",transporter.transporter_name)
 
+
 let paid=0
 
 payments.forEach(p=>{
-paid+=Number(p.amount)
+paid += Number(p.amount || 0)
 })
 
-document.getElementById("tripCount").innerText=trips.length
-document.getElementById("earnings").innerText=earnings
-document.getElementById("payments").innerText=paid
-document.getElementById("balance").innerText=earnings-paid
+
+document.getElementById("tripCount").innerText = trips.length
+
+document.getElementById("earnings").innerText =
+earnings.toFixed(2)
+
+document.getElementById("payments").innerText =
+paid.toFixed(2)
+
+document.getElementById("balance").innerText =
+(earnings-paid).toFixed(2)
 
 }
+
 
 /* LOGOUT */
 

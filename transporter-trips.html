@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>body{margin:0;font-family:Arial;background:#f4f6f9;}
+<!DOCTYPE html><html><head><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{padding:40px;}
 h2{color:#1f3c88;}
 .filters{margin-bottom:15px;}
@@ -36,18 +37,17 @@ color:red;
 margin-top:10px;
 font-weight:bold;
 }
-
 </style></head><body><div class="main"><h2>My Trips</h2><div class="filters"><select id="routeFilter"></select>
 <select id="truckFilter"></select>
 <select id="commodityFilter"></select>
 
 <button onclick="applyFilters()">Search</button>
 <button onclick="clearFilters()">Clear</button>
-
 <button onclick="downloadPDF()">Download PDF</button>
 <button onclick="logout()">Logout</button>
 
-</div><div class="message" id="message"></div><table><thead>
+</div><div class="message" id="message"></div><table>
+<thead>
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -60,21 +60,24 @@ font-weight:bold;
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table><div class="pagination">
+</thead>
+<tbody id="tripTable"></tbody>
+</table><div class="pagination">
 <button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
-</div></div><script>const supabaseClient = supabase.createClient(
+</div></div><script>
+
+const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 let allTrips=[]
 let filteredTrips=[]
+let expensesMap={}
 
 let page=1
 let pageSize=10
-
-let expensesMap={}
 
 init()
 
@@ -100,25 +103,10 @@ document.getElementById("message").innerText="Transporter record not found."
 return
 }
 
-/* LOAD EXPENSES */
-
-const {data:expenses}=await supabaseClient
-.from("expenses")
-.select("*")
-
-expenses.forEach(e=>{
-if(!expensesMap[e.trip_id]) expensesMap[e.trip_id]=0
-expensesMap[e.trip_id]+=Number(e.amount || 0)
-})
-
-/* TRY transporter_id */
-
 let {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
-
-/* FALLBACK transporter_name */
 
 if(!trips || trips.length==0){
 
@@ -137,6 +125,21 @@ document.getElementById("message").innerText="No trips found for this transporte
 allTrips=trips || []
 filteredTrips=trips || []
 
+/* LOAD EXPENSES FOR THESE TRIPS */
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+if(expenses){
+
+expenses.forEach(e=>{
+if(!expensesMap[e.trip_id]) expensesMap[e.trip_id]=0
+expensesMap[e.trip_id]+=Number(e.amount || 0)
+})
+
+}
+
 buildFilters()
 renderTrips()
 
@@ -152,9 +155,9 @@ let routeHTML='<option value="">All Routes</option>'
 let truckHTML='<option value="">All Trucks</option>'
 let commodityHTML='<option value="">All Commodities</option>'
 
-routes.forEach(r=>routeHTML+="<option>${r}</option>")
-trucks.forEach(t=>truckHTML+="<option>${t}</option>")
-commodities.forEach(c=>commodityHTML+="<option>${c}</option>")
+routes.forEach(r=>routeHTML+=`<option>${r}</option>`)
+trucks.forEach(t=>truckHTML+=`<option>${t}</option>`)
+commodities.forEach(c=>commodityHTML+=`<option>${c}</option>`)
 
 document.getElementById("routeFilter").innerHTML=routeHTML
 document.getElementById("truckFilter").innerHTML=truckHTML
@@ -203,14 +206,13 @@ let html=""
 pageTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
-let freight=((t.weight_kg/1000)*rate)
+let freight=(t.weight_kg/1000)*rate
 
-let expenseTotal=expensesMap[t.id] || 0
+let expenses=expensesMap[t.id] || 0
 
-let earnings=(freight-expenseTotal).toFixed(2)
+let earnings=(freight-expenses).toFixed(2)
 
 html+=`
-
 <tr>
 <td>${t.trip_no || ""}</td>
 <td>${t.route || ""}</td>
@@ -218,13 +220,16 @@ html+=`
 <td>${t.commodity || ""}</td>
 <td>${t.weight_kg || ""}</td>
 <td>${rate}</td>
-<td>${expenseTotal}</td>
+<td>${expenses}</td>
 <td>${t.trip_date || ""}</td>
 <td>${t.status || ""}</td>
 <td>${earnings}</td>
 </tr>
 `
-})document.getElementById("tripTable").innerHTML=html
+
+})
+
+document.getElementById("tripTable").innerHTML=html
 
 }
 
@@ -252,9 +257,9 @@ let rows=[]
 filteredTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
-let freight=((t.weight_kg/1000)*rate)
-let expenseTotal=expensesMap[t.id] || 0
-let earnings=(freight-expenseTotal).toFixed(2)
+let freight=(t.weight_kg/1000)*rate
+let expenses=expensesMap[t.id] || 0
+let earnings=(freight-expenses).toFixed(2)
 
 rows.push([
 t.trip_no,
@@ -263,7 +268,7 @@ t.truck,
 t.commodity,
 t.weight_kg,
 rate,
-expenseTotal,
+expenses,
 t.trip_date,
 t.status,
 earnings
@@ -288,4 +293,5 @@ await supabaseClient.auth.signOut()
 window.location.href="login.html"
 }
 
-</script></body></html>
+</script></body>
+</html>

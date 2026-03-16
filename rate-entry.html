@@ -1,4 +1,16 @@
-<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Rate Entry</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -49,40 +61,105 @@ border-bottom:1px solid #ddd;
 text-align:left;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* LOGIN CHECK */
 
 checkLogin()
 
 async function checkLogin(){
-const {data}=await supabaseClient.auth.getSession()
+
+const {data,error}=await supabaseClient.auth.getSession()
+
 if(!data.session){
 window.location.href="login.html"
 }
+
 }
 
-</script><div id="sidebar-container"></div><script>
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+</script>
+
+
+<div id="sidebar-container"></div>
+
+<script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><select id="commodity"></select>
+
+</script>
+
+
+<div class="main">
+
+<h2>Rate Entry</h2>
+
+<div class="card">
+
+<h3>Add Rate</h3>
+
+<select id="commodity"></select>
+
 <select id="route"></select>
+
 <select id="transporter"></select>
 
 <input id="companyRate" placeholder="Company Rate / MT">
-<input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
 
-</div><div class="card"><h3>Search Rates</h3><input id="searchCommodity" placeholder="Search Commodity">
-<input id="searchRoute" placeholder="Search Route"><button onclick="searchRates()">Search</button>
+<input id="truckRate" placeholder="Transporter Rate / MT">
+
+<button onclick="addRate()">Save Rate</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Search Rates</h3>
+
+<input id="searchCommodity" placeholder="Search Commodity">
+
+<input id="searchRoute" placeholder="Search Route">
+
+<button onclick="searchRates()">Search</button>
+
 <button onclick="clearSearch()">Clear</button>
 
-</div><div class="card"><h3>Existing Rates</h3><table><thead>
+</div>
+
+
+<div class="card">
+
+<h3>Existing Rates</h3>
+
+<table>
+
+<thead>
+
 <tr>
 <th>Commodity</th>
 <th>Route</th>
@@ -91,11 +168,25 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Transporter Rate</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="rateTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+
+</thead>
+
+<tbody id="rateTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div></div><script>
+</div>
+
+</div>
+
+
+<script>
 
 let commodities=[]
 let routes=[]
@@ -105,6 +196,7 @@ let filteredRates=[]
 
 let page=1
 let pageSize=10
+
 
 init()
 
@@ -116,6 +208,7 @@ await loadTransporters()
 await loadRates()
 
 }
+
 
 /* LOAD COMMODITIES */
 
@@ -135,6 +228,7 @@ document.getElementById("commodity").innerHTML=html
 
 }
 
+
 /* LOAD ROUTES */
 
 async function loadRoutes(){
@@ -152,6 +246,7 @@ html+=`<option value="${r.id}">${r.route_code}</option>`
 document.getElementById("route").innerHTML=html
 
 }
+
 
 /* LOAD TRANSPORTERS */
 
@@ -171,6 +266,7 @@ document.getElementById("transporter").innerHTML=html
 
 }
 
+
 /* LOAD RATES */
 
 async function loadRates(){
@@ -186,6 +282,7 @@ filteredRates=data
 renderRates()
 
 }
+
 
 /* RENDER TABLE */
 
@@ -224,6 +321,7 @@ document.getElementById("rateTable").innerHTML=html
 
 }
 
+
 /* ADD RATE */
 
 async function addRate(){
@@ -255,6 +353,7 @@ loadRates()
 
 }
 
+
 /* SEARCH */
 
 function searchRates(){
@@ -279,6 +378,7 @@ renderRates()
 
 }
 
+
 function clearSearch(){
 
 document.getElementById("searchCommodity").value=""
@@ -288,6 +388,7 @@ filteredRates=rates
 renderRates()
 
 }
+
 
 /* PAGINATION */
 
@@ -304,6 +405,7 @@ page--
 renderRates()
 }
 }
+
 
 /* PDF EXPORT */
 
@@ -343,6 +445,7 @@ doc.save("rate-sheet.pdf")
 
 }
 
+
 /* EDIT */
 
 async function editRate(id){
@@ -368,6 +471,7 @@ loadRates()
 
 }
 
+
 /* DELETE */
 
 async function deleteRate(id){
@@ -383,4 +487,7 @@ loadRates()
 
 }
 
-</script></body></html>
+</script>
+
+</body>
+</html>

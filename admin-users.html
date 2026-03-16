@@ -15,7 +15,7 @@ font-family:Arial;
 background:#f4f6f9;
 }
 
-/* PAGE */
+/* PAGE LAYOUT */
 
 .main{
 margin-left:220px;
@@ -26,14 +26,15 @@ h2{
 color:#1f3c88;
 }
 
-/* FORM */
+/* CREATE USER FORM */
 
 .form-box{
 background:white;
 padding:20px;
 border-radius:6px;
 margin-top:20px;
-width:400px;
+width:420px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 input,select{
@@ -63,7 +64,7 @@ table{
 width:100%;
 border-collapse:collapse;
 background:white;
-margin-top:20px;
+margin-top:25px;
 }
 
 th,td{
@@ -109,13 +110,11 @@ document.getElementById("sidebar-container").innerHTML=data
 <input type="password" id="password" placeholder="Password">
 
 <select id="role">
-
 <option value="admin">Admin</option>
 <option value="manager">Manager</option>
 <option value="operator">Operator</option>
 <option value="accounts">Accounts</option>
 <option value="customer">Customer</option>
-
 </select>
 
 <button onclick="createUser()">Create User</button>
@@ -141,42 +140,41 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
+/* SUPABASE CONNECTION */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzQyMTkyOSwiZXhwIjoyMDg4OTk3OTI5fQ.SwJMSWHi-k-bxAMDMVVSlo1hc5m6AElzIVWBEk6xsVg"
+"YOUR_ANON_PUBLIC_KEY"
 )
+
+/* LOAD USERS */
 
 loadUsers()
 
 async function loadUsers(){
 
-const {data:users}=await supabaseClient.auth.admin.listUsers()
-
-const {data:userRoles}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("user_roles")
 .select(`
 user_id,
+users(email),
 roles(role_name)
 `)
 
+if(error){
+console.log(error)
+return
+}
+
 let html=""
 
-users.users.forEach(u=>{
-
-let role=userRoles.find(r=>r.user_id===u.id)
-
-let roleName=role ? role.roles.role_name : "Not Assigned"
+data.forEach(u=>{
 
 html+=`
-
 <tr>
-
-<td>${u.email}</td>
-
-<td>${roleName}</td>
-
+<td>${u.users.email}</td>
+<td>${u.roles.role_name}</td>
 </tr>
-
 `
 
 })
@@ -185,6 +183,9 @@ document.getElementById("usersTable").innerHTML=html
 
 }
 
+
+/* CREATE USER */
+
 async function createUser(){
 
 let email=document.getElementById("email").value
@@ -192,34 +193,44 @@ let password=document.getElementById("password").value
 let role=document.getElementById("role").value
 
 if(!email || !password){
-
 alert("Enter email and password")
 return
-
 }
 
-const {data,error}=await supabaseClient.auth.admin.createUser({
+/* CREATE AUTH USER */
+
+const {data,error}=await supabaseClient.auth.signUp({
 
 email:email,
-password:password,
-email_confirm:true
+password:password
 
 })
 
 if(error){
-
 alert(error.message)
 return
-
 }
 
 let userId=data.user.id
+
+/* INSERT INTO USERS TABLE */
+
+await supabaseClient
+.from("users")
+.insert({
+id:userId,
+email:email
+})
+
+/* GET ROLE ID */
 
 const {data:roleData}=await supabaseClient
 .from("roles")
 .select("id")
 .eq("role_name",role)
 .single()
+
+/* INSERT USER ROLE */
 
 await supabaseClient
 .from("user_roles")
@@ -228,7 +239,7 @@ user_id:userId,
 role_id:roleData.id
 })
 
-alert("User created")
+alert("User Created")
 
 loadUsers()
 
@@ -237,5 +248,4 @@ loadUsers()
 </script>
 
 </body>
-
 </html>

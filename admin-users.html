@@ -2,7 +2,6 @@
 <html>
 
 <head>
-
 <title>Users - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -80,7 +79,6 @@ margin-left:5px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -107,6 +105,8 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <input type="email" id="email" placeholder="Email">
 
+<input type="password" id="password" placeholder="Password">
+
 <select id="role"></select>
 
 <button onclick="createUser()">Create User</button>
@@ -131,36 +131,49 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
-/* SUPABASE CONNECTION */
+/* SUPABASE CLIENT */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_PUBLIC_KEY"   // replace with your anon key
 )
+
+/* EDGE FUNCTION URL */
+
+const EDGE_FUNCTION_URL = 
+"https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user" 
+// replace if your function name is different
+
 
 /* LOAD ROLES */
 
 async function loadRoles(){
 
-const {data}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("roles")
 .select("*")
+
+if(error){
+console.log(error)
+return
+}
 
 let html=""
 
 data.forEach(r=>{
-html+=`<option value="${r.id}">${r.role_name}</option>`
+html += `<option value="${r.id}">${r.role_name}</option>`
 })
 
-document.getElementById("role").innerHTML=html
+document.getElementById("role").innerHTML = html
 
 }
+
 
 /* LOAD USERS */
 
 async function loadUsers(){
 
-const {data,error}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("users")
 .select(`
 id,
@@ -184,10 +197,10 @@ data.forEach(u=>{
 let role="Not Assigned"
 
 if(u.user_roles.length>0){
-role=u.user_roles[0].roles.role_name
+role = u.user_roles[0].roles.role_name
 }
 
-html+=`
+html += `
 <tr>
 <td>${u.email}</td>
 <td>${role}</td>
@@ -199,47 +212,49 @@ html+=`
 
 })
 
-document.getElementById("usersTable").innerHTML=html
+document.getElementById("usersTable").innerHTML = html
 
 }
 
-/* CREATE USER */
+
+/* CREATE USER USING EDGE FUNCTION */
 
 async function createUser(){
 
-let email=document.getElementById("email").value
-let roleId=document.getElementById("role").value
+let email = document.getElementById("email").value
+let password = document.getElementById("password").value
+let roleId = document.getElementById("role").value
 
-if(!email){
-alert("Enter email")
+if(!email || !password){
+alert("Enter email and password")
 return
 }
 
-const {data,error}=await supabaseClient
-.from("users")
-.insert({
-email:email
-})
-.select()
-.single()
-
-if(error){
-alert(error.message)
-return
-}
-
-await supabaseClient
-.from("user_roles")
-.insert({
-user_id:data.id,
+const response = await fetch(EDGE_FUNCTION_URL,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+email:email,
+password:password,
 role_id:roleId
 })
+})
+
+const result = await response.json()
+
+if(!response.ok){
+alert(result.error || "Error creating user")
+return
+}
 
 alert("User Created")
 
 loadUsers()
 
 }
+
 
 /* DELETE USER */
 
@@ -261,6 +276,7 @@ loadUsers()
 
 }
 
+
 /* INIT */
 
 loadRoles()
@@ -269,5 +285,4 @@ loadUsers()
 </script>
 
 </body>
-
 </html>

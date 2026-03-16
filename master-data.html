@@ -73,6 +73,13 @@ window.location.href="login.html"
 
 }
 
+async function logout(){
+
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+
+}
+
 </script><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
@@ -161,7 +168,6 @@ const pageSize=10
 
 init()
 
-
 async function init(){
 
 await loadTransporters()
@@ -170,7 +176,6 @@ await loadTrucks()
 await loadCommodities()
 
 }
-
 
 /* ROUTE CODE */
 
@@ -182,7 +187,6 @@ let d=document.getElementById("destination").value.substring(0,4).toUpperCase()
 document.getElementById("routeCode").value=o+"-"+d
 
 }
-
 
 /* ROUTES */
 
@@ -198,7 +202,6 @@ allRoutes=data
 renderRoutes()
 
 }
-
 
 function renderRoutes(){
 
@@ -227,7 +230,6 @@ document.getElementById("routeTable").innerHTML=html
 
 }
 
-
 function searchRoutes(){
 
 let val=document.getElementById("routeSearch").value.toLowerCase()
@@ -245,8 +247,6 @@ renderRoutes()
 
 function nextRoute(){routePage++;renderRoutes()}
 function prevRoute(){if(routePage>1){routePage--;renderRoutes()}}
-
-
 
 /* TRANSPORTERS */
 
@@ -270,7 +270,6 @@ dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
 document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
-
 
 function renderTransporters(){
 
@@ -300,7 +299,6 @@ document.getElementById("transporterTable").innerHTML=html
 
 }
 
-
 function searchTransporters(){
 
 let val=document.getElementById("transporterSearch").value.toLowerCase()
@@ -318,8 +316,6 @@ renderTransporters()
 function nextTransporter(){transporterPage++;renderTransporters()}
 function prevTransporter(){if(transporterPage>1){transporterPage--;renderTransporters()}}
 
-
-
 /* TRUCKS */
 
 async function loadTrucks(){
@@ -334,7 +330,6 @@ allTrucks=data
 renderTrucks()
 
 }
-
 
 function renderTrucks(){
 
@@ -360,7 +355,17 @@ document.getElementById("truckTable").innerHTML=html
 
 }
 
+function searchTrucks(){
 
+let val=document.getElementById("truckSearch").value.toLowerCase()
+
+trucks=allTrucks.filter(t=>
+t.truck_number.toLowerCase().includes(val)
+)
+
+renderTrucks()
+
+}
 
 /* COMMODITIES */
 
@@ -376,7 +381,6 @@ allCommodities=data
 renderCommodities()
 
 }
-
 
 function renderCommodities(){
 
@@ -399,7 +403,17 @@ document.getElementById("commodityTable").innerHTML=html
 
 }
 
+function searchCommodities(){
 
+let val=document.getElementById("commoditySearch").value.toLowerCase()
+
+commodities=allCommodities.filter(c=>
+c.name.toLowerCase().includes(val)
+)
+
+renderCommodities()
+
+}
 
 /* PDF */
 

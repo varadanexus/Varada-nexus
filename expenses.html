@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -72,24 +72,47 @@ const supabaseClient = supabase.createClient(
 
 /* LOGIN CHECK */
 
-checkLogin()
-
 async function checkLogin(){
 
 const {data}=await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.href="login.html"
+return
 }
 
 }
 
-</script><div id="sidebar-container"></div><script>
+checkLogin()
+
+/* LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+
 fetch("sidebar.html")
 .then(res => res.text())
 .then(data => {
+
 document.getElementById("sidebar-container").innerHTML = data
+
+/* APPLY RBAC AFTER SIDEBAR LOAD */
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC === "function"){
+applyMenuRBAC()
+}
+},300)
+
 })
+
 </script><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
 
 <select id="type">
@@ -150,11 +173,11 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-trips=data
+trips=data || []
 
 let html='<option value="">Select Trip</option>'
 
-data.forEach(t=>{
+trips.forEach(t=>{
 html+=`<option value="${t.id}">${t.trip_no}</option>`
 })
 
@@ -176,7 +199,7 @@ const {data}=await supabaseClient
 .select("expense_id")
 .ilike("expense_id","EXP"+year+month+"%")
 
-let seq=data.length+1
+let seq=(data?.length || 0)+1
 
 return "EXP"+year+month+seq.toString().padStart(4,"0")
 
@@ -210,7 +233,6 @@ expense_date:new Date()
 })
 
 document.getElementById("trip").value=""
-document.getElementById("type").value="Fuel"
 document.getElementById("amount").value=""
 
 loadExpenses()
@@ -226,14 +248,14 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-expenses=data
-filtered=data
+expenses=data || []
+filtered=expenses
 
 renderTable()
 
 }
 
-/* RENDER TABLE */
+/* RENDER */
 
 function renderTable(){
 
@@ -251,21 +273,15 @@ let trip=trips.find(t=>t.id==e.trip_id)
 html+=`
 
 <tr>
-
 <td>${e.expense_id || ""}</td>
 <td>${trip ? trip.trip_no : ""}</td>
 <td>${e.expense_type}</td>
 <td>${e.amount}</td>
 <td>${e.expense_date || ""}</td>
-
 <td>
-
 <button class="editBtn" onclick="editExpense('${e.id}')">Edit</button>
-
 <button class="deleteBtn" onclick="deleteExpense('${e.id}')">Delete</button>
-
 </td>
-
 </tr>
 
 `
@@ -276,144 +292,4 @@ document.getElementById("expenseTable").innerHTML=html
 
 }
 
-/* EDIT */
-
-async function editExpense(id){
-
-const {data}=await supabaseClient
-.from("expenses")
-.select("*")
-.eq("id",id)
-.single()
-
-let amount=prompt("Edit Amount",data.amount)
-
-await supabaseClient
-.from("expenses")
-.update({amount:amount})
-.eq("id",id)
-
-loadExpenses()
-
-}
-
-/* DELETE */
-
-async function deleteExpense(id){
-
-if(!confirm("Delete expense?")) return
-
-await supabaseClient
-.from("expenses")
-.delete()
-.eq("id",id)
-
-loadExpenses()
-
-}
-
-/* FILTER */
-
-function applyFilter(){
-
-let search=document.getElementById("searchTrip").value.toLowerCase()
-let type=document.getElementById("filterType").value
-
-filtered=expenses.filter(e=>{
-
-let trip=trips.find(t=>t.id==e.trip_id)
-
-return(
-(!search || (trip?.trip_no || "").toLowerCase().includes(search)) &&
-(!type || e.expense_type==type)
-)
-
-})
-
-page=1
-renderTable()
-
-}
-
-function clearFilter(){
-
-filtered=expenses
-page=1
-renderTable()
-
-}
-
-/* PAGINATION */
-
-function nextPage(){
-
-if(page*pageSize<filtered.length){
-page++
-renderTable()
-}
-
-}
-
-function prevPage(){
-
-if(page>1){
-page--
-renderTable()
-}
-
-}
-
-/* PDF REPORT */
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-filtered.forEach(e=>{
-
-let trip=trips.find(t=>t.id==e.trip_id)
-
-rows.push([
-e.expense_id,
-trip ? trip.trip_no : "",
-e.expense_type,
-e.amount,
-e.expense_date
-])
-
-})
-
-doc.text("Varada Nexus - Expense Report",14,15)
-
-doc.autoTable({
-head:[["Expense ID","Trip","Type","Amount","Date"]],
-body:rows,
-startY:20
-})
-
-doc.save("expense-report.pdf")
-
-}
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
-}
-
-</script>
-</body>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
-
-</html>
+</script></body></html>

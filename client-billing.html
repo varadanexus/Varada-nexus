@@ -51,6 +51,13 @@ cursor:pointer;
 background:#d9534f;
 }
 
+.trip-list{
+max-height:200px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -112,7 +119,9 @@ applyMenuRBAC()
 
 <h3>Create Invoice</h3>
 
-<select id="tripSelect" multiple size="8" style="width:400px;"></select>
+<select id="clientSelect" onchange="loadTripsByClient()"></select>
+
+<div class="trip-list" id="tripList"></div>
 
 <br>
 
@@ -127,6 +136,12 @@ applyMenuRBAC()
 <div class="card">
 
 <h3>Invoices</h3>
+
+<input id="searchClient" placeholder="Search Client">
+<input id="searchInvoice" placeholder="Search Invoice No">
+
+<button onclick="searchInvoices()">Search</button>
+<button onclick="clearSearch()">Clear</button>
 
 <table>
 
@@ -153,6 +168,7 @@ applyMenuRBAC()
 
 <script>
 
+let clients=[]
 let trips=[]
 let invoices=[]
 let selectedTrips=[]
@@ -162,18 +178,43 @@ init()
 
 async function init(){
 
-await loadTrips()
+await loadClients()
 await loadInvoices()
 
 }
 
-/* LOAD TRIPS */
+/* LOAD CLIENTS */
 
-async function loadTrips(){
+async function loadClients(){
+
+const {data}=await supabaseClient
+.from("clients")
+.select("*")
+
+clients=data||[]
+
+let html='<option value="">Select Client</option>'
+
+clients.forEach(c=>{
+html+=`<option value="${c.company}">${c.company}</option>`
+})
+
+document.getElementById("clientSelect").innerHTML=html
+
+}
+
+/* LOAD TRIPS BY CLIENT */
+
+async function loadTripsByClient(){
+
+let client=document.getElementById("clientSelect").value
+
+if(!client) return
 
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
+.eq("client_name",client)
 .eq("status","Completed")
 .order("created_at",{ascending:false})
 
@@ -181,13 +222,18 @@ trips=data
 
 let html=""
 
-trips.forEach(t=>{
-html+=`<option value="${t.id}">
+data.forEach(t=>{
+
+html+=`
+<div>
+<input type="checkbox" value="${t.id}">
 ${t.trip_no} | ${t.route} | ${t.truck}
-</option>`
+</div>
+`
+
 })
 
-document.getElementById("tripSelect").innerHTML=html
+document.getElementById("tripList").innerHTML=html
 
 }
 
@@ -195,14 +241,19 @@ document.getElementById("tripSelect").innerHTML=html
 
 async function generateInvoice(){
 
-let selected = Array.from(document.getElementById("tripSelect").selectedOptions).map(o=>o.value)
+let checked=document.querySelectorAll("#tripList input:checked")
 
-if(selected.length==0){
+if(checked.length==0){
 alert("Select trips")
 return
 }
 
-selectedTrips=trips.filter(t=>selected.includes(t.id))
+selectedTrips=[]
+
+checked.forEach(c=>{
+let trip=trips.find(t=>t.id==c.value)
+selectedTrips.push(trip)
+})
 
 let totalFreight=0
 let totalFuel=0
@@ -234,7 +285,7 @@ invoiceAmount=totalFreight-totalFuel
 
 document.getElementById("invoicePreview").innerHTML=`
 
-Client : ${selectedTrips[0].client_name || "N/A"} <br>
+Client : ${selectedTrips[0].client_name} <br>
 
 Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")} <br>
 
@@ -253,9 +304,7 @@ Fuel Deduction : ₹${totalFuel} <br>
 function generateInvoiceNo(){
 
 let now=new Date()
-
 let year=now.getFullYear()
-
 let rand=Math.floor(Math.random()*9000)+1000
 
 return "INV-"+year+"-"+rand
@@ -301,6 +350,14 @@ const {data}=await supabaseClient
 
 invoices=data
 
+renderInvoices(invoices)
+
+}
+
+/* RENDER */
+
+function renderInvoices(data){
+
 let html=""
 
 data.forEach(i=>{
@@ -312,7 +369,7 @@ html+=`
 
 <td>${i.trip_no}</td>
 
-<td>${i.client_name || ""}</td>
+<td>${i.client_name}</td>
 
 <td>₹${i.invoice_amount}</td>
 
@@ -335,7 +392,36 @@ document.getElementById("invoiceTable").innerHTML=html
 
 }
 
-/* DELETE INVOICE */
+/* SEARCH */
+
+function searchInvoices(){
+
+let client=document.getElementById("searchClient").value.toLowerCase()
+let invoice=document.getElementById("searchInvoice").value.toLowerCase()
+
+let filtered=invoices.filter(i=>{
+
+return(
+(!client || i.client_name?.toLowerCase().includes(client)) &&
+(!invoice || i.invoice_no?.toLowerCase().includes(invoice))
+)
+
+})
+
+renderInvoices(filtered)
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchClient").value=""
+document.getElementById("searchInvoice").value=""
+
+renderInvoices(invoices)
+
+}
+
+/* DELETE */
 
 async function deleteInvoice(id){
 

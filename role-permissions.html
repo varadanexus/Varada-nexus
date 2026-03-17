@@ -50,6 +50,16 @@ border-radius:4px;
 cursor:pointer;
 }
 
+button:hover{
+background:#162c66;
+}
+
+.save-all{
+margin-top:20px;
+padding:12px 20px;
+font-size:15px;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -59,10 +69,16 @@ background:white;
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
+text-align:center;
 }
 
 th{
 background:#eee;
+}
+
+.role-name{
+text-align:left;
+font-weight:bold;
 }
 
 </style>
@@ -95,26 +111,17 @@ document.getElementById("sidebar-container").innerHTML=data
 
 </div>
 
-<table>
+<table id="permTable"></table>
 
-<thead>
-
-<tr>
-<th>Role</th>
-<th>Page</th>
-<th>Access</th>
-<th>Save</th>
-</tr>
-
-</thead>
-
-<tbody id="permTable"></tbody>
-
-</table>
+<button class="save-all" onclick="saveAllPermissions()">
+Save All Permissions
+</button>
 
 </div>
 
 <script>
+
+/* SUPABASE */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -124,6 +131,7 @@ const supabaseClient = supabase.createClient(
 /* ERP PAGES */
 
 const pages=[
+
 {name:"Dashboard",file:"dashboard.html"},
 {name:"Trips",file:"trips.html"},
 {name:"Expenses",file:"expenses.html"},
@@ -136,6 +144,7 @@ const pages=[
 {name:"Transporter Dashboard",file:"transporter-dashboard.html"},
 {name:"Transporter Trips",file:"transporter-trips.html"},
 {name:"Transporter Ledger",file:"transporter-ledger.html"}
+
 ]
 
 /* CREATE ROLE */
@@ -144,11 +153,16 @@ async function createRole(){
 
 let name=document.getElementById("roleName").value
 
-if(!name) return alert("Enter role name")
+if(!name){
+alert("Enter role name")
+return
+}
 
 await supabaseClient
 .from("roles")
 .insert({role_name:name})
+
+document.getElementById("roleName").value=""
 
 alert("Role Created")
 
@@ -170,17 +184,31 @@ const {data:perms}=await supabaseClient
 
 let html=""
 
-html+=`<thead><tr><th>Role</th>`
+/* HEADER */
+
+html+=`<thead>
+<tr>
+<th>Role</th>
+`
 
 pages.forEach(p=>{
 html+=`<th>${p.name}</th>`
 })
 
-html+=`<th>Save</th></tr></thead><tbody>`
+html+=`
+</tr>
+</thead>
+<tbody>
+`
+
+/* ROWS */
 
 roles.forEach(role=>{
 
-html+=`<tr><td><b>${role.role_name}</b></td>`
+html+=`
+<tr>
+<td class="role-name">${role.role_name}</td>
+`
 
 pages.forEach(p=>{
 
@@ -189,10 +217,10 @@ String(x.role_id)===String(role.id) &&
 String(x.page)===String(p.file)
 )
 
-let checked=existing?.can_access ? "checked" : ""
+let checked=existing?.can_access ? "checked":""
 
 html+=`
-<td style="text-align:center">
+<td>
 <input type="checkbox"
 id="${role.id}_${p.file}"
 ${checked}>
@@ -201,35 +229,38 @@ ${checked}>
 
 })
 
-html+=`
-<td>
-<button onclick="saveRole('${role.id}')">
-Save
-</button>
-</td>
-</tr>
-`
+html+=`</tr>`
 
 })
 
 html+=`</tbody>`
 
-document.querySelector("table").innerHTML=html
+document.getElementById("permTable").innerHTML=html
 
 }
 
-/* SAVE ROLE */
+/* SAVE ALL PERMISSIONS */
 
-async function saveRole(roleId){
+async function saveAllPermissions(){
+
+const {data:roles}=await supabaseClient
+.from("roles")
+.select("*")
+
+for(let role of roles){
 
 for(let p of pages){
 
-let allowed=document.getElementById(roleId+"_"+p.file).checked
+let checkbox=document.getElementById(role.id+"_"+p.file)
+
+if(!checkbox) continue
+
+let allowed=checkbox.checked
 
 const {data:existing}=await supabaseClient
 .from("role_permissions")
 .select("*")
-.eq("role_id",roleId)
+.eq("role_id",role.id)
 .eq("page",p.file)
 
 if(existing && existing.length>0){
@@ -237,7 +268,7 @@ if(existing && existing.length>0){
 await supabaseClient
 .from("role_permissions")
 .update({can_access:allowed})
-.eq("role_id",roleId)
+.eq("role_id",role.id)
 .eq("page",p.file)
 
 }else{
@@ -245,7 +276,7 @@ await supabaseClient
 await supabaseClient
 .from("role_permissions")
 .insert({
-role_id:roleId,
+role_id:role.id,
 page:p.file,
 can_access:allowed
 })
@@ -254,13 +285,18 @@ can_access:allowed
 
 }
 
-alert("Permissions Saved")
+}
+
+alert("All Permissions Saved")
 
 }
+
+/* INIT */
 
 loadPermissions()
 
 </script>
+
 </body>
 
 </html>

@@ -11,16 +11,9 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+.main{margin-left:220px;padding:30px;}
 
 .card{
 background:white;
@@ -37,41 +30,23 @@ gap:12px;
 align-items:center;
 }
 
-.form-grid select,
-.form-grid input{
-padding:10px;
-border:1px solid #ccc;
-border-radius:4px;
+.form-grid select,.form-grid input{
+padding:10px;border:1px solid #ccc;border-radius:4px;
 }
 
 button{
-padding:8px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
+padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;cursor:pointer;
 }
 
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
 .saveBtn{background:#5cb85c;}
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
+table{width:100%;border-collapse:collapse;background:white;}
 
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
 
-th{
-background:#eee;
-text-align:left;
-}
+th{background:#eee;text-align:left;}
 
 .search-grid{
 display:grid;
@@ -80,7 +55,6 @@ gap:10px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -92,11 +66,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let editingTrip=null
-
 </script>
-
-<!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
 
@@ -106,11 +76,6 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
-},300)
-
 })
 
 </script>
@@ -176,6 +141,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </div>
 
+<br>
+
+<button onclick="downloadSearchPDF()">Download Search PDF</button>
+
 </div>
 
 <table>
@@ -192,7 +161,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>Date</th>
 <th>Status</th>
 <th>Action</th>
-<th>PDF</th>
 </tr>
 
 </thead>
@@ -224,57 +192,9 @@ await loadTrips()
 
 }
 
-async function generateTripNumber(){
-
-let today=new Date()
-
-let year=today.getFullYear().toString().slice(-2)
-let month=("0"+(today.getMonth()+1)).slice(-2)
-
-let prefix=`TR${year}${month}`
-
-const {data}=await supabaseClient
-.from("trips")
-.select("trip_no")
-.ilike("trip_no",`${prefix}%`)
-.order("trip_no",{ascending:false})
-.limit(1)
-
-let seq="0001"
-
-if(data.length>0){
-
-let last=data[0].trip_no.slice(-4)
-seq=(parseInt(last)+1).toString().padStart(4,"0")
-
-}
-
-return prefix+seq
-
-}
-
-/* LOAD DATA */
-
-async function loadClients(){
-
-const {data}=await supabaseClient.from("clients").select("*")
-
-clients=data||[]
-
-let html='<option value="">Select Client</option>'
-
-clients.forEach(c=>{
-html+=`<option value="${c.id}">${c.company}</option>`
-})
-
-document.getElementById("client").innerHTML=html
-
-}
-
 async function loadRoutes(){
 
 const {data}=await supabaseClient.from("routes").select("*")
-
 routes=data||[]
 
 let html='<option value="">Route</option>'
@@ -293,7 +213,6 @@ document.getElementById("searchRoute").innerHTML=search
 async function loadTrucks(){
 
 const {data}=await supabaseClient.from("trucks").select("*")
-
 trucks=data||[]
 
 let html='<option value="">Truck</option>'
@@ -312,7 +231,6 @@ document.getElementById("searchTruck").innerHTML=search
 async function loadCommodities(){
 
 const {data}=await supabaseClient.from("commodities").select("*")
-
 commodities=data||[]
 
 let html='<option value="">Commodity</option>'
@@ -328,7 +246,20 @@ document.getElementById("searchCommodity").innerHTML=search
 
 }
 
-/* SAVE OR UPDATE */
+async function loadClients(){
+
+const {data}=await supabaseClient.from("clients").select("*")
+clients=data||[]
+
+let html='<option value="">Client</option>'
+
+clients.forEach(c=>{
+html+=`<option value="${c.id}">${c.company}</option>`
+})
+
+document.getElementById("client").innerHTML=html
+
+}
 
 async function saveTrip(){
 
@@ -340,34 +271,7 @@ let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
-let tripNo=await generateTripNumber()
-
-let selectedTruck=trucks.find(t=>t.id==truck)
-let transporterId=selectedTruck?.transporter_id
-
-const {data:rate}=await supabaseClient
-.from("rates")
-.select("*")
-.eq("commodity_id",commodity)
-.eq("route_id",route)
-.eq("transporter_id",transporterId)
-.limit(1)
-
-let companyRate=0
-let transporterRate=0
-
-if(rate && rate.length>0){
-
-companyRate=rate[0].company_rate_per_mt
-transporterRate=rate[0].transporter_rate_per_mt
-
-}
-
-if(editingTrip){
-
-await supabaseClient
-.from("trips")
-.update({
+await supabaseClient.from("trips").insert({
 
 route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,
@@ -375,45 +279,9 @@ commodity:commodities.find(c=>c.id==commodity)?.name,
 client_name:clients.find(c=>c.id==client)?.company,
 weight_kg:Number(weight),
 trip_date:date,
-status:status,
-company_rate:companyRate,
-transporter_rate:transporterRate
+status:status
 
 })
-.eq("id",editingTrip)
-
-editingTrip=null
-
-}else{
-
-await supabaseClient
-.from("trips")
-.insert({
-
-trip_no:tripNo,
-route:routes.find(r=>r.id==route)?.route_code,
-truck:trucks.find(t=>t.id==truck)?.truck_number,
-commodity:commodities.find(c=>c.id==commodity)?.name,
-client_name:clients.find(c=>c.id==client)?.company,
-weight_kg:Number(weight),
-trip_date:date,
-status:status,
-company_rate:companyRate,
-transporter_rate:transporterRate
-
-})
-
-}
-
-/* CLEAR FORM */
-
-document.getElementById("route").value=""
-document.getElementById("truck").value=""
-document.getElementById("commodity").value=""
-document.getElementById("client").value=""
-document.getElementById("weight").value=""
-document.getElementById("tripDate").value=""
-document.getElementById("status").value=""
 
 loadTrips()
 
@@ -426,8 +294,8 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-trips=data||[]
-allTrips=data||[]
+trips=data
+allTrips=data
 
 renderTrips()
 
@@ -440,24 +308,22 @@ let html=""
 trips.forEach(t=>{
 
 html+=`
-<tr>
+<tr id="row_${t.id}">
 
 <td>${t.trip_no}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>
 <td>${t.commodity}</td>
-<td>${t.client_name||""}</td>
+<td>${t.client_name}</td>
 <td>${t.weight_kg}</td>
-<td>${t.trip_date||""}</td>
+<td>${t.trip_date}</td>
 <td>${t.status}</td>
 
 <td>
+
 <button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
-</td>
 
-<td>
-<button onclick="downloadTripPDF('${t.id}')">PDF</button>
 </td>
 
 </tr>
@@ -469,69 +335,111 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-/* EDIT */
-
 function editTrip(id){
 
+let row=document.getElementById("row_"+id)
 let t=trips.find(x=>x.id==id)
 
-document.getElementById("route").value=
-routes.find(r=>r.route_code==t.route)?.id
+row.innerHTML=`
 
-document.getElementById("truck").value=
-trucks.find(tr=>tr.truck_number==t.truck)?.id
+<td>${t.trip_no}</td>
+<td><input id="route_${id}" value="${t.route}"></td>
+<td><input id="truck_${id}" value="${t.truck}"></td>
+<td><input id="commodity_${id}" value="${t.commodity}"></td>
+<td><input id="client_${id}" value="${t.client_name}"></td>
+<td><input id="weight_${id}" value="${t.weight_kg}"></td>
+<td><input type="date" id="date_${id}" value="${t.trip_date}"></td>
+<td><input id="status_${id}" value="${t.status}"></td>
 
-document.getElementById("commodity").value=
-commodities.find(c=>c.name==t.commodity)?.id
+<td>
+<button class="saveBtn" onclick="saveEdit('${id}')">Save</button>
+<button class="deleteBtn" onclick="deleteTrip('${id}')">Delete</button>
+</td>
 
-document.getElementById("client").value=
-clients.find(c=>c.company==t.client_name)?.id
-
-document.getElementById("weight").value=t.weight_kg
-document.getElementById("tripDate").value=t.trip_date
-document.getElementById("status").value=t.status
-
-editingTrip=id
+`
 
 }
 
-/* DELETE */
-
-async function deleteTrip(id){
-
-if(!confirm("Delete trip?")) return
+async function saveEdit(id){
 
 await supabaseClient
 .from("trips")
-.delete()
+.update({
+
+route:document.getElementById("route_"+id).value,
+truck:document.getElementById("truck_"+id).value,
+commodity:document.getElementById("commodity_"+id).value,
+client_name:document.getElementById("client_"+id).value,
+weight_kg:Number(document.getElementById("weight_"+id).value),
+trip_date:document.getElementById("date_"+id).value,
+status:document.getElementById("status_"+id).value
+
+})
 .eq("id",id)
 
 loadTrips()
 
 }
 
-/* PDF */
+async function deleteTrip(id){
 
-function downloadTripPDF(id){
+if(!confirm("Delete trip?")) return
+
+await supabaseClient.from("trips").delete().eq("id",id)
+
+loadTrips()
+
+}
+
+/* SEARCH */
+
+function searchTrips(){
+
+let trip=document.getElementById("searchTripNo").value.toLowerCase()
+let route=document.getElementById("searchRoute").value
+let truck=document.getElementById("searchTruck").value
+let commodity=document.getElementById("searchCommodity").value
+
+trips=allTrips.filter(t=>
+
+(!trip || t.trip_no.toLowerCase().includes(trip)) &&
+(!route || t.route==route) &&
+(!truck || t.truck==truck) &&
+(!commodity || t.commodity==commodity)
+
+)
+
+renderTrips()
+
+}
+
+function clearSearch(){
+
+trips=allTrips
+renderTrips()
+
+}
+
+/* DOWNLOAD SEARCH RESULT */
+
+function downloadSearchPDF(){
 
 const { jsPDF } = window.jspdf
-
-let t=trips.find(x=>x.id==id)
-
 let doc=new jsPDF()
 
-doc.text("Varada Nexus Private Limited",20,20)
+let y=20
 
-doc.text("Trip No: "+t.trip_no,20,40)
-doc.text("Route: "+t.route,20,50)
-doc.text("Truck: "+t.truck,20,60)
-doc.text("Commodity: "+t.commodity,20,70)
-doc.text("Client: "+t.client_name,20,80)
-doc.text("Weight: "+t.weight_kg+" KG",20,90)
-doc.text("Date: "+t.trip_date,20,100)
-doc.text("Status: "+t.status,20,110)
+doc.text("Trips Report",20,y)
+y+=10
 
-doc.save(t.trip_no+".pdf")
+trips.forEach(t=>{
+
+doc.text(`${t.trip_no} | ${t.route} | ${t.truck} | ${t.commodity} | ${t.client_name} | ${t.weight_kg}`,20,y)
+y+=8
+
+})
+
+doc.save("Trips_Report.pdf")
 
 }
 

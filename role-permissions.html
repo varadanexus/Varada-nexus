@@ -1,4 +1,14 @@
-<!DOCTYPE html><html><head><title>Role Permissions - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Role Permissions - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -72,7 +82,13 @@ text-align:left;
 font-weight:bold;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -103,7 +119,14 @@ window.location.href="login.html"
 
 }
 
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</script>
+
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -111,23 +134,42 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
-/* APPLY RBAC AFTER SIDEBAR LOAD */
-
 setTimeout(()=>{
-
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
-
 },300)
 
 })
 
-</script><div class="main"><h2>Role Permissions</h2><div class="form-box"><h3>Create Role</h3><input id="roleName" placeholder="Role Name"><button onclick="createRole()">Create Role</button>
+</script>
 
-</div><table id="permTable"></table><button class="save-all" onclick="saveAllPermissions()">
+
+<div class="main">
+
+<h2>Role Permissions</h2>
+
+<div class="form-box">
+
+<h3>Create Role</h3>
+
+<input id="roleName" placeholder="Role Name">
+
+<button onclick="createRole()">Create Role</button>
+
+</div>
+
+
+<table id="permTable"></table>
+
+<button class="save-all" onclick="saveAllPermissions()">
 Save All Permissions
-</button></div><script>
+</button>
+
+</div>
+
+
+<script>
 
 /* ERP PAGES */
 
@@ -136,6 +178,8 @@ const pages=[
 {name:"Dashboard",file:"dashboard.html"},
 {name:"Trips",file:"trips.html"},
 {name:"Expenses",file:"expenses.html"},
+{name:"Client Billing",file:"client-billing.html"},
+{name:"Client Payments",file:"client-payments.html"},
 {name:"Master Data",file:"master-data.html"},
 {name:"Rates",file:"rate-entry.html"},
 {name:"Payments",file:"transporter-payments.html"},
@@ -147,6 +191,7 @@ const pages=[
 {name:"Transporter Ledger",file:"transporter-ledger.html"}
 
 ]
+
 
 /* CREATE ROLE */
 
@@ -186,8 +231,6 @@ const {data:perms}=await supabaseClient
 
 let html=""
 
-/* HEADER */
-
 html+=`<thead><tr><th>Role</th>`
 
 pages.forEach(p=>{
@@ -196,8 +239,6 @@ html+=`<th>${p.name}</th>`
 
 html+=`</tr></thead><tbody>`
 
-
-/* ROWS */
 
 roles.forEach(role=>{
 
@@ -290,4 +331,7 @@ alert("All Permissions Saved")
 
 loadPermissions()
 
-</script></body></html>
+</script>
+
+</body>
+</html>

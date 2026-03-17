@@ -51,6 +51,10 @@ links.forEach(link=>{
 
 let page = link.getAttribute("data-page").trim()
 
+/* ALWAYS KEEP LOGOUT */
+
+if(page === "logout") return
+
 if(!allowedPages.includes(page)){
 link.style.display="none"
 }
@@ -58,7 +62,5 @@ link.style.display="none"
 })
 
 }
-
-/* RUN RBAC */
 
 applyMenuRBAC()

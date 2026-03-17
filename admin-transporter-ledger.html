@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Transporter Ledger - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+select{
+padding:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>Transporter Ledger</h2>
+
+<div class="card">
+
+<select id="transporterSelect"></select>
+
+<button onclick="loadLedger()">Load Ledger</button>
+
+</div>
+
+
+<div class="card">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Reference</th>
+<th>Debit</th>
+<th>Credit</th>
+<th>Balance</th>
+</tr>
+
+</thead>
+
+<tbody id="ledgerTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<script>
+
+let transporters=[]
+let trips=[]
+let expenses=[]
+let payments=[]
+
+init()
+
+async function init(){
+
+await loadTransporters()
+
+}
+
+
+async function loadTransporters(){
+
+const {data}=await supabaseClient
+.from("transporters")
+.select("*")
+
+transporters=data || []
+
+let html='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporterSelect").innerHTML=html
+
+}
+
+
+
+async function loadLedger(){
+
+let transporterId=document.getElementById("transporterSelect").value
+
+if(!transporterId){
+alert("Select transporter")
+return
+}
+
+
+/* LOAD TRIPS */
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+
+
+/* LOAD EXPENSES */
+
+const {data:expenseData}=await supabaseClient
+.from("expenses")
+.select("*")
+
+
+/* LOAD PAYMENTS */
+
+let transporterName=transporters.find(x=>x.id==transporterId)?.transporter_name
+
+const {data:paymentData}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("transporter_name",transporterName)
+
+
+
+trips=tripData || []
+expenses=expenseData || []
+payments=paymentData || []
+
+let entries=[]
+
+
+/* TRIP DEBITS */
+
+trips.forEach(t=>{
+
+let weightMT=t.weight_kg/1000
+
+let gross=t.transporter_rate*weightMT
+
+
+let tripExpenses=expenses
+.filter(e=>e.trip_id==t.id)
+.reduce((sum,e)=>sum+Number(e.amount),0)
+
+
+let net=gross-tripExpenses
+
+
+entries.push({
+
+date:t.trip_date,
+type:"Trip",
+ref:t.trip_no,
+debit:net,
+credit:0
+
+})
+
+})
+
+
+
+/* PAYMENT CREDITS */
+
+payments.forEach(p=>{
+
+entries.push({
+
+date:p.payment_date,
+type:"Payment",
+ref:p.transaction_id || "Payment",
+debit:0,
+credit:p.amount
+
+})
+
+})
+
+
+
+/* SORT */
+
+entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+
+/* RUNNING BALANCE */
+
+let balance=0
+let html=""
+
+entries.forEach(e=>{
+
+balance+=e.debit
+balance-=e.credit
+
+html+=`
+
+<tr>
+
+<td>${e.date || ""}</td>
+
+<td>${e.type}</td>
+
+<td>${e.ref}</td>
+
+<td>${e.debit || ""}</td>
+
+<td>${e.credit || ""}</td>
+
+<td>${balance}</td>
+
+</tr>
+
+`
+
+})
+
+
+document.getElementById("ledgerTable").innerHTML=html
+
+}
+
+</script>
+
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+
+</body>
+</html>

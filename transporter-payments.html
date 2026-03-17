@@ -8,6 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="menu-rbac.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 
 body{
@@ -46,7 +49,6 @@ cursor:pointer;
 margin-top:5px;
 }
 
-.editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
 
 table{
@@ -79,19 +81,6 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-async function checkLogin(){
-
-const {data}=await supabaseClient.auth.getSession()
-
-if(!data.session){
-window.location.href="login.html"
-return
-}
-
-}
-
-checkLogin()
-
 </script>
 
 
@@ -104,13 +93,10 @@ checkLogin()
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
-
 document.getElementById("sidebar-container").innerHTML=data
 
 setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
+if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
 
 })
@@ -122,6 +108,8 @@ applyMenuRBAC()
 
 <h2>Transporter Payments</h2>
 
+
+<!-- ADD PAYMENT -->
 
 <div class="card">
 
@@ -141,6 +129,25 @@ applyMenuRBAC()
 
 </div>
 
+
+<!-- SEARCH -->
+
+<div class="card">
+
+<h3>Search Payments</h3>
+
+<select id="searchTransporter"></select>
+
+<input type="date" id="searchDate">
+
+<button onclick="searchPayments()">Search</button>
+<button onclick="clearSearch()">Clear</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+</div>
+
+
+<!-- PAYMENT HISTORY -->
 
 <div class="card">
 
@@ -177,6 +184,7 @@ applyMenuRBAC()
 
 let transporters=[]
 let payments=[]
+let allPayments=[]
 let page=1
 let pageSize=10
 
@@ -201,12 +209,15 @@ const {data}=await supabaseClient
 transporters=data||[]
 
 let html='<option value="">Select Transporter</option>'
+let search='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
 html+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
+search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
 })
 
 document.getElementById("transporter").innerHTML=html
+document.getElementById("searchTransporter").innerHTML=search
 
 }
 
@@ -221,11 +232,6 @@ let txn=document.getElementById("transactionId").value
 let date=document.getElementById("paymentDate").value
 let remarks=document.getElementById("remarks").value
 
-if(!transporter || !amount){
-alert("Please fill required fields")
-return
-}
-
 await supabaseClient
 .from("transporter_payments")
 .insert({
@@ -237,11 +243,6 @@ payment_date:date,
 remarks:remarks
 
 })
-
-document.getElementById("amount").value=""
-document.getElementById("transactionId").value=""
-document.getElementById("paymentDate").value=""
-document.getElementById("remarks").value=""
 
 loadPayments()
 
@@ -258,6 +259,7 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 payments=data||[]
+allPayments=data||[]
 
 renderPayments()
 
@@ -300,6 +302,40 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
+/* SEARCH */
+
+function searchPayments(){
+
+let transporter=document.getElementById("searchTransporter").value
+let date=document.getElementById("searchDate").value
+
+payments=allPayments.filter(p=>{
+
+return(
+(!transporter || p.transporter_name===transporter) &&
+(!date || p.payment_date===date)
+)
+
+})
+
+page=1
+renderPayments()
+
+}
+
+
+function clearSearch(){
+
+document.getElementById("searchTransporter").value=""
+document.getElementById("searchDate").value=""
+
+payments=allPayments
+
+renderPayments()
+
+}
+
+
 /* DELETE */
 
 async function deletePayment(id){
@@ -319,17 +355,41 @@ loadPayments()
 /* PAGINATION */
 
 function nextPage(){
-
 page++
 renderPayments()
-
 }
 
 function prevPage(){
-
 if(page>1) page--
-
 renderPayments()
+}
+
+
+/* PDF */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+let doc=new jsPDF()
+
+let rows=[]
+
+payments.forEach(p=>{
+rows.push([
+p.payment_date,
+p.transporter_name,
+p.amount,
+p.transaction_id,
+p.remarks
+])
+})
+
+doc.autoTable({
+head:[["Date","Transporter","Amount","Transaction ID","Remarks"]],
+body:rows
+})
+
+doc.save("transporter_payments.pdf")
 
 }
 

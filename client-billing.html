@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Client Billing - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+select,input{
+padding:10px;
+margin:5px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
+text-align:left;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+<div class="main">
+
+<h2>Client Billing</h2>
+
+<div class="card">
+
+<h3>Create Invoice</h3>
+
+<select id="tripSelect"></select>
+
+<button onclick="generateInvoice()">Generate Invoice</button>
+
+<p id="invoicePreview"></p>
+
+<button onclick="saveInvoice()">Save Invoice</button>
+
+</div>
+
+<div class="card">
+
+<h3>Invoices</h3>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Invoice No</th>
+<th>Trip</th>
+<th>Client</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody id="invoiceTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let trips=[]
+let invoices=[]
+let selectedTrip=null
+let invoiceAmount=0
+
+init()
+
+async function init(){
+
+await loadTrips()
+await loadInvoices()
+
+}
+
+/* LOAD TRIPS */
+
+async function loadTrips(){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("status","Completed")
+
+trips=data
+
+let html='<option value="">Select Completed Trip</option>'
+
+trips.forEach(t=>{
+html+=`<option value="${t.id}">
+${t.trip_no} | ${t.route}
+</option>`
+})
+
+document.getElementById("tripSelect").innerHTML=html
+
+}
+
+/* GENERATE INVOICE */
+
+async function generateInvoice(){
+
+let tripId=document.getElementById("tripSelect").value
+
+selectedTrip=trips.find(t=>t.id==tripId)
+
+if(!selectedTrip){
+alert("Select trip")
+return
+}
+
+let mt=selectedTrip.weight_kg/1000
+
+let baseAmount=mt*selectedTrip.company_rate
+
+/* GET FUEL EXPENSE */
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+.eq("trip_id",tripId)
+.eq("expense_type","Fuel")
+
+let fuel=0
+
+expenses.forEach(e=>{
+fuel+=Number(e.amount)
+})
+
+invoiceAmount=baseAmount-fuel
+
+document.getElementById("invoicePreview").innerHTML=`
+Client : ${selectedTrip.client_name || "N/A"} <br>
+Trip : ${selectedTrip.trip_no} <br>
+Base Amount : ₹${baseAmount} <br>
+Fuel Deduction : ₹${fuel} <br>
+<b>Invoice Amount : ₹${invoiceAmount}</b>
+`
+
+}
+
+/* GENERATE INVOICE NUMBER */
+
+function generateInvoiceNo(){
+
+let now=new Date()
+
+let year=now.getFullYear()
+
+let rand=Math.floor(Math.random()*9000)+1000
+
+return "INV-"+year+"-"+rand
+
+}
+
+/* SAVE INVOICE */
+
+async function saveInvoice(){
+
+if(!selectedTrip){
+alert("Generate invoice first")
+return
+}
+
+let invoiceNo=generateInvoiceNo()
+
+await supabaseClient
+.from("client_invoices")
+.insert({
+
+invoice_no:invoiceNo,
+trip_id:selectedTrip.id,
+trip_no:selectedTrip.trip_no,
+client_name:selectedTrip.client_name,
+route:selectedTrip.route,
+truck:selectedTrip.truck,
+commodity:selectedTrip.commodity,
+weight_kg:selectedTrip.weight_kg,
+rate_per_mt:selectedTrip.company_rate,
+invoice_amount:invoiceAmount
+
+})
+
+alert("Invoice Saved")
+
+loadInvoices()
+
+}
+
+/* LOAD INVOICES */
+
+async function loadInvoices(){
+
+const {data}=await supabaseClient
+.from("client_invoices")
+.select("*")
+.order("created_at",{ascending:false})
+
+invoices=data
+
+let html=""
+
+data.forEach(i=>{
+
+html+=`
+<tr>
+
+<td>${i.invoice_no}</td>
+
+<td>${i.trip_no}</td>
+
+<td>${i.client_name || ""}</td>
+
+<td>₹${i.invoice_amount}</td>
+
+<td>${i.status}</td>
+
+<td>
+<button onclick="downloadInvoice('${i.id}')">
+PDF
+</button>
+</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("invoiceTable").innerHTML=html
+
+}
+
+/* PDF */
+
+function downloadInvoice(id){
+
+const { jsPDF } = window.jspdf
+
+let invoice=invoices.find(x=>x.id==id)
+
+let doc=new jsPDF()
+
+doc.text("Varada Nexus Private Limited",20,20)
+
+doc.text("Invoice No : "+invoice.invoice_no,20,40)
+
+doc.text("Client : "+invoice.client_name,20,50)
+
+doc.text("Trip : "+invoice.trip_no,20,60)
+
+doc.text("Amount : ₹"+invoice.invoice_amount,20,70)
+
+doc.save(invoice.invoice_no+".pdf")
+
+}
+
+</script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+
+</body>
+</html>

@@ -85,8 +85,6 @@ background:#eee;
 
 <body>
 
-<!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
@@ -192,60 +190,7 @@ users.forEach(user=>{
 
 let roleName="Not Assigned"
 
-let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
-
-if(ur){
-
-let ur=userRoles.find(r=>String(r.user_id)===String(user.auth_id))
-
-if(role){
-roleName=role.role_name
-}
-
-}
-
-html+=`
-<tr>
-<td>${user.email}</td>
-<td>${roleName}</td>
-<td>
-
-<button class="edit-btn" onclick="editUser('${user.id}')">Edit</button>
-
-<button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
-
-</td>
-</tr>
-`
-
-})
-
-document.getElementById("usersTable").innerHTML=html
-
-}
-
-
-/* CREATE USER */
-
-async function loadUsers(){
-
-const {data:users} = await supabaseClient
-.from("users")
-.select("*")
-
-const {data:userRoles} = await supabaseClient
-.from("user_roles")
-.select("*")
-
-const {data:roles} = await supabaseClient
-.from("roles")
-.select("*")
-
-let html=""
-
-users.forEach(user=>{
-
-let roleName="Not Assigned"
+/* match using auth_id */
 
 let ur=userRoles.find(r=>String(r.user_id)===String(user.auth_id))
 
@@ -264,7 +209,11 @@ html+=`
 <td>${user.email}</td>
 <td>${roleName}</td>
 <td>
+
+<button class="edit-btn" onclick="editUser('${user.auth_id}')">Edit</button>
+
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
+
 </td>
 </tr>
 `
@@ -276,9 +225,48 @@ document.getElementById("usersTable").innerHTML=html
 }
 
 
-/* EDIT USER ROLE */
+/* CREATE USER */
 
-async function editUser(userId){
+async function createUser(){
+
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+let role=document.getElementById("role").value
+
+if(!email || !password){
+alert("Enter email and password")
+return
+}
+
+let res=await fetch(EDGE_FUNCTION,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+email:email,
+password:password,
+role_id:role
+})
+})
+
+let data=await res.json()
+
+if(!res.ok){
+alert(data.error)
+return
+}
+
+alert("User created")
+
+loadUsers()
+
+}
+
+
+/* EDIT ROLE */
+
+async function editUser(authId){
 
 const newRole=prompt("Enter Role ID")
 
@@ -287,7 +275,7 @@ if(!newRole) return
 await supabaseClient
 .from("user_roles")
 .update({role_id:newRole})
-.eq("user_id",userId)
+.eq("user_id",authId)
 
 loadUsers()
 

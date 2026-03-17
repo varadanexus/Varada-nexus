@@ -38,17 +38,19 @@ if(!userRole) return
 
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
-.select("page_name")
+.select("*")
 .eq("role_id",userRole.role_id)
 .eq("can_access",true)
 
 if(!permissions) return
 
 
-let allowedPages = permissions.map(p => p.page_name)
+/* collect allowed pages */
+
+let allowedPages = permissions.map(p => p.page_name || p.page)
 
 
-/* wait until sidebar loads */
+/* wait for sidebar */
 
 let checkSidebar = setInterval(()=>{
 
@@ -59,12 +61,12 @@ if(links.length === 0) return
 clearInterval(checkSidebar)
 
 
-links.forEach(link => {
+links.forEach(link=>{
 
 let page = link.getAttribute("data-page")
 
 if(!allowedPages.includes(page)){
-link.style.display = "none"
+link.style.display="none"
 }
 
 })
@@ -72,5 +74,3 @@ link.style.display = "none"
 },200)
 
 }
-
-applyMenuRBAC()

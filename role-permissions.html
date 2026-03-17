@@ -120,6 +120,9 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+<script>
+
+/* ERP PAGES */
 
 const pages=[
 "dashboard.html",
@@ -127,14 +130,21 @@ const pages=[
 "expenses.html",
 "master-data.html",
 "rate-entry.html",
-"transporter-payments.html"
+"transporter-payments.html",
+"admin-users.html",
+"profit-analysis.html"
 ]
+
+/* CREATE ROLE */
 
 async function createRole(){
 
 let name=document.getElementById("roleName").value
 
-if(!name) return alert("Enter role name")
+if(!name){
+alert("Enter role name")
+return
+}
 
 await supabaseClient
 .from("roles")
@@ -146,11 +156,20 @@ loadPermissions()
 
 }
 
+
+/* LOAD PERMISSIONS */
+
 async function loadPermissions(){
 
-const {data:roles}=await supabaseClient
+const {data:roles,error:roleError}=await supabaseClient
 .from("roles")
 .select("*")
+
+if(roleError){
+console.log(roleError)
+alert("Roles not loading")
+return
+}
 
 const {data:perms}=await supabaseClient
 .from("role_permissions")
@@ -162,9 +181,9 @@ roles.forEach(role=>{
 
 pages.forEach(page=>{
 
-let existing=perms.find(p=>p.role_id===role.id && p.page_name===page)
+let existing=perms?.find(p=>p.role_id==role.id && p.page_name==page)
 
-let checked=existing?.can_access ? "checked":""
+let checked=existing?.can_access ? "checked" : ""
 
 html+=`
 <tr>
@@ -174,7 +193,7 @@ html+=`
 <td>${page}</td>
 
 <td>
-<input type="checkbox" id="${role.id}-${page}" ${checked}>
+<input type="checkbox" id="${role.id}_${page}" ${checked}>
 </td>
 
 <td>
@@ -194,9 +213,12 @@ document.getElementById("permTable").innerHTML=html
 
 }
 
+
+/* SAVE PERMISSION */
+
 async function savePermission(roleId,page){
 
-let allowed=document.getElementById(roleId+"-"+page).checked
+let allowed=document.getElementById(roleId+"_"+page).checked
 
 const {data:existing}=await supabaseClient
 .from("role_permissions")
@@ -204,7 +226,7 @@ const {data:existing}=await supabaseClient
 .eq("role_id",roleId)
 .eq("page_name",page)
 
-if(existing.length>0){
+if(existing && existing.length>0){
 
 await supabaseClient
 .from("role_permissions")
@@ -228,10 +250,12 @@ alert("Permission Saved")
 
 }
 
+
+/* INIT */
+
 loadPermissions()
 
 </script>
-
 </body>
 
 </html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Generate Client Invoice</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+</script>
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>Generate Client Invoice</h2>
+
+<div class="card">
+
+<select id="clientSelect"></select>
+
+<button onclick="loadTrips()">Load Trips</button>
+
+</div>
+
+<div class="card">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Select</th>
+<th>Trip No</th>
+<th>Date</th>
+<th>Amount</th>
+</tr>
+
+</thead>
+
+<tbody id="tripTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="generateInvoice()">Generate Invoice</button>
+
+</div>
+
+</div>
+
+<script>
+
+let trips=[]
+
+init()
+
+async function init(){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("client")
+.not("client","is",null)
+
+let clients=[...new Set(data.map(x=>x.client))]
+
+let html='<option value="">Select Client</option>'
+
+clients.forEach(c=>{
+html+=`<option value="${c}">${c}</option>`
+})
+
+document.getElementById("clientSelect").innerHTML=html
+
+}
+
+
+async function loadTrips(){
+
+let client=document.getElementById("clientSelect").value
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("client",client)
+.is("invoice_id",null)
+
+trips=data
+
+let html=""
+
+data.forEach(t=>{
+
+let mt=t.weight_kg/1000
+
+let amount=t.company_rate*mt
+
+html+=`
+
+<tr>
+
+<td><input type="checkbox" value="${t.id}"></td>
+
+<td>${t.trip_no}</td>
+
+<td>${t.trip_date}</td>
+
+<td>${amount}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("tripTable").innerHTML=html
+
+}
+
+
+async function generateInvoice(){
+
+let selected=[...document.querySelectorAll("#tripTable input:checked")]
+.map(x=>x.value)
+
+if(selected.length==0){
+alert("Select trips")
+return
+}
+
+let invoiceNo="INV"+Date.now()
+
+let total=0
+
+selected.forEach(id=>{
+
+let t=trips.find(x=>x.id==id)
+
+let mt=t.weight_kg/1000
+
+total+=t.company_rate*mt
+
+})
+
+
+const {data}=await supabaseClient
+.from("client_invoices")
+.insert({
+
+invoice_no:invoiceNo,
+client_name:document.getElementById("clientSelect").value,
+invoice_amount:total,
+amount_paid:0,
+balance_amount:total,
+payment_status:"Pending"
+
+})
+.select()
+.single()
+
+
+for(let id of selected){
+
+await supabaseClient
+.from("trips")
+.update({invoice_id:data.id})
+.eq("id",id)
+
+}
+
+alert("Invoice Generated")
+
+loadTrips()
+
+}
+
+</script>
+
+<script src="rbac.js"></script>
+
+</body>
+
+</html>

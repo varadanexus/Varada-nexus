@@ -33,11 +33,9 @@ box-shadow:0 2px 5px rgba(0,0,0,0.1);
 display:grid;
 grid-template-columns: repeat(5,1fr);
 gap:12px;
-align-items:center;
 }
 
-.form-grid select,
-.form-grid input{
+.form-grid select,input{
 padding:10px;
 border:1px solid #ccc;
 border-radius:4px;
@@ -52,7 +50,6 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
 
 table{
@@ -73,7 +70,7 @@ text-align:left;
 
 .search-grid{
 display:grid;
-grid-template-columns: repeat(3,1fr);
+grid-template-columns:repeat(3,1fr);
 gap:10px;
 }
 
@@ -90,18 +87,6 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-async function checkLogin(){
-
-const {data}=await supabaseClient.auth.getSession()
-
-if(!data.session){
-window.location.href="login.html"
-}
-
-}
-
-checkLogin()
-
 </script>
 
 <!-- SIDEBAR -->
@@ -113,7 +98,6 @@ checkLogin()
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
-
 document.getElementById("sidebar-container").innerHTML=data
 
 setTimeout(()=>{
@@ -152,7 +136,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </div>
 
-
 <!-- SEARCH -->
 
 <div class="card">
@@ -172,7 +155,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 </div>
 
 </div>
-
 
 <!-- TABLE -->
 
@@ -210,6 +192,8 @@ let transporters=[]
 let rates=[]
 let allRates=[]
 
+/* INIT */
+
 init()
 
 async function init(){
@@ -225,7 +209,9 @@ await loadRates()
 
 async function loadCommodities(){
 
-const {data}=await supabaseClient.from("commodities").select("*")
+const {data}=await supabaseClient
+.from("commodities")
+.select("*")
 
 commodities=data||[]
 
@@ -243,7 +229,9 @@ document.getElementById("commodity").innerHTML=html
 
 async function loadRoutes(){
 
-const {data}=await supabaseClient.from("routes").select("*")
+const {data}=await supabaseClient
+.from("routes")
+.select("*")
 
 routes=data||[]
 
@@ -261,7 +249,9 @@ document.getElementById("route").innerHTML=html
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient.from("transporters").select("*")
+const {data}=await supabaseClient
+.from("transporters")
+.select("*")
 
 transporters=data||[]
 
@@ -282,6 +272,7 @@ async function saveRate(){
 let commodity=document.getElementById("commodity").value
 let route=document.getElementById("route").value
 let transporter=document.getElementById("transporter").value
+
 let companyRate=document.getElementById("companyRate").value
 let transporterRate=document.getElementById("transporterRate").value
 
@@ -301,26 +292,14 @@ loadRates()
 
 }
 
-/* LOAD RATES WITH JOIN */
+/* LOAD RATES */
 
 async function loadRates(){
 
-const {data,error}=await supabaseClient
+const {data}=await supabaseClient
 .from("rates")
-.select(`
-id,
-company_rate_per_mt,
-transporter_rate_per_mt,
-commodities(name),
-routes(route_code),
-transporters(transporter_name)
-`)
+.select("*")
 .order("created_at",{ascending:false})
-
-if(error){
-console.log(error)
-return
-}
 
 rates=data||[]
 allRates=data||[]
@@ -337,12 +316,16 @@ let html=""
 
 rates.forEach(r=>{
 
+let commodity=commodities.find(x=>x.id==r.commodity_id)?.name || ""
+let route=routes.find(x=>x.id==r.route_id)?.route_code || ""
+let transporter=transporters.find(x=>x.id==r.transporter_id)?.transporter_name || ""
+
 html+=`
 <tr>
 
-<td>${r.commodities?.name || ""}</td>
-<td>${r.routes?.route_code || ""}</td>
-<td>${r.transporters?.transporter_name || ""}</td>
+<td>${commodity}</td>
+<td>${route}</td>
+<td>${transporter}</td>
 
 <td>${r.company_rate_per_mt}</td>
 <td>${r.transporter_rate_per_mt}</td>
@@ -369,9 +352,12 @@ let route=document.getElementById("searchRoute").value.toLowerCase()
 
 rates=allRates.filter(r=>{
 
+let c=commodities.find(x=>x.id==r.commodity_id)?.name.toLowerCase() || ""
+let rt=routes.find(x=>x.id==r.route_id)?.route_code.toLowerCase() || ""
+
 return(
-(!commodity || r.commodities?.name.toLowerCase().includes(commodity)) &&
-(!route || r.routes?.route_code.toLowerCase().includes(route))
+(!commodity || c.includes(commodity)) &&
+(!route || rt.includes(route))
 )
 
 })
@@ -379,6 +365,8 @@ return(
 renderRates()
 
 }
+
+/* CLEAR */
 
 function clearSearch(){
 

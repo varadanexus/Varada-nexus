@@ -85,6 +85,8 @@ background:#eee;
 
 <body>
 
+<!-- SIDEBAR -->
+
 <div id="sidebar-container"></div>
 
 <script>
@@ -148,7 +150,7 @@ const EDGE_FUNCTION =
 
 async function loadRoles(){
 
-const {data,error} = await supabaseClient
+const {data,error}=await supabaseClient
 .from("roles")
 .select("*")
 
@@ -172,15 +174,15 @@ document.getElementById("role").innerHTML=html
 
 async function loadUsers(){
 
-const {data:users} = await supabaseClient
+const {data:users}=await supabaseClient
 .from("users")
 .select("*")
 
-const {data:userRoles} = await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("*")
 
-const {data:roles} = await supabaseClient
+const {data:roles}=await supabaseClient
 .from("roles")
 .select("*")
 
@@ -189,8 +191,9 @@ let html=""
 users.forEach(user=>{
 
 let roleName="Not Assigned"
+let roleId=null
 
-/* match using auth_id */
+/* match role using auth_id */
 
 let ur=userRoles.find(r=>String(r.user_id)===String(user.auth_id))
 
@@ -200,21 +203,30 @@ let role=roles.find(r=>String(r.id)===String(ur.role_id))
 
 if(role){
 roleName=role.role_name
+roleId=role.id
 }
 
 }
 
 html+=`
 <tr>
+
 <td>${user.email}</td>
-<td>${roleName}</td>
+
+<td>
+<select id="role-${user.auth_id}">
+${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_name}</option>`).join("")}
+</select>
+</td>
+
 <td>
 
-<button class="edit-btn" onclick="editUser('${user.auth_id}')">Edit</button>
+<button class="edit-btn" onclick="updateRole('${user.auth_id}')">Save</button>
 
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
 
 </td>
+
 </tr>
 `
 
@@ -264,18 +276,20 @@ loadUsers()
 }
 
 
-/* EDIT ROLE */
+/* UPDATE ROLE */
 
-async function editUser(authId){
+async function updateRole(authId){
 
-const newRole=prompt("Enter Role ID")
-
-if(!newRole) return
+let roleId=document.getElementById("role-"+authId).value
 
 await supabaseClient
 .from("user_roles")
-.update({role_id:newRole})
+.update({
+role_id:roleId
+})
 .eq("user_id",authId)
+
+alert("Role updated")
 
 loadUsers()
 

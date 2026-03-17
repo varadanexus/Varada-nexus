@@ -1,4 +1,13 @@
-<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Dashboard - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -48,12 +57,21 @@ border-bottom:1px solid #ddd;
 background:#eee;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* LOGIN CHECK */
 
 checkLogin()
 
@@ -67,27 +85,68 @@ window.location.href="login.html"
 
 }
 
-</script><div id="sidebar-container"></div><script>
+</script>
+
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
+
 document.getElementById("sidebar-container").innerHTML=data
+
+/* run RBAC after sidebar loads */
+
+if(typeof applyMenuRBAC === "function"){
+applyMenuRBAC()
+}
+
 })
 
-</script><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
+</script>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="main">
+
+<h1>Dashboard</h1>
+
+<div class="card-container">
+
+<div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div></div><script>
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* LOAD DASHBOARD */
 
 loadDashboard()
 
@@ -136,7 +195,8 @@ document.getElementById("totalProfit").innerText="₹ "+totalProfit.toLocaleStri
 
 }
 
-/* LOGOUT FUNCTION */
+
+/* LOGOUT */
 
 async function logout(){
 
@@ -148,10 +208,11 @@ window.location.href="login.html"
 
 </script>
 
-</body>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="rbac.js"></script>
+<!-- RBAC SCRIPT -->
+
 <script src="menu-rbac.js"></script>
+
+</body>
 
 </html>

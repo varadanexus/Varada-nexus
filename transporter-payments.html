@@ -1,4 +1,14 @@
-<!DOCTYPE html><html><head><title>Transporter Payments</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Transporter Payments</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -56,14 +66,18 @@ th{
 background:#eee;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
-/* LOGIN CHECK */
 
 async function checkLogin(){
 
@@ -78,16 +92,14 @@ return
 
 checkLogin()
 
-/* LOGOUT */
+</script>
 
-async function logout(){
 
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
+<!-- SIDEBAR -->
 
-}
+<div id="sidebar-container"></div>
 
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+<script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -95,23 +107,48 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
-/* APPLY RBAC AFTER SIDEBAR LOAD */
-
 setTimeout(()=>{
-
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
-
 },300)
 
 })
 
-</script><div class="main"><h2>Transporter Payments</h2><div class="card"><h3>Add Payment</h3><select id="transporter"></select>
+</script>
 
-<input type="number" id="amount" placeholder="Amount"><input id="transactionId" placeholder="Transaction ID"><input type="date" id="paymentDate"><input id="remarks" placeholder="Remarks"><button onclick="addPayment()">Save Payment</button>
 
-</div><div class="card"><h3>Payment History</h3><table><thead>
+<div class="main">
+
+<h2>Transporter Payments</h2>
+
+
+<div class="card">
+
+<h3>Add Payment</h3>
+
+<select id="transporter"></select>
+
+<input type="number" id="amount" placeholder="Amount">
+
+<input id="transactionId" placeholder="Transaction ID">
+
+<input type="date" id="paymentDate">
+
+<input id="remarks" placeholder="Remarks">
+
+<button onclick="addPayment()">Save Payment</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Payment History</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Date</th>
 <th>Transporter</th>
@@ -120,12 +157,183 @@ applyMenuRBAC()
 <th>Remarks</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</thead>
+
+<tbody id="paymentTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
-</div></div><script>
+</div>
 
-/* YOUR ORIGINAL PAYMENT SCRIPT CONTINUES HERE */
-/* (I did not modify your payment logic) */
+</div>
 
-</script></body></html>
+
+<script>
+
+let transporters=[]
+let payments=[]
+let page=1
+let pageSize=10
+
+init()
+
+async function init(){
+
+await loadTransporters()
+await loadPayments()
+
+}
+
+
+/* LOAD TRANSPORTERS */
+
+async function loadTransporters(){
+
+const {data}=await supabaseClient
+.from("transporters")
+.select("*")
+
+transporters=data||[]
+
+let html='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+html+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporter").innerHTML=html
+
+}
+
+
+/* ADD PAYMENT */
+
+async function addPayment(){
+
+let transporter=document.getElementById("transporter").value
+let amount=document.getElementById("amount").value
+let txn=document.getElementById("transactionId").value
+let date=document.getElementById("paymentDate").value
+let remarks=document.getElementById("remarks").value
+
+if(!transporter || !amount){
+alert("Please fill required fields")
+return
+}
+
+await supabaseClient
+.from("transporter_payments")
+.insert({
+
+transporter_name:transporter,
+amount:Number(amount),
+transaction_id:txn,
+payment_date:date,
+remarks:remarks
+
+})
+
+document.getElementById("amount").value=""
+document.getElementById("transactionId").value=""
+document.getElementById("paymentDate").value=""
+document.getElementById("remarks").value=""
+
+loadPayments()
+
+}
+
+
+/* LOAD PAYMENTS */
+
+async function loadPayments(){
+
+const {data}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+.order("created_at",{ascending:false})
+
+payments=data||[]
+
+renderPayments()
+
+}
+
+
+/* RENDER */
+
+function renderPayments(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let pageData=payments.slice(start,end)
+
+let html=""
+
+pageData.forEach(p=>{
+
+html+=`
+<tr>
+
+<td>${p.payment_date || ""}</td>
+<td>${p.transporter_name}</td>
+<td>${p.amount}</td>
+<td>${p.transaction_id || ""}</td>
+<td>${p.remarks || ""}</td>
+
+<td>
+<button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
+</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("paymentTable").innerHTML=html
+
+}
+
+
+/* DELETE */
+
+async function deletePayment(id){
+
+if(!confirm("Delete payment?")) return
+
+await supabaseClient
+.from("transporter_payments")
+.delete()
+.eq("id",id)
+
+loadPayments()
+
+}
+
+
+/* PAGINATION */
+
+function nextPage(){
+
+page++
+renderPayments()
+
+}
+
+function prevPage(){
+
+if(page>1) page--
+
+renderPayments()
+
+}
+
+</script>
+
+</body>
+</html>

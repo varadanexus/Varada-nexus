@@ -1,4 +1,14 @@
-<!DOCTYPE html><html><head><title>Rate Entry</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Rate Entry - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -13,23 +23,32 @@ padding:30px;
 
 .card{
 background:white;
-padding:20px;
+padding:25px;
 border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
 margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-select,input{
-padding:8px;
-margin:5px;
-width:200px;
+.form-grid{
+display:grid;
+grid-template-columns: repeat(5,1fr);
+gap:12px;
+align-items:center;
+}
+
+.form-grid select,
+.form-grid input{
+padding:10px;
+border:1px solid #ccc;
+border-radius:4px;
 }
 
 button{
-padding:8px 15px;
+padding:8px 14px;
 background:#1f3c88;
 color:white;
 border:none;
+border-radius:4px;
 cursor:pointer;
 }
 
@@ -39,24 +58,37 @@ cursor:pointer;
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:20px;
 background:white;
 }
 
 th,td{
 padding:10px;
 border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
 text-align:left;
 }
 
-</style></head><body><script>
+.search-grid{
+display:grid;
+grid-template-columns: repeat(3,1fr);
+gap:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
-/* LOGIN CHECK */
 
 async function checkLogin(){
 
@@ -64,23 +96,19 @@ const {data}=await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.href="login.html"
-return
 }
 
 }
 
 checkLogin()
 
-/* LOGOUT */
+</script>
 
-async function logout(){
+<!-- SIDEBAR -->
 
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
+<div id="sidebar-container"></div>
 
-}
-
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+<script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -88,31 +116,73 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
-/* APPLY RBAC AFTER SIDEBAR LOAD */
-
 setTimeout(()=>{
-
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-
+if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
 
 })
 
-</script><div class="main"><h2>Rate Entry</h2><div class="card"><h3>Add Rate</h3><select id="commodity"></select>
+</script>
 
+
+<div class="main">
+
+<h2>Rate Entry</h2>
+
+<!-- ADD RATE -->
+
+<div class="card">
+
+<h3>Add Rate</h3>
+
+<div class="form-grid">
+
+<select id="commodity"></select>
 <select id="route"></select>
-
 <select id="transporter"></select>
 
-<input id="companyRate" placeholder="Company Rate / MT"><input id="truckRate" placeholder="Transporter Rate / MT"><button onclick="addRate()">Save Rate</button>
+<input id="companyRate" placeholder="Company Rate / MT">
+<input id="transporterRate" placeholder="Transporter Rate / MT">
 
-</div><div class="card"><h3>Search Rates</h3><input id="searchCommodity" placeholder="Search Commodity"><input id="searchRoute" placeholder="Search Route"><button onclick="searchRates()">Search</button>
+</div>
 
+<br>
+
+<button onclick="saveRate()">Save Rate</button>
+
+</div>
+
+
+<!-- SEARCH -->
+
+<div class="card">
+
+<h3>Search Rates</h3>
+
+<div class="search-grid">
+
+<input id="searchCommodity" placeholder="Search Commodity">
+<input id="searchRoute" placeholder="Search Route">
+
+<div>
+<button onclick="searchRates()">Search</button>
 <button onclick="clearSearch()">Clear</button>
+</div>
 
-</div><div class="card"><h3>Existing Rates</h3><table><thead>
+</div>
+
+</div>
+
+
+<!-- TABLE -->
+
+<div class="card">
+
+<h3>Existing Rates</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Commodity</th>
 <th>Route</th>
@@ -121,13 +191,222 @@ applyMenuRBAC()
 <th>Transporter Rate</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="rateTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-<button onclick="downloadPDF()">Download PDF</button>
+</thead>
 
-</div></div><script>
+<tbody id="rateTable"></tbody>
 
-/* YOUR ORIGINAL RATE ENTRY SCRIPT CONTINUES */
-/* (NO LOGIC WAS MODIFIED) */
+</table>
 
-</script></body></html>
+</div>
+
+</div>
+
+
+<script>
+
+let commodities=[]
+let routes=[]
+let transporters=[]
+let rates=[]
+let allRates=[]
+
+init()
+
+async function init(){
+
+await loadCommodities()
+await loadRoutes()
+await loadTransporters()
+await loadRates()
+
+}
+
+/* LOAD COMMODITIES */
+
+async function loadCommodities(){
+
+const {data}=await supabaseClient.from("commodities").select("*")
+
+commodities=data||[]
+
+let html='<option value="">Select Commodity</option>'
+
+commodities.forEach(c=>{
+html+=`<option value="${c.id}">${c.name}</option>`
+})
+
+document.getElementById("commodity").innerHTML=html
+
+}
+
+/* LOAD ROUTES */
+
+async function loadRoutes(){
+
+const {data}=await supabaseClient.from("routes").select("*")
+
+routes=data||[]
+
+let html='<option value="">Select Route</option>'
+
+routes.forEach(r=>{
+html+=`<option value="${r.id}">${r.route_code}</option>`
+})
+
+document.getElementById("route").innerHTML=html
+
+}
+
+/* LOAD TRANSPORTERS */
+
+async function loadTransporters(){
+
+const {data}=await supabaseClient.from("transporters").select("*")
+
+transporters=data||[]
+
+let html='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporter").innerHTML=html
+
+}
+
+/* SAVE RATE */
+
+async function saveRate(){
+
+let commodity=document.getElementById("commodity").value
+let route=document.getElementById("route").value
+let transporter=document.getElementById("transporter").value
+let companyRate=document.getElementById("companyRate").value
+let transporterRate=document.getElementById("transporterRate").value
+
+await supabaseClient
+.from("rates")
+.insert({
+
+commodity_id:commodity,
+route_id:route,
+transporter_id:transporter,
+company_rate_per_mt:Number(companyRate),
+transporter_rate_per_mt:Number(transporterRate)
+
+})
+
+loadRates()
+
+}
+
+/* LOAD RATES WITH JOIN */
+
+async function loadRates(){
+
+const {data,error}=await supabaseClient
+.from("rates")
+.select(`
+id,
+company_rate_per_mt,
+transporter_rate_per_mt,
+commodities(name),
+routes(route_code),
+transporters(transporter_name)
+`)
+.order("created_at",{ascending:false})
+
+if(error){
+console.log(error)
+return
+}
+
+rates=data||[]
+allRates=data||[]
+
+renderRates()
+
+}
+
+/* RENDER */
+
+function renderRates(){
+
+let html=""
+
+rates.forEach(r=>{
+
+html+=`
+<tr>
+
+<td>${r.commodities?.name || ""}</td>
+<td>${r.routes?.route_code || ""}</td>
+<td>${r.transporters?.transporter_name || ""}</td>
+
+<td>${r.company_rate_per_mt}</td>
+<td>${r.transporter_rate_per_mt}</td>
+
+<td>
+<button class="deleteBtn" onclick="deleteRate('${r.id}')">Delete</button>
+</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("rateTable").innerHTML=html
+
+}
+
+/* SEARCH */
+
+function searchRates(){
+
+let commodity=document.getElementById("searchCommodity").value.toLowerCase()
+let route=document.getElementById("searchRoute").value.toLowerCase()
+
+rates=allRates.filter(r=>{
+
+return(
+(!commodity || r.commodities?.name.toLowerCase().includes(commodity)) &&
+(!route || r.routes?.route_code.toLowerCase().includes(route))
+)
+
+})
+
+renderRates()
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchCommodity").value=""
+document.getElementById("searchRoute").value=""
+
+rates=allRates
+
+renderRates()
+
+}
+
+/* DELETE */
+
+async function deleteRate(id){
+
+if(!confirm("Delete rate?")) return
+
+await supabaseClient
+.from("rates")
+.delete()
+.eq("id",id)
+
+loadRates()
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Client Payments - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+select,input{
+padding:10px;
+margin:5px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
+text-align:left;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>Client Payments</h2>
+
+
+<div class="card">
+
+<h3>Record Payment</h3>
+
+<select id="invoiceSelect"></select>
+
+<input id="amount" placeholder="Amount">
+
+<input type="date" id="paymentDate">
+
+<select id="method">
+
+<option value="Cash">Cash</option>
+<option value="Bank Transfer">Bank Transfer</option>
+<option value="UPI">UPI</option>
+
+</select>
+
+<input id="remarks" placeholder="Remarks">
+
+<button onclick="savePayment()">Save Payment</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Payment History</h3>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Date</th>
+<th>Invoice</th>
+<th>Client</th>
+<th>Amount</th>
+<th>Method</th>
+</tr>
+
+</thead>
+
+<tbody id="paymentTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<script>
+
+let invoices=[]
+let payments=[]
+
+init()
+
+async function init(){
+
+await loadInvoices()
+await loadPayments()
+
+}
+
+
+/* LOAD INVOICES */
+
+async function loadInvoices(){
+
+const {data}=await supabaseClient
+.from("client_invoices")
+.select("*")
+.eq("status","Pending")
+
+invoices=data
+
+let html='<option value="">Select Invoice</option>'
+
+data.forEach(i=>{
+
+html+=`
+<option value="${i.id}">
+${i.invoice_no} | ${i.client_name} | ₹${i.invoice_amount}
+</option>
+`
+
+})
+
+document.getElementById("invoiceSelect").innerHTML=html
+
+}
+
+
+/* SAVE PAYMENT */
+
+async function savePayment(){
+
+let invoiceId=document.getElementById("invoiceSelect").value
+let amount=document.getElementById("amount").value
+let date=document.getElementById("paymentDate").value
+let method=document.getElementById("method").value
+let remarks=document.getElementById("remarks").value
+
+if(!invoiceId || !amount){
+alert("Enter invoice and amount")
+return
+}
+
+let invoice=invoices.find(x=>x.id==invoiceId)
+
+await supabaseClient
+.from("client_payments")
+.insert({
+
+invoice_id:invoiceId,
+invoice_no:invoice.invoice_no,
+client_name:invoice.client_name,
+amount:Number(amount),
+payment_date:date,
+payment_method:method,
+remarks:remarks
+
+})
+
+/* UPDATE INVOICE STATUS */
+
+await supabaseClient
+.from("client_invoices")
+.update({status:"Paid"})
+.eq("id",invoiceId)
+
+alert("Payment Saved")
+
+loadInvoices()
+loadPayments()
+
+}
+
+
+/* LOAD PAYMENTS */
+
+async function loadPayments(){
+
+const {data}=await supabaseClient
+.from("client_payments")
+.select("*")
+.order("created_at",{ascending:false})
+
+payments=data
+
+let html=""
+
+data.forEach(p=>{
+
+html+=`
+<tr>
+
+<td>${p.payment_date || ""}</td>
+
+<td>${p.invoice_no}</td>
+
+<td>${p.client_name}</td>
+
+<td>₹${p.amount}</td>
+
+<td>${p.payment_method}</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("paymentTable").innerHTML=html
+
+}
+
+</script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+
+</body>
+
+</html>

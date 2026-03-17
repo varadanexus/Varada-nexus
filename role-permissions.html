@@ -124,9 +124,6 @@ const supabaseClient = supabase.createClient(
 /* ERP PAGES */
 
 const pages=[
-
-/* ADMIN ERP */
-
 {name:"Dashboard",file:"dashboard.html"},
 {name:"Trips",file:"trips.html"},
 {name:"Expenses",file:"expenses.html"},
@@ -136,13 +133,9 @@ const pages=[
 {name:"Users",file:"admin-users.html"},
 {name:"Role Permissions",file:"role-permissions.html"},
 {name:"Profit Analysis",file:"profit-analysis.html"},
-
-/* TRANSPORTER PORTAL */
-
 {name:"Transporter Dashboard",file:"transporter-dashboard.html"},
 {name:"Transporter Trips",file:"transporter-trips.html"},
 {name:"Transporter Ledger",file:"transporter-ledger.html"}
-
 ]
 
 /* CREATE ROLE */
@@ -177,8 +170,6 @@ const {data:perms}=await supabaseClient
 
 let html=""
 
-/* HEADER */
-
 html+=`<thead><tr><th>Role</th>`
 
 pages.forEach(p=>{
@@ -186,8 +177,6 @@ html+=`<th>${p.name}</th>`
 })
 
 html+=`<th>Save</th></tr></thead><tbody>`
-
-/* ROWS */
 
 roles.forEach(role=>{
 
@@ -197,7 +186,7 @@ pages.forEach(p=>{
 
 let existing=perms?.find(x =>
 String(x.role_id)===String(role.id) &&
-x.page_name===p.file
+String(x.page)===String(p.file)
 )
 
 let checked=existing?.can_access ? "checked" : ""
@@ -241,7 +230,7 @@ const {data:existing}=await supabaseClient
 .from("role_permissions")
 .select("*")
 .eq("role_id",roleId)
-.eq("page_name",p.file)
+.eq("page",p.file)
 
 if(existing && existing.length>0){
 
@@ -249,7 +238,7 @@ await supabaseClient
 .from("role_permissions")
 .update({can_access:allowed})
 .eq("role_id",roleId)
-.eq("page_name",p.file)
+.eq("page",p.file)
 
 }else{
 
@@ -257,7 +246,7 @@ await supabaseClient
 .from("role_permissions")
 .insert({
 role_id:roleId,
-page_name:p.file,
+page:p.file,
 can_access:allowed
 })
 

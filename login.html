@@ -14,8 +14,6 @@
 
 <style>
 
-/* LOGIN AREA */
-
 .login-container{
 display:flex;
 justify-content:center;
@@ -153,8 +151,6 @@ margin-top:12px;
 
 <script>
 
-/* SUPABASE CONNECTION */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -216,23 +212,24 @@ return
 
 /* GET ROLE */
 
-const {data:userRole,error:roleError}=await supabaseClient
+const {data:userRoles,error:roleError}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",authId)   // <-- FIXED HERE
-.single()
+.eq("user_id",dbUser.id)
 
-if(roleError || !userRole){
+if(roleError || !userRoles || userRoles.length===0){
 document.getElementById("error").innerText="User role not assigned"
 return
 }
+
+let roleId=userRoles[0].role_id
 
 /* GET ROLE NAME */
 
 const {data:role}=await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",userRole.role_id)
+.eq("id",roleId)
 .single()
 
 let roleName=role.role_name.toLowerCase()

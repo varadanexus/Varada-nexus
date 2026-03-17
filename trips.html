@@ -54,7 +54,6 @@ cursor:pointer;
 
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
-.saveBtn{background:#5cb85c;}
 
 table{
 width:100%;
@@ -76,62 +75,48 @@ text-align:left;
 
 </head>
 
-
 <body>
 
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 /* LOGIN */
 
 async function checkLogin(){
-
 const {data}=await supabaseClient.auth.getSession()
-
 if(!data.session){
 window.location.href="login.html"
 }
-
 }
 
 checkLogin()
 
 </script>
 
-
-<!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
-
 document.getElementById("sidebar-container").innerHTML=data
-
 setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
-
 })
-
 </script>
-
 
 <div class="main">
 
 <h2>Trips</h2>
 
-
 <div class="card">
 
-<h3>Create Trip</h3>
+<h3>Create / Edit Trip</h3>
 
 <div class="form-grid">
 
@@ -155,16 +140,14 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <br>
 
-<button onclick="saveTrip()">Save Trip</button>
+<button onclick="saveTrip()" id="saveBtn">Save Trip</button>
 
 </div>
-
 
 
 <table>
 
 <thead>
-
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -176,7 +159,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>Status</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody id="tripTable"></tbody>
@@ -193,6 +175,8 @@ let trucks=[]
 let commodities=[]
 let clients=[]
 let trips=[]
+
+let editingTripId=null
 
 
 init()
@@ -317,7 +301,7 @@ document.getElementById("commodity").innerHTML=html
 
 
 
-/* SAVE TRIP */
+/* SAVE / UPDATE TRIP */
 
 async function saveTrip(){
 
@@ -328,6 +312,28 @@ let client=document.getElementById("client").value
 let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
+
+if(editingTripId){
+
+await supabaseClient
+.from("trips")
+.update({
+
+route:routes.find(r=>r.id==route)?.route_code,
+truck:trucks.find(t=>t.id==truck)?.truck_number,
+commodity:commodities.find(c=>c.id==commodity)?.name,
+client_name:clients.find(c=>c.id==client)?.company,
+weight_kg:Number(weight),
+trip_date:date,
+status:status
+
+})
+.eq("id",editingTripId)
+
+editingTripId=null
+document.getElementById("saveBtn").innerText="Save Trip"
+
+}else{
 
 let tripNo=await generateTripNumber()
 
@@ -346,6 +352,9 @@ status:status
 
 })
 
+}
+
+clearForm()
 loadTrips()
 
 }
@@ -389,11 +398,9 @@ html+=`
 <td>
 
 <select onchange="updateStatus('${t.id}',this.value)">
-
 <option ${t.status=="LOADED"?"selected":""}>LOADED</option>
 <option ${t.status=="Completed"?"selected":""}>Completed</option>
 <option ${t.status=="Pending"?"selected":""}>Pending</option>
-
 </select>
 
 </td>
@@ -412,6 +419,25 @@ html+=`
 })
 
 document.getElementById("tripTable").innerHTML=html
+
+}
+
+
+/* EDIT TRIP */
+
+function editTrip(id){
+
+let t=trips.find(x=>x.id==id)
+
+editingTripId=id
+
+document.getElementById("weight").value=t.weight_kg
+document.getElementById("tripDate").value=t.trip_date
+document.getElementById("status").value=t.status
+
+document.getElementById("saveBtn").innerText="Update Trip"
+
+window.scrollTo({top:0,behavior:"smooth"})
 
 }
 
@@ -444,11 +470,13 @@ loadTrips()
 }
 
 
-/* EDIT */
+/* CLEAR FORM */
 
-function editTrip(id){
+function clearForm(){
 
-alert("Editing feature can be expanded here if needed")
+document.getElementById("weight").value=""
+document.getElementById("tripDate").value=""
+document.getElementById("status").value=""
 
 }
 

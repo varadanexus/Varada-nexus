@@ -51,6 +51,8 @@ cursor:pointer;
 }
 
 .deleteBtn{background:#d9534f;}
+.editBtn{background:#5bc0de;}
+.saveBtn{background:#5cb85c;}
 
 table{
 width:100%;
@@ -113,8 +115,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <h2>Rate Entry</h2>
 
-<!-- ADD RATE -->
-
 <div class="card">
 
 <h3>Add Rate</h3>
@@ -136,8 +136,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </div>
 
-<!-- SEARCH -->
-
 <div class="card">
 
 <h3>Search Rates</h3>
@@ -155,8 +153,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 </div>
 
 </div>
-
-<!-- TABLE -->
 
 <div class="card">
 
@@ -192,8 +188,6 @@ let transporters=[]
 let rates=[]
 let allRates=[]
 
-/* INIT */
-
 init()
 
 async function init(){
@@ -209,9 +203,7 @@ await loadRates()
 
 async function loadCommodities(){
 
-const {data}=await supabaseClient
-.from("commodities")
-.select("*")
+const {data}=await supabaseClient.from("commodities").select("*")
 
 commodities=data||[]
 
@@ -229,9 +221,7 @@ document.getElementById("commodity").innerHTML=html
 
 async function loadRoutes(){
 
-const {data}=await supabaseClient
-.from("routes")
-.select("*")
+const {data}=await supabaseClient.from("routes").select("*")
 
 routes=data||[]
 
@@ -249,9 +239,7 @@ document.getElementById("route").innerHTML=html
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
-.from("transporters")
-.select("*")
+const {data}=await supabaseClient.from("transporters").select("*")
 
 transporters=data||[]
 
@@ -321,7 +309,7 @@ let route=routes.find(x=>x.id==r.route_id)?.route_code || ""
 let transporter=transporters.find(x=>x.id==r.transporter_id)?.transporter_name || ""
 
 html+=`
-<tr>
+<tr id="row_${r.id}">
 
 <td>${commodity}</td>
 <td>${route}</td>
@@ -331,6 +319,7 @@ html+=`
 <td>${r.transporter_rate_per_mt}</td>
 
 <td>
+<button class="editBtn" onclick="editRate('${r.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteRate('${r.id}')">Delete</button>
 </td>
 
@@ -340,6 +329,65 @@ html+=`
 })
 
 document.getElementById("rateTable").innerHTML=html
+
+}
+
+/* EDIT */
+
+function editRate(id){
+
+let r=rates.find(x=>x.id==id)
+let row=document.getElementById(`row_${id}`)
+
+row.innerHTML=`
+
+<td>
+<select id="commodity_${id}">
+${commodities.map(c=>`<option value="${c.id}" ${c.id==r.commodity_id?"selected":""}>${c.name}</option>`).join("")}
+</select>
+</td>
+
+<td>
+<select id="route_${id}">
+${routes.map(rt=>`<option value="${rt.id}" ${rt.id==r.route_id?"selected":""}>${rt.route_code}</option>`).join("")}
+</select>
+</td>
+
+<td>
+<select id="transporter_${id}">
+${transporters.map(t=>`<option value="${t.id}" ${t.id==r.transporter_id?"selected":""}>${t.transporter_name}</option>`).join("")}
+</select>
+</td>
+
+<td><input id="company_${id}" value="${r.company_rate_per_mt}"></td>
+<td><input id="transporterRate_${id}" value="${r.transporter_rate_per_mt}"></td>
+
+<td>
+<button class="saveBtn" onclick="updateRateRow('${id}')">Save</button>
+<button class="deleteBtn" onclick="deleteRate('${id}')">Delete</button>
+</td>
+`
+
+}
+
+/* UPDATE */
+
+async function updateRateRow(id){
+
+await supabaseClient
+.from("rates")
+.update({
+
+commodity_id:document.getElementById(`commodity_${id}`).value,
+route_id:document.getElementById(`route_${id}`).value,
+transporter_id:document.getElementById(`transporter_${id}`).value,
+company_rate_per_mt:Number(document.getElementById(`company_${id}`).value),
+transporter_rate_per_mt:Number(document.getElementById(`transporterRate_${id}`).value)
+
+})
+.eq("id",id)
+
+loadRates()
 
 }
 
@@ -365,8 +413,6 @@ return(
 renderRates()
 
 }
-
-/* CLEAR */
 
 function clearSearch(){
 

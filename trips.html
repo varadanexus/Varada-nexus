@@ -6,6 +6,7 @@
 <title>Trips - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -90,6 +91,8 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+let editingTrip=null
 
 </script>
 
@@ -189,6 +192,7 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>Date</th>
 <th>Status</th>
 <th>Action</th>
+<th>PDF</th>
 </tr>
 
 </thead>
@@ -249,7 +253,7 @@ return prefix+seq
 
 }
 
-/* LOAD CLIENTS */
+/* LOAD DATA */
 
 async function loadClients(){
 
@@ -266,8 +270,6 @@ html+=`<option value="${c.id}">${c.company}</option>`
 document.getElementById("client").innerHTML=html
 
 }
-
-/* LOAD ROUTES */
 
 async function loadRoutes(){
 
@@ -288,8 +290,6 @@ document.getElementById("searchRoute").innerHTML=search
 
 }
 
-/* LOAD TRUCKS */
-
 async function loadTrucks(){
 
 const {data}=await supabaseClient.from("trucks").select("*")
@@ -308,8 +308,6 @@ document.getElementById("truck").innerHTML=html
 document.getElementById("searchTruck").innerHTML=search
 
 }
-
-/* LOAD COMMODITIES */
 
 async function loadCommodities(){
 
@@ -330,7 +328,7 @@ document.getElementById("searchCommodity").innerHTML=search
 
 }
 
-/* SAVE TRIP */
+/* SAVE OR UPDATE */
 
 async function saveTrip(){
 
@@ -363,35 +361,51 @@ if(rate && rate.length>0){
 companyRate=rate[0].company_rate_per_mt
 transporterRate=rate[0].transporter_rate_per_mt
 
-}else{
-
-alert("Rate not found for this Route + Commodity + Transporter")
-
 }
 
-/* INSERT TRIP */
+if(editingTrip){
+
+await supabaseClient
+.from("trips")
+.update({
+
+route:routes.find(r=>r.id==route)?.route_code,
+truck:trucks.find(t=>t.id==truck)?.truck_number,
+commodity:commodities.find(c=>c.id==commodity)?.name,
+client_name:clients.find(c=>c.id==client)?.company,
+weight_kg:Number(weight),
+trip_date:date,
+status:status,
+company_rate:companyRate,
+transporter_rate:transporterRate
+
+})
+.eq("id",editingTrip)
+
+editingTrip=null
+
+}else{
 
 await supabaseClient
 .from("trips")
 .insert({
 
 trip_no:tripNo,
-
 route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,
 commodity:commodities.find(c=>c.id==commodity)?.name,
 client_name:clients.find(c=>c.id==client)?.company,
-
 weight_kg:Number(weight),
 trip_date:date,
 status:status,
-
 company_rate:companyRate,
 transporter_rate:transporterRate
 
 })
 
-/* CLEAR FORM AFTER SAVE */
+}
+
+/* CLEAR FORM */
 
 document.getElementById("route").value=""
 document.getElementById("truck").value=""
@@ -400,8 +414,6 @@ document.getElementById("client").value=""
 document.getElementById("weight").value=""
 document.getElementById("tripDate").value=""
 document.getElementById("status").value=""
-
-/* RELOAD TABLE */
 
 loadTrips()
 
@@ -437,13 +449,15 @@ html+=`
 <td>${t.client_name||""}</td>
 <td>${t.weight_kg}</td>
 <td>${t.trip_date||""}</td>
-
 <td>${t.status}</td>
 
 <td>
-
+<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+</td>
 
+<td>
+<button onclick="downloadTripPDF('${t.id}')">PDF</button>
 </td>
 
 </tr>
@@ -455,6 +469,34 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
+/* EDIT */
+
+function editTrip(id){
+
+let t=trips.find(x=>x.id==id)
+
+document.getElementById("route").value=
+routes.find(r=>r.route_code==t.route)?.id
+
+document.getElementById("truck").value=
+trucks.find(tr=>tr.truck_number==t.truck)?.id
+
+document.getElementById("commodity").value=
+commodities.find(c=>c.name==t.commodity)?.id
+
+document.getElementById("client").value=
+clients.find(c=>c.company==t.client_name)?.id
+
+document.getElementById("weight").value=t.weight_kg
+document.getElementById("tripDate").value=t.trip_date
+document.getElementById("status").value=t.status
+
+editingTrip=id
+
+}
+
+/* DELETE */
+
 async function deleteTrip(id){
 
 if(!confirm("Delete trip?")) return
@@ -465,6 +507,31 @@ await supabaseClient
 .eq("id",id)
 
 loadTrips()
+
+}
+
+/* PDF */
+
+function downloadTripPDF(id){
+
+const { jsPDF } = window.jspdf
+
+let t=trips.find(x=>x.id==id)
+
+let doc=new jsPDF()
+
+doc.text("Varada Nexus Private Limited",20,20)
+
+doc.text("Trip No: "+t.trip_no,20,40)
+doc.text("Route: "+t.route,20,50)
+doc.text("Truck: "+t.truck,20,60)
+doc.text("Commodity: "+t.commodity,20,70)
+doc.text("Client: "+t.client_name,20,80)
+doc.text("Weight: "+t.weight_kg+" KG",20,90)
+doc.text("Date: "+t.trip_date,20,100)
+doc.text("Status: "+t.status,20,110)
+
+doc.save(t.trip_no+".pdf")
 
 }
 

@@ -192,6 +192,37 @@ await loadTrips()
 
 }
 
+/* TRIP NUMBER GENERATOR */
+
+async function generateTripNumber(){
+
+let today=new Date()
+
+let year=today.getFullYear().toString().slice(-2)
+let month=("0"+(today.getMonth()+1)).slice(-2)
+
+let prefix=`TR${year}${month}`
+
+const {data}=await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no",`${prefix}%`)
+.order("trip_no",{ascending:false})
+.limit(1)
+
+let seq="0001"
+
+if(data && data.length>0){
+
+let last=data[0].trip_no.slice(-4)
+seq=(parseInt(last)+1).toString().padStart(4,"0")
+
+}
+
+return prefix+seq
+
+}
+
 async function loadRoutes(){
 
 const {data}=await supabaseClient.from("routes").select("*")
@@ -261,6 +292,8 @@ document.getElementById("client").innerHTML=html
 
 }
 
+/* SAVE TRIP */
+
 async function saveTrip(){
 
 let route=document.getElementById("route").value
@@ -271,7 +304,11 @@ let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
+let tripNo = await generateTripNumber()
+
 await supabaseClient.from("trips").insert({
+
+trip_no:tripNo,
 
 route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,

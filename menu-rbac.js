@@ -5,66 +5,71 @@ const supabaseClient = supabase.createClient(
 
 async function applyMenuRBAC(){
 
-/* get login session */
-
 const { data:{session} } = await supabaseClient.auth.getSession()
 
 if(!session) return
 
-let authId = session.user.id
+const authId = session.user.id
 
 
 /* find ERP user */
 
-const {data:user,error:userError}=await supabaseClient
+const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
-if(userError || !user) return
+if(!user) return
 
 
-/* find role */
+/* get role */
 
-const {data:userRole,error:roleError}=await supabaseClient
+const {data:userRole} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
 .single()
 
-if(roleError || !userRole) return
+if(!userRole) return
 
 
-/* get role permissions */
+/* get permissions */
 
-const {data:perms,error:permError}=await supabaseClient
+const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .eq("role_id",userRole.role_id)
 .eq("can_access",true)
 
-if(permError || !perms) return
+if(!permissions) return
 
 
-/* allowed pages */
-
-let allowedPages = perms.map(p => p.page_name)
+let allowedPages = permissions.map(p => p.page_name)
 
 
-/* hide unauthorized sidebar links */
+/* wait until sidebar loads */
 
-document.querySelectorAll("[data-page]").forEach(link => {
+let checkSidebar = setInterval(()=>{
+
+let links = document.querySelectorAll(".sidebar a[data-page]")
+
+if(links.length === 0) return
+
+clearInterval(checkSidebar)
+
+
+links.forEach(link => {
 
 let page = link.getAttribute("data-page")
 
 if(!allowedPages.includes(page)){
-
 link.style.display = "none"
-
 }
 
 })
+
+},200)
 
 }
 

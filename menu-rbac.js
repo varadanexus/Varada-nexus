@@ -3,6 +3,11 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+
+/* ============================= */
+/* MENU RBAC */
+/* ============================= */
+
 async function applyMenuRBAC(){
 
 const { data:{session} } = await supabaseClient.auth.getSession()
@@ -10,6 +15,7 @@ const { data:{session} } = await supabaseClient.auth.getSession()
 if(!session) return
 
 const authId = session.user.id
+
 
 /* find ERP user */
 
@@ -21,6 +27,7 @@ const {data:user} = await supabaseClient
 
 if(!user) return
 
+
 /* get role */
 
 const {data:userRole} = await supabaseClient
@@ -30,6 +37,7 @@ const {data:userRole} = await supabaseClient
 .single()
 
 if(!userRole) return
+
 
 /* get permissions */
 
@@ -41,7 +49,9 @@ const {data:permissions} = await supabaseClient
 
 if(!permissions) return
 
+
 let allowedPages = permissions.map(p => p.page_name)
+
 
 /* hide unauthorized links */
 
@@ -51,7 +61,7 @@ links.forEach(link=>{
 
 let page = link.getAttribute("data-page").trim()
 
-/* ALWAYS KEEP LOGOUT */
+/* always allow logout */
 
 if(page === "logout") return
 
@@ -62,5 +72,23 @@ link.style.display="none"
 })
 
 }
+
+
+/* ============================= */
+/* GLOBAL LOGOUT */
+/* ============================= */
+
+window.logout = async function(){
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+
+/* ============================= */
+/* RUN RBAC */
+/* ============================= */
 
 applyMenuRBAC()

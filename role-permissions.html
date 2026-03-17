@@ -120,9 +120,8 @@ const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-<script>
 
-/* ERP PAGES */
+/* ALL ERP PAGES */
 
 const pages=[
 "dashboard.html",
@@ -135,6 +134,7 @@ const pages=[
 "profit-analysis.html"
 ]
 
+
 /* CREATE ROLE */
 
 async function createRole(){
@@ -146,9 +146,14 @@ alert("Enter role name")
 return
 }
 
-await supabaseClient
+const {error}=await supabaseClient
 .from("roles")
 .insert({role_name:name})
+
+if(error){
+alert(error.message)
+return
+}
 
 alert("Role Created")
 
@@ -167,13 +172,21 @@ const {data:roles,error:roleError}=await supabaseClient
 
 if(roleError){
 console.log(roleError)
-alert("Roles not loading")
+alert("Error loading roles")
 return
 }
 
-const {data:perms}=await supabaseClient
+const {data:perms,error:permError}=await supabaseClient
 .from("role_permissions")
 .select("*")
+
+if(permError){
+console.log(permError)
+}
+
+/* if no permissions exist yet */
+
+const permissions=perms || []
 
 let html=""
 
@@ -181,9 +194,12 @@ roles.forEach(role=>{
 
 pages.forEach(page=>{
 
-let existing=perms?.find(p=>p.role_id==role.id && p.page_name==page)
+let existing=permissions.find(p =>
+String(p.role_id)===String(role.id) &&
+p.page_name===page
+)
 
-let checked=existing?.can_access ? "checked" : ""
+let checked=existing && existing.can_access ? "checked" : ""
 
 html+=`
 <tr>

@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Dashboard - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<style>
+<!DOCTYPE html><html><head><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><!-- RBAC SCRIPT --><script src="menu-rbac.js"></script><style>
 
 body{
 margin:0;
@@ -34,13 +25,7 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-</style>
-
-</head>
-
-<body>
-
-<script>
+</style></head><body><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -49,26 +34,20 @@ const supabaseClient = supabase.createClient(
 
 /* LOGIN CHECK */
 
-checkLogin()
-
 async function checkLogin(){
 
-const {data}=await supabaseClient.auth.getSession()
+const {data} = await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.href="login.html"
+return
 }
 
 }
 
-</script>
+checkLogin()
 
-
-<!-- SIDEBAR -->
-
-<div id="sidebar-container"></div>
-
-<script>
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -76,7 +55,7 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
-/* IMPORTANT: wait for sidebar render */
+/* APPLY RBAC AFTER SIDEBAR LOAD */
 
 setTimeout(()=>{
 
@@ -84,47 +63,23 @@ if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
 
-},500)
+},300)
 
 })
 
-</script>
-
-
-<!-- MAIN CONTENT -->
-
-<div class="main">
-
-<h1>Dashboard</h1>
-
-<div class="card-container">
-
-<div class="card">
+</script><!-- MAIN CONTENT --><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div>
-
-</div>
-
-</div>
-
-
-<script>
+</div></div></div><script>
 
 /* LOAD DASHBOARD */
 
@@ -132,46 +87,49 @@ loadDashboard()
 
 async function loadDashboard(){
 
-const {data:trips}=await supabaseClient
+const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
 
-const {data:expenses}=await supabaseClient
+const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
 
-let totalTrips=trips.length
-let totalRevenue=0
-let totalCost=0
-let totalProfit=0
+let tripsData = trips || []
+let expensesData = expenses || []
 
-let expenseMap={}
+let totalTrips = tripsData.length
+let totalRevenue = 0
+let totalCost = 0
+let totalProfit = 0
 
-expenses.forEach(e=>{
+let expenseMap = {}
+
+expensesData.forEach(e=>{
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount)
 })
 
-trips.forEach(trip=>{
+tripsData.forEach(trip=>{
 
-let mt=trip.weight_kg/1000
-let expense=expenseMap[trip.id]||0
+let mt = trip.weight_kg/1000
+let expense = expenseMap[trip.id] || 0
 
-let companyAmount=(trip.company_rate*mt)-expense
-let transporterAmount=(trip.transporter_rate*mt)-expense
+let companyAmount = (trip.company_rate*mt) - expense
+let transporterAmount = (trip.transporter_rate*mt) - expense
 
-let profit=companyAmount-transporterAmount
+let profit = companyAmount - transporterAmount
 
-totalRevenue+=companyAmount
-totalCost+=transporterAmount
-totalProfit+=profit
+totalRevenue += companyAmount
+totalCost += transporterAmount
+totalProfit += profit
 
 })
 
-document.getElementById("totalTrips").innerText=totalTrips
-document.getElementById("totalRevenue").innerText="₹ "+totalRevenue.toLocaleString()
-document.getElementById("totalCost").innerText="₹ "+totalCost.toLocaleString()
-document.getElementById("totalProfit").innerText="₹ "+totalProfit.toLocaleString()
+document.getElementById("totalTrips").innerText = totalTrips
+document.getElementById("totalRevenue").innerText = "₹ "+totalRevenue.toLocaleString()
+document.getElementById("totalCost").innerText = "₹ "+totalCost.toLocaleString()
+document.getElementById("totalProfit").innerText = "₹ "+totalProfit.toLocaleString()
 
 }
 
@@ -185,13 +143,4 @@ window.location.href="login.html"
 
 }
 
-</script>
-
-
-<!-- RBAC SCRIPT (must be last) -->
-
-<script src="menu-rbac.js"></script>
-
-</body>
-
-</html>
+</script></body></html>

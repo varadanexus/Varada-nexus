@@ -164,7 +164,7 @@ applyMenuRBAC()
 
 <select id="commodity"></select>
 
-<input id="clientName" placeholder="Client Name">
+<select id="client"></select>
 
 <input id="weight" placeholder="Weight KG">
 
@@ -241,6 +241,7 @@ applyMenuRBAC()
 let routes=[]
 let trucks=[]
 let commodities=[]
+let clients=[]
 let trips=[]
 let allTrips=[]
 
@@ -256,7 +257,27 @@ async function init(){
 await loadRoutes()
 await loadTrucks()
 await loadCommodities()
+await loadClients()
 await loadTrips()
+
+}
+
+
+/* LOAD CLIENTS */
+
+async function loadClients(){
+
+const {data}=await supabaseClient.from("clients").select("*")
+
+clients=data||[]
+
+let html='<option value="">Select Client</option>'
+
+clients.forEach(c=>{
+html+=`<option value="${c.id}">${c.company} - ${c.client_name}</option>`
+})
+
+document.getElementById("client").innerHTML=html
 
 }
 
@@ -334,7 +355,7 @@ async function saveTrip(){
 let route=document.getElementById("route").value
 let truck=document.getElementById("truck").value
 let commodity=document.getElementById("commodity").value
-let client=document.getElementById("clientName").value
+let client=document.getElementById("client").value
 let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
@@ -344,6 +365,8 @@ alert("Fill required fields")
 return
 }
 
+let clientName = clients.find(c=>c.id==client)?.client_name
+
 await supabaseClient
 .from("trips")
 .insert({
@@ -351,14 +374,14 @@ await supabaseClient
 route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,
 commodity:commodities.find(c=>c.id==commodity)?.name,
-client_name:client,
+client_id:client,
+client_name:clientName,
 weight_kg:Number(weight),
 trip_date:date,
 status:status
 
 })
 
-document.getElementById("clientName").value=""
 document.getElementById("weight").value=""
 document.getElementById("tripDate").value=""
 document.getElementById("status").value=""

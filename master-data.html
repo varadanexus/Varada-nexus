@@ -1,14 +1,4 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Master Data</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="menu-rbac.js"></script>
-
-<style>
+<!DOCTYPE html><html><head><title>Master Data</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><style>
 
 body{
 margin:0;
@@ -74,16 +64,9 @@ margin-bottom:10px;
 margin-top:10px;
 }
 
-</style>
-
-</head>
-
-<body>
-
-<script>
+</style></head><body><script>
 
 const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -104,11 +87,7 @@ await supabaseClient.auth.signOut()
 window.location.href="login.html"
 }
 
-</script>
-
-<div id="sidebar-container"></div>
-
-<script>
+</script><div id="sidebar-container"></div><script>
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -117,34 +96,15 @@ setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
 })
-</script>
-
-
-<div class="main">
-
-<h1>Master Data</h1>
-
-<!-- CLIENTS -->
-
-<div class="card">
-
-<h3>Clients</h3>
-
-<input id="clientName" placeholder="Contact Name">
+</script><div class="main"><h1>Master Data</h1><!-- CLIENTS --><div class="card"><h3>Clients</h3><input id="clientName" placeholder="Contact Name">
 <input id="clientCompany" placeholder="Company">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email">
-<button onclick="addClient()">Add Client</button>
-
-<br><br>
+<button onclick="addClient()">Add Client</button><br><br>
 
 <input class="searchBox" id="clientSearch" placeholder="Search Client">
 <button onclick="searchClients()">Search</button>
-<button onclick="resetClientSearch()">Reset</button>
-
-<table>
-
-<thead>
+<button onclick="resetClientSearch()">Reset</button><table><thead>
 <tr>
 <th>Name</th>
 <th>Company</th>
@@ -152,37 +112,14 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>Email</th>
 <th>Action</th>
 </tr>
-</thead>
-
-<tbody id="clientTable"></tbody>
-
-</table>
-
-<div class="pagination">
+</thead><tbody id="clientTable"></tbody></table><div class="pagination">
 <button onclick="prevPage()">Prev</button>
 <button onclick="nextPage()">Next</button>
-</div>
-
-</div>
-
-
-<!-- TRANSPORTERS -->
-
-<div class="card">
-
-<h3>Transporters</h3>
-
-<input id="tName" placeholder="Name">
+</div></div><!-- TRANSPORTERS --><div class="card"><h3>Transporters</h3><input id="tName" placeholder="Name">
 <input id="tPhone" placeholder="Phone">
 <input id="tCompany" placeholder="Company">
 <input id="tPAN" placeholder="PAN">
-<button onclick="addTransporter()">Add Transporter</button>
-
-<input class="searchBox" id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTable('transporterTable','transporterSearch')">
-
-<table>
-
-<thead>
+<button onclick="addTransporter()">Add Transporter</button><input class="searchBox" id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTable('transporterTable','transporterSearch')"><table><thead>
 <tr>
 <th>Name</th>
 <th>Phone</th>
@@ -190,106 +127,31 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>PAN</th>
 <th>Action</th>
 </tr>
-</thead>
-
-<tbody id="transporterTable"></tbody>
-
-</table>
-
-</div>
-
-
-<!-- ROUTES -->
-
-<div class="card">
-
-<h3>Routes</h3>
-
-<input id="origin" placeholder="Origin">
+</thead><tbody id="transporterTable"></tbody></table></div><!-- ROUTES --><div class="card"><h3>Routes</h3><input id="origin" placeholder="Origin">
 <input id="destination" placeholder="Destination">
 <input id="routeCode" placeholder="Route Code">
-<button onclick="addRoute()">Add Route</button>
-
-<input class="searchBox" id="routeSearch" placeholder="Search Route" onkeyup="searchTable('routeTable','routeSearch')">
-
-<table>
-
-<thead>
+<button onclick="addRoute()">Add Route</button><input class="searchBox" id="routeSearch" placeholder="Search Route" onkeyup="searchTable('routeTable','routeSearch')"><table><thead>
 <tr>
 <th>Origin</th>
 <th>Destination</th>
 <th>Code</th>
 <th>Action</th>
 </tr>
-</thead>
-
-<tbody id="routeTable"></tbody>
-
-</table>
-
-</div>
-
-
-<!-- TRUCKS -->
-
-<div class="card">
-
-<h3>Trucks</h3>
-
-<input id="truckNumber" placeholder="Truck Number">
+</thead><tbody id="routeTable"></tbody></table></div><!-- TRUCKS --><div class="card"><h3>Trucks</h3><input id="truckNumber" placeholder="Truck Number">
 <select id="truckTransporter"></select>
-<button onclick="addTruck()">Add Truck</button>
-
-<input class="searchBox" id="truckSearch" placeholder="Search Truck" onkeyup="searchTable('truckTable','truckSearch')">
-
-<table>
-
-<thead>
+<button onclick="addTruck()">Add Truck</button><input class="searchBox" id="truckSearch" placeholder="Search Truck" onkeyup="searchTable('truckTable','truckSearch')"><table><thead>
 <tr>
 <th>Truck</th>
 <th>Transporter</th>
 <th>Action</th>
 </tr>
-</thead>
-
-<tbody id="truckTable"></tbody>
-
-</table>
-
-</div>
-
-
-<!-- COMMODITIES -->
-
-<div class="card">
-
-<h3>Commodities</h3>
-
-<input id="commodityName" placeholder="Commodity">
-<button onclick="addCommodity()">Add Commodity</button>
-
-<input class="searchBox" id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable','commoditySearch')">
-
-<table>
-
-<thead>
+</thead><tbody id="truckTable"></tbody></table></div><!-- COMMODITIES --><div class="card"><h3>Commodities</h3><input id="commodityName" placeholder="Commodity">
+<button onclick="addCommodity()">Add Commodity</button><input class="searchBox" id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable','commoditySearch')"><table><thead>
 <tr>
 <th>Commodity</th>
 <th>Action</th>
 </tr>
-</thead>
-
-<tbody id="commodityTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-
-<script>
+</thead><tbody id="commodityTable"></tbody></table></div></div><script>
 
 /* PAGINATION */
 
@@ -389,7 +251,6 @@ loadClients()
 
 }
 
-
 async function saveClient(btn){
 
 let row=btn.closest("tr")
@@ -411,7 +272,6 @@ alert("Saved")
 
 }
 
-
 async function deleteClient(id){
 
 if(!confirm("Delete client?")) return
@@ -424,7 +284,6 @@ await supabaseClient
 loadClients()
 
 }
-
 
 
 /* TRANSPORTERS */
@@ -463,6 +322,19 @@ document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
 
+async function deleteTransporter(id){
+
+if(!confirm("Delete transporter?")) return
+
+await supabaseClient
+.from("transporters")
+.delete()
+.eq("id",id)
+
+loadTransporters()
+
+}
+
 
 /* ROUTES */
 
@@ -492,6 +364,19 @@ html+=`
 })
 
 document.getElementById("routeTable").innerHTML=html
+
+}
+
+async function deleteRoute(id){
+
+if(!confirm("Delete route?")) return
+
+await supabaseClient
+.from("routes")
+.delete()
+.eq("id",id)
+
+loadRoutes()
 
 }
 
@@ -529,6 +414,19 @@ document.getElementById("truckTable").innerHTML=html
 
 }
 
+async function deleteTruck(id){
+
+if(!confirm("Delete truck?")) return
+
+await supabaseClient
+.from("trucks")
+.delete()
+.eq("id",id)
+
+loadTrucks()
+
+}
+
 
 /* COMMODITIES */
 
@@ -559,6 +457,19 @@ document.getElementById("commodityTable").innerHTML=html
 
 }
 
+async function deleteCommodity(id){
+
+if(!confirm("Delete commodity?")) return
+
+await supabaseClient
+.from("commodities")
+.delete()
+.eq("id",id)
+
+loadCommodities()
+
+}
+
 
 /* INIT */
 
@@ -568,7 +479,5 @@ loadRoutes()
 loadTrucks()
 loadCommodities()
 
-</script>
-
-</body>
+</script></body>
 </html>

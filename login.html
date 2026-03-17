@@ -219,7 +219,7 @@ return
 const {data:userRole,error:roleError}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id", authId)
+.eq("user_id",authId)   // <-- FIXED HERE
 .single()
 
 if(roleError || !userRole){

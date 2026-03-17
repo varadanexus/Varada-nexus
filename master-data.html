@@ -135,7 +135,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <input id="clientEmail" placeholder="Email">
 <button onclick="addClient()">Add Client</button>
 
-<input class="searchBox" id="clientSearch" placeholder="Search Client" onkeyup="searchTable('clientTable','clientSearch')">
+<br><br>
+
+<input class="searchBox" id="clientSearch" placeholder="Search Client">
+<button onclick="searchClients()">Search</button>
+<button onclick="resetClientSearch()">Reset</button>
 
 <table>
 
@@ -154,8 +158,8 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 </table>
 
 <div class="pagination">
-<button onclick="prevPage('client')">Prev</button>
-<button onclick="nextPage('client')">Next</button>
+<button onclick="prevPage()">Prev</button>
+<button onclick="nextPage()">Next</button>
 </div>
 
 </div>
@@ -286,6 +290,12 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <script>
 
+/* PAGINATION */
+
+let clientPage=0
+const pageSize=10
+let clientSearchText=""
+
 /* SEARCH */
 
 function searchTable(tableId,searchId){
@@ -299,14 +309,46 @@ r.style.display=r.innerText.toLowerCase().includes(filter)?"":"none"
 
 }
 
+/* CLIENT SEARCH */
+
+function searchClients(){
+
+clientSearchText=document.getElementById("clientSearch").value
+clientPage=0
+loadClients()
+
+}
+
+function resetClientSearch(){
+
+document.getElementById("clientSearch").value=""
+clientSearchText=""
+clientPage=0
+loadClients()
+
+}
+
 
 /* CLIENTS */
 
 async function loadClients(){
 
-const {data}=await supabaseClient
+let query=supabaseClient
 .from("clients")
 .select("*")
+.range(clientPage*pageSize,clientPage*pageSize+pageSize-1)
+
+if(clientSearchText){
+
+query=supabaseClient
+.from("clients")
+.select("*")
+.ilike("client_name","%"+clientSearchText+"%")
+.range(clientPage*pageSize,clientPage*pageSize+pageSize-1)
+
+}
+
+const {data}=await query
 
 let html=""
 
@@ -329,6 +371,20 @@ html+=`
 })
 
 document.getElementById("clientTable").innerHTML=html
+
+}
+
+function nextPage(){
+clientPage++
+loadClients()
+}
+
+function prevPage(){
+
+if(clientPage>0){
+clientPage--
+loadClients()
+}
 
 }
 
@@ -407,42 +463,6 @@ document.getElementById("truckTransporter").innerHTML=dropdown
 }
 
 
-async function saveTransporter(btn){
-
-let row=btn.closest("tr")
-let id=row.dataset.id
-let cells=row.querySelectorAll("td")
-
-await supabaseClient
-.from("transporters")
-.update({
-transporter_name:cells[0].innerText,
-phone:cells[1].innerText,
-company:cells[2].innerText,
-PAN:cells[3].innerText
-})
-.eq("id",id)
-
-alert("Saved")
-
-}
-
-
-async function deleteTransporter(id){
-
-if(!confirm("Delete transporter?")) return
-
-await supabaseClient
-.from("transporters")
-.delete()
-.eq("id",id)
-
-loadTransporters()
-
-}
-
-
-
 /* ROUTES */
 
 async function loadRoutes(){
@@ -473,40 +493,6 @@ html+=`
 document.getElementById("routeTable").innerHTML=html
 
 }
-
-
-async function saveRoute(btn){
-
-let row=btn.closest("tr")
-let id=row.dataset.id
-let cells=row.querySelectorAll("td")
-
-await supabaseClient
-.from("routes")
-.update({
-origin:cells[0].innerText,
-destination:cells[1].innerText
-})
-.eq("id",id)
-
-alert("Saved")
-
-}
-
-
-async function deleteRoute(id){
-
-if(!confirm("Delete route?")) return
-
-await supabaseClient
-.from("routes")
-.delete()
-.eq("id",id)
-
-loadRoutes()
-
-}
-
 
 
 /* TRUCKS */
@@ -543,21 +529,6 @@ document.getElementById("truckTable").innerHTML=html
 }
 
 
-async function deleteTruck(id){
-
-if(!confirm("Delete truck?")) return
-
-await supabaseClient
-.from("trucks")
-.delete()
-.eq("id",id)
-
-loadTrucks()
-
-}
-
-
-
 /* COMMODITIES */
 
 async function loadCommodities(){
@@ -586,37 +557,6 @@ html+=`
 document.getElementById("commodityTable").innerHTML=html
 
 }
-
-
-async function saveCommodity(btn){
-
-let row=btn.closest("tr")
-let id=row.dataset.id
-let name=row.children[0].innerText
-
-await supabaseClient
-.from("commodities")
-.update({name:name})
-.eq("id",id)
-
-alert("Saved")
-
-}
-
-
-async function deleteCommodity(id){
-
-if(!confirm("Delete commodity?")) return
-
-await supabaseClient
-.from("commodities")
-.delete()
-.eq("id",id)
-
-loadCommodities()
-
-}
-
 
 
 /* INIT */

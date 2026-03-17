@@ -306,6 +306,33 @@ let status=document.getElementById("status").value
 
 let tripNo = await generateTripNumber()
 
+/* GET TRANSPORTER FROM TRUCK */
+
+let selectedTruck=trucks.find(t=>t.id==truck)
+let transporterId=selectedTruck?.transporter_id
+
+/* FETCH RATE */
+
+const {data:rate}=await supabaseClient
+.from("rates")
+.select("*")
+.eq("route_id",route)
+.eq("commodity_id",commodity)
+.eq("transporter_id",transporterId)
+.limit(1)
+
+let companyRate=0
+let transporterRate=0
+
+if(rate && rate.length>0){
+
+companyRate=rate[0].company_rate_per_mt
+transporterRate=rate[0].transporter_rate_per_mt
+
+}
+
+/* INSERT */
+
 await supabaseClient.from("trips").insert({
 
 trip_no:tripNo,
@@ -314,9 +341,13 @@ route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,
 commodity:commodities.find(c=>c.id==commodity)?.name,
 client_name:clients.find(c=>c.id==client)?.company,
+
 weight_kg:Number(weight),
 trip_date:date,
-status:status
+status:status,
+
+company_rate:companyRate,
+transporter_rate:transporterRate
 
 })
 

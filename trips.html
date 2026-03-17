@@ -54,6 +54,7 @@ cursor:pointer;
 
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
+.saveBtn{background:#5cb85c;}
 
 table{
 width:100%;
@@ -71,6 +72,12 @@ background:#eee;
 text-align:left;
 }
 
+.search-grid{
+display:grid;
+grid-template-columns: repeat(5,1fr);
+gap:10px;
+}
+
 </style>
 
 </head>
@@ -84,39 +91,50 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* LOGIN */
-
 async function checkLogin(){
+
 const {data}=await supabaseClient.auth.getSession()
+
 if(!data.session){
 window.location.href="login.html"
 }
+
 }
 
 checkLogin()
 
 </script>
 
+<!-- SIDEBAR -->
+
 <div id="sidebar-container"></div>
 
 <script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
+
 document.getElementById("sidebar-container").innerHTML=data
+
 setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
+
 })
+
 </script>
+
 
 <div class="main">
 
 <h2>Trips</h2>
 
+<!-- CREATE TRIP -->
+
 <div class="card">
 
-<h3>Create / Edit Trip</h3>
+<h3>Create Trip</h3>
 
 <div class="form-grid">
 
@@ -140,7 +158,39 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <br>
 
-<button onclick="saveTrip()" id="saveBtn">Save Trip</button>
+<button onclick="saveTrip()">Save Trip</button>
+
+</div>
+
+
+<!-- SEARCH CRITERIA -->
+
+<div class="card">
+
+<h3>Search Trips</h3>
+
+<div class="search-grid">
+
+<input id="searchTripNo" placeholder="Trip No">
+
+<select id="searchRoute">
+<option value="">All Routes</option>
+</select>
+
+<select id="searchTruck">
+<option value="">All Trucks</option>
+</select>
+
+<select id="searchCommodity">
+<option value="">All Commodities</option>
+</select>
+
+<div>
+<button onclick="searchTrips()">Search</button>
+<button onclick="clearSearch()">Clear</button>
+</div>
+
+</div>
 
 </div>
 
@@ -148,6 +198,7 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <table>
 
 <thead>
+
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -159,6 +210,7 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <th>Status</th>
 <th>Action</th>
 </tr>
+
 </thead>
 
 <tbody id="tripTable"></tbody>
@@ -175,9 +227,7 @@ let trucks=[]
 let commodities=[]
 let clients=[]
 let trips=[]
-
-let editingTripId=null
-
+let allTrips=[]
 
 init()
 
@@ -190,7 +240,6 @@ await loadClients()
 await loadTrips()
 
 }
-
 
 /* AUTO TRIP NUMBER */
 
@@ -223,8 +272,7 @@ return prefix+seq
 
 }
 
-
-/* LOAD CLIENTS */
+/* CLIENTS */
 
 async function loadClients(){
 
@@ -242,7 +290,6 @@ document.getElementById("client").innerHTML=html
 
 }
 
-
 /* ROUTES */
 
 async function loadRoutes(){
@@ -252,15 +299,17 @@ const {data}=await supabaseClient.from("routes").select("*")
 routes=data||[]
 
 let html='<option value="">Route</option>'
+let search='<option value="">All Routes</option>'
 
 routes.forEach(r=>{
 html+=`<option value="${r.id}">${r.route_code}</option>`
+search+=`<option value="${r.route_code}">${r.route_code}</option>`
 })
 
 document.getElementById("route").innerHTML=html
+document.getElementById("searchRoute").innerHTML=search
 
 }
-
 
 /* TRUCKS */
 
@@ -271,15 +320,17 @@ const {data}=await supabaseClient.from("trucks").select("*")
 trucks=data||[]
 
 let html='<option value="">Truck</option>'
+let search='<option value="">All Trucks</option>'
 
 trucks.forEach(t=>{
 html+=`<option value="${t.id}">${t.truck_number}</option>`
+search+=`<option value="${t.truck_number}">${t.truck_number}</option>`
 })
 
 document.getElementById("truck").innerHTML=html
+document.getElementById("searchTruck").innerHTML=search
 
 }
-
 
 /* COMMODITIES */
 
@@ -290,18 +341,19 @@ const {data}=await supabaseClient.from("commodities").select("*")
 commodities=data||[]
 
 let html='<option value="">Commodity</option>'
+let search='<option value="">All Commodities</option>'
 
 commodities.forEach(c=>{
 html+=`<option value="${c.id}">${c.name}</option>`
+search+=`<option value="${c.name}">${c.name}</option>`
 })
 
 document.getElementById("commodity").innerHTML=html
+document.getElementById("searchCommodity").innerHTML=search
 
 }
 
-
-
-/* SAVE / UPDATE TRIP */
+/* SAVE TRIP */
 
 async function saveTrip(){
 
@@ -312,28 +364,6 @@ let client=document.getElementById("client").value
 let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
-
-if(editingTripId){
-
-await supabaseClient
-.from("trips")
-.update({
-
-route:routes.find(r=>r.id==route)?.route_code,
-truck:trucks.find(t=>t.id==truck)?.truck_number,
-commodity:commodities.find(c=>c.id==commodity)?.name,
-client_name:clients.find(c=>c.id==client)?.company,
-weight_kg:Number(weight),
-trip_date:date,
-status:status
-
-})
-.eq("id",editingTripId)
-
-editingTripId=null
-document.getElementById("saveBtn").innerText="Save Trip"
-
-}else{
 
 let tripNo=await generateTripNumber()
 
@@ -352,13 +382,9 @@ status:status
 
 })
 
-}
-
-clearForm()
 loadTrips()
 
 }
-
 
 /* LOAD TRIPS */
 
@@ -370,11 +396,48 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 trips=data||[]
+allTrips=data||[]
 
 renderTrips()
 
 }
 
+/* SEARCH */
+
+function searchTrips(){
+
+let tripNo=document.getElementById("searchTripNo").value.toLowerCase()
+let route=document.getElementById("searchRoute").value
+let truck=document.getElementById("searchTruck").value
+let commodity=document.getElementById("searchCommodity").value
+
+trips=allTrips.filter(t=>{
+
+return(
+(!tripNo || t.trip_no?.toLowerCase().includes(tripNo)) &&
+(!route || t.route===route) &&
+(!truck || t.truck===truck) &&
+(!commodity || t.commodity===commodity)
+)
+
+})
+
+renderTrips()
+
+}
+
+function clearSearch(){
+
+document.getElementById("searchTripNo").value=""
+document.getElementById("searchRoute").value=""
+document.getElementById("searchTruck").value=""
+document.getElementById("searchCommodity").value=""
+
+trips=allTrips
+
+renderTrips()
+
+}
 
 /* RENDER */
 
@@ -398,9 +461,11 @@ html+=`
 <td>
 
 <select onchange="updateStatus('${t.id}',this.value)">
+
 <option ${t.status=="LOADED"?"selected":""}>LOADED</option>
 <option ${t.status=="Completed"?"selected":""}>Completed</option>
 <option ${t.status=="Pending"?"selected":""}>Pending</option>
+
 </select>
 
 </td>
@@ -422,26 +487,6 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-
-/* EDIT TRIP */
-
-function editTrip(id){
-
-let t=trips.find(x=>x.id==id)
-
-editingTripId=id
-
-document.getElementById("weight").value=t.weight_kg
-document.getElementById("tripDate").value=t.trip_date
-document.getElementById("status").value=t.status
-
-document.getElementById("saveBtn").innerText="Update Trip"
-
-window.scrollTo({top:0,behavior:"smooth"})
-
-}
-
-
 /* UPDATE STATUS */
 
 async function updateStatus(id,status){
@@ -452,7 +497,6 @@ await supabaseClient
 .eq("id",id)
 
 }
-
 
 /* DELETE */
 
@@ -469,14 +513,11 @@ loadTrips()
 
 }
 
+/* EDIT */
 
-/* CLEAR FORM */
+function editTrip(id){
 
-function clearForm(){
-
-document.getElementById("weight").value=""
-document.getElementById("tripDate").value=""
-document.getElementById("status").value=""
+alert("Editing feature can be expanded here if needed")
 
 }
 

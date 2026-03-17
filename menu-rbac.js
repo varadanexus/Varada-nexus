@@ -1,0 +1,71 @@
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+async function applyMenuRBAC(){
+
+/* get login session */
+
+const { data:{session} } = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+let authId = session.user.id
+
+
+/* find ERP user */
+
+const {data:user,error:userError}=await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(userError || !user) return
+
+
+/* find role */
+
+const {data:userRole,error:roleError}=await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(roleError || !userRole) return
+
+
+/* get role permissions */
+
+const {data:perms,error:permError}=await supabaseClient
+.from("role_permissions")
+.select("page_name")
+.eq("role_id",userRole.role_id)
+.eq("can_access",true)
+
+if(permError || !perms) return
+
+
+/* allowed pages */
+
+let allowedPages = perms.map(p => p.page_name)
+
+
+/* hide unauthorized sidebar links */
+
+document.querySelectorAll("[data-page]").forEach(link => {
+
+let page = link.getAttribute("data-page")
+
+if(!allowedPages.includes(page)){
+
+link.style.display = "none"
+
+}
+
+})
+
+}
+
+applyMenuRBAC()

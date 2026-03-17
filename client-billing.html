@@ -104,7 +104,6 @@ applyMenuRBAC()
 
 </script>
 
-
 <div class="main">
 
 <h2>Client Billing</h2>
@@ -113,11 +112,7 @@ applyMenuRBAC()
 
 <h3>Create Invoice</h3>
 
-<select id="clientSelect"></select>
-
-<br>
-
-<select id="tripSelect" multiple size="6" style="width:350px;"></select>
+<select id="tripSelect" multiple size="8" style="width:400px;"></select>
 
 <br>
 
@@ -128,7 +123,6 @@ applyMenuRBAC()
 <button onclick="saveInvoice()">Save Invoice</button>
 
 </div>
-
 
 <div class="card">
 
@@ -159,64 +153,37 @@ applyMenuRBAC()
 
 <script>
 
-let clients=[]
 let trips=[]
 let invoices=[]
-let invoiceAmount=0
 let selectedTrips=[]
+let invoiceAmount=0
 
 init()
 
 async function init(){
 
-await loadClients()
+await loadTrips()
 await loadInvoices()
 
 }
 
-/* LOAD CLIENTS */
-
-async function loadClients(){
-
-const {data}=await supabaseClient
-.from("clients")
-.select("*")
-
-clients=data
-
-let html='<option value="">Select Client</option>'
-
-data.forEach(c=>{
-html+=`<option value="${c.company}">${c.company}</option>`
-})
-
-document.getElementById("clientSelect").innerHTML=html
-
-}
-
-document.getElementById("clientSelect")
-.addEventListener("change",loadTripsByClient)
-
-
 /* LOAD TRIPS */
 
-async function loadTripsByClient(){
-
-let client=document.getElementById("clientSelect").value
+async function loadTrips(){
 
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("client_name",client)
 .eq("status","Completed")
+.order("created_at",{ascending:false})
 
 trips=data
 
 let html=""
 
-data.forEach(t=>{
+trips.forEach(t=>{
 html+=`<option value="${t.id}">
-${t.trip_no} | ${t.route}
+${t.trip_no} | ${t.route} | ${t.truck}
 </option>`
 })
 
@@ -224,36 +191,28 @@ document.getElementById("tripSelect").innerHTML=html
 
 }
 
-
 /* GENERATE INVOICE */
 
 async function generateInvoice(){
 
-let options=[...document.getElementById("tripSelect").selectedOptions]
+let selected = Array.from(document.getElementById("tripSelect").selectedOptions).map(o=>o.value)
 
-if(options.length==0){
+if(selected.length==0){
 alert("Select trips")
 return
 }
 
-selectedTrips=[]
+selectedTrips=trips.filter(t=>selected.includes(t.id))
+
 let totalFreight=0
 let totalFuel=0
-let tripNos=[]
 
-for(let o of options){
-
-let trip=trips.find(t=>t.id==o.value)
-
-selectedTrips.push(trip)
-
-tripNos.push(trip.trip_no)
+for(let trip of selectedTrips){
 
 let mt=trip.weight_kg/1000
+let base=mt*trip.company_rate
 
-let freight=mt*trip.company_rate
-
-totalFreight+=freight
+totalFreight+=base
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
@@ -261,9 +220,13 @@ const {data:expenses}=await supabaseClient
 .eq("trip_id",trip.id)
 .eq("expense_type","Fuel")
 
+let fuel=0
+
 expenses.forEach(e=>{
-totalFuel+=Number(e.amount)
+fuel+=Number(e.amount)
 })
+
+totalFuel+=fuel
 
 }
 
@@ -271,13 +234,13 @@ invoiceAmount=totalFreight-totalFuel
 
 document.getElementById("invoicePreview").innerHTML=`
 
-Client : ${document.getElementById("clientSelect").value}<br>
+Client : ${selectedTrips[0].client_name || "N/A"} <br>
 
-Trips : ${tripNos.join(", ")}<br>
+Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")} <br>
 
-Total Freight : ₹${totalFreight}<br>
+Total Freight : ₹${totalFreight} <br>
 
-Fuel Deduction : ₹${totalFuel}<br>
+Fuel Deduction : ₹${totalFuel} <br>
 
 <b>Invoice Amount : ₹${invoiceAmount}</b>
 
@@ -285,8 +248,7 @@ Fuel Deduction : ₹${totalFuel}<br>
 
 }
 
-
-/* INVOICE NUMBER */
+/* GENERATE INVOICE NUMBER */
 
 function generateInvoiceNo(){
 
@@ -300,7 +262,6 @@ return "INV-"+year+"-"+rand
 
 }
 
-
 /* SAVE INVOICE */
 
 async function saveInvoice(){
@@ -312,15 +273,13 @@ return
 
 let invoiceNo=generateInvoiceNo()
 
-let tripNos=selectedTrips.map(t=>t.trip_no)
-
 await supabaseClient
 .from("client_invoices")
 .insert({
 
 invoice_no:invoiceNo,
-trip_no:tripNos.join(", "),
-client_name:document.getElementById("clientSelect").value,
+trip_no:selectedTrips.map(t=>t.trip_no).join(", "),
+client_name:selectedTrips[0].client_name,
 invoice_amount:invoiceAmount
 
 })
@@ -330,7 +289,6 @@ alert("Invoice Saved")
 loadInvoices()
 
 }
-
 
 /* LOAD INVOICES */
 
@@ -348,7 +306,6 @@ let html=""
 data.forEach(i=>{
 
 html+=`
-
 <tr>
 
 <td>${i.invoice_no}</td>
@@ -363,19 +320,13 @@ html+=`
 
 <td>
 
-<button onclick="downloadInvoice('${i.id}')">
-PDF
-</button>
+<button onclick="downloadInvoice('${i.id}')">PDF</button>
 
-<button class="deleteBtn"
-onclick="deleteInvoice('${i.id}')">
-Delete
-</button>
+<button class="deleteBtn" onclick="deleteInvoice('${i.id}')">Delete</button>
 
 </td>
 
 </tr>
-
 `
 
 })
@@ -383,7 +334,6 @@ Delete
 document.getElementById("invoiceTable").innerHTML=html
 
 }
-
 
 /* DELETE INVOICE */
 
@@ -399,7 +349,6 @@ await supabaseClient
 loadInvoices()
 
 }
-
 
 /* PDF */
 

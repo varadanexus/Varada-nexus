@@ -121,19 +121,18 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* ALL ERP PAGES */
+/* ERP PAGES */
 
 const pages=[
-"dashboard.html",
-"trips.html",
-"expenses.html",
-"master-data.html",
-"rate-entry.html",
-"transporter-payments.html",
-"admin-users.html",
-"profit-analysis.html"
+{name:"Dashboard",file:"dashboard.html"},
+{name:"Trips",file:"trips.html"},
+{name:"Expenses",file:"expenses.html"},
+{name:"Master Data",file:"master-data.html"},
+{name:"Rates",file:"rate-entry.html"},
+{name:"Payments",file:"transporter-payments.html"},
+{name:"Users",file:"admin-users.html"},
+{name:"Profit",file:"profit-analysis.html"}
 ]
-
 
 /* CREATE ROLE */
 
@@ -141,19 +140,11 @@ async function createRole(){
 
 let name=document.getElementById("roleName").value
 
-if(!name){
-alert("Enter role name")
-return
-}
+if(!name) return alert("Enter role name")
 
-const {error}=await supabaseClient
+await supabaseClient
 .from("roles")
 .insert({role_name:name})
-
-if(error){
-alert(error.message)
-return
-}
 
 alert("Role Created")
 
@@ -161,86 +152,85 @@ loadPermissions()
 
 }
 
-
 /* LOAD PERMISSIONS */
 
 async function loadPermissions(){
 
-const {data:roles,error:roleError}=await supabaseClient
+const {data:roles}=await supabaseClient
 .from("roles")
 .select("*")
 
-if(roleError){
-console.log(roleError)
-alert("Error loading roles")
-return
-}
-
-const {data:perms,error:permError}=await supabaseClient
+const {data:perms}=await supabaseClient
 .from("role_permissions")
 .select("*")
 
-if(permError){
-console.log(permError)
-}
-
-/* if no permissions exist yet */
-
-const permissions=perms || []
-
 let html=""
+
+/* HEADER */
+
+html+=`<thead><tr><th>Role</th>`
+
+pages.forEach(p=>{
+html+=`<th>${p.name}</th>`
+})
+
+html+=`<th>Save</th></tr></thead><tbody>`
+
+/* ROWS */
 
 roles.forEach(role=>{
 
-pages.forEach(page=>{
+html+=`<tr><td><b>${role.role_name}</b></td>`
 
-let existing=permissions.find(p =>
-String(p.role_id)===String(role.id) &&
-p.page_name===page
+pages.forEach(p=>{
+
+let existing=perms?.find(x =>
+String(x.role_id)===String(role.id) &&
+x.page_name===p.file
 )
 
-let checked=existing && existing.can_access ? "checked" : ""
+let checked=existing?.can_access ? "checked" : ""
 
 html+=`
-<tr>
-
-<td>${role.role_name}</td>
-
-<td>${page}</td>
-
-<td>
-<input type="checkbox" id="${role.id}_${page}" ${checked}>
+<td style="text-align:center">
+<input type="checkbox"
+id="${role.id}_${p.file}"
+${checked}>
 </td>
+`
 
+})
+
+html+=`
 <td>
-<button onclick="savePermission('${role.id}','${page}')">
+<button onclick="saveRole('${role.id}')">
 Save
 </button>
 </td>
-
 </tr>
 `
 
 })
 
-})
+html+=`</tbody>`
 
-document.getElementById("permTable").innerHTML=html
+document.querySelector("table").innerHTML=html
 
 }
 
+/* SAVE ROLE */
 
-/* SAVE PERMISSION */
+async function saveRole(roleId){
 
-async function savePermission(roleId,page){
+for(let p of pages){
 
-let allowed=document.getElementById(roleId+"_"+page).checked
+let allowed=document.getElementById(roleId+"_"+p.file).checked
 
 const {data:existing}=await supabaseClient
 .from("role_permissions")
 .select("*")
 .eq("role_id",roleId)
-.eq("page_name",page)
+.eq("page_name",p.file)
 
 if(existing && existing.length>0){
 
@@ -248,7 +238,7 @@ await supabaseClient
 .from("role_permissions")
 .update({can_access:allowed})
 .eq("role_id",roleId)
-.eq("page_name",page)
+.eq("page_name",p.file)
 
 }else{
 
@@ -256,18 +246,17 @@ await supabaseClient
 .from("role_permissions")
 .insert({
 role_id:roleId,
-page_name:page,
+page_name:p.file,
 can_access:allowed
 })
 
 }
 
-alert("Permission Saved")
-
 }
 
+alert("Permissions Saved")
 
-/* INIT */
+}
 
 loadPermissions()
 

@@ -14,41 +14,43 @@ const authId = session.user.id
 
 /* find ERP user */
 
-const {data:user} = await supabaseClient
+const {data:user,error:userError} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
-if(!user) return
+if(userError || !user) return
 
 
 /* get role */
 
-const {data:userRole} = await supabaseClient
+const {data:userRole,error:roleError} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
 .single()
 
-if(!userRole) return
+if(roleError || !userRole) return
 
 
 /* get permissions */
 
-const {data:permissions} = await supabaseClient
+const {data:permissions,error:permError} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .eq("role_id",userRole.role_id)
 .eq("can_access",true)
 
-if(!permissions) return
+if(permError || !permissions) return
 
 
-let allowedPages = permissions.map(p => p.page_name)
+/* clean page names */
+
+let allowedPages = permissions.map(p => p.page_name.trim())
 
 
-/* wait until sidebar links appear */
+/* wait until sidebar loads */
 
 let interval = setInterval(()=>{
 
@@ -58,7 +60,7 @@ if(links.length === 0) return
 
 links.forEach(link=>{
 
-let page = link.getAttribute("data-page")
+let page = link.getAttribute("data-page").trim()
 
 if(!allowedPages.includes(page)){
 link.style.display="none"
@@ -68,7 +70,7 @@ link.style.display="none"
 
 clearInterval(interval)
 
-},300)
+},200)
 
 }
 

@@ -3,56 +3,67 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-async function checkAccess(){
+async function checkRBAC(){
 
-const {data:{user}} = await supabaseClient.auth.getUser()
+const { data:{session} } = await supabaseClient.auth.getSession()
 
-if(!user){
-window.location="login.html"
+if(!session){
+window.location.href="/login.html"
 return
 }
 
-/* get user role */
+let authId = session.user.id
 
-const {data:userData} = await supabaseClient
+/* get ERP user */
+
+const {data:user}=await supabaseClient
 .from("users")
 .select("id")
-.eq("auth_id",user.id)
+.eq("auth_id",authId)
 .single()
 
-const {data:userRole} = await supabaseClient
+if(!user){
+alert("User not registered")
+window.location.href="/login.html"
+return
+}
+
+/* get role */
+
+const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",userData.id)
+.eq("user_id",user.id)
 .single()
 
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
+if(!userRole){
+alert("Role not assigned")
+window.location.href="/login.html"
+return
+}
 
-/* current page */
-
-let page=window.location.pathname.split("/").pop()
+let page = window.location.pathname.split("/").pop()
 
 /* check permission */
 
-const {data:perm} = await supabaseClient
+const {data:perm}=await supabaseClient
 .from("role_permissions")
 .select("*")
-.eq("role_id",role.id)
-.eq("page",page)
+.eq("role_id",userRole.role_id)
+.eq("page_name",page)
+.eq("can_access",true)
 .single()
 
-if(!perm || !perm.can_access){
+if(!perm){
 
-alert("Access Denied")
+alert("You do not have permission to access this page")
 
-window.location="dashboard.html"
-
-}
+window.location.href="/dashboard.html"
 
 }
 
-checkAccess()
+}
+
+/* run RBAC */
+
+checkRBAC()

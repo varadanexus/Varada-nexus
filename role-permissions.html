@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Role Permissions - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+.form-box{
+background:white;
+padding:20px;
+border-radius:6px;
+width:400px;
+margin-bottom:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
+<h2>Role Permissions</h2>
+
+<div class="form-box">
+
+<h3>Create Role</h3>
+
+<input id="roleName" placeholder="Role Name">
+
+<button onclick="createRole()">Create Role</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Role</th>
+<th>Page</th>
+<th>Access</th>
+<th>Save</th>
+</tr>
+
+</thead>
+
+<tbody id="permTable"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_PUBLIC_ANON_KEY"
+)
+
+const pages=[
+"dashboard.html",
+"trips.html",
+"expenses.html",
+"master-data.html",
+"rate-entry.html",
+"transporter-payments.html"
+]
+
+async function createRole(){
+
+let name=document.getElementById("roleName").value
+
+if(!name) return alert("Enter role name")
+
+await supabaseClient
+.from("roles")
+.insert({role_name:name})
+
+alert("Role Created")
+
+loadPermissions()
+
+}
+
+async function loadPermissions(){
+
+const {data:roles}=await supabaseClient
+.from("roles")
+.select("*")
+
+const {data:perms}=await supabaseClient
+.from("role_permissions")
+.select("*")
+
+let html=""
+
+roles.forEach(role=>{
+
+pages.forEach(page=>{
+
+let existing=perms.find(p=>p.role_id===role.id && p.page_name===page)
+
+let checked=existing?.can_access ? "checked":""
+
+html+=`
+<tr>
+
+<td>${role.role_name}</td>
+
+<td>${page}</td>
+
+<td>
+<input type="checkbox" id="${role.id}-${page}" ${checked}>
+</td>
+
+<td>
+<button onclick="savePermission('${role.id}','${page}')">
+Save
+</button>
+</td>
+
+</tr>
+`
+
+})
+
+})
+
+document.getElementById("permTable").innerHTML=html
+
+}
+
+async function savePermission(roleId,page){
+
+let allowed=document.getElementById(roleId+"-"+page).checked
+
+const {data:existing}=await supabaseClient
+.from("role_permissions")
+.select("*")
+.eq("role_id",roleId)
+.eq("page_name",page)
+
+if(existing.length>0){
+
+await supabaseClient
+.from("role_permissions")
+.update({can_access:allowed})
+.eq("role_id",roleId)
+.eq("page_name",page)
+
+}else{
+
+await supabaseClient
+.from("role_permissions")
+.insert({
+role_id:roleId,
+page_name:page,
+can_access:allowed
+})
+
+}
+
+alert("Permission Saved")
+
+}
+
+loadPermissions()
+
+</script>
+
+</body>
+
+</html>

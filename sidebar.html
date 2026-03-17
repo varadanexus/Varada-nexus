@@ -4,32 +4,20 @@
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
 
-<hr>
-
 <a href="trips.html" data-page="trips.html">Trips</a>
 <a href="expenses.html" data-page="expenses.html">Expenses</a>
 <a href="transporter-payments.html" data-page="transporter-payments.html">Transporter Payments</a>
 
-<hr>
-
 <a href="master-data.html" data-page="master-data.html">Master Data</a>
 <a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
 
-<hr>
-
 <a href="admin-users.html" data-page="admin-users.html">Users</a>
-
-<hr>
 
 <a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
 
-<hr>
-
 <a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
 
-<hr>
-
-<a href="#" onclick="logout()">Logout</a>
+<a href="#" data-page="logout" onclick="logout()">Logout</a>
 
 </div>
 
@@ -63,12 +51,6 @@ font-size:14px;
 background:#162c66;
 }
 
-.sidebar hr{
-border:0;
-border-top:1px solid rgba(255,255,255,0.2);
-margin:10px 0;
-}
-
 .sidebar a.active{
 background:#162c66;
 font-weight:bold;
@@ -100,7 +82,7 @@ const supabaseClient = supabase.createClient(
 
 await supabaseClient.auth.signOut()
 
-window.location.href="/login.html"
+window.location.href="login.html"
 
 }
 

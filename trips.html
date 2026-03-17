@@ -88,7 +88,7 @@ gap:10px;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 async function checkLogin(){
@@ -124,7 +124,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 })
 
 </script>
-
 
 <div class="main">
 
@@ -162,8 +161,7 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </div>
 
-
-<!-- SEARCH CRITERIA -->
+<!-- SEARCH -->
 
 <div class="card">
 
@@ -194,7 +192,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </div>
 
-
 <table>
 
 <thead>
@@ -218,7 +215,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 </table>
 
 </div>
-
 
 <script>
 
@@ -272,7 +268,7 @@ return prefix+seq
 
 }
 
-/* CLIENTS */
+/* LOAD CLIENTS */
 
 async function loadClients(){
 
@@ -290,7 +286,7 @@ document.getElementById("client").innerHTML=html
 
 }
 
-/* ROUTES */
+/* LOAD ROUTES */
 
 async function loadRoutes(){
 
@@ -311,7 +307,7 @@ document.getElementById("searchRoute").innerHTML=search
 
 }
 
-/* TRUCKS */
+/* LOAD TRUCKS */
 
 async function loadTrucks(){
 
@@ -332,7 +328,7 @@ document.getElementById("searchTruck").innerHTML=search
 
 }
 
-/* COMMODITIES */
+/* LOAD COMMODITIES */
 
 async function loadCommodities(){
 
@@ -448,7 +444,7 @@ let html=""
 trips.forEach(t=>{
 
 html+=`
-<tr>
+<tr id="row_${t.id}">
 
 <td>${t.trip_no}</td>
 <td>${t.route}</td>
@@ -473,7 +469,6 @@ html+=`
 <td>
 
 <button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
-
 <button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
 
 </td>
@@ -487,7 +482,62 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-/* UPDATE STATUS */
+/* INLINE EDIT */
+
+function editTrip(id){
+
+let row=document.getElementById(`row_${id}`)
+let t=trips.find(x=>x.id===id)
+
+row.innerHTML=`
+
+<td>${t.trip_no}</td>
+<td><input id="route_${id}" value="${t.route}"></td>
+<td><input id="truck_${id}" value="${t.truck}"></td>
+<td><input id="commodity_${id}" value="${t.commodity}"></td>
+<td><input id="client_${id}" value="${t.client_name}"></td>
+<td><input id="weight_${id}" value="${t.weight_kg}"></td>
+<td><input type="date" id="date_${id}" value="${t.trip_date}"></td>
+
+<td>
+<select id="status_${id}">
+<option ${t.status=="LOADED"?"selected":""}>LOADED</option>
+<option ${t.status=="Completed"?"selected":""}>Completed</option>
+<option ${t.status=="Pending"?"selected":""}>Pending</option>
+</select>
+</td>
+
+<td>
+<button class="saveBtn" onclick="saveTripRow('${id}')">Save</button>
+<button class="deleteBtn" onclick="deleteTrip('${id}')">Delete</button>
+</td>
+
+`
+
+}
+
+async function saveTripRow(id){
+
+await supabaseClient
+.from("trips")
+.update({
+
+route:document.getElementById(`route_${id}`).value,
+truck:document.getElementById(`truck_${id}`).value,
+commodity:document.getElementById(`commodity_${id}`).value,
+client_name:document.getElementById(`client_${id}`).value,
+weight_kg:Number(document.getElementById(`weight_${id}`).value),
+trip_date:document.getElementById(`date_${id}`).value,
+status:document.getElementById(`status_${id}`).value
+
+})
+.eq("id",id)
+
+loadTrips()
+
+}
+
+/* STATUS */
 
 async function updateStatus(id,status){
 
@@ -510,14 +560,6 @@ await supabaseClient
 .eq("id",id)
 
 loadTrips()
-
-}
-
-/* EDIT */
-
-function editTrip(id){
-
-alert("Editing feature can be expanded here if needed")
 
 }
 

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Financial Dashboard - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin-bottom:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card h3{
+margin:0 0 10px 0;
+color:#1f3c88;
+}
+
+.card p{
+font-size:22px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>Financial Dashboard</h2>
+
+<div class="cards">
+
+<div class="card">
+<h3>Total Client Revenue</h3>
+<p id="revenue">₹0</p>
+</div>
+
+<div class="card">
+<h3>Transporter Cost</h3>
+<p id="transporterCost">₹0</p>
+</div>
+
+<div class="card">
+<h3>Total Expenses</h3>
+<p id="expenses">₹0</p>
+</div>
+
+<div class="card">
+<h3>Net Profit</h3>
+<p id="profit">₹0</p>
+</div>
+
+<div class="card">
+<h3>Client Outstanding</h3>
+<p id="clientOutstanding">₹0</p>
+</div>
+
+<div class="card">
+<h3>Transporter Payable</h3>
+<p id="transporterPayable">₹0</p>
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+init()
+
+async function init(){
+
+await loadFinancials()
+
+}
+
+async function loadFinancials(){
+
+/* CLIENT REVENUE */
+
+const {data:invoices}=await supabaseClient
+.from("client_invoices")
+.select("*")
+
+let revenue=0
+let clientOutstanding=0
+
+invoices.forEach(i=>{
+
+revenue+=Number(i.invoice_amount || 0)
+
+clientOutstanding+=Number(i.balance_amount || 0)
+
+})
+
+
+/* TRANSPORTER PAYABLE FROM TRIPS */
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+let transporterCost=0
+let totalExpenses=0
+
+trips.forEach(t=>{
+
+let mt=t.weight_kg/1000
+
+let gross=t.transporter_rate*mt
+
+let tripExpense=expenses
+.filter(e=>e.trip_id==t.id)
+.reduce((sum,e)=>sum+Number(e.amount),0)
+
+let net=gross-tripExpense
+
+transporterCost+=net
+
+})
+
+
+expenses.forEach(e=>{
+totalExpenses+=Number(e.amount)
+})
+
+
+/* TRANSPORTER PAYMENTS */
+
+const {data:payments}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+
+let paid=0
+
+payments.forEach(p=>{
+paid+=Number(p.amount)
+})
+
+let transporterPayable=transporterCost-paid
+
+
+/* PROFIT */
+
+let profit=revenue-transporterCost
+
+
+document.getElementById("revenue").innerText="₹ "+revenue.toLocaleString()
+document.getElementById("transporterCost").innerText="₹ "+transporterCost.toLocaleString()
+document.getElementById("expenses").innerText="₹ "+totalExpenses.toLocaleString()
+document.getElementById("profit").innerText="₹ "+profit.toLocaleString()
+document.getElementById("clientOutstanding").innerText="₹ "+clientOutstanding.toLocaleString()
+document.getElementById("transporterPayable").innerText="₹ "+transporterPayable.toLocaleString()
+
+}
+
+</script>
+
+<script src="rbac.js"></script>
+
+</body>
+
+</html>

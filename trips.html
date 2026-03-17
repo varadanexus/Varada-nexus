@@ -129,8 +129,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <h2>Trips</h2>
 
-<!-- CREATE TRIP -->
-
 <div class="card">
 
 <h3>Create Trip</h3>
@@ -160,8 +158,6 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <button onclick="saveTrip()">Save Trip</button>
 
 </div>
-
-<!-- SEARCH -->
 
 <div class="card">
 
@@ -237,8 +233,6 @@ await loadTrips()
 
 }
 
-/* AUTO TRIP NUMBER */
-
 async function generateTripNumber(){
 
 let today=new Date()
@@ -268,8 +262,6 @@ return prefix+seq
 
 }
 
-/* LOAD CLIENTS */
-
 async function loadClients(){
 
 const {data}=await supabaseClient.from("clients").select("*")
@@ -285,8 +277,6 @@ html+=`<option value="${c.id}">${c.company}</option>`
 document.getElementById("client").innerHTML=html
 
 }
-
-/* LOAD ROUTES */
 
 async function loadRoutes(){
 
@@ -307,8 +297,6 @@ document.getElementById("searchRoute").innerHTML=search
 
 }
 
-/* LOAD TRUCKS */
-
 async function loadTrucks(){
 
 const {data}=await supabaseClient.from("trucks").select("*")
@@ -328,8 +316,6 @@ document.getElementById("searchTruck").innerHTML=search
 
 }
 
-/* LOAD COMMODITIES */
-
 async function loadCommodities(){
 
 const {data}=await supabaseClient.from("commodities").select("*")
@@ -348,8 +334,6 @@ document.getElementById("commodity").innerHTML=html
 document.getElementById("searchCommodity").innerHTML=search
 
 }
-
-/* SAVE TRIP */
 
 async function saveTrip(){
 
@@ -382,8 +366,6 @@ loadTrips()
 
 }
 
-/* LOAD TRIPS */
-
 async function loadTrips(){
 
 const {data}=await supabaseClient
@@ -397,45 +379,6 @@ allTrips=data||[]
 renderTrips()
 
 }
-
-/* SEARCH */
-
-function searchTrips(){
-
-let tripNo=document.getElementById("searchTripNo").value.toLowerCase()
-let route=document.getElementById("searchRoute").value
-let truck=document.getElementById("searchTruck").value
-let commodity=document.getElementById("searchCommodity").value
-
-trips=allTrips.filter(t=>{
-
-return(
-(!tripNo || t.trip_no?.toLowerCase().includes(tripNo)) &&
-(!route || t.route===route) &&
-(!truck || t.truck===truck) &&
-(!commodity || t.commodity===commodity)
-)
-
-})
-
-renderTrips()
-
-}
-
-function clearSearch(){
-
-document.getElementById("searchTripNo").value=""
-document.getElementById("searchRoute").value=""
-document.getElementById("searchTruck").value=""
-document.getElementById("searchCommodity").value=""
-
-trips=allTrips
-
-renderTrips()
-
-}
-
-/* RENDER */
 
 function renderTrips(){
 
@@ -482,21 +425,44 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-/* INLINE EDIT */
+/* FIXED EDIT WITH DROPDOWNS */
 
 function editTrip(id){
 
 let row=document.getElementById(`row_${id}`)
 let t=trips.find(x=>x.id===id)
 
+let routeOptions=""
+routes.forEach(r=>{
+routeOptions+=`<option ${r.route_code==t.route?"selected":""}>${r.route_code}</option>`
+})
+
+let truckOptions=""
+trucks.forEach(tr=>{
+truckOptions+=`<option ${tr.truck_number==t.truck?"selected":""}>${tr.truck_number}</option>`
+})
+
+let commodityOptions=""
+commodities.forEach(c=>{
+commodityOptions+=`<option ${c.name==t.commodity?"selected":""}>${c.name}</option>`
+})
+
+let clientOptions=""
+clients.forEach(c=>{
+clientOptions+=`<option ${c.company==t.client_name?"selected":""}>${c.company}</option>`
+})
+
 row.innerHTML=`
 
 <td>${t.trip_no}</td>
-<td><input id="route_${id}" value="${t.route}"></td>
-<td><input id="truck_${id}" value="${t.truck}"></td>
-<td><input id="commodity_${id}" value="${t.commodity}"></td>
-<td><input id="client_${id}" value="${t.client_name}"></td>
+
+<td><select id="route_${id}">${routeOptions}</select></td>
+<td><select id="truck_${id}">${truckOptions}</select></td>
+<td><select id="commodity_${id}">${commodityOptions}</select></td>
+<td><select id="client_${id}">${clientOptions}</select></td>
+
 <td><input id="weight_${id}" value="${t.weight_kg}"></td>
+
 <td><input type="date" id="date_${id}" value="${t.trip_date}"></td>
 
 <td>
@@ -537,8 +503,6 @@ loadTrips()
 
 }
 
-/* STATUS */
-
 async function updateStatus(id,status){
 
 await supabaseClient
@@ -547,8 +511,6 @@ await supabaseClient
 .eq("id",id)
 
 }
-
-/* DELETE */
 
 async function deleteTrip(id){
 

@@ -64,6 +64,15 @@ th{
 background:#eee;
 }
 
+.searchBox{
+margin-top:10px;
+margin-bottom:10px;
+}
+
+.pagination button{
+margin-right:5px;
+}
+
 </style>
 
 </head>
@@ -74,7 +83,7 @@ background:#eee;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 async function checkLogin(){
@@ -128,6 +137,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <button onclick="addClient()">Add Client</button>
 
+<br>
+
+<input class="searchBox" id="clientSearch" placeholder="Search Client" onkeyup="searchTable('clientTable','clientSearch')">
+
 <table>
 
 <thead>
@@ -143,6 +156,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <tbody id="clientTable"></tbody>
 
 </table>
+
+<div class="pagination">
+<button onclick="prevPage('client')">Prev</button>
+<button onclick="nextPage('client')">Next</button>
+</div>
 
 </div>
 
@@ -160,6 +178,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 <button onclick="addTransporter()">Add Transporter</button>
 
+<br>
+
+<input class="searchBox" id="transporterSearch" placeholder="Search Transporter" onkeyup="searchTable('transporterTable','transporterSearch')">
+
 <table>
 
 <thead>
@@ -175,6 +197,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <tbody id="transporterTable"></tbody>
 
 </table>
+
+<div class="pagination">
+<button onclick="prevPage('transporter')">Prev</button>
+<button onclick="nextPage('transporter')">Next</button>
+</div>
 
 </div>
 
@@ -192,6 +219,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <button onclick="generateRoute()">Generate</button>
 <button onclick="addRoute()">Add Route</button>
 
+<br>
+
+<input class="searchBox" id="routeSearch" placeholder="Search Route" onkeyup="searchTable('routeTable','routeSearch')">
+
 <table>
 
 <thead>
@@ -207,6 +238,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </table>
 
+<div class="pagination">
+<button onclick="prevPage('route')">Prev</button>
+<button onclick="nextPage('route')">Next</button>
+</div>
+
 </div>
 
 
@@ -220,6 +256,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <select id="truckTransporter"></select>
 
 <button onclick="addTruck()">Add Truck</button>
+
+<br>
+
+<input class="searchBox" id="truckSearch" placeholder="Search Truck" onkeyup="searchTable('truckTable','truckSearch')">
 
 <table>
 
@@ -235,6 +275,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </table>
 
+<div class="pagination">
+<button onclick="prevPage('truck')">Prev</button>
+<button onclick="nextPage('truck')">Next</button>
+</div>
+
 </div>
 
 
@@ -247,6 +292,10 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 <input id="commodityName" placeholder="Commodity">
 
 <button onclick="addCommodity()">Add Commodity</button>
+
+<br>
+
+<input class="searchBox" id="commoditySearch" placeholder="Search Commodity" onkeyup="searchTable('commodityTable','commoditySearch')">
 
 <table>
 
@@ -261,6 +310,11 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 </table>
 
+<div class="pagination">
+<button onclick="prevPage('commodity')">Prev</button>
+<button onclick="nextPage('commodity')">Next</button>
+</div>
+
 </div>
 
 </div>
@@ -268,6 +322,21 @@ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 
 
 <script>
+
+/* SEARCH */
+
+function searchTable(tableId,searchId){
+
+let filter=document.getElementById(searchId).value.toLowerCase()
+let rows=document.querySelectorAll(`#${tableId} tr`)
+
+rows.forEach(r=>{
+r.style.display=r.innerText.toLowerCase().includes(filter)?"":"none"
+})
+
+}
+
+
 
 /* CLIENTS */
 
@@ -301,66 +370,6 @@ document.getElementById("clientTable").innerHTML=html
 
 }
 
-async function addClient(){
-
-let name=document.getElementById("clientName").value
-let company=document.getElementById("clientCompany").value
-let phone=document.getElementById("clientPhone").value
-let email=document.getElementById("clientEmail").value
-
-await supabaseClient
-.from("clients")
-.insert({
-client_name:name,
-company:company,
-phone:phone,
-email:email
-})
-
-loadClients()
-
-}
-
-async function editClient(id){
-
-const {data}=await supabaseClient
-.from("clients")
-.select("*")
-.eq("id",id)
-.single()
-
-let name=prompt("Name",data.client_name)
-let company=prompt("Company",data.company)
-let phone=prompt("Phone",data.phone)
-let email=prompt("Email",data.email)
-
-await supabaseClient
-.from("clients")
-.update({
-client_name:name,
-company:company,
-phone:phone,
-email:email
-})
-.eq("id",id)
-
-loadClients()
-
-}
-
-async function deleteClient(id){
-
-if(!confirm("Delete client?")) return
-
-await supabaseClient
-.from("clients")
-.delete()
-.eq("id",id)
-
-loadClients()
-
-}
-
 
 
 /* TRANSPORTERS */
@@ -372,6 +381,7 @@ const {data}=await supabaseClient
 .select("*")
 
 let html=""
+let dropdown=""
 
 data.forEach(t=>{
 
@@ -383,17 +393,21 @@ html+=`
 <td>${t.PAN||""}</td>
 
 <td>
-<button class="editBtn" onclick="editTransporter('${t.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
+<button class="editBtn">Edit</button>
+<button class="deleteBtn">Delete</button>
 </td>
 </tr>
 `
 
+dropdown+=`<option value="${t.id}">${t.transporter_name}</option>`
+
 })
 
 document.getElementById("transporterTable").innerHTML=html
+document.getElementById("truckTransporter").innerHTML=dropdown
 
 }
+
 
 
 /* ROUTES */
@@ -415,8 +429,8 @@ html+=`
 <td>${r.route_code}</td>
 
 <td>
-<button class="editBtn" onclick="editRoute('${r.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button>
+<button class="editBtn">Edit</button>
+<button class="deleteBtn">Delete</button>
 </td>
 </tr>
 `
@@ -435,7 +449,11 @@ async function loadTrucks(){
 
 const {data}=await supabaseClient
 .from("trucks")
-.select("*")
+.select(`
+id,
+truck_number,
+transporters(transporter_name)
+`)
 
 let html=""
 
@@ -444,10 +462,11 @@ data.forEach(t=>{
 html+=`
 <tr>
 <td>${t.truck_number}</td>
-<td>${t.transporter_id}</td>
+<td>${t.transporters?.transporter_name||""}</td>
 
 <td>
-<button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button>
+<button class="editBtn">Edit</button>
+<button class="deleteBtn">Delete</button>
 </td>
 </tr>
 `
@@ -477,7 +496,8 @@ html+=`
 <td>${c.name}</td>
 
 <td>
-<button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button>
+<button class="editBtn">Edit</button>
+<button class="deleteBtn">Delete</button>
 </td>
 </tr>
 `

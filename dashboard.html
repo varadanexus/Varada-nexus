@@ -34,33 +34,9 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.widget{
-background:white;
-margin-top:25px;
-padding:20px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.widget table{
-width:100%;
-border-collapse:collapse;
-}
-
-.widget th,
-.widget td{
-padding:8px;
-border-bottom:1px solid #ddd;
-}
-
-.widget th{
-background:#eee;
-}
-
 </style>
 
 </head>
-
 
 <body>
 
@@ -100,11 +76,15 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
-/* run RBAC after sidebar loads */
+/* IMPORTANT: wait for sidebar render */
+
+setTimeout(()=>{
 
 if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
+
+},500)
 
 })
 
@@ -195,7 +175,6 @@ document.getElementById("totalProfit").innerText="₹ "+totalProfit.toLocaleStri
 
 }
 
-
 /* LOGOUT */
 
 async function logout(){
@@ -209,7 +188,7 @@ window.location.href="login.html"
 </script>
 
 
-<!-- RBAC SCRIPT -->
+<!-- RBAC SCRIPT (must be last) -->
 
 <script src="menu-rbac.js"></script>
 

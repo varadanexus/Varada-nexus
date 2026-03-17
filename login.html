@@ -37,8 +37,6 @@ color:#1f3c88;
 margin-bottom:25px;
 }
 
-/* INPUT FIELDS */
-
 .login-card select,
 .login-card input{
 width:100%;
@@ -49,8 +47,6 @@ border:1px solid #ccc;
 border-radius:4px;
 font-size:14px;
 }
-
-/* PASSWORD FIELD */
 
 .password-wrapper{
 position:relative;
@@ -65,8 +61,6 @@ padding-right:60px;
 margin-bottom:0;
 }
 
-/* SHOW PASSWORD */
-
 .show-password{
 position:absolute;
 right:12px;
@@ -76,8 +70,6 @@ cursor:pointer;
 font-size:13px;
 color:#1f3c88;
 }
-
-/* BUTTON */
 
 .login-card button{
 width:100%;
@@ -165,7 +157,7 @@ margin-top:12px;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 /* SHOW PASSWORD */
@@ -185,6 +177,8 @@ btn.innerText="Show"
 
 }
 
+/* LOGIN */
+
 async function login(){
 
 let email=document.getElementById("email").value
@@ -192,6 +186,8 @@ let password=document.getElementById("password").value
 let loginType=document.getElementById("loginType").value
 
 document.getElementById("error").innerText=""
+
+/* AUTH LOGIN */
 
 const {data,error}=await supabaseClient.auth.signInWithPassword({
 email:email,
@@ -205,16 +201,33 @@ return
 
 let authId=data.user.id
 
+/* FIND USER IN ERP USERS TABLE */
+
+const {data:dbUser,error:userError}=await supabaseClient
+.from("users")
+.select("*")
+.eq("auth_id",authId)
+.single()
+
+if(userError || !dbUser){
+document.getElementById("error").innerText="User not registered in ERP"
+return
+}
+
+/* GET ROLE */
+
 const {data:userRole,error:roleError}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",authId)
+.eq("user_id",dbUser.id)
 .single()
 
 if(roleError || !userRole){
 document.getElementById("error").innerText="User role not assigned"
 return
 }
+
+/* GET ROLE NAME */
 
 const {data:role}=await supabaseClient
 .from("roles")
@@ -224,7 +237,9 @@ const {data:role}=await supabaseClient
 
 let roleName=role.role_name.toLowerCase()
 
-if(loginType==="transporter" && roleName!=="transporter"){
+/* LOGIN TYPE VALIDATION */
+
+if(loginType==="transporter" && roleName!=="customer"){
 
 document.getElementById("error").innerText="This account is not a customer"
 
@@ -234,7 +249,7 @@ return
 
 }
 
-if(loginType==="staff" && roleName==="transporter"){
+if(loginType==="staff" && roleName==="customer"){
 
 document.getElementById("error").innerText="Customers must use customer login"
 
@@ -244,7 +259,9 @@ return
 
 }
 
-if(roleName==="transporter"){
+/* REDIRECT */
+
+if(roleName==="customer"){
 
 window.location.href="transporter-dashboard.html"
 

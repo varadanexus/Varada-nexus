@@ -8,9 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="menu-rbac.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
 <style>
 
 body{
@@ -57,6 +54,7 @@ cursor:pointer;
 
 .editBtn{background:#5bc0de;}
 .deleteBtn{background:#d9534f;}
+.saveBtn{background:#5cb85c;}
 
 table{
 width:100%;
@@ -74,14 +72,6 @@ background:#eee;
 text-align:left;
 }
 
-.searchBox{
-padding:10px;
-width:200px;
-border:1px solid #ccc;
-border-radius:4px;
-margin-right:10px;
-}
-
 </style>
 
 </head>
@@ -93,10 +83,10 @@ margin-right:10px;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
-/* LOGIN CHECK */
+/* LOGIN */
 
 async function checkLogin(){
 
@@ -104,22 +94,11 @@ const {data}=await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.href="login.html"
-return
 }
 
 }
 
 checkLogin()
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
-}
 
 </script>
 
@@ -131,15 +110,13 @@ window.location.href="login.html"
 <script>
 
 fetch("sidebar.html")
-.then(res => res.text())
-.then(data => {
+.then(res=>res.text())
+.then(data=>{
 
-document.getElementById("sidebar-container").innerHTML = data
+document.getElementById("sidebar-container").innerHTML=data
 
 setTimeout(()=>{
-if(typeof applyMenuRBAC === "function"){
-applyMenuRBAC()
-}
+if(typeof applyMenuRBAC==="function"){applyMenuRBAC()}
 },300)
 
 })
@@ -159,11 +136,8 @@ applyMenuRBAC()
 <div class="form-grid">
 
 <select id="route"></select>
-
 <select id="truck"></select>
-
 <select id="commodity"></select>
-
 <select id="client"></select>
 
 <input id="weight" placeholder="Weight KG">
@@ -182,23 +156,6 @@ applyMenuRBAC()
 <br>
 
 <button onclick="saveTrip()">Save Trip</button>
-
-</div>
-
-
-
-<div class="card">
-
-<input class="searchBox" id="searchTripNo" placeholder="Trip No">
-
-<select class="searchBox" id="searchRoute"></select>
-
-<select class="searchBox" id="searchTruck"></select>
-
-<select class="searchBox" id="searchCommodity"></select>
-
-<button onclick="searchTrips()">Search</button>
-<button onclick="clearSearch()">Clear</button>
 
 </div>
 
@@ -226,13 +183,6 @@ applyMenuRBAC()
 
 </table>
 
-
-<br>
-
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-<button onclick="downloadPDF()">Download PDF</button>
-
 </div>
 
 
@@ -243,14 +193,9 @@ let trucks=[]
 let commodities=[]
 let clients=[]
 let trips=[]
-let allTrips=[]
-
-let page=1
-let pageSize=10
 
 
 init()
-
 
 async function init(){
 
@@ -259,6 +204,38 @@ await loadTrucks()
 await loadCommodities()
 await loadClients()
 await loadTrips()
+
+}
+
+
+/* AUTO TRIP NUMBER */
+
+async function generateTripNumber(){
+
+let today=new Date()
+
+let year=today.getFullYear().toString().slice(-2)
+let month=("0"+(today.getMonth()+1)).slice(-2)
+
+let prefix=`TR${year}${month}`
+
+const {data}=await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no",`${prefix}%`)
+.order("trip_no",{ascending:false})
+.limit(1)
+
+let seq="0001"
+
+if(data.length>0){
+
+let last=data[0].trip_no.slice(-4)
+seq=(parseInt(last)+1).toString().padStart(4,"0")
+
+}
+
+return prefix+seq
 
 }
 
@@ -274,7 +251,7 @@ clients=data||[]
 let html='<option value="">Select Client</option>'
 
 clients.forEach(c=>{
-html+=`<option value="${c.id}">${c.company} - ${c.client_name}</option>`
+html+=`<option value="${c.id}">${c.company}</option>`
 })
 
 document.getElementById("client").innerHTML=html
@@ -282,7 +259,7 @@ document.getElementById("client").innerHTML=html
 }
 
 
-/* LOAD ROUTES */
+/* ROUTES */
 
 async function loadRoutes(){
 
@@ -290,21 +267,18 @@ const {data}=await supabaseClient.from("routes").select("*")
 
 routes=data||[]
 
-let html='<option value="">Select Route</option>'
-let search='<option value="">All Routes</option>'
+let html='<option value="">Route</option>'
 
 routes.forEach(r=>{
 html+=`<option value="${r.id}">${r.route_code}</option>`
-search+=`<option value="${r.route_code}">${r.route_code}</option>`
 })
 
 document.getElementById("route").innerHTML=html
-document.getElementById("searchRoute").innerHTML=search
 
 }
 
 
-/* LOAD TRUCKS */
+/* TRUCKS */
 
 async function loadTrucks(){
 
@@ -312,21 +286,18 @@ const {data}=await supabaseClient.from("trucks").select("*")
 
 trucks=data||[]
 
-let html='<option value="">Select Truck</option>'
-let search='<option value="">All Trucks</option>'
+let html='<option value="">Truck</option>'
 
 trucks.forEach(t=>{
 html+=`<option value="${t.id}">${t.truck_number}</option>`
-search+=`<option value="${t.truck_number}">${t.truck_number}</option>`
 })
 
 document.getElementById("truck").innerHTML=html
-document.getElementById("searchTruck").innerHTML=search
 
 }
 
 
-/* LOAD COMMODITIES */
+/* COMMODITIES */
 
 async function loadCommodities(){
 
@@ -334,18 +305,16 @@ const {data}=await supabaseClient.from("commodities").select("*")
 
 commodities=data||[]
 
-let html='<option value="">Select Commodity</option>'
-let search='<option value="">All Commodities</option>'
+let html='<option value="">Commodity</option>'
 
 commodities.forEach(c=>{
 html+=`<option value="${c.id}">${c.name}</option>`
-search+=`<option value="${c.name}">${c.name}</option>`
 })
 
 document.getElementById("commodity").innerHTML=html
-document.getElementById("searchCommodity").innerHTML=search
 
 }
+
 
 
 /* SAVE TRIP */
@@ -360,31 +329,22 @@ let weight=document.getElementById("weight").value
 let date=document.getElementById("tripDate").value
 let status=document.getElementById("status").value
 
-if(!route || !truck || !commodity){
-alert("Fill required fields")
-return
-}
-
-let clientName = clients.find(c=>c.id==client)?.client_name
+let tripNo=await generateTripNumber()
 
 await supabaseClient
 .from("trips")
 .insert({
 
+trip_no:tripNo,
 route:routes.find(r=>r.id==route)?.route_code,
 truck:trucks.find(t=>t.id==truck)?.truck_number,
 commodity:commodities.find(c=>c.id==commodity)?.name,
-client_id:client,
-client_name:clientName,
+client_name:clients.find(c=>c.id==client)?.company,
 weight_kg:Number(weight),
 trip_date:date,
 status:status
 
 })
-
-document.getElementById("weight").value=""
-document.getElementById("tripDate").value=""
-document.getElementById("status").value=""
 
 loadTrips()
 
@@ -401,7 +361,6 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 trips=data||[]
-allTrips=trips
 
 renderTrips()
 
@@ -412,34 +371,59 @@ renderTrips()
 
 function renderTrips(){
 
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageTrips=trips.slice(start,end)
-
 let html=""
 
-pageTrips.forEach(t=>{
+trips.forEach(t=>{
 
 html+=`
 <tr>
-<td>${t.trip_no||""}</td>
+
+<td>${t.trip_no}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>
 <td>${t.commodity}</td>
 <td>${t.client_name||""}</td>
 <td>${t.weight_kg}</td>
 <td>${t.trip_date||""}</td>
-<td>${t.status||""}</td>
+
 <td>
-<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+
+<select onchange="updateStatus('${t.id}',this.value)">
+
+<option ${t.status=="LOADED"?"selected":""}>LOADED</option>
+<option ${t.status=="Completed"?"selected":""}>Completed</option>
+<option ${t.status=="Pending"?"selected":""}>Pending</option>
+
+</select>
+
 </td>
+
+<td>
+
+<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
+
+<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+
+</td>
+
 </tr>
 `
 
 })
 
 document.getElementById("tripTable").innerHTML=html
+
+}
+
+
+/* UPDATE STATUS */
+
+async function updateStatus(id,status){
+
+await supabaseClient
+.from("trips")
+.update({status:status})
+.eq("id",id)
 
 }
 
@@ -459,8 +443,16 @@ loadTrips()
 
 }
 
+
+/* EDIT */
+
+function editTrip(id){
+
+alert("Editing feature can be expanded here if needed")
+
+}
+
 </script>
 
 </body>
-
 </html>

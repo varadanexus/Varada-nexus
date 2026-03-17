@@ -85,8 +85,6 @@ background:#eee;
 
 <body>
 
-<!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
@@ -133,14 +131,10 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
-/* SUPABASE */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
-/* EDGE FUNCTION */
 
 const EDGE_FUNCTION =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user"
@@ -193,9 +187,7 @@ users.forEach(user=>{
 let roleName="Not Assigned"
 let roleId=null
 
-/* match role using auth_id */
-
-let ur=userRoles.find(r=>String(r.user_id)===String(user.auth_id))
+let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
 
 if(ur){
 
@@ -214,14 +206,14 @@ html+=`
 <td>${user.email}</td>
 
 <td>
-<select id="role-${user.auth_id}">
+<select id="role-${user.id}">
 ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_name}</option>`).join("")}
 </select>
 </td>
 
 <td>
 
-<button class="edit-btn" onclick="updateRole('${user.auth_id}')">Save</button>
+<button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
 
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
 
@@ -278,16 +270,16 @@ loadUsers()
 
 /* UPDATE ROLE */
 
-async function updateRole(authId){
+async function updateRole(userId){
 
-let roleId=document.getElementById("role-"+authId).value
+let roleId=document.getElementById("role-"+userId).value
 
 await supabaseClient
 .from("user_roles")
 .update({
 role_id:roleId
 })
-.eq("user_id",authId)
+.eq("user_id",userId)
 
 alert("Role updated")
 
@@ -326,7 +318,6 @@ loadUsers()
 
 </body>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="rbac.js"></script>
 
 </html>

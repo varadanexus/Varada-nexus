@@ -27,6 +27,12 @@ return data.session
 
 async function checkMaintenance(){
 
+const page = window.location.pathname.split("/").pop()
+
+/* allow login page during maintenance */
+
+if(page === "login.html") return
+
 const {data:settings}=await supabaseClient
 .from("system_settings")
 .select("*")

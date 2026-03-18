@@ -1,7 +1,11 @@
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
 
 <div class="sidebar-header">
-<h2>Varada Nexus</h2>
+
+<span class="logo-text">Varada Nexus</span>
+
+<button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
 </div>
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
@@ -21,9 +25,10 @@
 <a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
 <a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
 
-<a href="#" onclick="logout();return false;">Logout</a>
+<a href="#" onclick="logout()">Logout</a>
 
 </div>
+
 
 <style>
 
@@ -36,20 +41,36 @@ height:100vh;
 background:#1f3c88;
 color:white;
 overflow-y:auto;
-padding-top:0;
-box-sizing:border-box;
+transition:0.3s;
+}
+
+.sidebar.collapsed{
+width:70px;
 }
 
 .sidebar-header{
-padding:20px 10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
 border-bottom:1px solid rgba(255,255,255,0.2);
-text-align:center;
 }
 
-.sidebar h2{
-margin:0;
-font-size:20px;
+.logo-text{
+font-size:18px;
 font-weight:bold;
+}
+
+.sidebar.collapsed .logo-text{
+display:none;
+}
+
+.toggle-btn{
+background:none;
+border:none;
+color:white;
+font-size:20px;
+cursor:pointer;
 }
 
 .sidebar a{
@@ -58,6 +79,7 @@ color:white;
 padding:12px 20px;
 text-decoration:none;
 font-size:14px;
+white-space:nowrap;
 }
 
 .sidebar a:hover{
@@ -70,13 +92,25 @@ font-weight:bold;
 border-left:4px solid white;
 }
 
+.sidebar.collapsed a{
+text-align:center;
+padding:12px 5px;
+font-size:0;
+}
+
+.sidebar.collapsed a::before{
+content:"•";
+font-size:18px;
+}
+
 </style>
+
 
 <script>
 
-/* Ensure Supabase library exists before creating client */
+/* ENSURE SUPABASE CLIENT EXISTS */
 
-if(typeof supabase !== "undefined" && typeof supabaseClient === "undefined"){
+if(typeof supabaseClient === "undefined" && typeof supabase !== "undefined"){
 
 window.supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -85,7 +119,17 @@ window.supabaseClient = supabase.createClient(
 
 }
 
-/* Wait for DOM */
+/* COLLAPSE SIDEBAR */
+
+function toggleSidebar(){
+
+const sidebar = document.getElementById("sidebar")
+
+sidebar.classList.toggle("collapsed")
+
+}
+
+/* ACTIVE PAGE HIGHLIGHT */
 
 setTimeout(()=>{
 
@@ -99,15 +143,14 @@ link.classList.add("active")
 
 })
 
-/* Apply RBAC */
-
 if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
 
-},150)
+},100)
 
-/* Logout */
+
+/* LOGOUT */
 
 async function logout(){
 
@@ -118,19 +161,13 @@ await supabaseClient.auth.signOut()
 }
 
 }catch(e){
-
 console.log("Logout error:",e)
-
 }
-
-/* Clear storage */
 
 localStorage.clear()
 sessionStorage.clear()
 
-/* Redirect */
-
-window.location.replace("login.html")
+window.location.href="login.html"
 
 }
 

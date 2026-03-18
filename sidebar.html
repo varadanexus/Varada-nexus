@@ -7,35 +7,35 @@
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
 
-<a href="trips.html" data-page="trips.html" data-role="admin,operator,manager">Trips</a>
+<a href="trips.html" data-page="trips.html">Trips</a>
 
-<a href="expenses.html" data-page="expenses.html" data-role="admin,operator,manager">Expenses</a>
+<a href="expenses.html" data-page="expenses.html">Expenses</a>
 
-<a href="client-billing.html" data-page="client-billing.html" data-role="admin">Client Billing</a>
+<a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
 
-<a href="client-payments.html" data-page="client-payments.html" data-role="admin">Client Payments</a>
+<a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
 
-<a href="client-ledger.html" data-page="client-ledger.html" data-role="admin">Client Ledger</a>
+<a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
 
-<a href="transporter-payments.html" data-page="transporter-payments.html" data-role="admin">Transporter Payments</a>
+<a href="transporter-payments.html" data-page="transporter-payments.html">Transporter Payments</a>
 
-<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html" data-role="admin">Transporter Ledger</a>
+<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
 
-<a href="master-data.html" data-page="master-data.html" data-role="admin">Master Data</a>
+<a href="master-data.html" data-page="master-data.html">Master Data</a>
 
-<a href="rate-entry.html" data-page="rate-entry.html" data-role="admin">Rates</a>
+<a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
 
-<a href="admin-users.html" data-page="admin-users.html" data-role="admin">Users</a>
+<a href="admin-users.html" data-page="admin-users.html">Users</a>
 
-<a href="role-permissions.html" data-page="role-permissions.html" data-role="admin">Role Permissions</a>
+<a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
 
-<a href="admin-maintenance.html" data-page="admin-maintenance.html" data-role="admin">System Maintenance</a>
+<a href="admin-maintenance.html" data-page="admin-maintenance.html">System Maintenance</a>
 
-<a href="profit-analysis.html" data-page="profit-analysis.html" data-role="admin">Profit Analysis</a>
+<a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
 
-<a href="financial-dashboard.html" data-page="financial-dashboard.html" data-role="admin">Financial Dashboard</a>
+<a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
 
-<a href="generate-invoice.html" data-page="generate-invoice.html" data-role="admin,operator,manager">Generate Invoice</a>
+<a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
 
 <a href="#" onclick="logout();return false;">Logout</a>
 
@@ -126,7 +126,7 @@ link.classList.add("active")
 }
 
 
-/* SIDEBAR RBAC USING role_permissions TABLE */
+/* SIDEBAR RBAC */
 
 async function applySidebarRBAC(){
 
@@ -138,41 +138,41 @@ if(!session) return
 
 const authId=session.user.id
 
-/* GET ERP USER */
+/* FIND ERP USER */
 
-const {data:user,error:userError}=await supabaseClient
+const {data:user}=await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
-if(userError || !user) return
+if(!user) return
 
-/* GET ROLE */
+/* GET USER ROLE */
 
-const {data:userRole,error:roleError}=await supabaseClient
+const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
 .single()
 
-if(roleError || !userRole) return
+if(!userRole) return
 
 let roleId=userRole.role_id
 
 /* GET ALLOWED PAGES */
 
-const {data:permissions,error:permError}=await supabaseClient
+const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .eq("role_id",roleId)
 .eq("can_access",true)
 
-if(permError || !permissions) return
+if(!permissions) return
 
 const allowedPages=permissions.map(p=>p.page_name)
 
-/* HIDE DISALLOWED MENU ITEMS */
+/* HIDE UNAUTHORIZED MENUS */
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
@@ -203,126 +203,8 @@ await supabaseClient.auth.signOut()
 
 }catch(e){
 
-console.log("Logout error:",e)
-
-}
-
-localStorage.clear()
-sessionStorage.clear()
-
-window.location.href="login.html"
-
-}
-
-
-/* INITIALIZE SIDEBAR AFTER PAGE LOAD */
-
-window.addEventListener("DOMContentLoaded", async ()=>{
-
-highlightActivePage()
-
-await applySidebarRBAC()
-
-})
-
-</script>
-
-/* GLOBAL SUPABASE CLIENT */
-
-if(typeof supabaseClient==="undefined"){
-
-window.supabaseClient=supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
-}
-
-
-/* ACTIVE PAGE */
-
-function highlightActivePage(){
-
-const currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll(".sidebar a").forEach(link=>{
-
-if(link.getAttribute("data-page")===currentPage){
-link.classList.add("active")
-}
-
-})
-
-}
-
-
-/* SIDEBAR RBAC */
-
-async function applySidebarRBAC(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session) return
-
-const authId=session.user.id
-
-/* FIND USER */
-
-const {data:user}=await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-if(!user) return
-
-/* GET ROLE */
-
-const {data:userRole}=await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
-.single()
-
-if(!userRole) return
-
-let roleId=userRole.role_id
-
-/* GET ALLOWED PAGES */
-
-const {data:allowed}=await supabaseClient
-.from("role_permissions")
-.select("page_name")
-.eq("role_id",roleId)
-.eq("can_access",true)
-
-if(!allowed) return
-
-const allowedPages=allowed.map(x=>x.page_name)
-
-/* HIDE MENU ITEMS */
-
-document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
-
-let page=link.getAttribute("data-page")
-
-if(!allowedPages.includes(page)){
-link.style.display="none"
-}
-
-})
-
-}
-
-
-/* LOGOUT */
-
-async function logout(){
-
-try{
-await supabaseClient.auth.signOut()
-}catch(e){
 console.log(e)
+
 }
 
 localStorage.clear()

@@ -39,6 +39,28 @@ const {data:settings}=await supabaseClient
 .eq("id",1)
 .single()
 
+/* VERSION CHECK */
+
+const systemVersion = settings.maintenance_version
+
+const localVersion = localStorage.getItem("erp_system_version")
+
+if(!localVersion){
+
+localStorage.setItem("erp_system_version", systemVersion)
+
+}else if(Number(localVersion) !== Number(systemVersion)){
+
+await supabaseClient.auth.signOut()
+
+localStorage.setItem("erp_system_version", systemVersion)
+
+window.location.href="login.html"
+
+return
+
+}
+
 if(!settings?.maintenance_mode) return
 
 /* GET CURRENT USER */

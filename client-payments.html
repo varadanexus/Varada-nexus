@@ -185,7 +185,28 @@ async function loadInvoices(){
 const {data}=await supabaseClient
 .from("client_invoices")
 .select("*")
-.in("payment_status",["Pending","Partially Paid"])
+
+invoices=data || []
+
+/* SHOW ONLY INVOICES WITH BALANCE */
+
+invoices = invoices.filter(i => i.balance_amount > 0)
+
+let html='<option value="">Select Invoice</option>'
+
+invoices.forEach(i=>{
+
+html+=`
+<option value="${i.id}">
+${i.invoice_no} | ${i.client_name} | Balance ₹${i.balance_amount}
+</option>
+`
+
+})
+
+document.getElementById("invoiceSelect").innerHTML=html
+
+}
 
 invoices=data || []
 

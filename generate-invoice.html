@@ -2,11 +2,15 @@
 <html>
 
 <head>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
+
 <title>Generate Client Invoice</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -30,6 +34,13 @@ margin-bottom:20px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
+select,input{
+padding:10px;
+margin-right:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -38,6 +49,11 @@ border-collapse:collapse;
 th,td{
 padding:10px;
 border-bottom:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#eee;
 }
 
 button{
@@ -47,6 +63,12 @@ color:white;
 border:none;
 border-radius:4px;
 cursor:pointer;
+}
+
+.summary{
+font-size:16px;
+font-weight:bold;
+margin-top:10px;
 }
 
 </style>
@@ -59,10 +81,13 @@ cursor:pointer;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 </script>
+
+
+<!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
 
@@ -94,6 +119,7 @@ applyMenuRBAC()
 
 </div>
 
+
 <div class="card">
 
 <table>
@@ -102,8 +128,10 @@ applyMenuRBAC()
 
 <tr>
 <th>Select</th>
-<th>Trip No</th>
+<th>Trip</th>
 <th>Date</th>
+<th>Weight MT</th>
+<th>Rate</th>
 <th>Amount</th>
 </tr>
 
@@ -115,15 +143,26 @@ applyMenuRBAC()
 
 <br>
 
+<div class="summary">
+Total Amount: ₹ <span id="totalAmount">0</span>
+</div>
+
+<br>
+
 <button onclick="generateInvoice()">Generate Invoice</button>
 
+<button onclick="downloadInvoice()">Download PDF</button>
+
 </div>
 
 </div>
+
 
 <script>
 
 let trips=[]
+let selectedTrips=[]
+
 
 init()
 
@@ -131,10 +170,10 @@ async function init(){
 
 const {data}=await supabaseClient
 .from("trips")
-.select("client")
-.not("client","is",null)
+.select("client_name")
+.not("client_name","is",null)
 
-let clients=[...new Set(data.map(x=>x.client))]
+let clients=[...new Set(data.map(x=>x.client_name))]
 
 let html='<option value="">Select Client</option>'
 
@@ -147,6 +186,9 @@ document.getElementById("clientSelect").innerHTML=html
 }
 
 
+
+/* LOAD TRIPS */
+
 async function loadTrips(){
 
 let client=document.getElementById("clientSelect").value
@@ -154,30 +196,34 @@ let client=document.getElementById("clientSelect").value
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("client",client)
+.eq("client_name",client)
 .is("invoice_id",null)
+.order("trip_no",{ascending:false})
 
-trips=data
+trips=data || []
 
 let html=""
 
-data.forEach(t=>{
+trips.forEach(t=>{
 
 let mt=t.weight_kg/1000
-
 let amount=t.company_rate*mt
 
 html+=`
 
 <tr>
 
-<td><input type="checkbox" value="${t.id}"></td>
+<td><input type="checkbox" value="${t.id}" onchange="calculateTotal()"></td>
 
 <td>${t.trip_no}</td>
 
 <td>${t.trip_date}</td>
 
-<td>${amount}</td>
+<td>${mt.toFixed(2)}</td>
+
+<td>${t.company_rate}</td>
+
+<td>${amount.toFixed(2)}</td>
 
 </tr>
 
@@ -190,30 +236,47 @@ document.getElementById("tripTable").innerHTML=html
 }
 
 
+
+/* CALCULATE TOTAL */
+
+function calculateTotal(){
+
+let checked=document.querySelectorAll("#tripTable input:checked")
+
+let total=0
+selectedTrips=[]
+
+checked.forEach(c=>{
+
+let trip=trips.find(t=>t.id==c.value)
+
+let mt=trip.weight_kg/1000
+let amount=trip.company_rate*mt
+
+total+=amount
+
+selectedTrips.push(trip)
+
+})
+
+document.getElementById("totalAmount").innerText=total.toFixed(2)
+
+}
+
+
+
+/* GENERATE INVOICE */
+
 async function generateInvoice(){
 
-let selected=[...document.querySelectorAll("#tripTable input:checked")]
-.map(x=>x.value)
-
-if(selected.length==0){
+if(selectedTrips.length==0){
 alert("Select trips")
 return
 }
 
 let invoiceNo="INV"+Date.now()
 
-let total=0
-
-selected.forEach(id=>{
-
-let t=trips.find(x=>x.id==id)
-
-let mt=t.weight_kg/1000
-
-total+=t.company_rate*mt
-
-})
-
+let total=Number(document.getElementById("totalAmount").innerText)
 
 const {data}=await supabaseClient
 .from("client_invoices")
@@ -230,13 +293,12 @@ payment_status:"Pending"
 .select()
 .single()
 
-
-for(let id of selected){
+for(let trip of selectedTrips){
 
 await supabaseClient
 .from("trips")
 .update({invoice_id:data.id})
-.eq("id",id)
+.eq("id",trip.id)
 
 }
 
@@ -246,10 +308,59 @@ loadTrips()
 
 }
 
+
+
+/* DOWNLOAD PDF */
+
+function downloadInvoice(){
+
+if(selectedTrips.length==0){
+alert("Generate invoice first")
+return
+}
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+doc.text("VARADA NEXUS PRIVATE LIMITED",20,20)
+
+doc.text("Client: "+document.getElementById("clientSelect").value,20,30)
+
+let rows=[]
+
+selectedTrips.forEach(t=>{
+
+let mt=t.weight_kg/1000
+let amount=t.company_rate*mt
+
+rows.push([
+t.trip_no,
+t.trip_date,
+mt.toFixed(2),
+t.company_rate,
+amount.toFixed(2)
+])
+
+})
+
+doc.autoTable({
+
+head:[["Trip","Date","Weight MT","Rate","Amount"]],
+body:rows,
+startY:40
+
+})
+
+doc.text("Total: ₹ "+document.getElementById("totalAmount").innerText,20,doc.lastAutoTable.finalY+10)
+
+doc.save("invoice.pdf")
+
+}
+
 </script>
 
 <script src="rbac.js"></script>
 
 </body>
-
 </html>

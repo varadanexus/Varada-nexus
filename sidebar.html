@@ -125,7 +125,7 @@ const currentPage = window.location.pathname.split("/").pop()
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
-if(link.getAttribute("data-page")===currentPage){
+if(link.dataset.page===currentPage){
 link.classList.add("active")
 }
 
@@ -147,7 +147,7 @@ document.getElementById("userName").innerText="User"
 return
 }
 
-/* GET NAME FROM EMAIL */
+/* NAME FROM EMAIL */
 
 const email=session.user.email
 const name=email.split("@")[0]
@@ -155,12 +155,12 @@ const name=email.split("@")[0]
 document.getElementById("userName").innerText=name
 
 
-/* FIND ERP USER */
+/* FIND ERP USER BY EMAIL */
 
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
-.eq("auth_id",session.user.id)
+.eq("email",email)
 .single()
 
 if(!user){
@@ -215,17 +215,21 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
-const authId=session.user.id
+const email=session.user.email
 
+
+/* FIND ERP USER */
 
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
-.eq("auth_id",authId)
+.eq("email",email)
 .single()
 
 if(!user) return
 
+
+/* GET USER ROLE */
 
 const {data:userRole}=await supabaseClient
 .from("user_roles")
@@ -235,6 +239,8 @@ const {data:userRole}=await supabaseClient
 
 if(!userRole) return
 
+
+/* GET PERMISSIONS */
 
 const {data:permissions}=await supabaseClient
 .from("role_permissions")
@@ -250,7 +256,7 @@ const allowedPages=permissions.map(p=>p.page_name)
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
-const page=link.getAttribute("data-page")
+const page=link.dataset.page
 
 if(!allowedPages.includes(page)){
 link.style.display="none"

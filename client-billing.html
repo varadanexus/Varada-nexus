@@ -111,8 +111,16 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <select id="clientSelect" onchange="loadTripsByClient()"></select>
 
-<div class="trip-list" id="tripList"></div>
+<div class="trip-list">
 
+<div>
+<input type="checkbox" id="selectAll" onclick="toggleAllTrips()">
+<b>Select All</b>
+</div>
+
+<div id="tripList"></div>
+
+</div>
 <br>
 
 <button onclick="generateInvoice()">Generate Invoice</button>
@@ -202,6 +210,7 @@ const {data}=await supabaseClient
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
+.is("invoice_id",null)
 .order("trip_no",{ascending:false})   // ✅ FIX: Latest trips first
 
 trips=data
@@ -433,7 +442,27 @@ doc.text("Amount : ₹"+invoice.invoice_amount,20,70)
 doc.save(invoice.invoice_no+".pdf")
 
 }
+  
+function toggleAllTrips(){
 
+let checked=document.getElementById("selectAll").checked
+
+document.querySelectorAll("#tripList input").forEach(c=>{
+c.checked=checked
+})
+
+generateInvoice()
+
+}
+
+document.addEventListener("change",function(e){
+
+if(e.target.closest("#tripList")){
+generateInvoice()
+}
+
+})
+  
 </script>
 
 </body>

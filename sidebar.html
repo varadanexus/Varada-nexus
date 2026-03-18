@@ -1,9 +1,6 @@
-<div class="sidebar" id="sidebar">
+<div class="sidebar">
 
-<div class="sidebar-header">
-<h2 id="logoText">Varada Nexus</h2>
-<button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-</div>
+<h2>Varada Nexus</h2>
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
 <a href="trips.html" data-page="trips.html">Trips</a>
@@ -26,6 +23,7 @@
 
 </div>
 
+
 <style>
 
 .sidebar{
@@ -36,32 +34,14 @@ width:220px;
 height:100vh;
 background:#1f3c88;
 color:white;
-transition:width 0.3s;
+padding-top:20px;
 overflow-y:auto;
 }
 
-.sidebar.collapsed{
-width:70px;
-}
-
-.sidebar-header{
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:15px;
-}
-
 .sidebar h2{
-margin:0;
-font-size:18px;
-}
-
-.toggle-btn{
-background:none;
-border:none;
-color:white;
-font-size:18px;
-cursor:pointer;
+text-align:center;
+margin-bottom:30px;
+font-size:20px;
 }
 
 .sidebar a{
@@ -70,7 +50,6 @@ color:white;
 padding:12px 20px;
 text-decoration:none;
 font-size:14px;
-transition:background 0.2s;
 }
 
 .sidebar a:hover{
@@ -83,35 +62,8 @@ font-weight:bold;
 border-left:4px solid white;
 }
 
-/* collapsed mode */
-
-.sidebar.collapsed h2{
-display:none;
-}
-
-.sidebar.collapsed a{
-text-align:center;
-padding:12px 10px;
-font-size:0;
-}
-
-.sidebar.collapsed a::before{
-content:"•";
-font-size:18px;
-}
-
-/* main content shift */
-
-.main{
-margin-left:220px;
-transition:margin-left 0.3s;
-}
-
-.sidebar.collapsed ~ .main{
-margin-left:70px;
-}
-
 </style>
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -119,42 +71,21 @@ margin-left:70px;
 
 /* GLOBAL SUPABASE CLIENT */
 
-if(typeof supabaseClient === "undefined"){
+if(typeof supabaseClient==="undefined"){
 
-window.supabaseClient = supabase.createClient(
+window.supabaseClient=supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 }
 
-/* SIDEBAR TOGGLE */
 
-function toggleSidebar(){
-
-const sidebar=document.getElementById("sidebar")
-
-sidebar.classList.toggle("collapsed")
-
-const main=document.querySelector(".main")
-
-if(main){
-
-if(sidebar.classList.contains("collapsed")){
-main.style.marginLeft="70px"
-}else{
-main.style.marginLeft="220px"
-}
-
-}
-
-}
-
-/* ACTIVE MENU */
+/* ACTIVE PAGE HIGHLIGHT */
 
 setTimeout(()=>{
 
-const currentPage=window.location.pathname.split("/").pop()
+const currentPage = window.location.pathname.split("/").pop()
 
 document.querySelectorAll(".sidebar a").forEach(link=>{
 
@@ -171,6 +102,7 @@ applyMenuRBAC()
 }
 
 },100)
+
 
 /* LOGOUT */
 
@@ -189,7 +121,7 @@ console.log("Logout error:",e)
 localStorage.clear()
 sessionStorage.clear()
 
-window.location.replace("login.html")
+window.location.href="login.html"
 
 }
 

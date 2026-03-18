@@ -1,8 +1,16 @@
-<!DOCTYPE html><html><head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html><html>
+<head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
-body{margin:0;font-family:Arial;background:#f4f6f9;}
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
 
-.main{margin-left:220px;padding:30px;}
+.main{
+margin-left:220px;
+padding:30px;
+}
 
 .card{
 background:white;
@@ -28,8 +36,6 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{background:#d9534f;}
-
 .trip-list{
 max-height:220px;
 overflow-y:auto;
@@ -53,6 +59,10 @@ background:#eee;
 text-align:left;
 }
 
+.deleteBtn{
+background:#d9534f;
+}
+
 </style></head><body><script>
 
 const supabaseClient = supabase.createClient(
@@ -60,35 +70,17 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-</script><div id="sidebar-container"></div><script>
-
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
-})
-
 </script><div class="main"><h2>Transporter Payments</h2><div class="card"><h3>Record Payment</h3><select id="transporterSelect"></select>
 
 <button onclick="loadTrips()">Load Trips</button>
 
 <div class="trip-list"><div>
-<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> 
-<b>Select All</b>
+<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> <b>Select All</b>
 </div><div id="tripList"></div></div><input id="amount" placeholder="Total Amount" readonly><input type="date" id="paymentDate"><select id="method">
 <option value="Cash">Cash</option>
 <option value="Bank Transfer">Bank Transfer</option>
 <option value="UPI">UPI</option>
 </select><input id="remarks" placeholder="Remarks"><button onclick="savePayment()">Save Payment</button>
-
-</div><div class="card"><h3>Search Payments</h3><select id="searchTransporter"></select>
-
-From <input type="date" id="fromDate">
-To <input type="date" id="toDate">
-
-<button onclick="searchPayments()">Search</button>
-<button onclick="clearSearch()">Clear</button>
-<button onclick="downloadPDF()">Download PDF</button>
 
 </div><div class="card"><h3>Payment History</h3><table><thead>
 <tr>
@@ -105,7 +97,6 @@ To <input type="date" id="toDate">
 let transporters=[]
 let trips=[]
 let payments=[]
-let allPayments=[]
 
 init()
 
@@ -116,30 +107,25 @@ await loadPayments()
 
 }
 
-
 /* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("transporters")
 .select("id,transporter_name")
-.order("transporter_name")
 
-transporters=data || []
+console.log("Transporters:",data)
 
-let dropdown=document.getElementById("transporterSelect")
-let search=document.getElementById("searchTransporter")
+transporters=data||[]
 
-dropdown.innerHTML='<option value="">Select Transporter</option>'
-search.innerHTML='<option value="">All Transporters</option>'
+let html='<option value="">Select Transporter</option>'
 
 transporters.forEach(t=>{
-
-dropdown.innerHTML+=`<option value="${t.id}">${t.transporter_name}</option>`
-search.innerHTML+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
-
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
 })
+
+document.getElementById("transporterSelect").innerHTML=html
 
 }
 
@@ -150,72 +136,45 @@ async function loadTrips(){
 
 let transporterId=document.getElementById("transporterSelect").value
 
+console.log("Selected transporter:",transporterId)
+
 if(!transporterId){
-alert("Select transporter")
+alert("Select transporter first")
 return
 }
 
-let transporter=transporters.find(t=>t.id==transporterId)
-
-/* load ALL trips */
-
-const {data:tripData}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("trips")
 .select("*")
+.eq("transporter_id",transporterId)
 
-/* filter transporter */
+console.log("Trips returned:",data)
 
-let transporterTrips=tripData.filter(t=>
-String(t.transporter_id)===String(transporterId)
-)
-
-/* filter completed */
-
-let completedTrips=transporterTrips.filter(t=>
-(t.status || "").toLowerCase().includes("complete")
-)
-
-/* load payments */
-
-const {data:paymentData}=await supabaseClient
-.from("transporter_payments")
-.select("trip_no")
-
-let paidTrips=[]
-
-paymentData.forEach(p=>{
-
-if(p.trip_no){
-
-p.trip_no.split(",").forEach(tr=>{
-paidTrips.push(tr.trim())
-})
-
+if(error){
+alert("Trip load error")
+console.log(error)
+return
 }
 
-})
-
-/* unpaid */
-
-trips=completedTrips.filter(t=>!paidTrips.includes(t.trip_no))
+trips=data||[]
 
 let html=""
 
 trips.forEach(t=>{
 
-let payable=(t.transporter_rate || 0)*(t.weight_kg/1000)
+let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
 
 html+=`
 <div>
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
+${t.trip_no} | ${t.route||""} | ${t.truck||""} | ₹${payable}
 </div>
 `
 
 })
 
-if(trips.length==0){
-html="<i>No unpaid trips available</i>"
+if(trips.length===0){
+html="<i>No trips found for this transporter</i>"
 }
 
 document.getElementById("tripList").innerHTML=html
@@ -223,7 +182,7 @@ document.getElementById("tripList").innerHTML=html
 }
 
 
-/* CALCULATE TOTAL */
+/* TOTAL */
 
 function calculateTotal(){
 
@@ -235,13 +194,13 @@ checked.forEach(c=>{
 
 let trip=trips.find(t=>t.id==c.value)
 
-let payable=(trip.transporter_rate || 0)*(trip.weight_kg/1000)
+let payable=(trip.transporter_rate||0)*(trip.weight_kg/1000)
 
 total+=payable
 
 })
 
-document.getElementById("amount").value=total.toFixed(2)
+document.getElementById("amount").value=total
 
 }
 
@@ -300,9 +259,8 @@ remarks:remarks
 
 })
 
-alert("Payment Saved")
+alert("Payment saved")
 
-loadTrips()
 loadPayments()
 
 }
@@ -317,17 +275,7 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-payments=data || []
-allPayments=data || []
-
-renderPayments()
-
-}
-
-
-/* RENDER */
-
-function renderPayments(){
+payments=data||[]
 
 let html=""
 
@@ -335,12 +283,12 @@ payments.forEach(p=>{
 
 html+=`
 <tr>
-<td>${p.payment_date || ""}</td>
+<td>${p.payment_date}</td>
 <td>${p.transporter_name}</td>
 <td>${p.trip_no}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method}</td>
-<td>${p.remarks || ""}</td>
+<td>${p.remarks||""}</td>
 <td><button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button></td>
 </tr>
 `
@@ -348,52 +296,6 @@ html+=`
 })
 
 document.getElementById("paymentTable").innerHTML=html
-
-}
-
-
-/* SEARCH */
-
-function searchPayments(){
-
-let transporter=document.getElementById("searchTransporter").value
-let from=document.getElementById("fromDate").value
-let to=document.getElementById("toDate").value
-
-payments=allPayments.filter(p=>{
-
-let matchTransporter=!transporter || p.transporter_name===transporter
-
-let matchDate=true
-
-if(from){
-matchDate=p.payment_date>=from
-}
-
-if(to){
-matchDate=matchDate && p.payment_date<=to
-}
-
-return matchTransporter && matchDate
-
-})
-
-renderPayments()
-
-}
-
-
-/* CLEAR */
-
-function clearSearch(){
-
-document.getElementById("searchTransporter").value=""
-document.getElementById("fromDate").value=""
-document.getElementById("toDate").value=""
-
-payments=allPayments
-
-renderPayments()
 
 }
 
@@ -410,39 +312,6 @@ await supabaseClient
 .eq("id",id)
 
 loadPayments()
-
-}
-
-
-/* PDF */
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-payments.forEach(p=>{
-
-rows.push([
-p.payment_date,
-p.transporter_name,
-p.trip_no,
-p.amount,
-p.payment_method,
-p.remarks
-])
-
-})
-
-doc.autoTable({
-head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
-body:rows
-})
-
-doc.save("transporter_payments.pdf")
 
 }
 

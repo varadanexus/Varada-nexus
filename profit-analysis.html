@@ -66,7 +66,7 @@ font-weight:bold;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 </script>
@@ -106,13 +106,13 @@ applyMenuRBAC()
 <thead>
 
 <tr>
-<th>Trip No</th>
+<th>Trip</th>
 <th>Route</th>
 <th>Client</th>
 <th>Weight MT</th>
-<th>Revenue</th>
-<th>Transporter Cost</th>
 <th>Expenses</th>
+<th>Company Amount</th>
+<th>Transporter Amount</th>
 <th>Profit</th>
 </tr>
 
@@ -138,7 +138,6 @@ async function init(){
 
 await loadTrips()
 await loadExpenses()
-
 renderProfit()
 
 }
@@ -171,7 +170,7 @@ expenses=data || []
 }
 
 
-/* RENDER PROFIT */
+/* CALCULATE PROFIT */
 
 function renderProfit(){
 
@@ -179,17 +178,17 @@ let html=""
 
 trips.forEach(t=>{
 
-let weightMT = (t.weight_kg || 0) / 1000
-
-let revenue = weightMT * (t.company_rate || 0)
-
-let transporterCost = weightMT * (t.transporter_rate || 0)
+let wtMT=(t.weight_kg || 0)/1000
 
 let tripExpenses = expenses
 .filter(e => e.trip_id === t.id)
 .reduce((sum,e)=> sum + Number(e.amount || 0),0)
 
-let profit = revenue - transporterCost - tripExpenses
+let companyAmount = (wtMT*(t.company_rate || 0)) - tripExpenses
+
+let transporterAmount = (wtMT*(t.transporter_rate || 0)) - tripExpenses
+
+let profit = companyAmount - transporterAmount
 
 let profitClass = profit >= 0 ? "profit" : "loss"
 
@@ -200,10 +199,10 @@ html+=`
 <td>${t.trip_no}</td>
 <td>${t.route}</td>
 <td>${t.client_name}</td>
-<td>${weightMT.toFixed(2)}</td>
-<td>₹${revenue.toFixed(2)}</td>
-<td>₹${transporterCost.toFixed(2)}</td>
+<td>${wtMT.toFixed(2)}</td>
 <td>₹${tripExpenses.toFixed(2)}</td>
+<td>₹${companyAmount.toFixed(2)}</td>
+<td>₹${transporterAmount.toFixed(2)}</td>
 <td class="${profitClass}">₹${profit.toFixed(2)}</td>
 
 </tr>

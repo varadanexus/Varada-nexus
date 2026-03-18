@@ -3,7 +3,8 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 );
 
-/* MAINTENANCE CHECK */
+
+/* CHECK MAINTENANCE MODE */
 
 async function checkMaintenance(){
 
@@ -35,11 +36,9 @@ max-width:500px;
 ">
 
 <h2 style="color:#1f3c88">System Maintenance</h2>
-
 <p>${data.message}</p>
 
 </div>
-
 </div>
 `
 
@@ -54,11 +53,17 @@ throw new Error("Maintenance mode active")
 
 async function checkLogin(){
 
+/* DO NOT CHECK LOGIN IF WE ARE ON LOGIN PAGE */
+
+const page = window.location.pathname.split("/").pop()
+
+if(page === "login.html") return
+
 const {data} = await supabaseClient.auth.getSession()
 
 if(!data.session){
 
-window.location.href="login.html"
+window.location.href = "login.html"
 
 return
 

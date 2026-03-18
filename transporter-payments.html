@@ -93,7 +93,6 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <h2>Transporter Payments</h2>
 
-<!-- RECORD PAYMENT -->
 
 <div class="card">
 
@@ -129,8 +128,6 @@ document.getElementById("sidebar-container").innerHTML=data
 </div>
 
 
-<!-- SEARCH -->
-
 <div class="card">
 
 <h3>Search Payments</h3>
@@ -149,8 +146,6 @@ To
 
 </div>
 
-
-<!-- HISTORY -->
 
 <div class="card">
 
@@ -210,8 +205,10 @@ let html='<option value="">Select Transporter</option>'
 let search='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
-html+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
+
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
 search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
+
 })
 
 document.getElementById("transporterSelect").innerHTML=html
@@ -220,31 +217,30 @@ document.getElementById("searchTransporter").innerHTML=search
 }
 
 
-/* LOAD TRIPS */
+/* LOAD TRIPS BY TRANSPORTER ID */
 
 async function loadTripsByTransporter(){
 
-let transporter=document.getElementById("transporterSelect").value
+let transporterId=document.getElementById("transporterSelect").value
 
-if(!transporter) return
-
+if(!transporterId) return
 
 const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_name",transporter)
+.eq("transporter_id",transporterId)
 .eq("status","Completed")
 .order("trip_no",{ascending:false})
 
 
-const {data:payments}=await supabaseClient
+const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
 
 
 let paidTrips=[]
 
-payments.forEach(p=>{
+paymentData.forEach(p=>{
 if(p.trip_no){
 p.trip_no.split(",").forEach(t=>{
 paidTrips.push(t.trim())
@@ -289,9 +285,13 @@ let checked=document.querySelectorAll("#tripList input:checked")
 let total=0
 
 checked.forEach(c=>{
+
 let trip=trips.find(t=>t.id==c.value)
+
 let payable=(trip.transporter_rate||0)*(trip.weight_kg/1000)
+
 total+=payable
+
 })
 
 document.getElementById("amount").value=total
@@ -318,7 +318,9 @@ calculateTotal()
 
 async function savePayment(){
 
-let transporter=document.getElementById("transporterSelect").value
+let transporterId=document.getElementById("transporterSelect").value
+let transporter=transporters.find(t=>t.id==transporterId)
+
 let amount=document.getElementById("amount").value
 let date=document.getElementById("paymentDate").value
 let method=document.getElementById("method").value
@@ -342,7 +344,7 @@ await supabaseClient
 .from("transporter_payments")
 .insert({
 
-transporter_name:transporter,
+transporter_name:transporter.transporter_name,
 trip_no:tripNos.join(", "),
 amount:Number(amount),
 payment_date:date,
@@ -386,18 +388,15 @@ payments.forEach(p=>{
 
 html+=`
 <tr>
-
 <td>${p.payment_date||""}</td>
 <td>${p.transporter_name}</td>
 <td>${p.trip_no}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method}</td>
 <td>${p.remarks||""}</td>
-
 <td>
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
 </td>
-
 </tr>
 `
 

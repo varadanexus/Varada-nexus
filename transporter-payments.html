@@ -1,21 +1,15 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html><head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
-<head>
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
 
-<title>Transporter Payments - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="menu-rbac.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
-<style>
-
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-
-.main{margin-left:220px;padding:30px;}
+.main{
+margin-left:220px;
+padding:30px;
+}
 
 .card{
 background:white;
@@ -41,7 +35,9 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{background:#d9534f;}
+.deleteBtn{
+background:#d9534f;
+}
 
 .trip-list{
 max-height:220px;
@@ -66,78 +62,35 @@ background:#eee;
 text-align:left;
 }
 
-</style>
-</head>
-
-<body>
-
-<script>
+</style></head><body><script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-</script>
+</script><div id="sidebar-container"></div><script>
 
-
-<div id="sidebar-container"></div>
-
-<script>
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script>
 
-
-<div class="main">
-
-<h2>Transporter Payments</h2>
-
-
-<div class="card">
-
-<h3>Record Payment</h3>
-
-<select id="transporterSelect"></select>
+</script><div class="main"><h2>Transporter Payments</h2><div class="card"><h3>Record Payment</h3><select id="transporterSelect"></select>
 
 <button onclick="loadTrips()">Load Trips</button>
 
-<div class="trip-list">
-
-<div>
-<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> <b>Select All</b>
-</div>
-
-<div id="tripList"></div>
-
-</div>
-
-<input id="amount" placeholder="Total Amount" readonly>
-
-<input type="date" id="paymentDate">
-
-<select id="method">
+<div class="trip-list"><div>
+<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> 
+<b>Select All</b>
+</div><div id="tripList"></div></div><input id="amount" placeholder="Total Amount" readonly><input type="date" id="paymentDate"><select id="method">
 <option value="Cash">Cash</option>
 <option value="Bank Transfer">Bank Transfer</option>
 <option value="UPI">UPI</option>
-</select>
+</select><input id="remarks" placeholder="Remarks"><button onclick="savePayment()">Save Payment</button>
 
-<input id="remarks" placeholder="Remarks">
-
-<button onclick="savePayment()">Save Payment</button>
-
-</div>
-
-
-
-<div class="card">
-
-<h3>Search Payments</h3>
-
-<select id="searchTransporter"></select>
+</div><div class="card"><h3>Search Payments</h3><select id="searchTransporter"></select>
 
 From <input type="date" id="fromDate">
 To <input type="date" id="toDate">
@@ -146,18 +99,7 @@ To <input type="date" id="toDate">
 <button onclick="clearSearch()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div>
-
-
-
-<div class="card">
-
-<h3>Payment History</h3>
-
-<table>
-
-<thead>
-<tr>
+</div><div class="card"><h3>Payment History</h3><table><thead><tr>
 <th>Date</th>
 <th>Transporter</th>
 <th>Trips</th>
@@ -165,20 +107,7 @@ To <input type="date" id="toDate">
 <th>Method</th>
 <th>Remarks</th>
 <th>Action</th>
-</tr>
-</thead>
-
-<tbody id="paymentTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-
-<script>
+</tr></thead><tbody id="paymentTable"></tbody></table></div></div><script>
 
 let transporters=[]
 let trips=[]
@@ -235,16 +164,25 @@ return
 
 let transporter=transporters.find(t=>t.id==transporterId)
 
-const {data:tripData}=await supabaseClient
+const {data:tripData,error}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-.eq("status","Completed")
+
+if(error){
+console.log(error)
+alert("Trip load error")
+return
+}
+
+let completedTrips = tripData.filter(t =>
+(t.status || "").toLowerCase().includes("complete")
+)
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
-.eq("transporter_name",transporter.transporter_name)
+.eq("transporter_name", transporter.transporter_name)
 
 let paidTrips=[]
 
@@ -260,7 +198,7 @@ paidTrips.push(t.trim())
 
 })
 
-trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
+trips = completedTrips.filter(t => !paidTrips.includes(t.trip_no))
 
 let html=""
 
@@ -334,7 +272,6 @@ calculateTotal()
 async function savePayment(){
 
 let transporterId=document.getElementById("transporterSelect").value
-
 let transporter=transporters.find(t=>t.id==transporterId)
 
 let amount=document.getElementById("amount").value
@@ -352,10 +289,8 @@ return
 let tripNos=[]
 
 checked.forEach(c=>{
-
 let trip=trips.find(t=>t.id==c.value)
 tripNos.push(trip.trip_no)
-
 })
 
 await supabaseClient
@@ -416,7 +351,9 @@ html+=`
 <td>${p.remarks || ""}</td>
 
 <td>
+
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
+
 </td>
 
 </tr>
@@ -516,15 +453,16 @@ p.remarks
 })
 
 doc.autoTable({
+
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
+
 body:rows
+
 })
 
 doc.save("transporter_payments.pdf")
 
 }
 
-</script>
-
-</body>
+</script></body>
 </html>

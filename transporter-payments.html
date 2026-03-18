@@ -107,8 +107,6 @@ document.getElementById("sidebar-container").innerHTML=data
 <h2>Transporter Payments</h2>
 
 
-<!-- RECORD PAYMENT -->
-
 <div class="card">
 
 <h3>Record Payment</h3>
@@ -147,8 +145,6 @@ document.getElementById("sidebar-container").innerHTML=data
 </div>
 
 
-<!-- SEARCH -->
-
 <div class="card">
 
 <h3>Search Payments</h3>
@@ -167,8 +163,6 @@ To
 
 </div>
 
-
-<!-- PAYMENT HISTORY -->
 
 <div class="card">
 
@@ -205,39 +199,18 @@ let transporters=[]
 let trips=[]
 let payments=[]
 let allPayments=[]
-let loggedTransporter=null
 
 init()
 
 async function init(){
 
 await loadTransporters()
-await detectTransporterLogin()
 await loadPayments()
 
 }
 
 
-/* Detect transporter login */
-
-function detectTransporterLogin(){
-
-let role=localStorage.getItem("role")
-let transporterId=localStorage.getItem("transporter_id")
-
-if(role==="transporter" && transporterId){
-
-loggedTransporter=transporterId
-
-document.getElementById("transporterSelect").value=transporterId
-document.getElementById("transporterSelect").disabled=true
-
-}
-
-}
-
-
-/* Load transporters */
+/* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
@@ -263,28 +236,44 @@ document.getElementById("searchTransporter").innerHTML=search
 }
 
 
-/* Load trips */
+/* LOAD TRIPS */
 
 async function loadTrips(){
 
-let transporterId=loggedTransporter || document.getElementById("transporterSelect").value
+let transporterId=document.getElementById("transporterSelect").value
 
 if(!transporterId){
+
 alert("Select transporter")
 return
+
 }
 
-const {data:tripData}=await supabaseClient
+/* Fetch trips */
+
+const {data:tripData,error}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
+.in("status",["Loaded","Completed"])
 .order("trip_no",{ascending:false})
 
+console.log("Trips returned:",tripData)
+
+if(error){
+
+alert("Error loading trips")
+console.log(error)
+return
+
+}
+
+
+/* Get already paid trips */
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
-
 
 let paidTrips=[]
 
@@ -316,7 +305,7 @@ html+=`
 
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
 
-${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable.toFixed(2)}
+${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
 
 </div>
 
@@ -324,10 +313,9 @@ ${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable.toFixed(2)}
 
 })
 
-
 if(trips.length==0){
 
-html="<i>No unpaid trips</i>"
+html="<i>No unpaid trips available</i>"
 
 }
 
@@ -336,7 +324,7 @@ document.getElementById("tripList").innerHTML=html
 }
 
 
-/* Calculate total */
+/* CALCULATE TOTAL */
 
 function calculateTotal(){
 
@@ -359,7 +347,7 @@ document.getElementById("amount").value=total.toFixed(2)
 }
 
 
-/* Select all */
+/* SELECT ALL */
 
 function toggleAllTrips(){
 
@@ -374,11 +362,11 @@ calculateTotal()
 }
 
 
-/* Save payment */
+/* SAVE PAYMENT */
 
 async function savePayment(){
 
-let transporterId=loggedTransporter || document.getElementById("transporterSelect").value
+let transporterId=document.getElementById("transporterSelect").value
 
 let transporter=transporters.find(t=>t.id==transporterId)
 
@@ -420,7 +408,6 @@ remarks:remarks
 
 })
 
-
 alert("Payment Saved")
 
 loadTrips()
@@ -429,7 +416,7 @@ loadPayments()
 }
 
 
-/* Load payments */
+/* LOAD PAYMENTS */
 
 async function loadPayments(){
 
@@ -439,23 +426,14 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 payments=data || []
-
-if(loggedTransporter){
-
-let transporter=transporters.find(t=>t.id==loggedTransporter)
-
-payments=payments.filter(p=>p.transporter_name===transporter.transporter_name)
-
-}
-
-allPayments=payments
+allPayments=data || []
 
 renderPayments()
 
 }
 
 
-/* Render payments */
+/* RENDER */
 
 function renderPayments(){
 
@@ -475,7 +453,9 @@ html+=`
 <td>${p.remarks || ""}</td>
 
 <td>
+
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
+
 </td>
 
 </tr>
@@ -489,7 +469,7 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
-/* Search */
+/* SEARCH */
 
 function searchPayments(){
 
@@ -520,7 +500,7 @@ renderPayments()
 }
 
 
-/* Clear search */
+/* CLEAR */
 
 function clearSearch(){
 
@@ -535,7 +515,7 @@ renderPayments()
 }
 
 
-/* Delete payment */
+/* DELETE */
 
 async function deletePayment(id){
 
@@ -551,11 +531,12 @@ loadPayments()
 }
 
 
-/* Download PDF */
+/* PDF */
 
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
+
 let doc=new jsPDF()
 
 let rows=[]
@@ -576,6 +557,7 @@ p.remarks
 doc.autoTable({
 
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
+
 body:rows
 
 })

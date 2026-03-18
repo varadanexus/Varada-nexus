@@ -279,6 +279,7 @@ String(t.transporter_id).trim() === transporterId
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
+.eq("transporter_name", transporters.find(t => t.id == transporterId)?.transporterforEac
 
 let paidTrips=[]
 
@@ -425,17 +426,73 @@ loadPayments()
 
 /* LOAD PAYMENTS */
 
-async function loadPayments(){
+async function loadTrips(){
 
-const {data}=await supabaseClient
-.from("transporter_payments")
+let transporterId=document.getElementById("transporterSelect").value
+
+if(!transporterId){
+alert("Select transporter")
+return
+}
+
+let transporter=transporters.find(t=>t.id==transporterId)
+
+const {data:tripData,error}=await supabaseClient
+.from("trips")
 .select("*")
-.order("created_at",{ascending:false})
+.eq("transporter_id",transporterId)
+.order("trip_no",{ascending:false})
 
-payments=data || []
-allPayments=data || []
+if(error){
+console.log(error)
+alert("Error loading trips")
+return
+}
 
-renderPayments()
+/* fetch payments ONLY for this transporter */
+
+const {data:paymentData}=await supabaseClient
+.from("transporter_payments")
+.select("trip_no")
+.eq("transporter_name", transporter.transporter_name)
+
+let paidTrips=[]
+
+paymentData.forEach(p=>{
+
+if(p.trip_no){
+
+p.trip_no.split(",").forEach(t=>{
+paidTrips.push(t.trim())
+})
+
+}
+
+})
+
+/* filter unpaid trips */
+
+trips = tripData.filter(t => !paidTrips.includes(t.trip_no))
+
+let html=""
+
+trips.forEach(t=>{
+
+let payable=(t.transporter_rate || 0)*(t.weight_kg/1000)
+
+html+=`
+<div>
+<input type="checkbox" value="${t.id}" onchange="calculateTotal()">
+${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
+</div>
+`
+})
+
+if(trips.length==0){
+html="<i>No unpaid trips available</i>"
+}
+
+document.getElementById("tripList").innerHTML=html
 
 }
 

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Profit Analysis - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="session-check.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:6px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#eee;
+}
+
+.profit{
+color:green;
+font-weight:bold;
+}
+
+.loss{
+color:red;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>Profit Analysis</h2>
+
+<div class="card">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Trip No</th>
+<th>Route</th>
+<th>Client</th>
+<th>Weight MT</th>
+<th>Revenue</th>
+<th>Transporter Cost</th>
+<th>Expenses</th>
+<th>Profit</th>
+</tr>
+
+</thead>
+
+<tbody id="profitTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<script>
+
+let trips=[]
+let expenses=[]
+
+init()
+
+async function init(){
+
+await loadTrips()
+await loadExpenses()
+
+renderProfit()
+
+}
+
+
+/* LOAD TRIPS */
+
+async function loadTrips(){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+
+trips=data || []
+
+}
+
+
+/* LOAD EXPENSES */
+
+async function loadExpenses(){
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("*")
+
+expenses=data || []
+
+}
+
+
+/* RENDER PROFIT */
+
+function renderProfit(){
+
+let html=""
+
+trips.forEach(t=>{
+
+let weightMT = (t.weight_kg || 0) / 1000
+
+let revenue = weightMT * (t.company_rate || 0)
+
+let transporterCost = weightMT * (t.transporter_rate || 0)
+
+let tripExpenses = expenses
+.filter(e => e.trip_id === t.id)
+.reduce((sum,e)=> sum + Number(e.amount || 0),0)
+
+let profit = revenue - transporterCost - tripExpenses
+
+let profitClass = profit >= 0 ? "profit" : "loss"
+
+html+=`
+
+<tr>
+
+<td>${t.trip_no}</td>
+<td>${t.route}</td>
+<td>${t.client_name}</td>
+<td>${weightMT.toFixed(2)}</td>
+<td>₹${revenue.toFixed(2)}</td>
+<td>₹${transporterCost.toFixed(2)}</td>
+<td>₹${tripExpenses.toFixed(2)}</td>
+<td class="${profitClass}">₹${profit.toFixed(2)}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("profitTable").innerHTML=html
+
+}
+
+</script>
+
+</body>
+</html>

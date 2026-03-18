@@ -7,44 +7,30 @@
 
 <div class="user-box">
 <div id="userName">Loading...</div>
-<div id="userRole">...</div>
+<div id="userRole"></div>
 </div>
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
-
 <a href="trips.html" data-page="trips.html">Trips</a>
-
 <a href="expenses.html" data-page="expenses.html">Expenses</a>
-
 <a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
-
 <a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
-
 <a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
-
 <a href="transporter-payments.html" data-page="transporter-payments.html">Transporter Payments</a>
-
 <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
-
 <a href="master-data.html" data-page="master-data.html">Master Data</a>
-
 <a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
-
 <a href="admin-users.html" data-page="admin-users.html">Users</a>
-
 <a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
-
 <a href="admin-maintenance.html" data-page="admin-maintenance.html">System Maintenance</a>
-
 <a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
-
 <a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
-
 <a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
 
 <a href="#" onclick="logout();return false;">Logout</a>
 
 </div>
+
 
 
 <style>
@@ -74,7 +60,6 @@ margin-bottom:10px;
 
 .logo{
 height:28px;
-width:auto;
 }
 
 .user-box{
@@ -115,6 +100,7 @@ border-left:4px solid white;
 </style>
 
 
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -131,7 +117,8 @@ window.supabaseClient=supabase.createClient(
 }
 
 
-/* HIGHLIGHT ACTIVE PAGE */
+
+/* ACTIVE PAGE */
 
 function highlightActivePage(){
 
@@ -148,25 +135,36 @@ link.classList.add("active")
 }
 
 
-/* LOAD USER NAME + ROLE */
+
+/* LOAD USER INFO */
 
 async function loadUserInfo(){
+
+try{
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
-const authId=session.user.id
+const email=session.user.email
 
-/* GET USER */
+/* EXTRACT NAME BEFORE @ */
+
+const name=email.split("@")[0]
+
+document.getElementById("userName").innerText=name
+
+
+/* FIND ERP USER */
 
 const {data:user}=await supabaseClient
 .from("users")
-.select("id,name")
-.eq("auth_id",authId)
+.select("id")
+.eq("auth_id",session.user.id)
 .single()
 
 if(!user) return
+
 
 /* GET ROLE */
 
@@ -178,16 +176,23 @@ const {data:userRole}=await supabaseClient
 
 if(!userRole) return
 
+
 const {data:role}=await supabaseClient
 .from("roles")
 .select("role_name")
 .eq("id",userRole.role_id)
 .single()
 
-document.getElementById("userName").innerText=user.name
 document.getElementById("userRole").innerText=role.role_name
 
+}catch(err){
+
+console.log("User info error:",err)
+
 }
+
+}
+
 
 
 /* SIDEBAR RBAC */
@@ -210,6 +215,7 @@ const {data:user}=await supabaseClient
 
 if(!user) return
 
+
 const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
@@ -218,7 +224,9 @@ const {data:userRole}=await supabaseClient
 
 if(!userRole) return
 
+
 let roleId=userRole.role_id
+
 
 const {data:permissions}=await supabaseClient
 .from("role_permissions")
@@ -228,7 +236,9 @@ const {data:permissions}=await supabaseClient
 
 if(!permissions) return
 
+
 const allowedPages=permissions.map(p=>p.page_name)
+
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
@@ -249,6 +259,7 @@ console.log("Sidebar RBAC error:",err)
 }
 
 
+
 /* LOGOUT */
 
 async function logout(){
@@ -265,6 +276,7 @@ sessionStorage.clear()
 window.location.href="login.html"
 
 }
+
 
 
 /* INITIALIZE */

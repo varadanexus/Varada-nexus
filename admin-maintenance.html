@@ -78,6 +78,20 @@ const supabaseClient = supabase.createClient(
 
 </script>
 
+/* GLOBAL LOGOUT */
+
+async function logout(){
+
+await supabaseClient.auth.signOut()
+
+localStorage.clear()
+
+window.location.href="login.html"
+
+}
+
+</script>
+ 
 <!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>

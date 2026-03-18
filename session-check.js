@@ -3,6 +3,46 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+/* GLOBAL SYSTEM STATUS BANNER */
+
+function showSystemBanner(mode,message){
+
+const existing=document.getElementById("systemBanner")
+if(existing) existing.remove()
+
+const banner=document.createElement("div")
+
+banner.id="systemBanner"
+
+banner.style.position="fixed"
+banner.style.top="0"
+banner.style.left="0"
+banner.style.width="100%"
+banner.style.padding="8px"
+banner.style.textAlign="center"
+banner.style.fontWeight="bold"
+banner.style.zIndex="9999"
+banner.style.fontFamily="Arial"
+
+if(mode){
+
+banner.style.background="#d9534f"
+banner.style.color="white"
+banner.innerText="⚠ SYSTEM MAINTENANCE MODE ACTIVE"
+
+}else{
+
+banner.style.background="#28a745"
+banner.style.color="white"
+banner.innerText="✔ SYSTEM RUNNING NORMALLY"
+
+}
+
+document.body.appendChild(banner)
+
+}
+
+
 /* CHECK LOGIN */
 
 async function checkLogin(){
@@ -73,6 +113,10 @@ const {data:settings}=await supabaseClient
 .select("*")
 .eq("id",1)
 .single()
+
+/* SHOW SYSTEM STATUS BANNER */
+
+showSystemBanner(settings.maintenance_mode,settings.message)
 
 /* VERSION CHECK */
 
@@ -169,7 +213,6 @@ await checkMaintenance()
 runChecks()
 
 
-
 /* BROWSER BACK BUTTON PROTECTION */
 
 window.addEventListener("pageshow", function (event) {
@@ -180,48 +223,45 @@ window.location.reload();
 
 }
 
-});
+})
 
 
 /* DISABLE CACHE */
 
-window.history.pushState(null, null, window.location.href);
+window.history.pushState(null, null, window.location.href)
 
 window.onpopstate = function () {
 
-window.history.go(1);
+window.history.go(1)
 
-};
+}
 
 
 /* ACTIVITY TIMEOUT (15 MINUTES) */
 
-let inactivityTimer;
+let inactivityTimer
 
 async function autoLogout(){
 
-await supabaseClient.auth.signOut();
+await supabaseClient.auth.signOut()
 
-alert("Session expired due to inactivity.");
+alert("Session expired due to inactivity.")
 
-window.location.href = "login.html";
+window.location.href = "login.html"
 
 }
 
 function resetInactivityTimer(){
 
-clearTimeout(inactivityTimer);
+clearTimeout(inactivityTimer)
 
-inactivityTimer = setTimeout(autoLogout, 15 * 60 * 1000);
+inactivityTimer = setTimeout(autoLogout, 15 * 60 * 1000)
 
 }
 
-window.onload = resetInactivityTimer;
+window.onload = resetInactivityTimer
 
-document.onmousemove = resetInactivityTimer;
-
-document.onkeypress = resetInactivityTimer;
-
-document.onclick = resetInactivityTimer;
-
-document.onscroll = resetInactivityTimer;
+document.onmousemove = resetInactivityTimer
+document.onkeypress = resetInactivityTimer
+document.onclick = resetInactivityTimer
+document.onscroll = resetInactivityTimer

@@ -3,42 +3,43 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* GLOBAL SYSTEM STATUS BANNER */
+/* SYSTEM STATUS BADGE (ADMIN ONLY) */
 
-function showSystemBanner(mode,message){
+function showSystemBadge(mode){
 
-const existing=document.getElementById("systemBanner")
+const existing=document.getElementById("systemStatusBadge")
 if(existing) existing.remove()
 
-const banner=document.createElement("div")
+const badge=document.createElement("div")
 
-banner.id="systemBanner"
+badge.id="systemStatusBadge"
 
-banner.style.position="fixed"
-banner.style.top="0"
-banner.style.left="0"
-banner.style.width="100%"
-banner.style.padding="8px"
-banner.style.textAlign="center"
-banner.style.fontWeight="bold"
-banner.style.zIndex="9999"
-banner.style.fontFamily="Arial"
+badge.style.position="fixed"
+badge.style.top="10px"
+badge.style.right="20px"
+badge.style.padding="6px 12px"
+badge.style.borderRadius="6px"
+badge.style.fontSize="13px"
+badge.style.fontWeight="bold"
+badge.style.fontFamily="Arial"
+badge.style.zIndex="2000"
+badge.style.boxShadow="0 2px 6px rgba(0,0,0,0.2)"
 
 if(mode){
 
-banner.style.background="#d9534f"
-banner.style.color="white"
-banner.innerText="⚠ SYSTEM MAINTENANCE MODE ACTIVE"
+badge.style.background="#d9534f"
+badge.style.color="white"
+badge.innerText="🔴 MAINTENANCE MODE"
 
 }else{
 
-banner.style.background="#28a745"
-banner.style.color="white"
-banner.innerText="✔ SYSTEM RUNNING NORMALLY"
+badge.style.background="#28a745"
+badge.style.color="white"
+badge.innerText="🟢 SYSTEM ONLINE"
 
 }
 
-document.body.appendChild(banner)
+document.body.appendChild(badge)
 
 }
 
@@ -114,10 +115,6 @@ const {data:settings}=await supabaseClient
 .eq("id",1)
 .single()
 
-/* SHOW SYSTEM STATUS BANNER */
-
-showSystemBanner(settings.maintenance_mode,settings.message)
-
 /* VERSION CHECK */
 
 const systemVersion = settings.maintenance_version
@@ -140,10 +137,6 @@ return
 
 }
 
-if(!settings?.maintenance_mode) return
-
-/* GET CURRENT USER */
-
 const {data:session}=await supabaseClient.auth.getSession()
 
 if(!session?.session) return
@@ -158,11 +151,17 @@ const {data:user}=await supabaseClient
 .eq("auth_id",authId)
 .single()
 
-/* ADMIN BYPASS */
+/* SHOW BADGE ONLY FOR ADMIN */
 
-if(user?.is_admin) return
+if(user?.is_admin){
 
-/* BLOCK NON ADMINS */
+showSystemBadge(settings.maintenance_mode)
+
+}
+
+/* BLOCK NON ADMINS DURING MAINTENANCE */
+
+if(settings.maintenance_mode && !user?.is_admin){
 
 document.body.innerHTML=`
 
@@ -194,6 +193,8 @@ max-width:500px;
 `
 
 throw new Error("Maintenance active")
+
+}
 
 }
 

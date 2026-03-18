@@ -144,6 +144,7 @@ applyMenuRBAC()
 <th>Client</th>
 <th>Amount</th>
 <th>Method</th>
+<th>Remarks</th>
 </tr>
 
 </thead>
@@ -172,7 +173,7 @@ await loadPayments()
 }
 
 
-/* LOAD INVOICES (Pending + Partially Paid) */
+/* LOAD INVOICES */
 
 async function loadInvoices(){
 
@@ -200,7 +201,7 @@ document.getElementById("invoiceSelect").innerHTML=html
 }
 
 
-/* SAVE PAYMENT WITH PARTIAL SUPPORT */
+/* SAVE PAYMENT */
 
 async function savePayment(){
 
@@ -217,8 +218,8 @@ return
 
 let invoice=invoices.find(x=>x.id==invoiceId)
 
-let newPaid=Number(invoice.amount_paid || 0) + amount
-let balance=Number(invoice.invoice_amount) - newPaid
+let newPaid=(invoice.amount_paid || 0) + amount
+let balance=invoice.invoice_amount - newPaid
 
 let status="Pending"
 
@@ -299,6 +300,8 @@ html+=`
 <td>₹${p.amount}</td>
 
 <td>${p.payment_method}</td>
+
+<td>${p.remarks || ""}</td>
 
 </tr>
 `

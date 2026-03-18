@@ -97,7 +97,53 @@ window.supabaseClient = supabase.createClient(
 
 }
 
+/* GLOBAL MAINTENANCE CHECK */
 
+async function checkMaintenance(){
+
+const {data} = await supabaseClient
+.from("system_settings")
+.select("*")
+.eq("id",1)
+.single()
+
+if(data && data.maintenance_mode === true){
+
+document.body.innerHTML = `
+<div style="
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:Arial;
+background:#f4f6f9;
+">
+
+<div style="
+background:white;
+padding:40px;
+border-radius:8px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+text-align:center;
+max-width:500px;
+">
+
+<h2 style="color:#1f3c88">System Maintenance</h2>
+
+<p>${data.message}</p>
+
+</div>
+
+</div>
+`
+
+throw new Error("Maintenance mode active")
+
+}
+
+}
+
+checkMaintenance()
 
 /* ACTIVE PAGE HIGHLIGHT */
 

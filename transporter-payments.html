@@ -1,4 +1,6 @@
-<!DOCTYPE html><html><head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html><html>
+<head>
+<title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -156,6 +158,7 @@ document.getElementById("searchTransporter").innerHTML=search
 }
 
 
+
 /* LOAD TRIPS */
 
 async function loadTrips(){
@@ -166,6 +169,7 @@ const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
+.order("trip_no",{ascending:false})   // NEW: latest trips first
 
 trips=data||[]
 
@@ -194,6 +198,7 @@ document.getElementById("tripList").innerHTML=html
 }
 
 
+
 /* TOTAL */
 
 function calculateTotal(){
@@ -217,6 +222,7 @@ document.getElementById("amount").value=total
 }
 
 
+
 /* SELECT ALL */
 
 function toggleAllTrips(){
@@ -230,6 +236,7 @@ c.checked=checked
 calculateTotal()
 
 }
+
 
 
 /* SAVE PAYMENT */
@@ -277,6 +284,7 @@ loadPayments()
 }
 
 
+
 /* LOAD PAYMENTS */
 
 async function loadPayments(){
@@ -292,6 +300,7 @@ allPayments=data||[]
 renderPayments()
 
 }
+
 
 
 /* RENDER */
@@ -333,6 +342,7 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
+
 /* SEARCH */
 
 function searchPayments(){
@@ -360,6 +370,7 @@ renderPayments()
 }
 
 
+
 /* CLEAR */
 
 function clearSearch(){
@@ -368,6 +379,7 @@ payments=allPayments
 renderPayments()
 
 }
+
 
 
 /* PAGINATION */
@@ -388,6 +400,7 @@ renderPayments()
 }
 
 
+
 /* DELETE */
 
 async function deletePayment(id){
@@ -400,6 +413,7 @@ await supabaseClient
 loadPayments()
 
 }
+
 
 
 /* PDF */

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<title>System Maintenance Control</title>
+
+<script src="menu-rbac.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:8px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+max-width:600px;
+}
+
+h2{
+color:#1f3c88;
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+margin-top:15px;
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+.toggle{
+font-size:16px;
+margin-top:15px;
+}
+
+.status{
+margin-top:10px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
+
+<div class="main">
+
+<h2>System Maintenance Control</h2>
+
+<div class="card">
+
+<label class="toggle">
+
+<input type="checkbox" id="maintenanceToggle">
+
+ Enable Maintenance Mode
+
+</label>
+
+<div class="status" id="statusText"></div>
+
+<br>
+
+<label>Maintenance Message</label>
+
+<textarea id="message" rows="4"></textarea>
+
+<br>
+
+<button onclick="saveMaintenance()">Save Settings</button>
+
+<br><br>
+
+<button onclick="forceLogout()">Force Logout All Users</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+loadSettings()
+
+async function loadSettings(){
+
+const {data}=await supabaseClient
+.from("system_settings")
+.select("*")
+.eq("id",1)
+.single()
+
+if(!data) return
+
+document.getElementById("maintenanceToggle").checked = data.maintenance_mode
+
+document.getElementById("message").value = data.message || ""
+
+updateStatus(data.maintenance_mode)
+
+}
+
+function updateStatus(mode){
+
+document.getElementById("statusText").innerText = mode
+? "Maintenance Mode ACTIVE"
+: "System Running Normally"
+
+}
+
+document.getElementById("maintenanceToggle").addEventListener("change", function(){
+
+updateStatus(this.checked)
+
+})
+
+
+async function saveMaintenance(){
+
+let mode=document.getElementById("maintenanceToggle").checked
+
+let message=document.getElementById("message").value
+
+await supabaseClient
+.from("system_settings")
+.update({
+
+maintenance_mode:mode,
+message:message
+
+})
+.eq("id",1)
+
+alert("Maintenance Settings Updated")
+
+}
+
+
+async function forceLogout(){
+
+if(!confirm("This will log out ALL users. Continue?")) return
+
+const {data}=await supabaseClient
+.from("system_settings")
+.select("maintenance_version")
+.eq("id",1)
+.single()
+
+let newVersion = Number(data.maintenance_version) + 1
+
+await supabaseClient
+.from("system_settings")
+.update({
+maintenance_version:newVersion
+})
+.eq("id",1)
+
+alert("All users logged out successfully")
+
+}
+
+</script>
+
+</body>
+
+</html>

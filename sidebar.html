@@ -156,21 +156,27 @@ const {data:userRole}=await supabaseClient
 
 if(!userRole) return
 
-const {data:role}=await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
+let roleId=userRole.role_id
 
-const roleName=role.role_name.toLowerCase()
+/* GET ALLOWED PAGES */
 
-/* FILTER MENU */
+const {data:allowed}=await supabaseClient
+.from("role_permissions")
+.select("page_name")
+.eq("role_id",roleId)
+.eq("can_access",true)
 
-document.querySelectorAll(".sidebar a[data-role]").forEach(link=>{
+if(!allowed) return
 
-const allowedRoles=link.dataset.role.toLowerCase().split(",")
+const allowedPages=allowed.map(x=>x.page_name)
 
-if(!allowedRoles.includes(roleName)){
+/* HIDE MENU ITEMS */
+
+document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
+
+let page=link.getAttribute("data-page")
+
+if(!allowedPages.includes(page)){
 link.style.display="none"
 }
 

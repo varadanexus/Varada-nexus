@@ -1,8 +1,4 @@
-<div class="sidebar">
-
-<h2>Varada Nexus</h2>
-
-<a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
+<div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
 
 <a href="trips.html" data-page="trips.html">Trips</a>
 
@@ -13,11 +9,11 @@
 <a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
 
 <a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
-  
+
 <a href="transporter-payments.html" data-page="transporter-payments.html">Transporter Payments</a>
 
 <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
-  
+
 <a href="master-data.html" data-page="master-data.html">Master Data</a>
 
 <a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
@@ -31,13 +27,10 @@
 <a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
 
 <a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
-  
-<a href="#" data-page="logout" onclick="logout()">Logout</a>
 
-</div>
+<a href="#" onclick="logout()">Logout</a>
 
-
-<style>
+</div><style>
 
 .sidebar{
 position:fixed;
@@ -73,32 +66,41 @@ font-weight:bold;
 border-left:4px solid white;
 }
 
-</style>
+</style><script>
 
+/* ACTIVE MENU */
 
-<script>
+const currentPage = window.location.pathname.split("/").pop()
 
-/* highlight active menu */
+document.querySelectorAll(".sidebar a").forEach(link=>{
 
-const links=document.querySelectorAll(".sidebar a")
+const page = link.getAttribute("data-page")
 
-links.forEach(link=>{
-if(link.href===window.location.href){
+if(page === currentPage){
 link.classList.add("active")
 }
+
 })
 
-/* run RBAC AFTER sidebar loads */
+
+
+/* RUN RBAC AFTER SIDEBAR LOAD */
 
 setTimeout(()=>{
+
 if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
+
 },300)
 
-/* logout */
+
+
+/* LOGOUT */
 
 async function logout(){
+
+try{
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -107,7 +109,13 @@ const supabaseClient = supabase.createClient(
 
 await supabaseClient.auth.signOut()
 
-window.location.href="login.html"
+window.location.href = "login.html"
+
+}catch(e){
+
+alert("Logout failed")
+
+}
 
 }
 

@@ -1,11 +1,8 @@
 <div class="sidebar" id="sidebar">
 
 <div class="sidebar-header">
-
-<span class="logo-text">Varada Nexus</span>
-
+<h2 id="logoText">Varada Nexus</h2>
 <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
 </div>
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
@@ -29,7 +26,6 @@
 
 </div>
 
-
 <style>
 
 .sidebar{
@@ -40,8 +36,8 @@ width:220px;
 height:100vh;
 background:#1f3c88;
 color:white;
+transition:width 0.3s;
 overflow-y:auto;
-transition:0.3s;
 }
 
 .sidebar.collapsed{
@@ -50,26 +46,21 @@ width:70px;
 
 .sidebar-header{
 display:flex;
-justify-content:space-between;
 align-items:center;
+justify-content:space-between;
 padding:15px;
-border-bottom:1px solid rgba(255,255,255,0.2);
 }
 
-.logo-text{
+.sidebar h2{
+margin:0;
 font-size:18px;
-font-weight:bold;
-}
-
-.sidebar.collapsed .logo-text{
-display:none;
 }
 
 .toggle-btn{
 background:none;
 border:none;
 color:white;
-font-size:20px;
+font-size:18px;
 cursor:pointer;
 }
 
@@ -79,7 +70,7 @@ color:white;
 padding:12px 20px;
 text-decoration:none;
 font-size:14px;
-white-space:nowrap;
+transition:background 0.2s;
 }
 
 .sidebar a:hover{
@@ -92,9 +83,15 @@ font-weight:bold;
 border-left:4px solid white;
 }
 
+/* collapsed mode */
+
+.sidebar.collapsed h2{
+display:none;
+}
+
 .sidebar.collapsed a{
 text-align:center;
-padding:12px 5px;
+padding:12px 10px;
 font-size:0;
 }
 
@@ -103,41 +100,85 @@ content:"•";
 font-size:18px;
 }
 
+/* main content shift */
+
+.main{
+margin-left:220px;
+transition:margin-left 0.3s;
+}
+
+.sidebar.collapsed ~ .main{
+margin-left:70px;
+}
+
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-/* ENSURE SUPABASE LIBRARY EXISTS */
+/* GLOBAL SUPABASE CLIENT */
 
-function loadSupabase(callback){
+if(typeof supabaseClient === "undefined"){
 
-if(typeof supabase !== "undefined"){
-callback()
-return
-}
-
-let script=document.createElement("script")
-script.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
-script.onload=callback
-document.head.appendChild(script)
-
-}
-
-/* LOGOUT */
-
-function logout(){
-
-loadSupabase(async function(){
-
-try{
-
-const client=supabase.createClient(
+window.supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-await client.auth.signOut()
+}
+
+/* SIDEBAR TOGGLE */
+
+function toggleSidebar(){
+
+const sidebar=document.getElementById("sidebar")
+
+sidebar.classList.toggle("collapsed")
+
+const main=document.querySelector(".main")
+
+if(main){
+
+if(sidebar.classList.contains("collapsed")){
+main.style.marginLeft="70px"
+}else{
+main.style.marginLeft="220px"
+}
+
+}
+
+}
+
+/* ACTIVE MENU */
+
+setTimeout(()=>{
+
+const currentPage=window.location.pathname.split("/").pop()
+
+document.querySelectorAll(".sidebar a").forEach(link=>{
+
+if(link.getAttribute("data-page")===currentPage){
+link.classList.add("active")
+}
+
+})
+
+/* APPLY RBAC */
+
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+
+},100)
+
+/* LOGOUT */
+
+async function logout(){
+
+try{
+
+await supabaseClient.auth.signOut()
 
 }catch(e){
 
@@ -145,16 +186,10 @@ console.log("Logout error:",e)
 
 }
 
-/* CLEAR STORAGE */
-
 localStorage.clear()
 sessionStorage.clear()
 
-/* REDIRECT */
-
 window.location.replace("login.html")
-
-})
 
 }
 

@@ -5,7 +5,7 @@
 
 <title>Transporter Payments - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="menu-rbac.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -13,16 +13,9 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+.main{margin-left:220px;padding:30px;}
 
 .card{
 background:white;
@@ -48,9 +41,7 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{
-background:#d9534f;
-}
+.deleteBtn{background:#d9534f;}
 
 .trip-list{
 max-height:220px;
@@ -76,7 +67,6 @@ text-align:left;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -118,8 +108,7 @@ document.getElementById("sidebar-container").innerHTML=data
 <div class="trip-list">
 
 <div>
-<input type="checkbox" id="selectAll" onclick="toggleAllTrips()">
-<b>Select All</b>
+<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> <b>Select All</b>
 </div>
 
 <div id="tripList"></div>
@@ -131,11 +120,9 @@ document.getElementById("sidebar-container").innerHTML=data
 <input type="date" id="paymentDate">
 
 <select id="method">
-
 <option value="Cash">Cash</option>
 <option value="Bank Transfer">Bank Transfer</option>
 <option value="UPI">UPI</option>
-
 </select>
 
 <input id="remarks" placeholder="Remarks">
@@ -145,23 +132,22 @@ document.getElementById("sidebar-container").innerHTML=data
 </div>
 
 
+
 <div class="card">
 
 <h3>Search Payments</h3>
 
 <select id="searchTransporter"></select>
 
-From
-<input type="date" id="fromDate">
-
-To
-<input type="date" id="toDate">
+From <input type="date" id="fromDate">
+To <input type="date" id="toDate">
 
 <button onclick="searchPayments()">Search</button>
 <button onclick="clearSearch()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
 </div>
+
 
 
 <div class="card">
@@ -171,7 +157,6 @@ To
 <table>
 
 <thead>
-
 <tr>
 <th>Date</th>
 <th>Transporter</th>
@@ -181,7 +166,6 @@ To
 <th>Remarks</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody id="paymentTable"></tbody>
@@ -191,6 +175,7 @@ To
 </div>
 
 </div>
+
 
 
 <script>
@@ -216,22 +201,23 @@ async function loadTransporters(){
 
 const {data}=await supabaseClient
 .from("transporters")
-.select("*")
+.select("id,transporter_name")
+.order("transporter_name")
 
 transporters=data || []
 
-let html='<option value="">Select Transporter</option>'
-let search='<option value="">All Transporters</option>'
+let dropdown=document.getElementById("transporterSelect")
+let search=document.getElementById("searchTransporter")
+
+dropdown.innerHTML='<option value="">Select Transporter</option>'
+search.innerHTML='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
 
-html+=`<option value="${t.id}">${t.transporter_name}</option>`
-search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
+dropdown.innerHTML+=`<option value="${t.id}">${t.transporter_name}</option>`
+search.innerHTML+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
 
 })
-
-document.getElementById("transporterSelect").innerHTML=html
-document.getElementById("searchTransporter").innerHTML=search
 
 }
 
@@ -243,43 +229,22 @@ async function loadTrips(){
 let transporterId=document.getElementById("transporterSelect").value
 
 if(!transporterId){
-
 alert("Select transporter")
 return
-
 }
 
-transporterId = transporterId.trim()
+let transporter=transporters.find(t=>t.id==transporterId)
 
-/* Fetch trips */
-
-const {data:tripData,error}=await supabaseClient
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
-.order("trip_no",{ascending:false})
-
-if(error){
-
-alert("Error loading trips")
-console.log(error)
-return
-
-}
-
-
-/* Filter transporter trips */
-
-let transporterTrips = tripData.filter(t => 
-String(t.transporter_id).trim() === transporterId
-)
-
-
-/* Get paid trips */
+.eq("transporter_id",transporterId)
+.eq("status","Completed")
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
-.eq("transporter_name", transporters.find(t => t.id == transporterId)?.transporterforEac
+.eq("transporter_name",transporter.transporter_name)
 
 let paidTrips=[]
 
@@ -295,9 +260,7 @@ paidTrips.push(t.trim())
 
 })
 
-
-trips = transporterTrips.filter(t => !paidTrips.includes(t.trip_no))
-
+trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
 
 let html=""
 
@@ -319,11 +282,8 @@ ${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
 
 })
 
-
 if(trips.length==0){
-
 html="<i>No unpaid trips available</i>"
-
 }
 
 document.getElementById("tripList").innerHTML=html
@@ -385,10 +345,8 @@ let remarks=document.getElementById("remarks").value
 let checked=document.querySelectorAll("#tripList input:checked")
 
 if(checked.length==0){
-
 alert("Select trips")
 return
-
 }
 
 let tripNos=[]
@@ -396,11 +354,9 @@ let tripNos=[]
 checked.forEach(c=>{
 
 let trip=trips.find(t=>t.id==c.value)
-
 tripNos.push(trip.trip_no)
 
 })
-
 
 await supabaseClient
 .from("transporter_payments")
@@ -415,7 +371,6 @@ remarks:remarks
 
 })
 
-
 alert("Payment Saved")
 
 loadTrips()
@@ -426,73 +381,17 @@ loadPayments()
 
 /* LOAD PAYMENTS */
 
-async function loadTrips(){
+async function loadPayments(){
 
-let transporterId=document.getElementById("transporterSelect").value
-
-if(!transporterId){
-alert("Select transporter")
-return
-}
-
-let transporter=transporters.find(t=>t.id==transporterId)
-
-const {data:tripData,error}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",transporterId)
-.order("trip_no",{ascending:false})
-
-if(error){
-console.log(error)
-alert("Error loading trips")
-return
-}
-
-/* fetch payments ONLY for this transporter */
-
-const {data:paymentData}=await supabaseClient
+const {data}=await supabaseClient
 .from("transporter_payments")
-.select("trip_no")
-.eq("transporter_name", transporter.transporter_name)
+.select("*")
+.order("created_at",{ascending:false})
 
-let paidTrips=[]
+payments=data || []
+allPayments=data || []
 
-paymentData.forEach(p=>{
-
-if(p.trip_no){
-
-p.trip_no.split(",").forEach(t=>{
-paidTrips.push(t.trim())
-})
-
-}
-
-})
-
-/* filter unpaid trips */
-
-trips = tripData.filter(t => !paidTrips.includes(t.trip_no))
-
-let html=""
-
-trips.forEach(t=>{
-
-let payable=(t.transporter_rate || 0)*(t.weight_kg/1000)
-
-html+=`
-<div>
-<input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
-</div>
-`
-})
-
-if(trips.length==0){
-html="<i>No unpaid trips available</i>"
-}
-
-document.getElementById("tripList").innerHTML=html
+renderPayments()
 
 }
 
@@ -517,9 +416,7 @@ html+=`
 <td>${p.remarks || ""}</td>
 
 <td>
-
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
-
 </td>
 
 </tr>
@@ -619,10 +516,8 @@ p.remarks
 })
 
 doc.autoTable({
-
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
 body:rows
-
 })
 
 doc.save("transporter_payments.pdf")

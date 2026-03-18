@@ -71,6 +71,24 @@ const supabaseClient = supabase.createClient(
 
 <div id="sidebar-container"></div>
 
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
+})
+
+</script>
+
 
 <div class="main">
 

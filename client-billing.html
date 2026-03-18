@@ -213,7 +213,7 @@ const {data}=await supabaseClient
 .eq("status","Completed")
 .order("trip_no",{ascending:false})
 
-/* REMOVE ALREADY INVOICED TRIPS */
+/* REMOVE INVOICED TRIPS */
 
 const {data:inv}=await supabaseClient
 .from("client_invoices")
@@ -335,7 +335,6 @@ invoice_no:invoiceNo,
 trip_no:selectedTrips.map(t=>t.trip_no).join(", "),
 client_name:selectedTrips[0].client_name,
 invoice_amount:invoiceAmount,
-
 amount_paid:0,
 balance_amount:invoiceAmount,
 payment_status:"Pending"
@@ -355,7 +354,7 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-invoices=data
+invoices=data || []
 
 renderInvoices(invoices)
 
@@ -371,14 +370,19 @@ html+=`
 <tr>
 
 <td>${i.invoice_no}</td>
+
 <td>${i.trip_no}</td>
+
 <td>${i.client_name}</td>
+
 <td>₹${i.invoice_amount}</td>
+
 <td>${i.payment_status}</td>
 
 <td>
 
 <button onclick="downloadInvoice('${i.id}')">PDF</button>
+
 <button class="deleteBtn" onclick="deleteInvoice('${i.id}')">Delete</button>
 
 </td>
@@ -429,7 +433,6 @@ await supabaseClient
 .eq("id",id)
 
 loadInvoices()
-loadPayments()
 
 }
 
@@ -444,8 +447,11 @@ let doc=new jsPDF()
 doc.text("Varada Nexus Private Limited",20,20)
 
 doc.text("Invoice No : "+invoice.invoice_no,20,40)
+
 doc.text("Client : "+invoice.client_name,20,50)
+
 doc.text("Trips : "+invoice.trip_no,20,60)
+
 doc.text("Amount : ₹"+invoice.invoice_amount,20,70)
 
 doc.save(invoice.invoice_no+".pdf")

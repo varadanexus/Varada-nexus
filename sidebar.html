@@ -68,15 +68,13 @@ border-left:4px solid white;
 
 </style><script>
 
-/* ACTIVE MENU */
+/* ACTIVE PAGE HIGHLIGHT */
 
 const currentPage = window.location.pathname.split("/").pop()
 
 document.querySelectorAll(".sidebar a").forEach(link=>{
 
-const page = link.getAttribute("data-page")
-
-if(page === currentPage){
+if(link.getAttribute("data-page") === currentPage){
 link.classList.add("active")
 }
 
@@ -84,7 +82,7 @@ link.classList.add("active")
 
 
 
-/* RUN RBAC AFTER SIDEBAR LOAD */
+/* APPLY RBAC */
 
 setTimeout(()=>{
 
@@ -96,26 +94,20 @@ applyMenuRBAC()
 
 
 
-/* LOGOUT */
+/* GLOBAL LOGOUT FUNCTION */
 
 async function logout(){
 
-try{
+if(typeof supabaseClient === "undefined"){
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+alert("Logout failed: Supabase client not found")
+return
+
+}
 
 await supabaseClient.auth.signOut()
 
-window.location.href = "login.html"
-
-}catch(e){
-
-alert("Logout failed")
-
-}
+window.location.href="login.html"
 
 }
 

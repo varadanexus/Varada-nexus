@@ -85,44 +85,21 @@ const supabaseClient = supabase.createClient(
 <option value="Bank Transfer">Bank Transfer</option>
 <option value="UPI">UPI</option></select><input id="remarks" placeholder="Remarks"><button onclick="savePayment()">Save Payment</button>
 
-</div><div class="card"><h3>Search Payments</h3><select id="searchTransporter"></select>
-
-From
-<input type="date" id="fromDate">
-
-To
-<input type="date" id="toDate">
-
-<button onclick="searchPayments()">Search</button>
-<button onclick="clearSearch()">Clear</button>
-<button onclick="downloadPDF()">Download PDF</button>
-
-</div><div class="card"><h3>Payment History</h3><table><thead>
-<tr>
+</div><div class="card"><h3>Payment History</h3><table><thead><tr>
 <th>Date</th>
 <th>Transporter</th>
-<th>Trips</th>
+<th>Trip ID</th>
 <th>Amount</th>
 <th>Method</th>
 <th>Remarks</th>
 <th>Action</th>
-</tr>
-</thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-
-</div></div><script>
+</tr></thead><tbody id="paymentTable"></tbody></table></div></div><script>
 
 let transporters=[]
 let trips=[]
 let payments=[]
-let allPayments=[]
-
-let page=1
-let pageSize=10
-
 
 init()
-
 
 async function init(){
 
@@ -143,19 +120,15 @@ const {data}=await supabaseClient
 transporters=data||[]
 
 let html='<option value="">Select Transporter</option>'
-let search='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
-
 html+=`<option value="${t.id}">${t.transporter_name}</option>`
-search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
-
 })
 
 document.getElementById("transporterSelect").innerHTML=html
-document.getElementById("searchTransporter").innerHTML=search
 
 }
+
 
 
 /* LOAD TRIPS */
@@ -164,46 +137,13 @@ async function loadTrips(){
 
 let transporterId=document.getElementById("transporterSelect").value
 
-if(!transporterId){
-alert("Select transporter first")
-return
-}
-
-const {data:tripData,error}=await supabaseClient
+const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 .order("trip_no",{ascending:false})
 
-if(error){
-console.log(error)
-alert("Error loading trips")
-return
-}
-
-const {data:paymentData}=await supabaseClient
-.from("transporter_payments")
-.select("trip_no")
-
-let paidTrips=[]
-
-if(paymentData){
-
-paymentData.forEach(p=>{
-
-if(p.trip_no){
-
-p.trip_no.split(",").forEach(t=>{
-paidTrips.push(t.trim())
-})
-
-}
-
-})
-
-}
-
-trips=(tripData||[]).filter(t=>!paidTrips.includes(t.trip_no))
+trips=data||[]
 
 let html=""
 
@@ -212,21 +152,23 @@ trips.forEach(t=>{
 let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
 
 html+=`
+
 <div>
+
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ${t.route||""} | ${t.truck||""} | ₹${payable}
+
+${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable}
+
 </div>
+
 `
 
 })
 
-if(trips.length===0){
-html="<i>No unpaid trips available</i>"
-}
-
 document.getElementById("tripList").innerHTML=html
 
 }
+
 
 
 /* CALCULATE TOTAL */
@@ -252,6 +194,7 @@ document.getElementById("amount").value=total
 }
 
 
+
 /* SELECT ALL */
 
 function toggleAllTrips(){
@@ -265,6 +208,7 @@ c.checked=checked
 calculateTotal()
 
 }
+
 
 
 /* SAVE PAYMENT */
@@ -286,28 +230,20 @@ alert("Select trips")
 return
 }
 
-if(!date){
-alert("Select payment date")
-return
-}
+for(const c of checked){
 
-let tripNos=[]
-
-checked.forEach(c=>{
 let trip=trips.find(t=>t.id==c.value)
-tripNos.push(trip.trip_no)
-})
 
 const {error}=await supabaseClient
 .from("transporter_payments")
 .insert({
 
-transporter_name:transporter.transporter_name,
-trip_no:tripNos.join(", "),
-amount:Number(amount),
-payment_date:date,
-payment_method:method,
-remarks:remarks
+trip_id: trip.id,
+transporter_name: transporter.transporter_name,
+amount: (trip.transporter_rate||0)*(trip.weight_kg/1000),
+payment_date: date,
+transaction_id: "TXN"+Date.now(),
+remarks: remarks
 
 })
 
@@ -317,12 +253,14 @@ alert("Error saving payment")
 return
 }
 
+}
+
 alert("Payment saved")
 
-loadTrips()
 loadPayments()
 
 }
+
 
 
 /* LOAD PAYMENTS */
@@ -335,25 +273,10 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 payments=data||[]
-allPayments=data||[]
-
-renderPayments()
-
-}
-
-
-/* RENDER PAYMENTS */
-
-function renderPayments(){
-
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageData=payments.slice(start,end)
 
 let html=""
 
-pageData.forEach(p=>{
+payments.forEach(p=>{
 
 html+=`
 
@@ -361,9 +284,9 @@ html+=`
 
 <td>${p.payment_date}</td>
 <td>${p.transporter_name}</td>
-<td>${p.trip_no}</td>
+<td>${p.trip_id}</td>
 <td>₹${p.amount}</td>
-<td>${p.payment_method}</td>
+<td>${p.payment_method||""}</td>
 <td>${p.remarks||""}</td>
 
 <td>
@@ -381,55 +304,6 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
-/* SEARCH */
-
-function searchPayments(){
-
-let transporter=document.getElementById("searchTransporter").value
-let from=document.getElementById("fromDate").value
-let to=document.getElementById("toDate").value
-
-payments=allPayments.filter(p=>{
-
-let matchTransporter=!transporter || p.transporter_name===transporter
-
-let matchDate=true
-
-if(from) matchDate=p.payment_date>=from
-if(to) matchDate=matchDate && p.payment_date<=to
-
-return matchTransporter && matchDate
-
-})
-
-page=1
-renderPayments()
-
-}
-
-
-/* CLEAR */
-
-function clearSearch(){
-
-payments=allPayments
-renderPayments()
-
-}
-
-
-/* PAGINATION */
-
-function nextPage(){
-page++
-renderPayments()
-}
-
-function prevPage(){
-if(page>1) page--
-renderPayments()
-}
-
 
 /* DELETE */
 
@@ -444,38 +318,4 @@ loadPayments()
 
 }
 
-
-/* PDF */
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-payments.forEach(p=>{
-
-rows.push([
-p.payment_date,
-p.transporter_name,
-p.trip_no,
-p.amount,
-p.payment_method,
-p.remarks
-])
-
-})
-
-doc.autoTable({
-head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
-body:rows
-})
-
-doc.save("transporter_payments.pdf")
-
-}
-
-</script></body>
-</html>
+</script></body></html>

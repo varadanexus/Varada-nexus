@@ -1,4 +1,8 @@
-<div class="sidebar"><h2>Varada Nexus</h2><a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
+<div class="sidebar">
+
+<h2>Varada Nexus</h2>
+
+<a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
 
 <a href="trips.html" data-page="trips.html">Trips</a>
 
@@ -30,7 +34,11 @@
 
 <a href="#" onclick="logout()">Logout</a>
 
-</div><style>
+</div>
+
+
+
+<style>
 
 .sidebar{
 position:fixed;
@@ -66,7 +74,30 @@ font-weight:bold;
 border-left:4px solid white;
 }
 
-</style><script>
+</style>
+
+
+
+<!-- SUPABASE LIBRARY -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+
+<script>
+
+/* CREATE GLOBAL SUPABASE CLIENT */
+
+if(typeof supabaseClient === "undefined"){
+
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+}
+
+
 
 /* ACTIVE PAGE HIGHLIGHT */
 
@@ -98,17 +129,29 @@ applyMenuRBAC()
 
 async function logout(){
 
-if(typeof supabaseClient === "undefined"){
-
-alert("Logout failed: Supabase client not found")
-return
-
-}
+try{
 
 await supabaseClient.auth.signOut()
 
-window.location.href="login.html"
+}catch(e){
+console.log("Logout error:",e)
+}
+
+/* CLEAR STORAGE */
+
+localStorage.clear()
+sessionStorage.clear()
+
+/* REDIRECT */
+
+window.location.replace("login.html")
 
 }
 
 </script>
+
+
+
+<!-- GLOBAL SECURITY GUARD -->
+
+<script src="auth-guard.js"></script>

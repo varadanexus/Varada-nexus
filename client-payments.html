@@ -172,14 +172,14 @@ await loadPayments()
 }
 
 
-/* LOAD INVOICES (Pending + Partial) */
+/* LOAD INVOICES (Pending + Partially Paid) */
 
 async function loadInvoices(){
 
 const {data}=await supabaseClient
 .from("client_invoices")
 .select("*")
-.in("payment_status",["Pending","Partial"])
+.in("payment_status",["Pending","Partially Paid"])
 
 invoices=data || []
 
@@ -217,8 +217,8 @@ return
 
 let invoice=invoices.find(x=>x.id==invoiceId)
 
-let newPaid=(invoice.amount_paid || 0) + amount
-let balance=invoice.invoice_amount - newPaid
+let newPaid=Number(invoice.amount_paid || 0) + amount
+let balance=Number(invoice.invoice_amount) - newPaid
 
 let status="Pending"
 
@@ -227,7 +227,7 @@ status="Paid"
 balance=0
 }
 else if(newPaid>0){
-status="Partial"
+status="Partially Paid"
 }
 
 

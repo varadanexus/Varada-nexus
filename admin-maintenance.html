@@ -6,8 +6,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 
-<title>System Maintenance Control</title>
+<title>System Maintenance Control - Varada Nexus ERP</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- RBAC -->
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -27,7 +30,7 @@ padding:30px;
 background:white;
 padding:25px;
 border-radius:8px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 max-width:600px;
 }
 
@@ -76,7 +79,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* GLOBAL LOGOUT */
+/* LOGOUT */
 
 async function logout(){
 
@@ -89,7 +92,7 @@ window.location.href="login.html"
 }
 
 </script>
- 
+
 <!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
@@ -103,7 +106,7 @@ fetch("sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 
 setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
+if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
 },300)
@@ -112,6 +115,7 @@ applyMenuRBAC()
 
 </script>
 
+<!-- MAIN CONTENT -->
 
 <div class="main">
 
@@ -146,7 +150,6 @@ applyMenuRBAC()
 </div>
 
 </div>
-
 
 <script>
 
@@ -184,7 +187,6 @@ updateStatus(this.checked)
 
 })
 
-
 async function saveMaintenance(){
 
 let mode=document.getElementById("maintenanceToggle").checked
@@ -194,17 +196,14 @@ let message=document.getElementById("message").value
 await supabaseClient
 .from("system_settings")
 .update({
-
 maintenance_mode:mode,
 message:message
-
 })
 .eq("id",1)
 
 alert("Maintenance Settings Updated")
 
 }
-
 
 async function forceLogout(){
 
@@ -232,5 +231,4 @@ alert("All users logged out successfully")
 </script>
 
 </body>
-
 </html>

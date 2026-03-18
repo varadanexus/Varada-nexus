@@ -105,17 +105,16 @@ border-left:4px solid white;
 
 <script>
 
-/* CREATE GLOBAL SUPABASE CLIENT */
+/* CREATE SUPABASE CLIENT */
 
 if(typeof supabaseClient==="undefined"){
 
 window.supabaseClient=supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_PUBLIC_ANON_KEY"
 )
 
 }
-
 
 
 /* ACTIVE PAGE */
@@ -135,7 +134,6 @@ link.classList.add("active")
 }
 
 
-
 /* LOAD USER INFO */
 
 async function loadUserInfo(){
@@ -144,12 +142,14 @@ try{
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 
-if(!session) return
+if(!session){
+document.getElementById("userName").innerText="User"
+return
+}
+
+/* GET NAME FROM EMAIL */
 
 const email=session.user.email
-
-/* EXTRACT NAME BEFORE @ */
-
 const name=email.split("@")[0]
 
 document.getElementById("userName").innerText=name
@@ -163,10 +163,13 @@ const {data:user}=await supabaseClient
 .eq("auth_id",session.user.id)
 .single()
 
-if(!user) return
+if(!user){
+document.getElementById("userRole").innerText=""
+return
+}
 
 
-/* GET ROLE */
+/* GET USER ROLE */
 
 const {data:userRole}=await supabaseClient
 .from("user_roles")
@@ -174,8 +177,13 @@ const {data:userRole}=await supabaseClient
 .eq("user_id",user.id)
 .single()
 
-if(!userRole) return
+if(!userRole){
+document.getElementById("userRole").innerText=""
+return
+}
 
+
+/* GET ROLE NAME */
 
 const {data:role}=await supabaseClient
 .from("roles")
@@ -183,11 +191,13 @@ const {data:role}=await supabaseClient
 .eq("id",userRole.role_id)
 .single()
 
+if(role){
 document.getElementById("userRole").innerText=role.role_name
+}
 
 }catch(err){
 
-console.log("User info error:",err)
+console.log("User load error:",err)
 
 }
 
@@ -207,6 +217,7 @@ if(!session) return
 
 const authId=session.user.id
 
+
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
@@ -225,13 +236,10 @@ const {data:userRole}=await supabaseClient
 if(!userRole) return
 
 
-let roleId=userRole.role_id
-
-
 const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("page_name")
-.eq("role_id",roleId)
+.eq("role_id",userRole.role_id)
 .eq("can_access",true)
 
 if(!permissions) return
@@ -252,7 +260,7 @@ link.style.display="none"
 
 }catch(err){
 
-console.log("Sidebar RBAC error:",err)
+console.log("RBAC error:",err)
 
 }
 
@@ -285,9 +293,9 @@ window.addEventListener("load", async ()=>{
 
 highlightActivePage()
 
-await applySidebarRBAC()
-
 await loadUserInfo()
+
+await applySidebarRBAC()
 
 })
 

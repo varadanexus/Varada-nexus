@@ -1,5 +1,4 @@
-<!DOCTYPE html><html>
-<head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html><html><head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -63,7 +62,7 @@ text-align:left;
 background:#d9534f;
 }
 
-</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+</style></head><body><div id="sidebar-container"></div><script>
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -98,7 +97,8 @@ To
 <button onclick="clearSearch()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div><div class="card"><h3>Payment History</h3><table><thead><tr>
+</div><div class="card"><h3>Payment History</h3><table><thead>
+<tr>
 <th>Date</th>
 <th>Transporter</th>
 <th>Trips</th>
@@ -106,7 +106,8 @@ To
 <th>Method</th>
 <th>Remarks</th>
 <th>Action</th>
-</tr></thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</tr>
+</thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
 </div></div><script>
@@ -129,7 +130,6 @@ await loadTransporters()
 await loadPayments()
 
 }
-
 
 
 /* LOAD TRANSPORTERS */
@@ -158,31 +158,36 @@ document.getElementById("searchTransporter").innerHTML=search
 }
 
 
-
 /* LOAD TRIPS */
 
 async function loadTrips(){
 
 let transporterId=document.getElementById("transporterSelect").value
 
+if(!transporterId){
+alert("Select transporter first")
+return
+}
 
-/* LOAD ALL TRIPS */
-
-const {data:tripData}=await supabaseClient
+const {data:tripData,error}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 .order("trip_no",{ascending:false})
 
-
-/* GET PAID TRIPS */
+if(error){
+console.log(error)
+alert("Error loading trips")
+return
+}
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
 
-
 let paidTrips=[]
+
+if(paymentData){
 
 paymentData.forEach(p=>{
 
@@ -196,13 +201,9 @@ paidTrips.push(t.trim())
 
 })
 
+}
 
-/* FILTER UNPAID */
-
-trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
-
-
-/* DISPLAY */
+trips=(tripData||[]).filter(t=>!paidTrips.includes(t.trip_no))
 
 let html=""
 
@@ -211,15 +212,10 @@ trips.forEach(t=>{
 let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
 
 html+=`
-
 <div>
-
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-
-${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable}
-
+${t.trip_no} | ${t.route||""} | ${t.truck||""} | ₹${payable}
 </div>
-
 `
 
 })
@@ -233,8 +229,7 @@ document.getElementById("tripList").innerHTML=html
 }
 
 
-
-/* TOTAL */
+/* CALCULATE TOTAL */
 
 function calculateTotal(){
 
@@ -257,7 +252,6 @@ document.getElementById("amount").value=total
 }
 
 
-
 /* SELECT ALL */
 
 function toggleAllTrips(){
@@ -271,7 +265,6 @@ c.checked=checked
 calculateTotal()
 
 }
-
 
 
 /* SAVE PAYMENT */
@@ -288,6 +281,16 @@ let remarks=document.getElementById("remarks").value
 
 let checked=document.querySelectorAll("#tripList input:checked")
 
+if(checked.length===0){
+alert("Select trips")
+return
+}
+
+if(!date){
+alert("Select payment date")
+return
+}
+
 let tripNos=[]
 
 checked.forEach(c=>{
@@ -295,7 +298,7 @@ let trip=trips.find(t=>t.id==c.value)
 tripNos.push(trip.trip_no)
 })
 
-await supabaseClient
+const {error}=await supabaseClient
 .from("transporter_payments")
 .insert({
 
@@ -308,12 +311,18 @@ remarks:remarks
 
 })
 
+if(error){
+console.log(error)
+alert("Error saving payment")
+return
+}
+
 alert("Payment saved")
 
+loadTrips()
 loadPayments()
 
 }
-
 
 
 /* LOAD PAYMENTS */
@@ -333,8 +342,7 @@ renderPayments()
 }
 
 
-
-/* RENDER */
+/* RENDER PAYMENTS */
 
 function renderPayments(){
 
@@ -373,7 +381,6 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
-
 /* SEARCH */
 
 function searchPayments(){
@@ -401,7 +408,6 @@ renderPayments()
 }
 
 
-
 /* CLEAR */
 
 function clearSearch(){
@@ -410,7 +416,6 @@ payments=allPayments
 renderPayments()
 
 }
-
 
 
 /* PAGINATION */
@@ -426,7 +431,6 @@ renderPayments()
 }
 
 
-
 /* DELETE */
 
 async function deletePayment(id){
@@ -439,7 +443,6 @@ await supabaseClient
 loadPayments()
 
 }
-
 
 
 /* PDF */

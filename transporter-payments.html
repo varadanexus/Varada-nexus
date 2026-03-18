@@ -13,16 +13,9 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+.main{margin-left:220px;padding:30px;}
 
 .card{
 background:white;
@@ -48,15 +41,14 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{
-background:#d9534f;
-}
+.deleteBtn{background:#d9534f;}
 
 .trip-list{
 max-height:200px;
 overflow-y:auto;
 border:1px solid #ddd;
 padding:10px;
+margin-top:10px;
 }
 
 table{
@@ -70,10 +62,7 @@ padding:10px;
 border-bottom:1px solid #ddd;
 }
 
-th{
-background:#eee;
-text-align:left;
-}
+th{background:#eee;text-align:left;}
 
 </style>
 
@@ -85,10 +74,11 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_KEY"
 )
 
 </script>
+
 
 <div id="sidebar-container"></div>
 
@@ -143,7 +133,11 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <select id="searchTransporter"></select>
 
-<input type="date" id="searchDate">
+From
+<input type="date" id="fromDate">
+
+To
+<input type="date" id="toDate">
 
 <button onclick="searchPayments()">Search</button>
 <button onclick="clearSearch()">Clear</button>
@@ -206,7 +200,7 @@ const {data}=await supabaseClient
 .from("transporters")
 .select("*")
 
-transporters=data || []
+transporters=data||[]
 
 let html='<option value="">Select Transporter</option>'
 let search='<option value="">All Transporters</option>'
@@ -214,7 +208,6 @@ let search='<option value="">All Transporters</option>'
 transporters.forEach(t=>{
 
 html+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
-
 search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
 
 })
@@ -231,6 +224,8 @@ async function loadTripsByTransporter(){
 
 let transporter=document.getElementById("transporterSelect").value
 
+if(!transporter) return
+
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
@@ -238,7 +233,7 @@ const {data}=await supabaseClient
 .eq("status","Completed")
 .order("trip_no",{ascending:false})
 
-trips=data || []
+trips=data||[]
 
 let html=""
 
@@ -303,11 +298,8 @@ return
 let tripNos=[]
 
 checked.forEach(c=>{
-
 let trip=trips.find(t=>t.id==c.value)
-
 tripNos.push(trip.trip_no)
-
 })
 
 await supabaseClient
@@ -339,8 +331,8 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-payments=data || []
-allPayments=data || []
+payments=data||[]
+allPayments=data||[]
 
 renderPayments()
 
@@ -358,12 +350,12 @@ payments.forEach(p=>{
 html+=`
 <tr>
 
-<td>${p.payment_date || ""}</td>
+<td>${p.payment_date||""}</td>
 <td>${p.transporter_name}</td>
 <td>${p.trip_no}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method}</td>
-<td>${p.remarks || ""}</td>
+<td>${p.remarks||""}</td>
 
 <td>
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
@@ -384,14 +376,24 @@ document.getElementById("paymentTable").innerHTML=html
 function searchPayments(){
 
 let transporter=document.getElementById("searchTransporter").value
-let date=document.getElementById("searchDate").value
+let from=document.getElementById("fromDate").value
+let to=document.getElementById("toDate").value
 
 payments=allPayments.filter(p=>{
 
-return(
-(!transporter || p.transporter_name===transporter) &&
-(!date || p.payment_date===date)
-)
+let matchTransporter=!transporter||p.transporter_name===transporter
+
+let matchDate=true
+
+if(from){
+matchDate=p.payment_date>=from
+}
+
+if(to){
+matchDate=matchDate && p.payment_date<=to
+}
+
+return matchTransporter && matchDate
 
 })
 
@@ -405,7 +407,8 @@ renderPayments()
 function clearSearch(){
 
 document.getElementById("searchTransporter").value=""
-document.getElementById("searchDate").value=""
+document.getElementById("fromDate").value=""
+document.getElementById("toDate").value=""
 
 payments=allPayments
 
@@ -454,10 +457,8 @@ p.remarks
 })
 
 doc.autoTable({
-
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
 body:rows
-
 })
 
 doc.save("transporter_payments.pdf")

@@ -190,29 +190,11 @@ invoices=data || []
 
 /* SHOW ONLY INVOICES WITH BALANCE */
 
-invoices = invoices.filter(i => i.balance_amount > 0)
+let pendingInvoices = invoices.filter(i => Number(i.balance_amount) > 0)
 
 let html='<option value="">Select Invoice</option>'
 
-invoices.forEach(i=>{
-
-html+=`
-<option value="${i.id}">
-${i.invoice_no} | ${i.client_name} | Balance ₹${i.balance_amount}
-</option>
-`
-
-})
-
-document.getElementById("invoiceSelect").innerHTML=html
-
-}
-
-invoices=data || []
-
-let html='<option value="">Select Invoice</option>'
-
-invoices.forEach(i=>{
+pendingInvoices.forEach(i=>{
 
 html+=`
 <option value="${i.id}">
@@ -293,8 +275,8 @@ alert("Payment Recorded")
 document.getElementById("amount").value=""
 document.getElementById("remarks").value=""
 
-loadInvoices()
-loadPayments()
+await loadInvoices()
+await loadPayments()
 
 }
 
@@ -344,11 +326,10 @@ document.getElementById("paymentTable").innerHTML=html
 
 
 /* DELETE PAYMENT */
+
 async function deletePayment(id){
 
 if(!confirm("Delete this payment?")) return
-
-/* GET PAYMENT */
 
 const {data:payment}=await supabaseClient
 .from("client_payments")
@@ -359,8 +340,6 @@ const {data:payment}=await supabaseClient
 if(!payment) return
 
 let invoiceId=payment.invoice_id
-
-/* DELETE PAYMENT */
 
 await supabaseClient
 .from("client_payments")
@@ -376,7 +355,7 @@ const {data:allPayments}=await supabaseClient
 
 let totalPaid=0
 
-if(allPayments && allPayments.length>0){
+if(allPayments){
 
 allPayments.forEach(p=>{
 totalPaid += Number(p.amount)
@@ -394,18 +373,18 @@ const {data:invoice}=await supabaseClient
 
 let balance = invoice.invoice_amount - totalPaid
 
-let status = "Pending"
+let status="Pending"
 
-if(totalPaid === 0){
-status = "Pending"
-balance = invoice.invoice_amount
+if(totalPaid===0){
+status="Pending"
+balance=invoice.invoice_amount
 }
-else if(balance <= 0){
-status = "Paid"
-balance = 0
+else if(balance<=0){
+status="Paid"
+balance=0
 }
 else{
-status = "Partially Paid"
+status="Partially Paid"
 }
 
 /* UPDATE INVOICE */
@@ -413,13 +392,13 @@ status = "Partially Paid"
 await supabaseClient
 .from("client_invoices")
 .update({
-amount_paid: totalPaid,
-balance_amount: balance,
-payment_status: status
+amount_paid:totalPaid,
+balance_amount:balance,
+payment_status:status
 })
 .eq("id",invoiceId)
 
-/* REFRESH UI */
+/* REFRESH */
 
 await loadInvoices()
 await loadPayments()
@@ -433,5 +412,4 @@ await loadPayments()
 <script src="menu-rbac.js"></script>
 
 </body>
-
 </html>

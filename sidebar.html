@@ -97,7 +97,7 @@ border-left:4px solid white;
 
 <script>
 
-/* SUPABASE CLIENT */
+/* GLOBAL SUPABASE CLIENT */
 
 if(typeof supabaseClient==="undefined"){
 
@@ -109,9 +109,9 @@ window.supabaseClient=supabase.createClient(
 }
 
 
-/* ACTIVE PAGE HIGHLIGHT */
+/* ACTIVE PAGE */
 
-setTimeout(()=>{
+function highlightActivePage(){
 
 const currentPage = window.location.pathname.split("/").pop()
 
@@ -123,38 +123,18 @@ link.classList.add("active")
 
 })
 
-},100)
-
-
-
-/* LOGOUT */
-
-async function logout(){
-
-try{
-await supabaseClient.auth.signOut()
-}catch(e){
-console.log("Logout error:",e)
 }
-
-localStorage.clear()
-sessionStorage.clear()
-
-window.location.href="login.html"
-
-}
-
 
 
 /* SIDEBAR RBAC */
 
 async function applySidebarRBAC(){
 
-const {data:session}=await supabaseClient.auth.getSession()
+const {data:{session}} = await supabaseClient.auth.getSession()
 
-if(!session?.session) return
+if(!session) return
 
-const authId=session.session.user.id
+const authId=session.user.id
 
 /* FIND USER */
 
@@ -166,37 +146,65 @@ const {data:user}=await supabaseClient
 
 if(!user) return
 
-/* GET USER ROLE */
+/* GET ROLE */
 
-const {data:roles}=await supabaseClient
+const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-
-if(!roles || roles.length===0) return
-
-const {data:roleData}=await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",roles[0].role_id)
 .single()
 
-const role=roleData.role_name.toLowerCase()
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+const roleName=role.role_name.toLowerCase()
 
 /* FILTER MENU */
 
 document.querySelectorAll(".sidebar a[data-role]").forEach(link=>{
 
-const allowed=link.dataset.role.toLowerCase().split(",")
+const allowedRoles=link.dataset.role.toLowerCase().split(",")
 
-if(!allowed.includes(role)){
-link.remove()
+if(!allowedRoles.includes(roleName)){
+link.style.display="none"
 }
 
 })
 
 }
 
-setTimeout(applySidebarRBAC,200)
+
+/* LOGOUT */
+
+async function logout(){
+
+try{
+await supabaseClient.auth.signOut()
+}catch(e){
+console.log(e)
+}
+
+localStorage.clear()
+sessionStorage.clear()
+
+window.location.href="login.html"
+
+}
+
+
+/* INITIALIZE */
+
+window.addEventListener("load", async ()=>{
+
+highlightActivePage()
+
+await applySidebarRBAC()
+
+})
 
 </script>

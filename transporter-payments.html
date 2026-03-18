@@ -53,7 +53,7 @@ background:#d9534f;
 }
 
 .trip-list{
-max-height:200px;
+max-height:220px;
 overflow-y:auto;
 border:1px solid #ddd;
 padding:10px;
@@ -115,7 +115,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <select id="transporterSelect"></select>
 
-<button onclick="loadTripsByTransporter()">Load Trips</button>
+<button onclick="loadTrips()">Load Trips</button>
 
 <div class="trip-list">
 
@@ -205,18 +205,39 @@ let transporters=[]
 let trips=[]
 let payments=[]
 let allPayments=[]
+let loggedTransporter=null
 
 init()
 
 async function init(){
 
 await loadTransporters()
+await detectTransporterLogin()
 await loadPayments()
 
 }
 
 
-/* LOAD TRANSPORTERS */
+/* Detect transporter login */
+
+function detectTransporterLogin(){
+
+let role=localStorage.getItem("role")
+let transporterId=localStorage.getItem("transporter_id")
+
+if(role==="transporter" && transporterId){
+
+loggedTransporter=transporterId
+
+document.getElementById("transporterSelect").value=transporterId
+document.getElementById("transporterSelect").disabled=true
+
+}
+
+}
+
+
+/* Load transporters */
 
 async function loadTransporters(){
 
@@ -242,42 +263,29 @@ document.getElementById("searchTransporter").innerHTML=search
 }
 
 
-/* LOAD TRIPS */
+/* Load trips */
 
-async function loadTripsByTransporter(){
+async function loadTrips(){
 
-let transporterId=document.getElementById("transporterSelect").value
+let transporterId=loggedTransporter || document.getElementById("transporterSelect").value
 
 if(!transporterId){
-
-alert("Select transporter first")
+alert("Select transporter")
 return
-
 }
 
-/* GET TRIPS */
-
-const {data:tripData,error}=await supabaseClient
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 .eq("status","Completed")
 .order("trip_no",{ascending:false})
 
-if(error){
-
-alert("Error loading trips")
-console.log(error)
-return
-
-}
-
-
-/* GET PAID TRIPS */
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
+
 
 let paidTrips=[]
 
@@ -294,8 +302,6 @@ paidTrips.push(t.trim())
 })
 
 
-/* FILTER UNPAID */
-
 trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
 
 
@@ -311,7 +317,7 @@ html+=`
 
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
 
-${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable}
+${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable.toFixed(2)}
 
 </div>
 
@@ -322,7 +328,7 @@ ${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable}
 
 if(trips.length==0){
 
-html="<i>No unpaid trips available</i>"
+html="<i>No unpaid trips</i>"
 
 }
 
@@ -331,7 +337,7 @@ document.getElementById("tripList").innerHTML=html
 }
 
 
-/* CALCULATE TOTAL */
+/* Calculate total */
 
 function calculateTotal(){
 
@@ -349,21 +355,19 @@ total+=payable
 
 })
 
-document.getElementById("amount").value=total
+document.getElementById("amount").value=total.toFixed(2)
 
 }
 
 
-/* SELECT ALL */
+/* Select all */
 
 function toggleAllTrips(){
 
 let checked=document.getElementById("selectAll").checked
 
 document.querySelectorAll("#tripList input").forEach(c=>{
-
 c.checked=checked
-
 })
 
 calculateTotal()
@@ -371,11 +375,11 @@ calculateTotal()
 }
 
 
-/* SAVE PAYMENT */
+/* Save payment */
 
 async function savePayment(){
 
-let transporterId=document.getElementById("transporterSelect").value
+let transporterId=loggedTransporter || document.getElementById("transporterSelect").value
 
 let transporter=transporters.find(t=>t.id==transporterId)
 
@@ -389,7 +393,6 @@ let checked=document.querySelectorAll("#tripList input:checked")
 if(checked.length==0){
 
 alert("Select trips")
-
 return
 
 }
@@ -418,15 +421,16 @@ remarks:remarks
 
 })
 
+
 alert("Payment Saved")
 
-loadTripsByTransporter()
+loadTrips()
 loadPayments()
 
 }
 
 
-/* LOAD PAYMENTS */
+/* Load payments */
 
 async function loadPayments(){
 
@@ -436,14 +440,23 @@ const {data}=await supabaseClient
 .order("created_at",{ascending:false})
 
 payments=data || []
-allPayments=data || []
+
+if(loggedTransporter){
+
+let transporter=transporters.find(t=>t.id==loggedTransporter)
+
+payments=payments.filter(p=>p.transporter_name===transporter.transporter_name)
+
+}
+
+allPayments=payments
 
 renderPayments()
 
 }
 
 
-/* RENDER */
+/* Render payments */
 
 function renderPayments(){
 
@@ -463,9 +476,7 @@ html+=`
 <td>${p.remarks || ""}</td>
 
 <td>
-
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
-
 </td>
 
 </tr>
@@ -479,7 +490,7 @@ document.getElementById("paymentTable").innerHTML=html
 }
 
 
-/* SEARCH */
+/* Search */
 
 function searchPayments(){
 
@@ -494,15 +505,11 @@ let matchTransporter=!transporter || p.transporter_name===transporter
 let matchDate=true
 
 if(from){
-
 matchDate=p.payment_date>=from
-
 }
 
 if(to){
-
 matchDate=matchDate && p.payment_date<=to
-
 }
 
 return matchTransporter && matchDate
@@ -514,7 +521,7 @@ renderPayments()
 }
 
 
-/* CLEAR */
+/* Clear search */
 
 function clearSearch(){
 
@@ -529,7 +536,7 @@ renderPayments()
 }
 
 
-/* DELETE */
+/* Delete payment */
 
 async function deletePayment(id){
 
@@ -545,12 +552,11 @@ loadPayments()
 }
 
 
-/* PDF */
+/* Download PDF */
 
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
-
 let doc=new jsPDF()
 
 let rows=[]
@@ -571,7 +577,6 @@ p.remarks
 doc.autoTable({
 
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
-
 body:rows
 
 })

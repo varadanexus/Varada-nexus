@@ -84,12 +84,10 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_KEY"
 )
 
 </script>
-
-<!-- SIDEBAR -->
 
 <div id="sidebar-container"></div>
 
@@ -98,15 +96,7 @@ const supabaseClient = supabase.createClient(
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
-
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-},300)
-
 })
 
 </script>
@@ -183,8 +173,6 @@ await loadInvoices()
 
 }
 
-/* LOAD CLIENTS */
-
 async function loadClients(){
 
 const {data}=await supabaseClient
@@ -203,8 +191,6 @@ document.getElementById("clientSelect").innerHTML=html
 
 }
 
-/* LOAD TRIPS BY CLIENT */
-
 async function loadTripsByClient(){
 
 let client=document.getElementById("clientSelect").value
@@ -216,7 +202,6 @@ const {data}=await supabaseClient
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
-.order("created_at",{ascending:false})
 
 trips=data
 
@@ -236,8 +221,6 @@ ${t.trip_no} | ${t.route} | ${t.truck}
 document.getElementById("tripList").innerHTML=html
 
 }
-
-/* GENERATE INVOICE */
 
 async function generateInvoice(){
 
@@ -299,8 +282,6 @@ Fuel Deduction : ₹${totalFuel} <br>
 
 }
 
-/* GENERATE INVOICE NUMBER */
-
 function generateInvoiceNo(){
 
 let now=new Date()
@@ -310,8 +291,6 @@ let rand=Math.floor(Math.random()*9000)+1000
 return "INV-"+year+"-"+rand
 
 }
-
-/* SAVE INVOICE */
 
 async function saveInvoice(){
 
@@ -329,7 +308,11 @@ await supabaseClient
 invoice_no:invoiceNo,
 trip_no:selectedTrips.map(t=>t.trip_no).join(", "),
 client_name:selectedTrips[0].client_name,
-invoice_amount:invoiceAmount
+invoice_amount:invoiceAmount,
+
+amount_paid:0,
+balance_amount:invoiceAmount,
+payment_status:"Pending"
 
 })
 
@@ -338,8 +321,6 @@ alert("Invoice Saved")
 loadInvoices()
 
 }
-
-/* LOAD INVOICES */
 
 async function loadInvoices(){
 
@@ -353,8 +334,6 @@ invoices=data
 renderInvoices(invoices)
 
 }
-
-/* RENDER */
 
 function renderInvoices(data){
 
@@ -373,7 +352,7 @@ html+=`
 
 <td>₹${i.invoice_amount}</td>
 
-<td>${i.status || "Pending"}</td>
+<td>${i.payment_status || "Pending"}</td>
 
 <td>
 
@@ -391,8 +370,6 @@ html+=`
 document.getElementById("invoiceTable").innerHTML=html
 
 }
-
-/* SEARCH */
 
 function searchInvoices(){
 
@@ -421,8 +398,6 @@ renderInvoices(invoices)
 
 }
 
-/* DELETE */
-
 async function deleteInvoice(id){
 
 if(!confirm("Delete invoice?")) return
@@ -435,8 +410,6 @@ await supabaseClient
 loadInvoices()
 
 }
-
-/* PDF */
 
 function downloadInvoice(id){
 
@@ -461,9 +434,6 @@ doc.save(invoice.invoice_no+".pdf")
 }
 
 </script>
-
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
 
 </body>
 </html>

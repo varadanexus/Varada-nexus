@@ -108,57 +108,31 @@ font-size:18px;
 
 <script>
 
-/* ENSURE SUPABASE CLIENT EXISTS */
+/* ENSURE SUPABASE LIBRARY EXISTS */
 
-if(typeof supabaseClient === "undefined" && typeof supabase !== "undefined"){
+function loadSupabase(callback){
 
-window.supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
+if(typeof supabase !== "undefined"){
+callback()
+return
 }
 
-/* COLLAPSE SIDEBAR */
-
-function toggleSidebar(){
-
-const sidebar = document.getElementById("sidebar")
-
-sidebar.classList.toggle("collapsed")
+let script=document.createElement("script")
+script.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+script.onload=callback
+document.head.appendChild(script)
 
 }
-
-/* ACTIVE PAGE HIGHLIGHT */
-
-setTimeout(()=>{
-
-const currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll(".sidebar a").forEach(link=>{
-
-if(link.getAttribute("data-page") === currentPage){
-link.classList.add("active")
-}
-
-})
-
-if(typeof applyMenuRBAC === "function"){
-applyMenuRBAC()
-}
-
-},100)
-
 
 /* LOGOUT */
 
-async function logout(){
+function logout(){
+
+loadSupabase(async function(){
 
 try{
 
-/* create fresh client to guarantee logout */
-
-const client = supabase.createClient(
+const client=supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -171,14 +145,17 @@ console.log("Logout error:",e)
 
 }
 
-/* clear all local sessions */
+/* CLEAR STORAGE */
 
 localStorage.clear()
 sessionStorage.clear()
 
-/* force redirect */
+/* REDIRECT */
 
 window.location.replace("login.html")
 
+})
+
 }
+
 </script>

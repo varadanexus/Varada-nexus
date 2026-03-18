@@ -26,7 +26,7 @@
 
 <a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
 
-<a href="admin-maintenance.html">System Maintenance</a>
+<a href="admin-maintenance.html" data-page="admin-maintenance.html">System Maintenance</a>
 
 <a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
 
@@ -34,10 +34,9 @@
 
 <a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
 
-<a href="#" onclick="logout()">Logout</a>
+<a href="#" onclick="logout();return false;">Logout</a>
 
 </div>
-
 
 
 <style>
@@ -47,15 +46,17 @@ position:fixed;
 left:0;
 top:0;
 width:220px;
-height:100%;
+height:100vh;
 background:#1f3c88;
 color:white;
 padding-top:20px;
+overflow-y:auto;
 }
 
 .sidebar h2{
 text-align:center;
 margin-bottom:30px;
+font-size:20px;
 }
 
 .sidebar a{
@@ -79,16 +80,9 @@ border-left:4px solid white;
 </style>
 
 
-
-<!-- SUPABASE LIBRARY -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-
 <script>
 
-/* CREATE GLOBAL SUPABASE CLIENT */
+/* SUPABASE GLOBAL CLIENT */
 
 if(typeof supabaseClient === "undefined"){
 
@@ -99,53 +93,6 @@ window.supabaseClient = supabase.createClient(
 
 }
 
-/* GLOBAL MAINTENANCE CHECK */
-
-async function checkMaintenance(){
-
-const {data} = await supabaseClient
-.from("system_settings")
-.select("*")
-.eq("id",1)
-.single()
-
-if(data && data.maintenance_mode === true){
-
-document.body.innerHTML = `
-<div style="
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-font-family:Arial;
-background:#f4f6f9;
-">
-
-<div style="
-background:white;
-padding:40px;
-border-radius:8px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-text-align:center;
-max-width:500px;
-">
-
-<h2 style="color:#1f3c88">System Maintenance</h2>
-
-<p>${data.message}</p>
-
-</div>
-
-</div>
-`
-
-throw new Error("Maintenance mode active")
-
-}
-
-}
-
-checkMaintenance()
 
 /* ACTIVE PAGE HIGHLIGHT */
 
@@ -160,8 +107,7 @@ link.classList.add("active")
 })
 
 
-
-/* APPLY RBAC */
+/* APPLY RBAC AFTER SIDEBAR LOAD */
 
 setTimeout(()=>{
 
@@ -172,8 +118,7 @@ applyMenuRBAC()
 },300)
 
 
-
-/* GLOBAL LOGOUT FUNCTION */
+/* GLOBAL LOGOUT */
 
 async function logout(){
 
@@ -197,9 +142,3 @@ window.location.replace("login.html")
 }
 
 </script>
-
-
-
-<!-- GLOBAL SECURITY GUARD -->
-
-<script src="auth-guard.js"></script>

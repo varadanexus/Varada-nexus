@@ -1,6 +1,5 @@
 <!DOCTYPE html><html>
-<head>
-<title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
 body{
 margin:0;
@@ -132,6 +131,7 @@ await loadPayments()
 }
 
 
+
 /* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
@@ -165,13 +165,44 @@ async function loadTrips(){
 
 let transporterId=document.getElementById("transporterSelect").value
 
-const {data}=await supabaseClient
+
+/* LOAD ALL TRIPS */
+
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-.order("trip_no",{ascending:false})   // NEW: latest trips first
+.order("trip_no",{ascending:false})
 
-trips=data||[]
+
+/* GET PAID TRIPS */
+
+const {data:paymentData}=await supabaseClient
+.from("transporter_payments")
+.select("trip_no")
+
+
+let paidTrips=[]
+
+paymentData.forEach(p=>{
+
+if(p.trip_no){
+
+p.trip_no.split(",").forEach(t=>{
+paidTrips.push(t.trim())
+})
+
+}
+
+})
+
+
+/* FILTER UNPAID */
+
+trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
+
+
+/* DISPLAY */
 
 let html=""
 
@@ -192,6 +223,10 @@ ${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable}
 `
 
 })
+
+if(trips.length===0){
+html="<i>No unpaid trips available</i>"
+}
 
 document.getElementById("tripList").innerHTML=html
 
@@ -244,7 +279,6 @@ calculateTotal()
 async function savePayment(){
 
 let transporterId=document.getElementById("transporterSelect").value
-
 let transporter=transporters.find(t=>t.id==transporterId)
 
 let amount=document.getElementById("amount").value
@@ -257,11 +291,8 @@ let checked=document.querySelectorAll("#tripList input:checked")
 let tripNos=[]
 
 checked.forEach(c=>{
-
 let trip=trips.find(t=>t.id==c.value)
-
 tripNos.push(trip.trip_no)
-
 })
 
 await supabaseClient
@@ -385,18 +416,13 @@ renderPayments()
 /* PAGINATION */
 
 function nextPage(){
-
 page++
 renderPayments()
-
 }
 
 function prevPage(){
-
 if(page>1) page--
-
 renderPayments()
-
 }
 
 

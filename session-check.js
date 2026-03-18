@@ -23,13 +23,48 @@ return data.session
 }
 
 
+/* SINGLE SESSION PROTECTION */
+
+async function checkSingleSession(){
+
+const page = window.location.pathname.split("/").pop()
+
+if(page === "login.html") return
+
+const {data} = await supabaseClient.auth.getSession()
+
+if(!data.session) return
+
+const authId = data.session.user.id
+
+const {data:user}=await supabaseClient
+.from("users")
+.select("session_token")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const browserToken = localStorage.getItem("erp_session_token")
+
+if(browserToken && user.session_token !== browserToken){
+
+alert("Your account was logged in from another device.")
+
+await supabaseClient.auth.signOut()
+
+window.location.href="login.html"
+
+}
+
+}
+
+
 /* CHECK MAINTENANCE */
 
 async function checkMaintenance(){
 
 const page = window.location.pathname.split("/").pop()
-
-/* allow login page during maintenance */
 
 if(page === "login.html") return
 
@@ -125,11 +160,15 @@ async function runChecks(){
 
 await checkLogin()
 
+await checkSingleSession()
+
 await checkMaintenance()
 
 }
 
 runChecks()
+
+
 
 /* BROWSER BACK BUTTON PROTECTION */
 
@@ -143,6 +182,7 @@ window.location.reload();
 
 });
 
+
 /* DISABLE CACHE */
 
 window.history.pushState(null, null, window.location.href);
@@ -153,11 +193,10 @@ window.history.go(1);
 
 };
 
+
 /* ACTIVITY TIMEOUT (15 MINUTES) */
 
 let inactivityTimer;
-
-/* logout function */
 
 async function autoLogout(){
 
@@ -169,17 +208,13 @@ window.location.href = "login.html";
 
 }
 
-/* reset timer on activity */
-
 function resetInactivityTimer(){
 
 clearTimeout(inactivityTimer);
 
-inactivityTimer = setTimeout(autoLogout, 15 * 60 * 1000); // 15 minutes
+inactivityTimer = setTimeout(autoLogout, 15 * 60 * 1000);
 
 }
-
-/* detect user activity */
 
 window.onload = resetInactivityTimer;
 

@@ -323,12 +323,11 @@ document.getElementById("paymentTable").innerHTML=html
 
 
 /* DELETE PAYMENT */
-
 async function deletePayment(id){
 
 if(!confirm("Delete this payment?")) return
 
-/* GET PAYMENT FIRST */
+/* GET PAYMENT */
 
 const {data:payment}=await supabaseClient
 .from("client_payments")
@@ -347,7 +346,7 @@ await supabaseClient
 .delete()
 .eq("id",id)
 
-/* RECALCULATE TOTAL PAID */
+/* GET REMAINING PAYMENTS */
 
 const {data:allPayments}=await supabaseClient
 .from("client_payments")
@@ -356,9 +355,13 @@ const {data:allPayments}=await supabaseClient
 
 let totalPaid=0
 
+if(allPayments && allPayments.length>0){
+
 allPayments.forEach(p=>{
-totalPaid+=Number(p.amount)
+totalPaid += Number(p.amount)
 })
+
+}
 
 /* GET INVOICE */
 
@@ -368,16 +371,20 @@ const {data:invoice}=await supabaseClient
 .eq("id",invoiceId)
 .single()
 
-let balance=invoice.invoice_amount-totalPaid
+let balance = invoice.invoice_amount - totalPaid
 
-let status="Pending"
+let status = "Pending"
 
-if(balance<=0){
-status="Paid"
-balance=0
+if(totalPaid === 0){
+status = "Pending"
+balance = invoice.invoice_amount
 }
-else if(totalPaid>0){
-status="Partially Paid"
+else if(balance <= 0){
+status = "Paid"
+balance = 0
+}
+else{
+status = "Partially Paid"
 }
 
 /* UPDATE INVOICE */
@@ -385,14 +392,16 @@ status="Partially Paid"
 await supabaseClient
 .from("client_invoices")
 .update({
-amount_paid:totalPaid,
-balance_amount:balance,
-payment_status:status
+amount_paid: totalPaid,
+balance_amount: balance,
+payment_status: status
 })
 .eq("id",invoiceId)
 
-loadInvoices()
-loadPayments()
+/* REFRESH UI */
+
+await loadInvoices()
+await loadPayments()
 
 }
 

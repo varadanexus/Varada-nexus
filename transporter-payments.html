@@ -278,7 +278,6 @@ const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-.eq("status","Completed")
 .order("trip_no",{ascending:false})
 
 

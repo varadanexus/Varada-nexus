@@ -102,11 +102,27 @@ window.location.href="login.html"
 
 }
 
-</script><!-- SIDEBAR --><div id="sidebar-container"></div>
-<div class="main">
-  <h2>Users</h2>
-  <div class="form-box">
-    <h3>Create User</h3><input type="email" id="email" placeholder="Email"><input type="password" id="password" placeholder="Password"><select id="role"></select>
+</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML=data
+
+/* APPLY RBAC AFTER SIDEBAR LOAD */
+
+setTimeout(()=>{
+
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+
+},300)
+
+})
+
+</script><div class="main"><h2>Users</h2><div class="form-box"><h3>Create User</h3><input type="email" id="email" placeholder="Email"><input type="password" id="password" placeholder="Password"><select id="role"></select>
 
 <button onclick="createUser()">Create User</button>
 

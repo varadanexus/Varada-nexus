@@ -1,5 +1,20 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Trip Expenses - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<title>Trip Expenses - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="menu-rbac.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -64,47 +79,33 @@ background:#eee;
 text-align:left;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
-/* LOGIN CHECK */
+</script>
 
-async function checkLogin(){
 
-const {data}=await supabaseClient.auth.getSession()
+<!-- SIDEBAR -->
 
-if(!data.session){
-window.location.href="login.html"
-return
-}
+<div id="sidebar-container"></div>
 
-}
-
-checkLogin()
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
-}
-
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+<script>
 
 fetch("sidebar.html")
 .then(res => res.text())
 .then(data => {
 
 document.getElementById("sidebar-container").innerHTML = data
-
-/* APPLY RBAC AFTER SIDEBAR LOAD */
 
 setTimeout(()=>{
 if(typeof applyMenuRBAC === "function"){
@@ -114,7 +115,21 @@ applyMenuRBAC()
 
 })
 
-</script><div class="main"><h1>Trip Expenses</h1><div class="card"><h3>Add Expense</h3><div class="form-grid"><select id="trip"></select>
+</script>
+
+
+<div class="main">
+
+<h1>Trip Expenses</h1>
+
+
+<div class="card">
+
+<h3>Add Expense</h3>
+
+<div class="form-grid">
+
+<select id="trip"></select>
 
 <select id="type">
 <option>Fuel</option>
@@ -122,19 +137,40 @@ applyMenuRBAC()
 <option>Driver</option>
 <option>Maintenance</option>
 <option>Other</option>
-</select><input id="amount" placeholder="Amount"><button onclick="saveExpense()">Add Expense</button>
+</select>
 
-</div></div><div class="card"><input id="searchTrip" placeholder="Search Trip No"><select id="filterType">
+<input id="amount" placeholder="Amount">
+
+<button onclick="saveExpense()">Add Expense</button>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<input id="searchTrip" placeholder="Search Trip No">
+
+<select id="filterType">
 <option value="">All Types</option>
 <option>Fuel</option>
 <option>Toll</option>
 <option>Driver</option>
 <option>Maintenance</option>
 <option>Other</option>
-</select><button onclick="applyFilter()">Filter</button>
+</select>
+
+<button onclick="applyFilter()">Filter</button>
 <button onclick="clearFilter()">Clear</button>
 
-</div><table><thead>
+</div>
+
+
+<table>
+
+<thead>
+
 <tr>
 <th>Expense ID</th>
 <th>Trip</th>
@@ -143,11 +179,25 @@ applyMenuRBAC()
 <th>Date</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="expenseTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+
+</thead>
+
+<tbody id="expenseTable"></tbody>
+
+</table>
+
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div><script>
+</div>
+
+
+
+<script>
 
 let trips=[]
 let expenses=[]
@@ -156,7 +206,9 @@ let filtered=[]
 let page=1
 let pageSize=10
 
+
 init()
+
 
 async function init(){
 
@@ -164,6 +216,8 @@ await loadTrips()
 await loadExpenses()
 
 }
+
+
 
 /* LOAD TRIPS */
 
@@ -186,6 +240,8 @@ document.getElementById("trip").innerHTML=html
 
 }
 
+
+
 /* GENERATE EXPENSE ID */
 
 async function generateExpenseId(){
@@ -205,6 +261,8 @@ let seq=(data?.length || 0)+1
 return "EXP"+year+month+seq.toString().padStart(4,"0")
 
 }
+
+
 
 /* SAVE EXPENSE */
 
@@ -240,6 +298,8 @@ loadExpenses()
 
 }
 
+
+
 /* LOAD EXPENSES */
 
 async function loadExpenses(){
@@ -256,7 +316,9 @@ renderTable()
 
 }
 
-/* RENDER */
+
+
+/* RENDER TABLE */
 
 function renderTable(){
 
@@ -274,15 +336,20 @@ let trip=trips.find(t=>t.id==e.trip_id)
 html+=`
 
 <tr>
+
 <td>${e.expense_id || ""}</td>
 <td>${trip ? trip.trip_no : ""}</td>
 <td>${e.expense_type}</td>
 <td>${e.amount}</td>
 <td>${e.expense_date || ""}</td>
+
 <td>
+
 <button class="editBtn" onclick="editExpense('${e.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteExpense('${e.id}')">Delete</button>
+
 </td>
+
 </tr>
 
 `
@@ -293,4 +360,138 @@ document.getElementById("expenseTable").innerHTML=html
 
 }
 
-</script></body></html>
+
+
+/* EDIT EXPENSE */
+
+function editExpense(id){
+
+let expense=expenses.find(e=>e.id==id)
+
+let newAmount=prompt("Edit Amount",expense.amount)
+
+if(newAmount===null) return
+
+supabaseClient
+.from("expenses")
+.update({amount:newAmount})
+.eq("id",id)
+.then(()=>loadExpenses())
+
+}
+
+
+
+/* DELETE EXPENSE */
+
+async function deleteExpense(id){
+
+if(!confirm("Delete this expense?")) return
+
+await supabaseClient
+.from("expenses")
+.delete()
+.eq("id",id)
+
+loadExpenses()
+
+}
+
+
+
+/* PAGINATION */
+
+function nextPage(){
+
+if(page*pageSize >= filtered.length) return
+
+page++
+renderTable()
+
+}
+
+function prevPage(){
+
+if(page>1){
+page--
+renderTable()
+}
+
+}
+
+
+
+/* FILTER */
+
+function applyFilter(){
+
+let tripSearch=document.getElementById("searchTrip").value.toLowerCase()
+let typeFilter=document.getElementById("filterType").value
+
+filtered=expenses.filter(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+let matchTrip=!tripSearch || (trip && trip.trip_no.toLowerCase().includes(tripSearch))
+let matchType=!typeFilter || e.expense_type===typeFilter
+
+return matchTrip && matchType
+
+})
+
+page=1
+renderTable()
+
+}
+
+function clearFilter(){
+
+document.getElementById("searchTrip").value=""
+document.getElementById("filterType").value=""
+
+filtered=expenses
+
+page=1
+renderTable()
+
+}
+
+
+
+/* PDF */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+filtered.forEach(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+rows.push([
+e.expense_id,
+trip ? trip.trip_no : "",
+e.expense_type,
+e.amount,
+e.expense_date
+])
+
+})
+
+doc.autoTable({
+head:[["Expense ID","Trip","Type","Amount","Date"]],
+body:rows
+})
+
+doc.save("trip_expenses.pdf")
+
+}
+
+</script>
+
+</body>
+</html>

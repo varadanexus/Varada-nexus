@@ -130,3 +130,25 @@ await checkMaintenance()
 }
 
 runChecks()
+
+/* BROWSER BACK BUTTON PROTECTION */
+
+window.addEventListener("pageshow", function (event) {
+
+if (event.persisted) {
+
+window.location.reload();
+
+}
+
+});
+
+/* DISABLE CACHE */
+
+window.history.pushState(null, null, window.location.href);
+
+window.onpopstate = function () {
+
+window.history.go(1);
+
+};

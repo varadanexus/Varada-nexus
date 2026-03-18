@@ -374,7 +374,7 @@ html+=`
 <td>${i.trip_no}</td>
 <td>${i.client_name}</td>
 <td>₹${i.invoice_amount}</td>
-<td>${i.payment_status || "Pending"}</td>
+<td>${i.payment_status}</td>
 
 <td>
 
@@ -429,6 +429,7 @@ await supabaseClient
 .eq("id",id)
 
 loadInvoices()
+loadPayments()
 
 }
 

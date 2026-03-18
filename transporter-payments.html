@@ -85,7 +85,7 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_SUPABASE_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 </script>
@@ -249,16 +249,14 @@ return
 
 }
 
+transporterId = transporterId.trim()
+
 /* Fetch trips */
 
 const {data:tripData,error}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporterId)
-.in("status",["Loaded","Completed"])
 .order("trip_no",{ascending:false})
-
-console.log("Trips returned:",tripData)
 
 if(error){
 
@@ -269,7 +267,14 @@ return
 }
 
 
-/* Get already paid trips */
+/* Filter transporter trips */
+
+let transporterTrips = tripData.filter(t => 
+String(t.transporter_id).trim() === transporterId
+)
+
+
+/* Get paid trips */
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
@@ -290,7 +295,7 @@ paidTrips.push(t.trim())
 })
 
 
-trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
+trips = transporterTrips.filter(t => !paidTrips.includes(t.trip_no))
 
 
 let html=""
@@ -312,6 +317,7 @@ ${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
 `
 
 })
+
 
 if(trips.length==0){
 
@@ -407,6 +413,7 @@ payment_method:method,
 remarks:remarks
 
 })
+
 
 alert("Payment Saved")
 
@@ -557,7 +564,6 @@ p.remarks
 doc.autoTable({
 
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
-
 body:rows
 
 })

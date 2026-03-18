@@ -48,7 +48,6 @@ max-height:200px;
 overflow-y:auto;
 border:1px solid #ddd;
 padding:10px;
-margin-top:10px;
 }
 
 table{
@@ -74,29 +73,25 @@ th{background:#eee;text-align:left;}
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_KEY"
+"YOUR_SUPABASE_KEY"
 )
 
 </script>
 
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-
 </script>
 
 
 <div class="main">
 
 <h2>Transporter Payments</h2>
-
 
 <!-- RECORD PAYMENT -->
 
@@ -106,7 +101,16 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <select id="transporterSelect" onchange="loadTripsByTransporter()"></select>
 
-<div class="trip-list" id="tripList"></div>
+<div class="trip-list">
+
+<div>
+<input type="checkbox" id="selectAll" onclick="toggleAllTrips()">
+<b>Select All</b>
+</div>
+
+<div id="tripList"></div>
+
+</div>
 
 <input id="amount" placeholder="Total Amount" readonly>
 
@@ -206,10 +210,8 @@ let html='<option value="">Select Transporter</option>'
 let search='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
-
 html+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
 search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
-
 })
 
 document.getElementById("transporterSelect").innerHTML=html
@@ -226,14 +228,33 @@ let transporter=document.getElementById("transporterSelect").value
 
 if(!transporter) return
 
-const {data}=await supabaseClient
+
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_name",transporter)
 .eq("status","Completed")
 .order("trip_no",{ascending:false})
 
-trips=data||[]
+
+const {data:payments}=await supabaseClient
+.from("transporter_payments")
+.select("trip_no")
+
+
+let paidTrips=[]
+
+payments.forEach(p=>{
+if(p.trip_no){
+p.trip_no.split(",").forEach(t=>{
+paidTrips.push(t.trim())
+})
+}
+})
+
+
+trips=tripData.filter(t=>!paidTrips.includes(t.trip_no))
+
 
 let html=""
 
@@ -244,11 +265,15 @@ let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
 html+=`
 <div>
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ${t.route} | ₹${payable}
+${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable}
 </div>
 `
 
 })
+
+if(trips.length===0){
+html="<i>No unpaid trips available</i>"
+}
 
 document.getElementById("tripList").innerHTML=html
 
@@ -264,16 +289,27 @@ let checked=document.querySelectorAll("#tripList input:checked")
 let total=0
 
 checked.forEach(c=>{
-
 let trip=trips.find(t=>t.id==c.value)
-
 let payable=(trip.transporter_rate||0)*(trip.weight_kg/1000)
-
 total+=payable
-
 })
 
 document.getElementById("amount").value=total
+
+}
+
+
+/* SELECT ALL */
+
+function toggleAllTrips(){
+
+let checked=document.getElementById("selectAll").checked
+
+document.querySelectorAll("#tripList input").forEach(c=>{
+c.checked=checked
+})
+
+calculateTotal()
 
 }
 
@@ -317,6 +353,7 @@ remarks:remarks
 
 alert("Payment Saved")
 
+loadTripsByTransporter()
 loadPayments()
 
 }
@@ -381,7 +418,7 @@ let to=document.getElementById("toDate").value
 
 payments=allPayments.filter(p=>{
 
-let matchTransporter=!transporter||p.transporter_name===transporter
+let matchTransporter=!transporter || p.transporter_name===transporter
 
 let matchDate=true
 
@@ -444,7 +481,6 @@ let doc=new jsPDF()
 let rows=[]
 
 payments.forEach(p=>{
-
 rows.push([
 p.payment_date,
 p.transporter_name,
@@ -453,7 +489,6 @@ p.amount,
 p.payment_method,
 p.remarks
 ])
-
 })
 
 doc.autoTable({

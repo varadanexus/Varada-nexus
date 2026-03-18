@@ -234,6 +234,17 @@ const {data:role}=await supabaseClient
 
 let roleName=role.role_name.toLowerCase()
 
+/* GENERATE SESSION TOKEN */
+
+let sessionToken = crypto.randomUUID()
+
+await supabaseClient
+.from("users")
+.update({session_token:sessionToken})
+.eq("id",dbUser.id)
+
+localStorage.setItem("erp_session_token",sessionToken)
+
 /* LOGIN TYPE VALIDATION */
 
 if(loginType==="transporter" && roleName!=="customer"){

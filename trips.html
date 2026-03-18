@@ -63,7 +63,7 @@ gap:10px;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_SUPABASE_KEY"
 )
 
 </script>
@@ -306,10 +306,15 @@ let status=document.getElementById("status").value
 
 let tripNo = await generateTripNumber()
 
-/* GET TRANSPORTER FROM TRUCK */
-
 let selectedTruck=trucks.find(t=>t.id==truck)
 let transporterId=selectedTruck?.transporter_id
+
+if(!transporterId){
+
+alert("Truck has no transporter assigned")
+return
+
+}
 
 /* FETCH RATE */
 
@@ -331,7 +336,7 @@ transporterRate=rate[0].transporter_rate_per_mt
 
 }
 
-/* INSERT */
+/* INSERT TRIP */
 
 await supabaseClient.from("trips").insert({
 
@@ -342,6 +347,8 @@ truck:trucks.find(t=>t.id==truck)?.truck_number,
 commodity:commodities.find(c=>c.id==commodity)?.name,
 client_name:clients.find(c=>c.id==client)?.company,
 
+transporter_id:transporterId,
+
 weight_kg:Number(weight),
 trip_date:date,
 status:status,
@@ -350,6 +357,16 @@ company_rate:companyRate,
 transporter_rate:transporterRate
 
 })
+
+/* CLEAR FORM */
+
+document.getElementById("route").value=""
+document.getElementById("truck").value=""
+document.getElementById("commodity").value=""
+document.getElementById("client").value=""
+document.getElementById("weight").value=""
+document.getElementById("tripDate").value=""
+document.getElementById("status").value=""
 
 loadTrips()
 
@@ -403,62 +420,6 @@ document.getElementById("tripTable").innerHTML=html
 
 }
 
-function editTrip(id){
-
-let row=document.getElementById("row_"+id)
-let t=trips.find(x=>x.id==id)
-
-row.innerHTML=`
-
-<td>${t.trip_no}</td>
-<td><input id="route_${id}" value="${t.route}"></td>
-<td><input id="truck_${id}" value="${t.truck}"></td>
-<td><input id="commodity_${id}" value="${t.commodity}"></td>
-<td><input id="client_${id}" value="${t.client_name}"></td>
-<td><input id="weight_${id}" value="${t.weight_kg}"></td>
-<td><input type="date" id="date_${id}" value="${t.trip_date}"></td>
-<td><input id="status_${id}" value="${t.status}"></td>
-
-<td>
-<button class="saveBtn" onclick="saveEdit('${id}')">Save</button>
-<button class="deleteBtn" onclick="deleteTrip('${id}')">Delete</button>
-</td>
-
-`
-
-}
-
-async function saveEdit(id){
-
-await supabaseClient
-.from("trips")
-.update({
-
-route:document.getElementById("route_"+id).value,
-truck:document.getElementById("truck_"+id).value,
-commodity:document.getElementById("commodity_"+id).value,
-client_name:document.getElementById("client_"+id).value,
-weight_kg:Number(document.getElementById("weight_"+id).value),
-trip_date:document.getElementById("date_"+id).value,
-status:document.getElementById("status_"+id).value
-
-})
-.eq("id",id)
-
-loadTrips()
-
-}
-
-async function deleteTrip(id){
-
-if(!confirm("Delete trip?")) return
-
-await supabaseClient.from("trips").delete().eq("id",id)
-
-loadTrips()
-
-}
-
 /* SEARCH */
 
 function searchTrips(){
@@ -487,8 +448,6 @@ trips=allTrips
 renderTrips()
 
 }
-
-/* DOWNLOAD SEARCH RESULT */
 
 function downloadSearchPDF(){
 

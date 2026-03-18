@@ -328,11 +328,70 @@ async function deletePayment(id){
 
 if(!confirm("Delete this payment?")) return
 
+/* GET PAYMENT FIRST */
+
+const {data:payment}=await supabaseClient
+.from("client_payments")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!payment) return
+
+let invoiceId=payment.invoice_id
+
+/* DELETE PAYMENT */
+
 await supabaseClient
 .from("client_payments")
 .delete()
 .eq("id",id)
 
+/* RECALCULATE TOTAL PAID */
+
+const {data:allPayments}=await supabaseClient
+.from("client_payments")
+.select("amount")
+.eq("invoice_id",invoiceId)
+
+let totalPaid=0
+
+allPayments.forEach(p=>{
+totalPaid+=Number(p.amount)
+})
+
+/* GET INVOICE */
+
+const {data:invoice}=await supabaseClient
+.from("client_invoices")
+.select("*")
+.eq("id",invoiceId)
+.single()
+
+let balance=invoice.invoice_amount-totalPaid
+
+let status="Pending"
+
+if(balance<=0){
+status="Paid"
+balance=0
+}
+else if(totalPaid>0){
+status="Partially Paid"
+}
+
+/* UPDATE INVOICE */
+
+await supabaseClient
+.from("client_invoices")
+.update({
+amount_paid:totalPaid,
+balance_amount:balance,
+payment_status:status
+})
+.eq("id",invoiceId)
+
+loadInvoices()
 loadPayments()
 
 }

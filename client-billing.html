@@ -210,8 +210,49 @@ const {data}=await supabaseClient
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
-.is("invoice_id",null)
-.order("trip_no",{ascending:false})   // ✅ FIX: Latest trips first
+.order("trip_no",{ascending:false})
+
+/* REMOVE TRIPS ALREADY INVOICED */
+
+const {data:inv}=await supabaseClient
+.from("client_invoices")
+.select("trip_no")
+
+let invoicedTrips=[]
+
+inv.forEach(i=>{
+if(i.trip_no){
+i.trip_no.split(",").forEach(t=>{
+invoicedTrips.push(t.trim())
+})
+}
+})
+
+trips=data.filter(t=>!invoicedTrips.includes(t.trip_no))
+
+let html=""
+
+trips.forEach(t=>{
+
+html+=`
+<div>
+<input type="checkbox" value="${t.id}">
+${t.trip_no} | ${t.route} | ${t.truck}
+</div>
+`
+
+})
+
+document.getElementById("tripList").innerHTML=html
+
+})
+}
+})
+
+trips=data.filter(t=>!invoicedTrips.includes(t.trip_no)) 
+  
+  
+  // ✅ FIX: Latest trips first
 
 trips=data
 

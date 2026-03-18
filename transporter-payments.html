@@ -1,15 +1,8 @@
 <!DOCTYPE html><html><head><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="menu-rbac.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+.main{margin-left:220px;padding:30px;}
 
 .card{
 background:white;
@@ -35,9 +28,7 @@ border-radius:4px;
 cursor:pointer;
 }
 
-.deleteBtn{
-background:#d9534f;
-}
+.deleteBtn{background:#d9534f;}
 
 .trip-list{
 max-height:220px;
@@ -99,7 +90,8 @@ To <input type="date" id="toDate">
 <button onclick="clearSearch()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div><div class="card"><h3>Payment History</h3><table><thead><tr>
+</div><div class="card"><h3>Payment History</h3><table><thead>
+<tr>
 <th>Date</th>
 <th>Transporter</th>
 <th>Trips</th>
@@ -107,7 +99,8 @@ To <input type="date" id="toDate">
 <th>Method</th>
 <th>Remarks</th>
 <th>Action</th>
-</tr></thead><tbody id="paymentTable"></tbody></table></div></div><script>
+</tr>
+</thead><tbody id="paymentTable"></tbody></table></div></div><script>
 
 let transporters=[]
 let trips=[]
@@ -164,25 +157,29 @@ return
 
 let transporter=transporters.find(t=>t.id==transporterId)
 
-const {data:tripData,error}=await supabaseClient
+/* load ALL trips */
+
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporterId)
 
-if(error){
-console.log(error)
-alert("Trip load error")
-return
-}
+/* filter transporter */
 
-let completedTrips = tripData.filter(t =>
+let transporterTrips=tripData.filter(t=>
+String(t.transporter_id)===String(transporterId)
+)
+
+/* filter completed */
+
+let completedTrips=transporterTrips.filter(t=>
 (t.status || "").toLowerCase().includes("complete")
 )
+
+/* load payments */
 
 const {data:paymentData}=await supabaseClient
 .from("transporter_payments")
 .select("trip_no")
-.eq("transporter_name", transporter.transporter_name)
 
 let paidTrips=[]
 
@@ -190,15 +187,17 @@ paymentData.forEach(p=>{
 
 if(p.trip_no){
 
-p.trip_no.split(",").forEach(t=>{
-paidTrips.push(t.trim())
+p.trip_no.split(",").forEach(tr=>{
+paidTrips.push(tr.trim())
 })
 
 }
 
 })
 
-trips = completedTrips.filter(t => !paidTrips.includes(t.trip_no))
+/* unpaid */
+
+trips=completedTrips.filter(t=>!paidTrips.includes(t.trip_no))
 
 let html=""
 
@@ -207,15 +206,10 @@ trips.forEach(t=>{
 let payable=(t.transporter_rate || 0)*(t.weight_kg/1000)
 
 html+=`
-
 <div>
-
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-
 ${t.trip_no} | ${t.route || ""} | ${t.truck || ""} | ₹${payable.toFixed(2)}
-
 </div>
-
 `
 
 })
@@ -340,24 +334,15 @@ let html=""
 payments.forEach(p=>{
 
 html+=`
-
 <tr>
-
 <td>${p.payment_date || ""}</td>
 <td>${p.transporter_name}</td>
 <td>${p.trip_no}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method}</td>
 <td>${p.remarks || ""}</td>
-
-<td>
-
-<button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
-
-</td>
-
+<td><button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button></td>
 </tr>
-
 `
 
 })
@@ -453,11 +438,8 @@ p.remarks
 })
 
 doc.autoTable({
-
 head:[["Date","Transporter","Trips","Amount","Method","Remarks"]],
-
 body:rows
-
 })
 
 doc.save("transporter_payments.pdf")

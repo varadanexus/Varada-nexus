@@ -152,3 +152,41 @@ window.onpopstate = function () {
 window.history.go(1);
 
 };
+
+/* ACTIVITY TIMEOUT (15 MINUTES) */
+
+let inactivityTimer;
+
+/* logout function */
+
+async function autoLogout(){
+
+await supabaseClient.auth.signOut();
+
+alert("Session expired due to inactivity.");
+
+window.location.href = "login.html";
+
+}
+
+/* reset timer on activity */
+
+function resetInactivityTimer(){
+
+clearTimeout(inactivityTimer);
+
+inactivityTimer = setTimeout(autoLogout, 15 * 60 * 1000); // 15 minutes
+
+}
+
+/* detect user activity */
+
+window.onload = resetInactivityTimer;
+
+document.onmousemove = resetInactivityTimer;
+
+document.onkeypress = resetInactivityTimer;
+
+document.onclick = resetInactivityTimer;
+
+document.onscroll = resetInactivityTimer;

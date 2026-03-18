@@ -77,6 +77,23 @@ height:28px;
 width:auto;
 }
 
+.user-box{
+padding:12px 20px;
+border-bottom:1px solid rgba(255,255,255,0.2);
+margin-bottom:10px;
+}
+
+#userName{
+font-size:14px;
+font-weight:bold;
+}
+
+#userRole{
+font-size:12px;
+opacity:0.8;
+text-transform:capitalize;
+}
+
 .sidebar a{
 display:block;
 color:white;
@@ -131,6 +148,48 @@ link.classList.add("active")
 }
 
 
+/* LOAD USER NAME + ROLE */
+
+async function loadUserInfo(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId=session.user.id
+
+/* GET USER */
+
+const {data:user}=await supabaseClient
+.from("users")
+.select("id,name")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* GET ROLE */
+
+const {data:userRole}=await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+document.getElementById("userName").innerText=user.name
+document.getElementById("userRole").innerText=role.role_name
+
+}
+
+
 /* SIDEBAR RBAC */
 
 async function applySidebarRBAC(){
@@ -143,8 +202,6 @@ if(!session) return
 
 const authId=session.user.id
 
-/* FIND ERP USER */
-
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
@@ -152,8 +209,6 @@ const {data:user}=await supabaseClient
 .single()
 
 if(!user) return
-
-/* GET USER ROLE */
 
 const {data:userRole}=await supabaseClient
 .from("user_roles")
@@ -165,8 +220,6 @@ if(!userRole) return
 
 let roleId=userRole.role_id
 
-/* GET ALLOWED PAGES */
-
 const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("page_name")
@@ -176,8 +229,6 @@ const {data:permissions}=await supabaseClient
 if(!permissions) return
 
 const allowedPages=permissions.map(p=>p.page_name)
-
-/* HIDE UNAUTHORIZED MENUS */
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
@@ -203,13 +254,9 @@ console.log("Sidebar RBAC error:",err)
 async function logout(){
 
 try{
-
 await supabaseClient.auth.signOut()
-
 }catch(e){
-
 console.log(e)
-
 }
 
 localStorage.clear()
@@ -227,6 +274,8 @@ window.addEventListener("load", async ()=>{
 highlightActivePage()
 
 await applySidebarRBAC()
+
+await loadUserInfo()
 
 })
 

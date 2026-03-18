@@ -2,11 +2,11 @@
 <html>
 
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+
 <title>Role Permissions - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -93,32 +93,8 @@ font-weight:bold;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_SUPABASE_ANON_KEY"
 )
-
-/* LOGIN CHECK */
-
-async function checkLogin(){
-
-const {data}=await supabaseClient.auth.getSession()
-
-if(!data.session){
-window.location.href="login.html"
-return
-}
-
-}
-
-checkLogin()
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-
-}
 
 </script>
 

@@ -24,6 +24,7 @@ background:#f4f6f9;
 .main{
 margin-left:220px;
 padding:30px;
+margin-top:20px;
 }
 
 .card{
@@ -36,6 +37,7 @@ max-width:600px;
 
 h2{
 color:#1f3c88;
+margin-bottom:20px;
 }
 
 input,textarea{
@@ -79,6 +81,43 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+/* CHECK LOGIN */
+
+async function checkLogin(){
+
+const {data} = await supabaseClient.auth.getSession()
+
+if(!data.session){
+window.location.href="login.html"
+return
+}
+
+return data.session
+
+}
+
+/* ADMIN ACCESS CHECK */
+
+async function checkAdmin(){
+
+const session = await checkLogin()
+
+if(!session) return
+
+const {data:user}=await supabaseClient
+.from("users")
+.select("is_admin")
+.eq("auth_id",session.user.id)
+.single()
+
+if(!user?.is_admin){
+window.location.href="dashboard.html"
+}
+
+}
+
+checkAdmin()
+
 /* LOGOUT */
 
 async function logout(){
@@ -86,12 +125,14 @@ async function logout(){
 await supabaseClient.auth.signOut()
 
 localStorage.clear()
+sessionStorage.clear()
 
 window.location.href="login.html"
 
 }
 
 </script>
+
 
 <!-- SIDEBAR -->
 
@@ -105,15 +146,20 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML=data
 
+/* APPLY RBAC */
+
 setTimeout(()=>{
+
 if(typeof applyMenuRBAC === "function"){
 applyMenuRBAC()
 }
+
 },300)
 
 })
 
 </script>
+
 
 <!-- MAIN CONTENT -->
 
@@ -151,7 +197,10 @@ applyMenuRBAC()
 
 </div>
 
+
 <script>
+
+/* LOAD SETTINGS */
 
 loadSettings()
 
@@ -166,12 +215,13 @@ const {data}=await supabaseClient
 if(!data) return
 
 document.getElementById("maintenanceToggle").checked = data.maintenance_mode
-
 document.getElementById("message").value = data.message || ""
 
 updateStatus(data.maintenance_mode)
 
 }
+
+/* STATUS TEXT */
 
 function updateStatus(mode){
 
@@ -187,10 +237,12 @@ updateStatus(this.checked)
 
 })
 
+
+/* SAVE SETTINGS */
+
 async function saveMaintenance(){
 
 let mode=document.getElementById("maintenanceToggle").checked
-
 let message=document.getElementById("message").value
 
 await supabaseClient
@@ -204,6 +256,9 @@ message:message
 alert("Maintenance Settings Updated")
 
 }
+
+
+/* FORCE LOGOUT ALL USERS */
 
 async function forceLogout(){
 

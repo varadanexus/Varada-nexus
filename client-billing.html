@@ -202,6 +202,7 @@ const {data}=await supabaseClient
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
+.order("trip_no",{ascending:false})   // ✅ FIX: Latest trips first
 
 trips=data
 

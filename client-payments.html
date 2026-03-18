@@ -45,6 +45,10 @@ border-radius:4px;
 cursor:pointer;
 }
 
+.deleteBtn{
+background:#d9534f;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -145,6 +149,7 @@ applyMenuRBAC()
 <th>Amount</th>
 <th>Method</th>
 <th>Remarks</th>
+<th>Action</th>
 </tr>
 
 </thead>
@@ -303,12 +308,32 @@ html+=`
 
 <td>${p.remarks || ""}</td>
 
+<td>
+<button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
+</td>
+
 </tr>
 `
 
 })
 
 document.getElementById("paymentTable").innerHTML=html
+
+}
+
+
+/* DELETE PAYMENT */
+
+async function deletePayment(id){
+
+if(!confirm("Delete this payment?")) return
+
+await supabaseClient
+.from("client_payments")
+.delete()
+.eq("id",id)
+
+loadPayments()
 
 }
 

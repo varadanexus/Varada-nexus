@@ -1,6 +1,19 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Dashboard - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><!-- RBAC SCRIPT --><script src="menu-rbac.js"></script><style>
+<!DOCTYPE html>
+<html>
+<head>
 
+<title>Dashboard - Varada Nexus ERP</title>
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- CORE SCRIPTS (ORDER VERY IMPORTANT) -->
+<script src="session-check.js"></script>
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
+
+<style>
 body{
 margin:0;
 font-family:Arial;
@@ -25,68 +38,63 @@ padding:20px;
 border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
+</style>
 
-</style></head><body><script>
+</head>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+<body>
 
-/* LOGIN CHECK */
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
-async function checkLogin(){
-
-const {data} = await supabaseClient.auth.getSession()
-
-if(!data.session){
-window.location.href="login.html"
-return
-}
-
-}
-
-checkLogin()
-
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
-
+<script>
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
-
 document.getElementById("sidebar-container").innerHTML=data
-
-/* APPLY RBAC AFTER SIDEBAR LOAD */
-
-setTimeout(()=>{
-
-if(typeof applyMenuRBAC === "function"){
-applyMenuRBAC()
-}
-
-},300)
-
 })
+</script>
 
-</script><!-- MAIN CONTENT --><div class="main"><h1>Dashboard</h1><div class="card-container"><div class="card">
+<!-- MAIN -->
+<div class="main">
+<h1>Dashboard</h1>
+
+<div class="card-container">
+
+<div class="card">
 <h3>Total Trips</h3>
 <p id="totalTrips">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Company Amount</h3>
 <p id="totalRevenue">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Transporter Amount</h3>
 <p id="totalCost">0</p>
-</div><div class="card">
+</div>
+
+<div class="card">
 <h3>Total Profit</h3>
 <p id="totalProfit">0</p>
-</div></div></div><script>
+</div>
+
+</div>
+</div>
+
+<script>
+
+/* USE GLOBAL CLIENT (IMPORTANT) */
+const supabaseClient = window.supabaseClient
 
 /* LOAD DASHBOARD */
-
-loadDashboard()
+window.addEventListener("load", loadDashboard)
 
 async function loadDashboard(){
+
+try{
 
 const {data:trips} = await supabaseClient
 .from("trips")
@@ -113,7 +121,7 @@ expenseMap[e.trip_id]+=Number(e.amount)
 
 tripsData.forEach(trip=>{
 
-let mt = trip.weight_kg/1000
+let mt = (trip.weight_kg || 0)/1000
 let expense = expenseMap[trip.id] || 0
 
 let companyAmount = (trip.company_rate*mt) - expense
@@ -121,29 +129,24 @@ let transporterAmount = (trip.transporter_rate*mt) - expense
 
 let profit = companyAmount - transporterAmount
 
-totalRevenue += companyAmount
-totalCost += transporterAmount
-totalProfit += profit
+totalRevenue += companyAmount || 0
+totalCost += transporterAmount || 0
+totalProfit += profit || 0
 
 })
 
 document.getElementById("totalTrips").innerText = totalTrips
-document.getElementById("totalRevenue").innerText = "₹ "+totalRevenue.toLocaleString()
-document.getElementById("totalCost").innerText = "₹ "+totalCost.toLocaleString()
-document.getElementById("totalProfit").innerText = "₹ "+totalProfit.toLocaleString()
+document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()
+document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost).toLocaleString()
+document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit).toLocaleString()
+
+}catch(err){
+console.log("Dashboard error:",err)
+}
 
 }
 
-/* LOGOUT */
+</script>
 
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
-}
-
-</script><script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script></body></html>
+</body>
+</html>

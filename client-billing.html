@@ -88,7 +88,18 @@ fetch("sidebar.html")
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* 🔥 CRITICAL FIX (same as trips page) */
+/* 🔥 FORCE SCRIPT EXECUTION FIX */
+
+let scripts = document.getElementById("sidebar-container").querySelectorAll("script")
+
+scripts.forEach(oldScript=>{
+let newScript = document.createElement("script")
+newScript.text = oldScript.innerHTML
+document.body.appendChild(newScript)
+})
+
+/* NOW APPLY RBAC */
+
 setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()

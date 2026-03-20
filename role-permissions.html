@@ -151,10 +151,30 @@ loadPermissions()
 
 /* LOAD DATA */
 
+/* LOAD DATA */
+
 async function loadPermissions(){
 
-const {data:roles}=await supabaseClient.from("roles").select("*")
-const {data:perms}=await supabaseClient.from("role_permissions").select("*")
+try{
+
+console.log("Loading permissions...")
+
+const {data:roles,error:rErr}=await supabaseClient.from("roles").select("*")
+const {data:perms,error:pErr}=await supabaseClient.from("role_permissions").select("*")
+
+console.log("Roles:",roles)
+console.log("Permissions:",perms)
+
+if(rErr || pErr){
+console.error("DB Error",rErr,pErr)
+alert("Error loading data")
+return
+}
+
+if(!roles || roles.length===0){
+permTable.innerHTML="<tr><td>No Roles Found</td></tr>"
+return
+}
 
 let html=`<thead><tr><th>Role</th>`
 
@@ -162,7 +182,7 @@ pages.forEach(p=>{ html+=`<th>${p.name}</th>` })
 
 html+=`</tr></thead><tbody>`
 
-roles?.forEach(role=>{
+roles.forEach(role=>{
 
 html+=`<tr><td class="role-name">${role.role_name}</td>`
 
@@ -172,17 +192,17 @@ html+=`<td style="text-align:left">`
 
 actions.forEach(a=>{
 
-let existing=perms?.find(x=>
-String(x.role_id)==String(role.id) &&
-x.page_name==p.file &&
-(x.action_name || "view")==a
+let existing = perms?.find(x =>
+String(x.role_id)===String(role.id) &&
+x.page_name===p.file &&
+(x.action_name || "view")===a
 )
 
 html+=`
 <label style="display:block">
 <input type="checkbox"
 id="${role.id}_${p.file}_${a}"
-${existing?.can_access?"checked":""}>
+${existing && existing.can_access ? "checked":""}>
  ${a}
 </label>
 `
@@ -197,7 +217,17 @@ html+=`</tr>`
 
 html+=`</tbody>`
 
-permTable.innerHTML=html
+document.getElementById("permTable").innerHTML = html
+
+console.log("Table rendered ✅")
+
+}catch(err){
+
+console.error("LOAD ERROR:",err)
+alert("Error loading permissions")
+
+}
+
 }
 
 /* SAVE (UPSERT SAFE) */

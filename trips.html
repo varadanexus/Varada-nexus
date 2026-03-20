@@ -3,13 +3,12 @@
 
 <head>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="session-check.js"></script>
-
 <title>Trips - Varada Nexus ERP</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="menu-rbac.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -33,6 +32,8 @@ th{background:#eee;text-align:left;}
 
 <script>
 
+/* SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -44,29 +45,64 @@ const supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>
 
 <script>
+
+/* ✅ STANDARD (same as dashboard) */
+
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-/* 🔥 CRITICAL FIX */
-setTimeout(async ()=>{
-
-if(typeof loadUserInfo==="function"){
-await loadUserInfo()
-}
-
-if(typeof applySidebarRBAC==="function"){
-await applySidebarRBAC()
-}
-
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-
-},300)
-
+await initSidebar()
 })
+
+/* ✅ SAME AS DASHBOARD */
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
 </script>
 
 <div class="main">
@@ -165,6 +201,7 @@ await loadTrips()
 }
 
 /* TRIP NUMBER */
+
 async function generateTripNumber(){
 
 let today=new Date()
@@ -190,7 +227,7 @@ seq=(parseInt(last)+1).toString().padStart(4,"0")
 return prefix+seq
 }
 
-/* LOADS (unchanged) */
+/* LOADS */
 
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
@@ -241,7 +278,7 @@ html+=`<option value="${c.id}">${c.company}</option>`
 document.getElementById("client").innerHTML=html
 }
 
-/* 🔥 FIXED SAVE TRIP */
+/* SAVE TRIP (WITH RATES) */
 
 async function saveTrip(){
 
@@ -263,7 +300,7 @@ alert("Truck has no transporter assigned")
 return
 }
 
-/* 🔥 GET RATE */
+/* GET RATE */
 
 const {data:rate}=await supabaseClient
 .from("rates")
@@ -313,12 +350,15 @@ document.getElementById("status").value=""
 loadTrips()
 }
 
-/* REST SAME */
+/* LOAD TRIPS */
 
 async function loadTrips(){
-const {data}=await supabaseClient.from("trips").select("*").order("created_at",{ascending:false})
-trips=data
-allTrips=data
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+trips=data||[]
+allTrips=data||[]
 renderTrips()
 }
 

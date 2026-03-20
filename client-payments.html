@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 
-<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+<head>
 
 <title>Client Payments - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -74,6 +75,8 @@ text-align:left;
 
 <script>
 
+/* SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -81,34 +84,71 @@ const supabaseClient = supabase.createClient(
 
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
 
+/* ✅ SAME STRUCTURE AS DASHBOARD */
+
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-},300)
-
+await initSidebar()
 })
 
-</script>
+async function initSidebar(){
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
 
 <div class="main">
 
 <h2>Client Payments</h2>
-
 
 <div class="card">
 
@@ -121,11 +161,9 @@ applyMenuRBAC()
 <input type="date" id="paymentDate">
 
 <select id="method">
-
 <option value="Cash">Cash</option>
 <option value="Bank Transfer">Bank Transfer</option>
 <option value="UPI">UPI</option>
-
 </select>
 
 <input id="remarks" placeholder="Remarks">
@@ -134,7 +172,6 @@ applyMenuRBAC()
 
 </div>
 
-
 <div class="card">
 
 <h3>Payment History</h3>
@@ -142,7 +179,6 @@ applyMenuRBAC()
 <table>
 
 <thead>
-
 <tr>
 <th>Date</th>
 <th>Invoice</th>
@@ -152,7 +188,6 @@ applyMenuRBAC()
 <th>Remarks</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody id="paymentTable"></tbody>
@@ -163,7 +198,6 @@ applyMenuRBAC()
 
 </div>
 
-
 <script>
 
 let invoices=[]
@@ -172,12 +206,9 @@ let payments=[]
 init()
 
 async function init(){
-
 await loadInvoices()
 await loadPayments()
-
 }
-
 
 /* LOAD INVOICES */
 
@@ -189,26 +220,19 @@ const {data}=await supabaseClient
 
 invoices=data || []
 
-/* SHOW ONLY INVOICES WITH BALANCE */
-
 let pendingInvoices = invoices.filter(i => Number(i.balance_amount) > 0)
 
 let html='<option value="">Select Invoice</option>'
 
 pendingInvoices.forEach(i=>{
-
 html+=`
 <option value="${i.id}">
 ${i.invoice_no} | ${i.client_name} | Balance ₹${i.balance_amount}
-</option>
-`
-
+</option>`
 })
 
 document.getElementById("invoiceSelect").innerHTML=html
-
 }
-
 
 /* SAVE PAYMENT */
 
@@ -235,18 +259,11 @@ let status="Pending"
 if(balance<=0){
 status="Paid"
 balance=0
-}
-else if(newPaid>0){
+}else if(newPaid>0){
 status="Partially Paid"
 }
 
-
-/* INSERT PAYMENT */
-
-await supabaseClient
-.from("client_payments")
-.insert({
-
+await supabaseClient.from("client_payments").insert({
 invoice_id:invoiceId,
 invoice_no:invoice.invoice_no,
 client_name:invoice.client_name,
@@ -254,22 +271,13 @@ amount:amount,
 payment_date:date,
 payment_method:method,
 remarks:remarks
-
 })
 
-
-/* UPDATE INVOICE */
-
-await supabaseClient
-.from("client_invoices")
-.update({
-
+await supabaseClient.from("client_invoices").update({
 amount_paid:newPaid,
 balance_amount:balance,
 payment_status:status
-
-})
-.eq("id",invoiceId)
+}).eq("id",invoiceId)
 
 alert("Payment Recorded")
 
@@ -278,9 +286,7 @@ document.getElementById("remarks").value=""
 
 await loadInvoices()
 await loadPayments()
-
 }
-
 
 /* LOAD PAYMENTS */
 
@@ -296,37 +302,24 @@ payments=data || []
 let html=""
 
 payments.forEach(p=>{
-
 html+=`
 <tr>
-
 <td>${p.payment_date || ""}</td>
-
 <td>${p.invoice_no}</td>
-
 <td>${p.client_name}</td>
-
 <td>₹${p.amount}</td>
-
 <td>${p.payment_method}</td>
-
 <td>${p.remarks || ""}</td>
-
 <td>
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
 </td>
-
-</tr>
-`
-
+</tr>`
 })
 
 document.getElementById("paymentTable").innerHTML=html
-
 }
 
-
-/* DELETE PAYMENT */
+/* DELETE */
 
 async function deletePayment(id){
 
@@ -342,12 +335,7 @@ if(!payment) return
 
 let invoiceId=payment.invoice_id
 
-await supabaseClient
-.from("client_payments")
-.delete()
-.eq("id",id)
-
-/* GET REMAINING PAYMENTS */
+await supabaseClient.from("client_payments").delete().eq("id",id)
 
 const {data:allPayments}=await supabaseClient
 .from("client_payments")
@@ -355,16 +343,7 @@ const {data:allPayments}=await supabaseClient
 .eq("invoice_id",invoiceId)
 
 let totalPaid=0
-
-if(allPayments){
-
-allPayments.forEach(p=>{
-totalPaid += Number(p.amount)
-})
-
-}
-
-/* GET INVOICE */
+allPayments?.forEach(p=>totalPaid+=Number(p.amount))
 
 const {data:invoice}=await supabaseClient
 .from("client_invoices")
@@ -377,7 +356,6 @@ let balance = invoice.invoice_amount - totalPaid
 let status="Pending"
 
 if(totalPaid===0){
-status="Pending"
 balance=invoice.invoice_amount
 }
 else if(balance<=0){
@@ -388,29 +366,21 @@ else{
 status="Partially Paid"
 }
 
-/* UPDATE INVOICE */
-
-await supabaseClient
-.from("client_invoices")
-.update({
+await supabaseClient.from("client_invoices").update({
 amount_paid:totalPaid,
 balance_amount:balance,
 payment_status:status
-})
-.eq("id",invoiceId)
-
-/* REFRESH */
+}).eq("id",invoiceId)
 
 await loadInvoices()
 await loadPayments()
-
 }
 
 </script>
 
-
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

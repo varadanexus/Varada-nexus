@@ -2,25 +2,16 @@
 <html>
 
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+
 <title>Financial Dashboard - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
 
 .cards{
 display:grid;
@@ -33,7 +24,6 @@ margin-bottom:30px;
 background:white;
 padding:20px;
 border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .card h3{
@@ -45,7 +35,6 @@ color:#1f3c88;
 font-size:22px;
 font-weight:bold;
 }
-
 </style>
 
 </head>
@@ -53,37 +42,60 @@ font-weight:bold;
 <body>
 
 <script>
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+})
 
-setTimeout(()=>{
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId=session.user.id
+const email=session.user.email
+
+document.getElementById("userName").innerText=email.split("@")[0]
+
+const {data:user}=await supabaseClient
+.from("users").select("id").eq("auth_id",authId).single()
+
+if(!user) return
+
+const {data:userRole}=await supabaseClient
+.from("user_roles").select("role_id").eq("user_id",user.id).single()
+
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles").select("role_name").eq("id",userRole.role_id).single()
+
+if(role){
+document.getElementById("userRole").innerText=role.role_name
+}
+
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
-},300)
 
-})
-
+window.logout=async()=>{
+await supabaseClient.auth.signOut()
+window.location="login.html"
+}
+}
 </script>
-
 
 <div class="main">
 
@@ -125,106 +137,104 @@ applyMenuRBAC()
 
 </div>
 
-
 <script>
 
-init()
+window.onload = init
 
 async function init(){
 
-await loadFinancials()
+try{
+
+const [
+{data:invoices},
+{data:trips},
+{data:expenses},
+{data:payments}
+] = await Promise.all([
+
+supabaseClient.from("client_invoices").select("*"),
+supabaseClient.from("trips").select("*"),
+supabaseClient.from("expenses").select("*"),
+supabaseClient.from("transporter_payments").select("*")
+
+])
+
+calculate(invoices||[], trips||[], expenses||[], payments||[])
+
+}catch(err){
+console.error("Load Error:",err)
+}
 
 }
 
-async function loadFinancials(){
-
-/* CLIENT REVENUE */
-
-const {data:invoices}=await supabaseClient
-.from("client_invoices")
-.select("*")
+function calculate(invoices,trips,expenses,payments){
 
 let revenue=0
 let clientOutstanding=0
-
-invoices.forEach(i=>{
-
-revenue+=Number(i.invoice_amount || 0)
-
-clientOutstanding+=Number(i.balance_amount || 0)
-
-})
-
-
-/* TRANSPORTER PAYABLE FROM TRIPS */
-
-const {data:trips}=await supabaseClient
-.from("trips")
-.select("*")
-
-const {data:expenses}=await supabaseClient
-.from("expenses")
-.select("*")
-
 let transporterCost=0
 let totalExpenses=0
-
-trips.forEach(t=>{
-
-let mt=t.weight_kg/1000
-
-let gross=t.transporter_rate*mt
-
-let tripExpense=expenses
-.filter(e=>e.trip_id==t.id)
-.reduce((sum,e)=>sum+Number(e.amount),0)
-
-let net=gross-tripExpense
-
-transporterCost+=net
-
-})
-
-
-expenses.forEach(e=>{
-totalExpenses+=Number(e.amount)
-})
-
-
-/* TRANSPORTER PAYMENTS */
-
-const {data:payments}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-
 let paid=0
 
+/* EXPENSE MAP */
+
+let expenseMap={}
+
+expenses.forEach(e=>{
+totalExpenses+=Number(e.amount||0)
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
+
+/* REVENUE */
+
+invoices.forEach(i=>{
+revenue+=Number(i.invoice_amount||0)
+clientOutstanding+=Number(i.balance_amount||0)
+})
+
+/* TRANSPORTER COST */
+
+trips.forEach(t=>{
+let mt=(Number(t.weight_kg)||0)/1000
+let gross=(Number(t.transporter_rate)||0)*mt
+let tripExpense=expenseMap[t.id]||0
+transporterCost+=(gross-tripExpense)
+})
+
+/* PAYMENTS */
+
 payments.forEach(p=>{
-paid+=Number(p.amount)
+paid+=Number(p.amount||0)
 })
 
 let transporterPayable=transporterCost-paid
-
-
-/* PROFIT */
-
 let profit=revenue-transporterCost
 
+/* UI */
 
-document.getElementById("revenue").innerText="₹ "+revenue.toLocaleString()
-document.getElementById("transporterCost").innerText="₹ "+transporterCost.toLocaleString()
-document.getElementById("expenses").innerText="₹ "+totalExpenses.toLocaleString()
-document.getElementById("profit").innerText="₹ "+profit.toLocaleString()
-document.getElementById("clientOutstanding").innerText="₹ "+clientOutstanding.toLocaleString()
-document.getElementById("transporterPayable").innerText="₹ "+transporterPayable.toLocaleString()
+revenueEl.innerText="₹ "+Math.round(revenue).toLocaleString()
+transporterCostEl.innerText="₹ "+Math.round(transporterCost).toLocaleString()
+expensesEl.innerText="₹ "+Math.round(totalExpenses).toLocaleString()
+profitEl.innerText="₹ "+Math.round(profit).toLocaleString()
+clientOutstandingEl.innerText="₹ "+Math.round(clientOutstanding).toLocaleString()
+transporterPayableEl.innerText="₹ "+Math.round(transporterPayable).toLocaleString()
 
 }
 
+/* SHORTCUT ELEMENTS */
+
+const revenueEl=document.getElementById("revenue")
+const transporterCostEl=document.getElementById("transporterCost")
+const expensesEl=document.getElementById("expenses")
+const profitEl=document.getElementById("profit")
+const clientOutstandingEl=document.getElementById("clientOutstanding")
+const transporterPayableEl=document.getElementById("transporterPayable")
+
 </script>
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
 
 </body>
-
 </html>

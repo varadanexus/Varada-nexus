@@ -6,6 +6,10 @@
 <title>Dashboard - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 🔥 RBAC MUST LOAD FIRST -->
+<script src="rbac.js"></script>
+
 <script src="session-check.js"></script>
 
 <style>
@@ -86,7 +90,7 @@ const supabaseClient = supabase.createClient(
 
 <script>
 
-/* LOAD SIDEBAR + APPLY RBAC */
+/* LOAD SIDEBAR + RBAC */
 
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -98,6 +102,7 @@ await new Promise(r => setTimeout(r, 200))
 
 await initSidebar()
 
+/* APPLY MENU RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
@@ -126,7 +131,7 @@ const {data:user} = await supabaseClient
 
 if(!user) return
 
-/* MULTI ROLE SUPPORT */
+/* MULTI ROLE */
 const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
@@ -216,7 +221,6 @@ loadDashboard()
 
 </script>
 
-<script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
 

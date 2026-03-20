@@ -7,7 +7,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
-<script src="menu-rbac.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -39,13 +38,11 @@ fetch("sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR SIDEBAR RENDER */
+/* WAIT FOR SIDEBAR */
 await new Promise(r => setTimeout(r, 200))
 
-/* LOAD USER + ROLE */
 await initSidebar()
 
-/* APPLY RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
@@ -66,27 +63,21 @@ const {data:user}=await supabaseClient
 
 if(!user) return
 
-const {data:userRole}=await supabaseClient
-.from("user_roles").select("role_id").eq("user_id",user.id).single()
+/* ✅ MULTI ROLE FIX */
+const {data:userRoles}=await supabaseClient
+.from("user_roles").select("role_id").eq("user_id",user.id)
 
-if(!userRole) return
+if(!userRoles || userRoles.length===0) return
+
+let roleId=userRoles[0].role_id
 
 const {data:role}=await supabaseClient
-.from("roles").select("role_name").eq("id",userRole.role_id).single()
+.from("roles").select("role_name").eq("id",roleId).single()
 
 if(role){
 document.getElementById("userRole").innerText=role.role_name
 }
 
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-
-window.logout=async()=>{
-await supabaseClient.auth.signOut()
-localStorage.clear()
-window.location="login.html"
-}
 }
 </script>
 
@@ -223,6 +214,8 @@ alert("Error logging out users")
 }
 
 </script>
+
+<!-- 🔥 RBAC MUST BE LAST -->
 
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>

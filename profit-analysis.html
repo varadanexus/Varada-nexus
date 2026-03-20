@@ -5,57 +5,19 @@
 
 <title>Profit Analysis - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:6px;
-margin-bottom:20px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-text-align:center;
-}
-
-th{
-background:#eee;
-}
-
-.profit{
-color:green;
-font-weight:bold;
-}
-
-.loss{
-color:red;
-font-weight:bold;
-}
-
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+.card{background:white;padding:20px;border-radius:6px;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center;}
+th{background:#eee;}
+.profit{color:green;font-weight:bold;}
+.loss{color:red;font-weight:bold;}
 </style>
 
 </head>
@@ -63,37 +25,60 @@ font-weight:bold;
 <body>
 
 <script>
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+})
 
-setTimeout(()=>{
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId=session.user.id
+const email=session.user.email
+
+document.getElementById("userName").innerText=email.split("@")[0]
+
+const {data:user}=await supabaseClient
+.from("users").select("id").eq("auth_id",authId).single()
+
+if(!user) return
+
+const {data:userRole}=await supabaseClient
+.from("user_roles").select("role_id").eq("user_id",user.id).single()
+
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles").select("role_name").eq("id",userRole.role_id).single()
+
+if(role){
+document.getElementById("userRole").innerText=role.role_name
+}
+
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
-},300)
 
-})
-
+window.logout=async()=>{
+await supabaseClient.auth.signOut()
+window.location="login.html"
+}
+}
 </script>
-
 
 <div class="main">
 
@@ -104,7 +89,6 @@ applyMenuRBAC()
 <table>
 
 <thead>
-
 <tr>
 <th>Trip</th>
 <th>Route</th>
@@ -115,7 +99,6 @@ applyMenuRBAC()
 <th>Transporter Amount</th>
 <th>Profit</th>
 </tr>
-
 </thead>
 
 <tbody id="profitTable"></tbody>
@@ -126,76 +109,66 @@ applyMenuRBAC()
 
 </div>
 
-
 <script>
 
 let trips=[]
 let expenses=[]
 
-init()
+window.onload = init
 
 async function init(){
 
-await loadTrips()
-await loadExpenses()
-renderProfit()
+try{
 
-}
-
-
-/* LOAD TRIPS */
-
-async function loadTrips(){
-
-const {data}=await supabaseClient
+const {data:tripData} = await supabaseClient
 .from("trips")
 .select("*")
 .order("created_at",{ascending:false})
 
-trips=data || []
-
-}
-
-
-/* LOAD EXPENSES */
-
-async function loadExpenses(){
-
-const {data}=await supabaseClient
+const {data:expenseData} = await supabaseClient
 .from("expenses")
 .select("*")
 
-expenses=data || []
+trips = tripData || []
+expenses = expenseData || []
+
+renderProfit()
+
+}catch(err){
+console.error("Init Error:",err)
+}
 
 }
 
-
-/* CALCULATE PROFIT */
+/* FAST EXPENSE MAP */
 
 function renderProfit(){
+
+let expenseMap={}
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
 
 let html=""
 
 trips.forEach(t=>{
 
-let wtMT=(t.weight_kg || 0)/1000
+let wtMT = (Number(t.weight_kg)||0)/1000
+let tripExpenses = expenseMap[t.id] || 0
 
-let tripExpenses = expenses
-.filter(e => e.trip_id === t.id)
-.reduce((sum,e)=> sum + Number(e.amount || 0),0)
+let companyRate = Number(t.company_rate)||0
+let transporterRate = Number(t.transporter_rate)||0
 
-let companyAmount = (wtMT*(t.company_rate || 0)) - tripExpenses
-
-let transporterAmount = (wtMT*(t.transporter_rate || 0)) - tripExpenses
-
+let companyAmount = (wtMT*companyRate) - tripExpenses
+let transporterAmount = (wtMT*transporterRate) - tripExpenses
 let profit = companyAmount - transporterAmount
 
 let profitClass = profit >= 0 ? "profit" : "loss"
 
 html+=`
-
 <tr>
-
 <td>${t.trip_no}</td>
 <td>${t.route}</td>
 <td>${t.client_name}</td>
@@ -204,9 +177,7 @@ html+=`
 <td>₹${companyAmount.toFixed(2)}</td>
 <td>₹${transporterAmount.toFixed(2)}</td>
 <td class="${profitClass}">₹${profit.toFixed(2)}</td>
-
 </tr>
-
 `
 
 })
@@ -216,8 +187,10 @@ document.getElementById("profitTable").innerHTML=html
 }
 
 </script>
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

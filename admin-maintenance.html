@@ -3,69 +3,20 @@
 
 <head>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
-
 <title>System Maintenance Control - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<!-- RBAC -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
-
-.card{
-background:white;
-padding:25px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-max-width:600px;
-}
-
-h2{
-color:#1f3c88;
-}
-
-input,textarea{
-width:100%;
-padding:10px;
-margin-top:10px;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
-button{
-margin-top:15px;
-padding:10px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-.toggle{
-font-size:16px;
-margin-top:15px;
-}
-
-.status{
-margin-top:10px;
-font-weight:bold;
-}
-
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+.card{background:white;padding:25px;border-radius:8px;max-width:600px;}
+h2{color:#1f3c88;}
+input,textarea{width:100%;padding:10px;margin-top:10px;border:1px solid #ccc;border-radius:4px;}
+button{margin-top:15px;padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
+.status{margin-top:10px;font-weight:bold;}
 </style>
 
 </head>
@@ -73,49 +24,61 @@ font-weight:bold;
 <body>
 
 <script>
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-localStorage.clear()
-
-window.location.href="login.html"
-
-}
-
 </script>
 
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC === "function"){
-applyMenuRBAC()
-}
-},300)
-
+await initSidebar()
 })
 
-</script>
+async function initSidebar(){
 
-<!-- MAIN CONTENT -->
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId=session.user.id
+const email=session.user.email
+
+document.getElementById("userName").innerText=email.split("@")[0]
+
+const {data:user}=await supabaseClient
+.from("users").select("id").eq("auth_id",authId).single()
+
+if(!user) return
+
+const {data:userRole}=await supabaseClient
+.from("user_roles").select("role_id").eq("user_id",user.id).single()
+
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles").select("role_name").eq("id",userRole.role_id).single()
+
+if(role){
+document.getElementById("userRole").innerText=role.role_name
+}
+
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+
+window.logout=async()=>{
+await supabaseClient.auth.signOut()
+localStorage.clear()
+window.location="login.html"
+}
+}
+</script>
 
 <div class="main">
 
@@ -123,12 +86,9 @@ applyMenuRBAC()
 
 <div class="card">
 
-<label class="toggle">
-
+<label>
 <input type="checkbox" id="maintenanceToggle">
-
  Enable Maintenance Mode
-
 </label>
 
 <div class="status" id="statusText"></div>
@@ -136,10 +96,7 @@ applyMenuRBAC()
 <br>
 
 <label>Maintenance Message</label>
-
 <textarea id="message" rows="4"></textarea>
-
-<br>
 
 <button onclick="saveMaintenance()">Save Settings</button>
 
@@ -153,61 +110,83 @@ applyMenuRBAC()
 
 <script>
 
-loadSettings()
+/* INIT */
+window.onload = loadSettings
+
+/* LOAD SETTINGS */
 
 async function loadSettings(){
 
-const {data}=await supabaseClient
+try{
+
+const {data,error}=await supabaseClient
 .from("system_settings")
 .select("*")
 .eq("id",1)
 .single()
 
+if(error){
+console.error(error)
+return
+}
+
 if(!data) return
 
-document.getElementById("maintenanceToggle").checked = data.maintenance_mode
-
-document.getElementById("message").value = data.message || ""
+maintenanceToggle.checked = data.maintenance_mode
+message.value = data.message || ""
 
 updateStatus(data.maintenance_mode)
 
+}catch(err){
+console.error("Load Error:",err)
 }
+
+}
+
+/* STATUS */
 
 function updateStatus(mode){
 
-document.getElementById("statusText").innerText = mode
-? "Maintenance Mode ACTIVE"
-: "System Running Normally"
+statusText.innerText = mode
+? "⚠️ Maintenance Mode ACTIVE"
+: "✅ System Running Normally"
 
 }
 
-document.getElementById("maintenanceToggle").addEventListener("change", function(){
-
+maintenanceToggle.addEventListener("change", function(){
 updateStatus(this.checked)
-
 })
+
+/* SAVE */
 
 async function saveMaintenance(){
 
-let mode=document.getElementById("maintenanceToggle").checked
-
-let message=document.getElementById("message").value
+try{
 
 await supabaseClient
 .from("system_settings")
 .update({
-maintenance_mode:mode,
-message:message
+maintenance_mode:maintenanceToggle.checked,
+message:message.value
 })
 .eq("id",1)
 
-alert("Maintenance Settings Updated")
+alert("Settings Updated")
+
+}catch(err){
+console.error(err)
+alert("Error saving settings")
+}
 
 }
 
+/* FORCE LOGOUT */
+
 async function forceLogout(){
 
-if(!confirm("This will log out ALL users. Continue?")) return
+if(!confirm("Logout ALL users?")) return
+
+try{
 
 const {data}=await supabaseClient
 .from("system_settings")
@@ -215,7 +194,7 @@ const {data}=await supabaseClient
 .eq("id",1)
 .single()
 
-let newVersion = Number(data.maintenance_version) + 1
+let newVersion = Number(data.maintenance_version || 0) + 1
 
 await supabaseClient
 .from("system_settings")
@@ -224,11 +203,20 @@ maintenance_version:newVersion
 })
 .eq("id",1)
 
-alert("All users logged out successfully")
+alert("All users logged out")
+
+}catch(err){
+console.error(err)
+alert("Error logging out users")
+}
 
 }
 
 </script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
 
 </body>
 </html>

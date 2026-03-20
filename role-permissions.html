@@ -137,6 +137,10 @@ const pages=[
 {name:"Financial Dashboard",file:"financial-dashboard.html"},
 ]
 
+/* 🔥 ACTIONS */
+
+const actions=["view","create","edit","delete"]
+
 /* CREATE ROLE */
 
 async function createRole(){
@@ -151,7 +155,6 @@ return
 await supabaseClient.from("roles").insert({role_name:name})
 
 roleName.value=""
-
 alert("Role Created")
 
 loadPermissions()
@@ -176,17 +179,29 @@ html+=`<tr><td class="role-name">${role.role_name}</td>`
 
 pages.forEach(p=>{
 
+html+=`<td style="text-align:left">`
+
+actions.forEach(a=>{
+
 let existing=perms?.find(x=>
 String(x.role_id)==String(role.id) &&
-x.page_name==p.file
+x.page_name==p.file &&
+(x.action_name || "view")==a
 )
 
 html+=`
-<td>
+<label style="display:block">
 <input type="checkbox"
-id="${role.id}_${p.file}"
+id="${role.id}_${p.file}_${a}"
 ${existing?.can_access?"checked":""}>
-</td>`
+ ${a}
+</label>
+`
+
+})
+
+html+=`</td>`
+
 })
 
 html+=`</tr>`
@@ -209,7 +224,9 @@ for(let role of roles){
 
 for(let p of pages){
 
-let cb=document.getElementById(role.id+"_"+p.file)
+for(let a of actions){
+
+let cb=document.getElementById(`${role.id}_${p.file}_${a}`)
 if(!cb) continue
 
 let allowed=cb.checked
@@ -219,6 +236,7 @@ const {data:existing}=await supabaseClient
 .select("*")
 .eq("role_id",role.id)
 .eq("page_name",p.file)
+.eq("action_name",a)
 
 if(existing && existing.length>0){
 
@@ -227,6 +245,7 @@ supabaseClient.from("role_permissions")
 .update({can_access:allowed})
 .eq("role_id",role.id)
 .eq("page_name",p.file)
+.eq("action_name",a)
 )
 
 }else{
@@ -236,9 +255,12 @@ supabaseClient.from("role_permissions")
 .insert({
 role_id:role.id,
 page_name:p.file,
+action_name:a,
 can_access:allowed
 })
 )
+
+}
 
 }
 

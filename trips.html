@@ -261,8 +261,8 @@ html+=`
 <td>${t.trip_date||""}</td>
 <td>${t.status||""}</td>
 <td>
-<button class="editBtn">Edit</button>
-<button class="deleteBtn">Delete</button>
+<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
 </td>
 </tr>`
 })

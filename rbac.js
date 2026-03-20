@@ -1,168 +1,69 @@
 /* ===========================
-   GLOBAL PAGE RBAC (FINAL)
+   HARD PAGE RBAC (FINAL FIX)
 =========================== */
 
 async function enforcePageAccess(){
 
-try{
-
-/* GET CURRENT PAGE */
 const page = window.location.pathname.split("/").pop()
 
-/* GET SESSION */
-const { data:{session}, error:sessionError } = await supabaseClient.auth.getSession()
+try{
 
-if(sessionError || !session){
-window.location.href="login.html"
-return
+const { data:{session} } = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.replace("login.html")
+return false
 }
 
 const authId = session.user.id
 
-/* GET USER */
-const {data:user, error:userError} = await supabaseClient
+const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
-if(userError || !user){
-window.location.href="login.html"
-return
+if(!user){
+window.location.replace("login.html")
+return false
 }
 
-/* GET ROLES */
-const {data:userRoles, error:roleError} = await supabaseClient
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
 
-if(roleError || !userRoles || userRoles.length===0){
-window.location.href="dashboard.html"
-return
+if(!userRoles || userRoles.length===0){
+window.location.replace("dashboard.html")
+return false
 }
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* GET PERMISSIONS */
-const {data:permissions, error:permError} = await supabaseClient
+const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .in("role_id",roleIds)
 .eq("can_access",true)
 
-if(permError){
-console.log("RBAC ERROR:",permError)
-window.location.href="dashboard.html"
-return
-}
-
-/* SAFE ARRAY */
 let allowedPages = (permissions || []).map(p=>p.page_name.trim())
 
 console.log("PAGE:",page)
 console.log("ALLOWED:",allowedPages)
 
-/* 🔥 FINAL CHECK */
+/* 🚨 FINAL BLOCK */
 if(!allowedPages.includes(page)){
-alert("Access Denied")
-window.location.href="dashboard.html"
-return
+window.location.replace("dashboard.html")
+return false
 }
 
-/* ✅ ALLOW PAGE */
-document.body.style.display="block"
+return true
 
 }catch(err){
 
-console.log("FATAL RBAC ERROR:",err)
-
-/* FAIL SAFE */
-window.location.href="dashboard.html"
-
-}
-
-}/* ===========================
-   GLOBAL PAGE RBAC (FINAL)
-=========================== */
-
-async function enforcePageAccess(){
-
-try{
-
-/* GET CURRENT PAGE */
-const page = window.location.pathname.split("/").pop()
-
-/* GET SESSION */
-const { data:{session}, error:sessionError } = await supabaseClient.auth.getSession()
-
-if(sessionError || !session){
-window.location.href="login.html"
-return
-}
-
-const authId = session.user.id
-
-/* GET USER */
-const {data:user, error:userError} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-if(userError || !user){
-window.location.href="login.html"
-return
-}
-
-/* GET ROLES */
-const {data:userRoles, error:roleError} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
-
-if(roleError || !userRoles || userRoles.length===0){
-window.location.href="dashboard.html"
-return
-}
-
-let roleIds = userRoles.map(r=>r.role_id)
-
-/* GET PERMISSIONS */
-const {data:permissions, error:permError} = await supabaseClient
-.from("role_permissions")
-.select("page_name")
-.in("role_id",roleIds)
-.eq("can_access",true)
-
-if(permError){
-console.log("RBAC ERROR:",permError)
-window.location.href="dashboard.html"
-return
-}
-
-/* SAFE ARRAY */
-let allowedPages = (permissions || []).map(p=>p.page_name.trim())
-
-console.log("PAGE:",page)
-console.log("ALLOWED:",allowedPages)
-
-/* 🔥 FINAL CHECK */
-if(!allowedPages.includes(page)){
-alert("Access Denied")
-window.location.href="dashboard.html"
-return
-}
-
-/* ✅ ALLOW PAGE */
-document.body.style.display="block"
-
-}catch(err){
-
-console.log("FATAL RBAC ERROR:",err)
-
-/* FAIL SAFE */
-window.location.href="dashboard.html"
+console.log("RBAC ERROR:",err)
+window.location.replace("dashboard.html")
+return false
 
 }
 

@@ -9,8 +9,6 @@
 <script src="session-check.js"></script>
 <script src="rbac.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
@@ -29,7 +27,6 @@ th{background:#eee;}
 <body>
 
 <script>
-/* ✅ USE GLOBAL CLIENT */
 const supabaseClient = window.supabaseClient
 </script>
 
@@ -143,9 +140,6 @@ await loadTrucks()
 await loadCommodities()
 await loadClients()
 await loadTrips()
-
-/* 🔥 APPLY RBAC AFTER LOAD */
-setTimeout(applyTripsRBAC,500)
 }
 
 /* ================= RBAC ================= */
@@ -184,33 +178,29 @@ btn.style.display="none"
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
 routes=data||[]
-let html='<option value="">Route</option>'
-routes.forEach(r=> html+=`<option value="${r.id}">${r.route_code}</option>`)
-route.innerHTML=html
+route.innerHTML='<option value="">Route</option>' +
+routes.map(r=>`<option value="${r.id}">${r.route_code}</option>`).join("")
 }
 
 async function loadTrucks(){
 const {data}=await supabaseClient.from("trucks").select("*")
 trucks=data||[]
-let html='<option value="">Truck</option>'
-trucks.forEach(t=> html+=`<option value="${t.id}">${t.truck_number}</option>`)
-truck.innerHTML=html
+truck.innerHTML='<option value="">Truck</option>' +
+trucks.map(t=>`<option value="${t.id}">${t.truck_number}</option>`).join("")
 }
 
 async function loadCommodities(){
 const {data}=await supabaseClient.from("commodities").select("*")
 commodities=data||[]
-let html='<option value="">Commodity</option>'
-commodities.forEach(c=> html+=`<option value="${c.id}">${c.name}</option>`)
-commodity.innerHTML=html
+commodity.innerHTML='<option value="">Commodity</option>' +
+commodities.map(c=>`<option value="${c.id}">${c.name}</option>`).join("")
 }
 
 async function loadClients(){
 const {data}=await supabaseClient.from("clients").select("*")
 clients=data||[]
-let html='<option value="">Client</option>'
-clients.forEach(c=> html+=`<option value="${c.id}">${c.company}</option>`)
-client.innerHTML=html
+client.innerHTML='<option value="">Client</option>' +
+clients.map(c=>`<option value="${c.id}">${c.company}</option>`).join("")
 }
 
 /* ================= SAVE ================= */
@@ -223,23 +213,17 @@ alert("No permission to create")
 return
 }
 
-/* existing logic unchanged */
-let routeVal=route.value
-let truckVal=truck.value
-let commodityVal=commodity.value
-let clientVal=client.value
-
 await supabaseClient.from("trips").insert({
-route:routes.find(r=>r.id==routeVal)?.route_code,
-truck:trucks.find(t=>t.id==truckVal)?.truck_number,
-commodity:commodities.find(c=>c.id==commodityVal)?.name,
-client_name:clients.find(c=>c.id==clientVal)?.company
+route:routes.find(r=>r.id==route.value)?.route_code,
+truck:trucks.find(t=>t.id==truck.value)?.truck_number,
+commodity:commodities.find(c=>c.id==commodity.value)?.name,
+client_name:clients.find(c=>c.id==client.value)?.company
 })
 
 loadTrips()
 }
 
-/* ================= LOAD TABLE ================= */
+/* ================= TABLE ================= */
 
 async function loadTrips(){
 const {data}=await supabaseClient.from("trips").select("*").order("created_at",{ascending:false})
@@ -247,11 +231,15 @@ trips=data||[]
 renderTrips()
 }
 
-function renderTrips(){
+/* 🔥 IMPORTANT: APPLY RBAC AFTER RENDER */
+
+async function renderTrips(){
+
 let html=""
+
 trips.forEach(t=>{
 html+=`
-<tr>
+<tr id="row_${t.id}">
 <td>${t.trip_no||""}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>
@@ -266,7 +254,41 @@ html+=`
 </td>
 </tr>`
 })
+
 tripTable.innerHTML=html
+
+/* 🔥 APPLY RBAC AFTER BUTTONS CREATED */
+applyTripsRBAC()
+}
+
+/* ================= EDIT ================= */
+
+async function editTrip(id){
+
+const canEdit = await checkPermission("trips.html","edit")
+if(!canEdit){
+alert("No permission to edit")
+return
+}
+
+alert("Edit logic here")
+}
+
+/* ================= DELETE ================= */
+
+async function deleteTrip(id){
+
+const canDelete = await checkPermission("trips.html","delete")
+if(!canDelete){
+alert("No permission to delete")
+return
+}
+
+if(!confirm("Delete this trip?")) return
+
+await supabaseClient.from("trips").delete().eq("id",id)
+
+loadTrips()
 }
 
 </script>

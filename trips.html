@@ -271,7 +271,26 @@ alert("No permission to edit")
 return
 }
 
-alert("Edit logic here")
+let row = document.getElementById("row_"+id)
+if(!row) return
+
+let t = trips.find(x=>x.id==id)
+
+/* 🔥 CONVERT TO INPUTS */
+
+row.innerHTML = `
+<td>${t.trip_no}</td>
+<td><input id="route_${id}" value="${t.route}"></td>
+<td><input id="truck_${id}" value="${t.truck}"></td>
+<td><input id="commodity_${id}" value="${t.commodity}"></td>
+<td><input id="client_${id}" value="${t.client_name}"></td>
+<td><input id="weight_${id}" value="${t.weight_kg}"></td>
+<td><input id="date_${id}" value="${t.trip_date}"></td>
+<td><input id="status_${id}" value="${t.status}"></td>
+<td>
+<button class="saveBtn" onclick="updateTrip('${id}')">Save</button>
+</td>
+`
 }
 
 /* ================= DELETE ================= */

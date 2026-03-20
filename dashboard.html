@@ -4,8 +4,15 @@
 
 <title>Dashboard - Varada Nexus ERP</title>
 
-<!-- SUPABASE -->
+<!-- SUPABASE FIRST (CRITICAL) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
 
 <!-- CORE SCRIPTS -->
 <script src="session-check.js"></script>
@@ -52,7 +59,6 @@ fetch("sidebar.html")
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* ensure RBAC runs AFTER sidebar loads */
 setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
@@ -69,97 +75,4 @@ applyMenuRBAC()
 <div class="card-container">
 
 <div class="card">
-<h3>Total Trips</h3>
-<p id="totalTrips">0</p>
-</div>
-
-<div class="card">
-<h3>Total Company Amount</h3>
-<p id="totalRevenue">0</p>
-</div>
-
-<div class="card">
-<h3>Total Transporter Amount</h3>
-<p id="totalCost">0</p>
-</div>
-
-<div class="card">
-<h3>Total Profit</h3>
-<p id="totalProfit">0</p>
-</div>
-
-</div>
-</div>
-
-<script>
-
-/* SAFE CLIENT (FIXED) */
-const supabaseClient = window.supabaseClient || supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
-/* LOAD DASHBOARD */
-window.addEventListener("load", loadDashboard)
-
-async function loadDashboard(){
-
-try{
-
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("*")
-
-const {data:expenses} = await supabaseClient
-.from("expenses")
-.select("*")
-
-let tripsData = trips || []
-let expensesData = expenses || []
-
-let totalTrips = tripsData.length
-let totalRevenue = 0
-let totalCost = 0
-let totalProfit = 0
-
-let expenseMap = {}
-
-expensesData.forEach(e=>{
-if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-expenseMap[e.trip_id]+=Number(e.amount || 0)
-})
-
-tripsData.forEach(trip=>{
-
-let mt = (trip.weight_kg || 0)/1000
-let expense = expenseMap[trip.id] || 0
-
-let companyRate = Number(trip.company_rate || 0)
-let transporterRate = Number(trip.transporter_rate || 0)
-
-let companyAmount = (companyRate * mt) - expense
-let transporterAmount = (transporterRate * mt) - expense
-
-let profit = companyAmount - transporterAmount
-
-totalRevenue += companyAmount || 0
-totalCost += transporterAmount || 0
-totalProfit += profit || 0
-
-})
-
-document.getElementById("totalTrips").innerText = totalTrips
-document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()
-document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost).toLocaleString()
-document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit).toLocaleString()
-
-}catch(err){
-console.log("Dashboard error:",err)
-}
-
-}
-
-</script>
-
-</body>
-</html>
+<h3>Total Trips

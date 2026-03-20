@@ -28,12 +28,13 @@ button{margin-top:15px;padding:10px 14px;background:#1f3c88;color:white;border:n
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* 🔐 PAGE RBAC (ADDED) */
+/* 🔐 PAGE RBAC (FIXED WITH FILE NAME) */
 (async ()=>{
-await enforcePageAccess("system_maintenance")
+const page = window.location.pathname.split("/").pop()
+await enforcePageAccess(page)
 })()
 
 </script>
@@ -84,6 +85,13 @@ const {data:role}=await supabaseClient
 
 if(role){
 document.getElementById("userRole").innerText=role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
 }
 
 }

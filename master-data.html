@@ -26,12 +26,10 @@ th{background:#eee;}
 <body>
 
 <script>
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
 </script>
 
 <!-- SIDEBAR -->
@@ -65,7 +63,6 @@ window.location="login.html"
 
 <!-- CLIENTS -->
 <div class="card">
-
 <h3>Clients</h3>
 
 <input id="clientCompany" placeholder="Company">
@@ -74,28 +71,16 @@ window.location="login.html"
 
 <button onclick="addClient()">Add Client</button>
 
-<input id="clientSearch" placeholder="Search">
-
 <table>
 <thead>
-<tr>
-<th>Company</th>
-<th>Phone</th>
-<th>Email</th>
-<th>Action</th>
-</tr>
+<tr><th>Company</th><th>Phone</th><th>Email</th><th>Action</th></tr>
 </thead>
 <tbody id="clientTable"></tbody>
 </table>
-
-<button onclick="prevPage()">Prev</button>
-<button onclick="nextPage()">Next</button>
-
 </div>
 
 <!-- TRANSPORTERS -->
 <div class="card">
-
 <h3>Transporters</h3>
 
 <input id="tName" placeholder="Name">
@@ -105,20 +90,14 @@ window.location="login.html"
 
 <table>
 <thead>
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Action</th>
-</tr>
+<tr><th>Name</th><th>Phone</th><th>Action</th></tr>
 </thead>
 <tbody id="transporterTable"></tbody>
 </table>
-
 </div>
 
 <!-- ROUTES -->
 <div class="card">
-
 <h3>Routes</h3>
 
 <input id="origin" placeholder="Origin">
@@ -129,21 +108,14 @@ window.location="login.html"
 
 <table>
 <thead>
-<tr>
-<th>Origin</th>
-<th>Destination</th>
-<th>Code</th>
-<th>Action</th>
-</tr>
+<tr><th>Origin</th><th>Destination</th><th>Code</th><th>Action</th></tr>
 </thead>
 <tbody id="routeTable"></tbody>
 </table>
-
 </div>
 
 <!-- TRUCKS -->
 <div class="card">
-
 <h3>Trucks</h3>
 
 <input id="truckNumber" placeholder="Truck Number">
@@ -155,20 +127,14 @@ window.location="login.html"
 
 <table>
 <thead>
-<tr>
-<th>Truck</th>
-<th>Transporter</th>
-<th>Action</th>
-</tr>
+<tr><th>Truck</th><th>Transporter</th><th>Action</th></tr>
 </thead>
 <tbody id="truckTable"></tbody>
 </table>
-
 </div>
 
 <!-- COMMODITIES -->
 <div class="card">
-
 <h3>Commodities</h3>
 
 <input id="commodityName" placeholder="Commodity">
@@ -177,44 +143,35 @@ window.location="login.html"
 
 <table>
 <thead>
-<tr>
-<th>Name</th>
-<th>Action</th>
-</tr>
+<tr><th>Name</th><th>Action</th></tr>
 </thead>
 <tbody id="commodityTable"></tbody>
 </table>
-
 </div>
 
 </div>
 
 <script>
 
-/* ================= ROUTE AUTO ================= */
-
+/* ROUTE AUTO */
 function generateRoute(){
 let o=origin.value.trim()
 let d=destination.value.trim()
 
 if(o && d){
 routeCode.value =
-o.substring(0,4).toUpperCase() + "-" +
+o.substring(0,4).toUpperCase()+"-"+
 d.substring(0,4).toUpperCase()
 }else{
 routeCode.value=""
 }
 }
-
 origin.addEventListener("input",generateRoute)
 destination.addEventListener("input",generateRoute)
 
-/* ================= TRUCK AUTO ================= */
-
+/* TRUCK AUTO */
 truckNumber.addEventListener("input",()=>{
-
 let val=truckNumber.value.toUpperCase()
-
 let match=val.match(/[A-Z]{2}\d{4}$/)
 
 if(match){
@@ -222,36 +179,29 @@ truckId.value = match[0].replace(/([A-Z]{2})(\d{4})/,"$1-$2")
 }else{
 truckId.value=""
 }
-
 })
 
-/* ================= ADD ================= */
+/* ADD */
 
 async function addClient(){
-
 await supabaseClient.from("clients").insert({
 company:clientCompany.value,
 phone:clientPhone.value,
 email:clientEmail.value
 })
-
 clientCompany.value=""
 clientPhone.value=""
 clientEmail.value=""
-
 loadClients()
 }
 
 async function addTransporter(){
-
 await supabaseClient.from("transporters").insert({
 transporter_name:tName.value,
 phone:tPhone.value
 })
-
 tName.value=""
 tPhone.value=""
-
 loadTransporters()
 }
 
@@ -267,11 +217,10 @@ return
 }
 
 if(!c){
-c = o.substring(0,4).toUpperCase()+"-"+d.substring(0,4).toUpperCase()
+c=o.substring(0,4).toUpperCase()+"-"+d.substring(0,4).toUpperCase()
 }
 
-const {error} = await supabaseClient
-.from("routes")
+const {error}=await supabaseClient.from("routes")
 .insert({origin:o,destination:d,route_code:c})
 
 if(error){
@@ -287,47 +236,29 @@ loadRoutes()
 }
 
 async function addTruck(){
-
 await supabaseClient.from("trucks").insert({
 truck_number:truckNumber.value,
 transporter_id:truckTransporter.value
 })
-
 truckNumber.value=""
 truckId.value=""
-
 loadTrucks()
 }
 
 async function addCommodity(){
-
 await supabaseClient.from("commodities").insert({
 name:commodityName.value
 })
-
 commodityName.value=""
-
 loadCommodities()
 }
 
-/* ================= LOAD ================= */
-
-let page=0,limit=10
+/* LOAD */
 
 async function loadClients(){
-
-let search=clientSearch.value
-
-let query=supabaseClient.from("clients").select("*")
-
-if(search){
-query=query.ilike("company","%"+search+"%")
-}
-
-const {data}=await query.range(page*limit,page*limit+limit-1)
-
+const {data}=await supabaseClient.from("clients").select("*")
 let html=""
-data.forEach(c=>{
+data?.forEach(c=>{
 html+=`
 <tr>
 <td>${c.company}</td>
@@ -336,20 +267,13 @@ html+=`
 <td><button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button></td>
 </tr>`
 })
-
 clientTable.innerHTML=html
 }
 
-function nextPage(){page++;loadClients()}
-function prevPage(){if(page>0){page--;loadClients()}}
-
 async function loadTransporters(){
-
 const {data}=await supabaseClient.from("transporters").select("*")
-
-let html="",dd=""
-
-data.forEach(t=>{
+let html="",dd='<option value="">Select</option>'
+data?.forEach(t=>{
 html+=`
 <tr>
 <td>${t.transporter_name}</td>
@@ -358,17 +282,14 @@ html+=`
 </tr>`
 dd+=`<option value="${t.id}">${t.transporter_name}</option>`
 })
-
 transporterTable.innerHTML=html
 truckTransporter.innerHTML=dd
 }
 
 async function loadRoutes(){
-
 const {data}=await supabaseClient.from("routes").select("*")
-
 let html=""
-data.forEach(r=>{
+data?.forEach(r=>{
 html+=`
 <tr>
 <td>${r.origin}</td>
@@ -377,22 +298,24 @@ html+=`
 <td><button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button></td>
 </tr>`
 })
-
 routeTable.innerHTML=html
 }
 
 async function loadTrucks(){
 
-const {data}=await supabaseClient
-.from("trucks")
-.select(`id,truck_number,transporters(transporter_name)`)
+const {data:trucks}=await supabaseClient.from("trucks").select("*")
+const {data:transporters}=await supabaseClient.from("transporters").select("*")
 
 let html=""
-data.forEach(t=>{
+
+trucks?.forEach(t=>{
+
+let name = transporters.find(x=>x.id==t.transporter_id)?.transporter_name || ""
+
 html+=`
 <tr>
 <td>${t.truck_number}</td>
-<td>${t.transporters?.transporter_name||""}</td>
+<td>${name}</td>
 <td><button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button></td>
 </tr>`
 })
@@ -401,18 +324,15 @@ truckTable.innerHTML=html
 }
 
 async function loadCommodities(){
-
 const {data}=await supabaseClient.from("commodities").select("*")
-
 let html=""
-data.forEach(c=>{
+data?.forEach(c=>{
 html+=`
 <tr>
 <td>${c.name}</td>
 <td><button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button></td>
 </tr>`
 })
-
 commodityTable.innerHTML=html
 }
 

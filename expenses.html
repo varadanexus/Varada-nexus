@@ -3,12 +3,11 @@
 
 <head>
 
+<title>Trip Expenses - Varada Nexus ERP</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 
-<title>Trip Expenses - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="menu-rbac.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -55,13 +54,8 @@ cursor:pointer;
 border-radius:4px;
 }
 
-.editBtn{
-background:#5bc0de;
-}
-
-.deleteBtn{
-background:#d9534f;
-}
+.editBtn{background:#5bc0de;}
+.deleteBtn{background:#d9534f;}
 
 table{
 width:100%;
@@ -89,39 +83,75 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
 
+/* LOAD SIDEBAR + INIT */
+
 fetch("sidebar.html")
-.then(res => res.text())
-.then(data => {
-
-document.getElementById("sidebar-container").innerHTML = data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC === "function"){
-applyMenuRBAC()
-}
-},300)
-
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
 })
 
-</script>
+async function initSidebar(){
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
 
 <div class="main">
 
 <h1>Trip Expenses</h1>
-
 
 <div class="card">
 
@@ -147,7 +177,6 @@ applyMenuRBAC()
 
 </div>
 
-
 <div class="card">
 
 <input id="searchTrip" placeholder="Search Trip No">
@@ -166,11 +195,9 @@ applyMenuRBAC()
 
 </div>
 
-
 <table>
 
 <thead>
-
 <tr>
 <th>Expense ID</th>
 <th>Trip</th>
@@ -179,13 +206,11 @@ applyMenuRBAC()
 <th>Date</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody id="expenseTable"></tbody>
 
 </table>
-
 
 <br>
 
@@ -194,8 +219,6 @@ applyMenuRBAC()
 <button onclick="downloadPDF()">Download PDF</button>
 
 </div>
-
-
 
 <script>
 
@@ -206,18 +229,12 @@ let filtered=[]
 let page=1
 let pageSize=10
 
-
 init()
 
-
 async function init(){
-
 await loadTrips()
 await loadExpenses()
-
 }
-
-
 
 /* LOAD TRIPS */
 
@@ -240,9 +257,7 @@ document.getElementById("trip").innerHTML=html
 
 }
 
-
-
-/* GENERATE EXPENSE ID */
+/* GENERATE ID */
 
 async function generateExpenseId(){
 
@@ -262,9 +277,7 @@ return "EXP"+year+month+seq.toString().padStart(4,"0")
 
 }
 
-
-
-/* SAVE EXPENSE */
+/* SAVE */
 
 async function saveExpense(){
 
@@ -279,16 +292,12 @@ return
 
 let expenseId=await generateExpenseId()
 
-await supabaseClient
-.from("expenses")
-.insert({
-
+await supabaseClient.from("expenses").insert({
 expense_id:expenseId,
 trip_id:tripId,
 expense_type:type,
 amount:amount,
 expense_date:new Date()
-
 })
 
 document.getElementById("trip").value=""
@@ -298,9 +307,7 @@ loadExpenses()
 
 }
 
-
-
-/* LOAD EXPENSES */
+/* LOAD */
 
 async function loadExpenses(){
 
@@ -316,16 +323,12 @@ renderTable()
 
 }
 
-
-
-/* RENDER TABLE */
+/* RENDER */
 
 function renderTable(){
 
 let start=(page-1)*pageSize
-let end=start+pageSize
-
-let rows=filtered.slice(start,end)
+let rows=filtered.slice(start,start+pageSize)
 
 let html=""
 
@@ -334,62 +337,47 @@ rows.forEach(e=>{
 let trip=trips.find(t=>t.id==e.trip_id)
 
 html+=`
-
 <tr>
-
 <td>${e.expense_id || ""}</td>
 <td>${trip ? trip.trip_no : ""}</td>
 <td>${e.expense_type}</td>
 <td>${e.amount}</td>
 <td>${e.expense_date || ""}</td>
-
 <td>
-
 <button class="editBtn" onclick="editExpense('${e.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteExpense('${e.id}')">Delete</button>
-
 </td>
-
 </tr>
-
 `
-
 })
 
 document.getElementById("expenseTable").innerHTML=html
 
 }
 
-
-
-/* EDIT EXPENSE */
+/* EDIT */
 
 function editExpense(id){
 
-let expense=expenses.find(e=>e.id==id)
+let e=expenses.find(x=>x.id==id)
 
-let newAmount=prompt("Edit Amount",expense.amount)
+let val=prompt("Edit Amount",e.amount)
+if(val===null) return
 
-if(newAmount===null) return
-
-supabaseClient
-.from("expenses")
-.update({amount:newAmount})
+supabaseClient.from("expenses")
+.update({amount:val})
 .eq("id",id)
 .then(()=>loadExpenses())
 
 }
 
-
-
-/* DELETE EXPENSE */
+/* DELETE */
 
 async function deleteExpense(id){
 
-if(!confirm("Delete this expense?")) return
+if(!confirm("Delete?")) return
 
-await supabaseClient
-.from("expenses")
+await supabaseClient.from("expenses")
 .delete()
 .eq("id",id)
 
@@ -397,29 +385,17 @@ loadExpenses()
 
 }
 
-
-
 /* PAGINATION */
 
 function nextPage(){
-
 if(page*pageSize >= filtered.length) return
-
 page++
 renderTable()
-
 }
 
 function prevPage(){
-
-if(page>1){
-page--
-renderTable()
+if(page>1){page--;renderTable()}
 }
-
-}
-
-
 
 /* FILTER */
 
@@ -432,10 +408,10 @@ filtered=expenses.filter(e=>{
 
 let trip=trips.find(t=>t.id==e.trip_id)
 
-let matchTrip=!tripSearch || (trip && trip.trip_no.toLowerCase().includes(tripSearch))
-let matchType=!typeFilter || e.expense_type===typeFilter
-
-return matchTrip && matchType
+return (
+(!tripSearch || (trip && trip.trip_no.toLowerCase().includes(tripSearch))) &&
+(!typeFilter || e.expense_type===typeFilter)
+)
 
 })
 
@@ -450,36 +426,23 @@ document.getElementById("searchTrip").value=""
 document.getElementById("filterType").value=""
 
 filtered=expenses
-
 page=1
 renderTable()
 
 }
-
-
 
 /* PDF */
 
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
-
 let doc=new jsPDF()
 
 let rows=[]
 
 filtered.forEach(e=>{
-
 let trip=trips.find(t=>t.id==e.trip_id)
-
-rows.push([
-e.expense_id,
-trip ? trip.trip_no : "",
-e.expense_type,
-e.amount,
-e.expense_date
-])
-
+rows.push([e.expense_id,trip?.trip_no||"",e.expense_type,e.amount,e.expense_date])
 })
 
 doc.autoTable({
@@ -492,8 +455,10 @@ doc.save("trip_expenses.pdf")
 }
 
 </script>
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

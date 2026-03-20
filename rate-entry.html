@@ -32,7 +32,7 @@ th{background:#eee;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -42,10 +42,66 @@ const supabaseClient = supabase.createClient(
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-setTimeout(()=>{ if(typeof applyMenuRBAC==="function"){applyMenuRBAC()} },300)
+
+await initSidebar()
+
 })
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+/* SHOW USER NAME */
+document.getElementById("userName").innerText = email.split("@")[0]
+
+/* GET USER ID FROM TABLE */
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* GET ROLE */
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+/* SHOW ROLE */
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* APPLY RBAC */
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+
+/* LOGOUT */
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
 </script>
 
 <div class="main">

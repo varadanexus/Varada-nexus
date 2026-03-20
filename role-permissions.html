@@ -203,6 +203,12 @@ permTable.innerHTML=html
 
 async function saveAllPermissions(){
 
+const btn = document.getElementById("saveBtn")
+btn.disabled = true
+btn.innerText = "Saving..."
+
+try{
+
 const {data:roles}=await supabaseClient.from("roles").select("*")
 
 let allData=[]
@@ -225,6 +231,36 @@ can_access: cb.checked
 
 }
 }
+}
+
+/* 🔥 UPSERT (SAFE + FAST) */
+const {error} = await supabaseClient
+.from("role_permissions")
+.upsert(allData, {
+onConflict: "role_id,page_name,action_name"
+})
+
+if(error){
+console.error(error)
+alert("Error saving permissions")
+return
+}
+
+alert("Permissions Saved Successfully 🚀")
+
+/* 🔄 RELOAD TO VERIFY */
+loadPermissions()
+
+}catch(err){
+
+console.error(err)
+alert("Error saving permissions")
+
+}
+
+btn.disabled = false
+btn.innerText = "Save All Permissions"
+
 }
 
 /* 🚀 2 QUERIES ONLY */

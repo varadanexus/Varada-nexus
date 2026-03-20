@@ -52,7 +52,7 @@ fetch("sidebar.html")
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* ENSURE RBAC AFTER LOAD */
+/* ensure RBAC runs AFTER sidebar loads */
 setTimeout(()=>{
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
@@ -93,8 +93,11 @@ applyMenuRBAC()
 
 <script>
 
-/* USE GLOBAL CLIENT ONLY */
-const supabaseClient = window.supabaseClient
+/* SAFE CLIENT (FIXED) */
+const supabaseClient = window.supabaseClient || supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24i"
+)
 
 /* LOAD DASHBOARD */
 window.addEventListener("load", loadDashboard)
@@ -121,14 +124,10 @@ let totalProfit = 0
 
 let expenseMap = {}
 
-/* MAP EXPENSES */
-
 expensesData.forEach(e=>{
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount || 0)
 })
-
-/* CALCULATIONS */
 
 tripsData.forEach(trip=>{
 
@@ -148,8 +147,6 @@ totalCost += transporterAmount || 0
 totalProfit += profit || 0
 
 })
-
-/* DISPLAY */
 
 document.getElementById("totalTrips").innerText = totalTrips
 document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()

@@ -11,44 +11,15 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-
-input,select{
-padding:10px;
-margin:5px;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
-button{
-padding:8px 12px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-h3{
-margin-top:0;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;}
+button{padding:8px 12px;background:#1f3c88;color:white;border:none;border-radius:4px;cursor:pointer;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+th{background:#eee;}
+.deleteBtn{background:#d9534f;}
 
 </style>
 
@@ -58,11 +29,9 @@ margin-top:0;
 
 <script>
 
-/* SUPABASE CLIENT */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmRhc2UiLCJyZWYiOiJ0aWNzZ2J0eGZoaGlobWFtZWppc3MiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MzQyMTkyOSwiZXhwIjoyMDg4OTk3OTI5fQ.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 </script>
@@ -71,9 +40,6 @@ const supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>
 
 <script>
-
-/* STANDARD SIDEBAR */
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
@@ -84,49 +50,16 @@ await initSidebar()
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
-const authId = session.user.id
-const email = session.user.email
+document.getElementById("userName").innerText = session.user.email.split("@")[0]
 
-document.getElementById("userName").innerText = email.split("@")[0]
-
-const {data:user} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-if(!user) return
-
-const {data:userRole} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
-.single()
-
-if(!userRole) return
-
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
-
-if(role){
-document.getElementById("userRole").innerText = role.role_name
-}
-
-/* LOGOUT */
-
-window.logout = async function(){
+window.logout = async ()=>{
 await supabaseClient.auth.signOut()
-window.location.href="login.html"
+window.location="login.html"
 }
 
 }
-
 </script>
 
 <div class="main">
@@ -135,71 +68,78 @@ window.location.href="login.html"
 
 <!-- ROUTES -->
 <div class="card">
-
 <h3>Add Route</h3>
-
 <input id="routeCode" placeholder="Route Code">
+<button onclick="addRoute()">Add</button>
 
-<button onclick="addRoute()">Add Route</button>
-
+<table>
+<thead><tr><th>Route</th><th>Action</th></tr></thead>
+<tbody id="routeTable"></tbody>
+</table>
 </div>
 
 <!-- TRUCKS -->
 <div class="card">
-
 <h3>Add Truck</h3>
-
 <input id="truckNo" placeholder="Truck Number">
-
 <select id="transporterSelect"></select>
+<button onclick="addTruck()">Add</button>
 
-<button onclick="addTruck()">Add Truck</button>
-
+<table>
+<thead><tr><th>Truck</th><th>Transporter</th><th>Action</th></tr></thead>
+<tbody id="truckTable"></tbody>
+</table>
 </div>
 
 <!-- COMMODITIES -->
 <div class="card">
-
 <h3>Add Commodity</h3>
+<input id="commodityName" placeholder="Commodity">
+<button onclick="addCommodity()">Add</button>
 
-<input id="commodityName" placeholder="Commodity Name">
-
-<button onclick="addCommodity()">Add Commodity</button>
-
+<table>
+<thead><tr><th>Name</th><th>Action</th></tr></thead>
+<tbody id="commodityTable"></tbody>
+</table>
 </div>
 
 <!-- CLIENTS -->
 <div class="card">
-
 <h3>Add Client</h3>
+<input id="clientName" placeholder="Client">
+<button onclick="addClient()">Add</button>
 
-<input id="clientName" placeholder="Client Name">
-
-<button onclick="addClient()">Add Client</button>
-
+<table>
+<thead><tr><th>Name</th><th>Action</th></tr></thead>
+<tbody id="clientTable"></tbody>
+</table>
 </div>
 
 </div>
 
 <script>
 
-/* INIT */
-
 init()
 
 async function init(){
-
 await loadTransporters()
-
+await loadAll()
 }
 
-/* LOAD TRANSPORTERS */
+/* LOAD ALL */
+
+async function loadAll(){
+await loadRoutes()
+await loadTrucks()
+await loadCommodities()
+await loadClients()
+}
+
+/* TRANSPORTERS */
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
-.from("transporters")
-.select("*")
+const {data}=await supabaseClient.from("transporters").select("*")
 
 let html='<option value="">Select Transporter</option>'
 
@@ -211,90 +151,159 @@ document.getElementById("transporterSelect").innerHTML=html
 
 }
 
-/* ADD ROUTE */
+/* ROUTES */
+
+async function loadRoutes(){
+
+const {data}=await supabaseClient.from("routes").select("*")
+
+let html=""
+
+data?.forEach(r=>{
+html+=`
+<tr>
+<td>${r.route_code}</td>
+<td><button class="deleteBtn" onclick="deleteRoute('${r.id}')">Delete</button></td>
+</tr>`
+})
+
+document.getElementById("routeTable").innerHTML=html
+
+}
 
 async function addRoute(){
 
 let val=document.getElementById("routeCode").value
+if(!val) return alert("Enter route")
 
-if(!val){
-alert("Enter route")
-return
+await supabaseClient.from("routes").insert({route_code:val})
+document.getElementById("routeCode").value=""
+loadRoutes()
+
 }
 
-await supabaseClient.from("routes").insert({
-route_code:val
+async function deleteRoute(id){
+await supabaseClient.from("routes").delete().eq("id",id)
+loadRoutes()
+}
+
+/* TRUCKS */
+
+async function loadTrucks(){
+
+const {data}=await supabaseClient
+.from("trucks")
+.select("*, transporters(transporter_name)")
+
+let html=""
+
+data?.forEach(t=>{
+html+=`
+<tr>
+<td>${t.truck_number}</td>
+<td>${t.transporters?.transporter_name || ""}</td>
+<td><button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button></td>
+</tr>`
 })
 
-alert("Route Added")
-
-document.getElementById("routeCode").value=""
+document.getElementById("truckTable").innerHTML=html
 
 }
-
-/* ADD TRUCK */
 
 async function addTruck(){
 
 let truck=document.getElementById("truckNo").value
 let transporter=document.getElementById("transporterSelect").value
 
-if(!truck || !transporter){
-alert("Enter truck & transporter")
-return
-}
+if(!truck || !transporter) return alert("Enter all")
 
 await supabaseClient.from("trucks").insert({
 truck_number:truck,
 transporter_id:transporter
 })
 
-alert("Truck Added")
-
 document.getElementById("truckNo").value=""
+loadTrucks()
 
 }
 
-/* ADD COMMODITY */
+async function deleteTruck(id){
+await supabaseClient.from("trucks").delete().eq("id",id)
+loadTrucks()
+}
+
+/* COMMODITIES */
+
+async function loadCommodities(){
+
+const {data}=await supabaseClient.from("commodities").select("*")
+
+let html=""
+
+data?.forEach(c=>{
+html+=`
+<tr>
+<td>${c.name}</td>
+<td><button class="deleteBtn" onclick="deleteCommodity('${c.id}')">Delete</button></td>
+</tr>`
+})
+
+document.getElementById("commodityTable").innerHTML=html
+
+}
 
 async function addCommodity(){
 
 let val=document.getElementById("commodityName").value
+if(!val) return alert("Enter")
 
-if(!val){
-alert("Enter commodity")
-return
-}
-
-await supabaseClient.from("commodities").insert({
-name:val
-})
-
-alert("Commodity Added")
+await supabaseClient.from("commodities").insert({name:val})
 
 document.getElementById("commodityName").value=""
+loadCommodities()
 
 }
 
-/* ADD CLIENT */
+async function deleteCommodity(id){
+await supabaseClient.from("commodities").delete().eq("id",id)
+loadCommodities()
+}
+
+/* CLIENTS */
+
+async function loadClients(){
+
+const {data}=await supabaseClient.from("clients").select("*")
+
+let html=""
+
+data?.forEach(c=>{
+html+=`
+<tr>
+<td>${c.company}</td>
+<td><button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button></td>
+</tr>`
+})
+
+document.getElementById("clientTable").innerHTML=html
+
+}
 
 async function addClient(){
 
 let val=document.getElementById("clientName").value
+if(!val) return alert("Enter")
 
-if(!val){
-alert("Enter client")
-return
-}
-
-await supabaseClient.from("clients").insert({
-company:val
-})
-
-alert("Client Added")
+await supabaseClient.from("clients").insert({company:val})
 
 document.getElementById("clientName").value=""
+loadClients()
 
+}
+
+async function deleteClient(id){
+await supabaseClient.from("clients").delete().eq("id",id)
+loadClients()
 }
 
 </script>

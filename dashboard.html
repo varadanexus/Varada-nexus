@@ -75,4 +75,96 @@ applyMenuRBAC()
 <div class="card-container">
 
 <div class="card">
-<h3>Total Trips
+<h3>Total Trips</h3>
+<p id="totalTrips">0</p>
+</div>
+
+<div class="card">
+<h3>Total Company Amount</h3>
+<p id="totalRevenue">0</p>
+</div>
+
+<div class="card">
+<h3>Total Transporter Amount</h3>
+<p id="totalCost">0</p>
+</div>
+
+<div class="card">
+<h3>Total Profit</h3>
+<p id="totalProfit">0</p>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const supabaseClient = window.supabaseClient
+
+window.addEventListener("load", loadDashboard)
+
+async function loadDashboard(){
+
+try{
+
+const {data:trips,error:tripErr} = await supabaseClient
+.from("trips")
+.select("*")
+
+if(tripErr) console.log("Trips error:",tripErr)
+
+const {data:expenses,error:expErr} = await supabaseClient
+.from("expenses")
+.select("*")
+
+if(expErr) console.log("Expenses error:",expErr)
+
+let tripsData = trips || []
+let expensesData = expenses || []
+
+let totalTrips = tripsData.length
+let totalRevenue = 0
+let totalCost = 0
+let totalProfit = 0
+
+let expenseMap = {}
+
+expensesData.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount || 0)
+})
+
+tripsData.forEach(trip=>{
+
+let mt = (trip.weight_kg || 0)/1000
+let expense = expenseMap[trip.id] || 0
+
+let companyRate = Number(trip.company_rate || 0)
+let transporterRate = Number(trip.transporter_rate || 0)
+
+let companyAmount = (companyRate * mt) - expense
+let transporterAmount = (transporterRate * mt) - expense
+
+let profit = companyAmount - transporterAmount
+
+totalRevenue += companyAmount || 0
+totalCost += transporterAmount || 0
+totalProfit += profit || 0
+
+})
+
+document.getElementById("totalTrips").innerText = totalTrips
+document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()
+document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost).toLocaleString()
+document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit).toLocaleString()
+
+}catch(err){
+console.log("Dashboard error:",err)
+}
+
+}
+
+</script>
+
+</body>
+</html>

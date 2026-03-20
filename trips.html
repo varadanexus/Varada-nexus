@@ -140,8 +140,10 @@ await loadTrucks()
 await loadCommodities()
 await loadClients()
 await loadTrips()
-}
 
+/* 🔥 APPLY RBAC AFTER LOAD */
+setTimeout(applyTripsRBAC,300)
+}
 /* ================= RBAC ================= */
 
 async function applyTripsRBAC(){
@@ -306,6 +308,42 @@ return
 if(!confirm("Delete this trip?")) return
 
 await supabaseClient.from("trips").delete().eq("id",id)
+
+loadTrips()
+}
+
+/* ================= UPDATE ================= */
+
+async function updateTrip(id){
+
+const canEdit = await checkPermission("trips.html","edit")
+if(!canEdit){
+alert("No permission to edit")
+return
+}
+
+let updatedData = {
+route: document.getElementById(`route_${id}`).value,
+truck: document.getElementById(`truck_${id}`).value,
+commodity: document.getElementById(`commodity_${id}`).value,
+client_name: document.getElementById(`client_${id}`).value,
+weight_kg: document.getElementById(`weight_${id}`).value,
+trip_date: document.getElementById(`date_${id}`).value,
+status: document.getElementById(`status_${id}`).value
+}
+
+const {error} = await supabaseClient
+.from("trips")
+.update(updatedData)
+.eq("id", id)
+
+if(error){
+console.error(error)
+alert("Error updating trip ❌")
+return
+}
+
+alert("Trip updated ✅")
 
 loadTrips()
 }

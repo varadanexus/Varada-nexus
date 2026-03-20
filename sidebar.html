@@ -122,7 +122,7 @@ link.classList.add("active")
 
 }
 
-/* LOAD USER INFO (DEBUG VERSION) */
+/* LOAD USER INFO (DEBUG ON SCREEN) */
 
 async function loadUserInfo(){
 
@@ -138,30 +138,28 @@ return
 const authId = session.user.id
 const email = session.user.email
 
-console.log("AUTH ID:", authId)
-
-/* DISPLAY NAME */
 document.getElementById("userName").innerText = email.split("@")[0]
 
-/* DEBUG QUERY */
+document.getElementById("userRole").innerText = "Checking..."
 
 const {data:user,error:userErr} = await supabaseClient
 .from("users")
 .select("*")
 .eq("auth_id",authId)
 
-console.log("USER QUERY RESULT:", user, userErr)
-
-/* STOP HERE FOR DEBUG */
+if(userErr){
+document.getElementById("userRole").innerText = "Error: "+userErr.message
+return
+}
 
 if(!user || user.length===0){
-document.getElementById("userRole").innerText="(user not found)"
+document.getElementById("userRole").innerText = "User not found"
 return
 }
 
 let userId = user[0].id
 
-/* GET ROLE */
+document.getElementById("userRole").innerText = "User found ✓"
 
 const {data:userRole} = await supabaseClient
 .from("user_roles")
@@ -170,11 +168,9 @@ const {data:userRole} = await supabaseClient
 .single()
 
 if(!userRole){
-document.getElementById("userRole").innerText=""
+document.getElementById("userRole").innerText = "Role missing"
 return
 }
-
-/* GET ROLE NAME */
 
 const {data:role} = await supabaseClient
 .from("roles")
@@ -187,7 +183,7 @@ document.getElementById("userRole").innerText = role.role_name
 }
 
 }catch(err){
-console.log("User load error:",err)
+document.getElementById("userRole").innerText = "Error loading user"
 }
 
 }

@@ -41,14 +41,63 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
 await initSidebar()
+
 })
 
 async function initSidebar(){
+
 const {data:{session}} = await supabaseClient.auth.getSession()
+
 if(!session) return
-document.getElementById("userName").innerText =
-session.user.email.split("@")[0]
+
+const authId = session.user.id
+const email = session.user.email
+
+/* SHOW USER NAME */
+document.getElementById("userName").innerText = email.split("@")[0]
+
+/* GET USER ID FROM TABLE */
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* GET ROLE */
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+/* SHOW ROLE */
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* APPLY RBAC */
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+
+/* LOGOUT */
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
 }
 </script>
 

@@ -49,11 +49,21 @@ fetch("sidebar.html")
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* FIX */
-setTimeout(()=>{
+/* 🔥 CRITICAL FIX */
+setTimeout(async ()=>{
+
+if(typeof loadUserInfo==="function"){
+await loadUserInfo()
+}
+
+if(typeof applySidebarRBAC==="function"){
+await applySidebarRBAC()
+}
+
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
+
 },300)
 
 })

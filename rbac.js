@@ -7,7 +7,14 @@ async function checkRBAC(){
 
 try{
 
-/* 🚨 BLOCK UI IMMEDIATELY */
+let currentPage = window.location.pathname.split("/").pop().trim()
+
+/* ✅ SKIP LOGIN PAGE */
+if(currentPage === "login.html" || currentPage === ""){
+return
+}
+
+/* 🚨 HIDE PAGE UNTIL VERIFIED */
 document.body.style.display = "none"
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -44,10 +51,7 @@ return
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* CURRENT PAGE */
-let currentPage = window.location.pathname.split("/").pop().trim()
-
-/* PERMISSIONS */
+/* CHECK PERMISSION */
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
@@ -55,7 +59,7 @@ const {data:permissions} = await supabaseClient
 .eq("page_name",currentPage)
 .eq("can_access",true)
 
-/* ❌ BLOCK ACCESS */
+/* ❌ BLOCK */
 if(!permissions || permissions.length===0){
 
 alert("Access Denied")
@@ -64,14 +68,12 @@ window.location.replace("dashboard.html")
 return
 }
 
-/* ✅ ALLOW PAGE */
+/* ✅ ALLOW */
 document.body.style.display = "block"
 
 }catch(err){
 
 console.error("RBAC ERROR:",err)
-
-/* FAIL SAFE → BLOCK */
 window.location.replace("login.html")
 
 }

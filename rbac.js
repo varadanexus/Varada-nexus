@@ -1,31 +1,25 @@
-/* ===========================
-   HARD PAGE RBAC (FINAL FIX)
-=========================== */
-
-async function enforcePageAccess(){
-
-const page = window.location.pathname.split("/").pop()
+async function enforceRBAC(){
 
 try{
+
+const page = window.location.pathname.split("/").pop()
 
 const { data:{session} } = await supabaseClient.auth.getSession()
 
 if(!session){
-window.location.replace("login.html")
-return false
+window.location.href="login.html"
+return
 }
-
-const authId = session.user.id
 
 const {data:user} = await supabaseClient
 .from("users")
 .select("id")
-.eq("auth_id",authId)
+.eq("auth_id",session.user.id)
 .single()
 
 if(!user){
-window.location.replace("login.html")
-return false
+window.location.href="login.html"
+return
 }
 
 const {data:userRoles} = await supabaseClient
@@ -34,8 +28,8 @@ const {data:userRoles} = await supabaseClient
 .eq("user_id",user.id)
 
 if(!userRoles || userRoles.length===0){
-window.location.replace("dashboard.html")
-return false
+window.location.href="dashboard.html"
+return
 }
 
 let roleIds = userRoles.map(r=>r.role_id)
@@ -48,23 +42,18 @@ const {data:permissions} = await supabaseClient
 
 let allowedPages = (permissions || []).map(p=>p.page_name.trim())
 
-console.log("PAGE:",page)
-console.log("ALLOWED:",allowedPages)
-
-/* 🚨 FINAL BLOCK */
 if(!allowedPages.includes(page)){
-window.location.replace("dashboard.html")
-return false
+alert("Access Denied")
+window.location.href="dashboard.html"
+return
 }
-
-return true
 
 }catch(err){
-
 console.log("RBAC ERROR:",err)
-window.location.replace("dashboard.html")
-return false
-
+window.location.href="dashboard.html"
 }
 
 }
+
+/* AUTO RUN */
+window.addEventListener("DOMContentLoaded", enforceRBAC)

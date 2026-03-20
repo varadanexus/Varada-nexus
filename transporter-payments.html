@@ -1,5 +1,19 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Transporter Payments - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Transporter Payments - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<script src="menu-rbac.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -63,44 +77,145 @@ text-align:left;
 background:#d9534f;
 }
 
-</style></head><body><div id="sidebar-container"></div><script>
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
-})
-</script><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+/* SUPABASE CLIENT */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-</script><div class="main"><h2>Transporter Payments</h2><div class="card"><h3>Record Payment</h3><select id="transporterSelect"></select>
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+
+/* ✅ STANDARD SIDEBAR (same as dashboard) */
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+})
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
+
+<div class="main">
+
+<h2>Transporter Payments</h2>
+
+<div class="card">
+
+<h3>Record Payment</h3>
+
+<select id="transporterSelect"></select>
 <button onclick="loadTrips()">Load Trips</button>
 
-<div class="trip-list"><div>
+<div class="trip-list">
+
+<div>
 <input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> Select All
-</div><div id="tripList"></div></div><input id="amount" placeholder="Total Amount" readonly><input type="date" id="paymentDate"><select id="method">
+</div>
+
+<div id="tripList"></div>
+
+</div>
+
+<input id="amount" placeholder="Total Amount" readonly>
+
+<input type="date" id="paymentDate">
+
+<select id="method">
 <option value="">Method</option>
 <option>Cash</option>
 <option>Bank Transfer</option>
 <option>UPI</option>
-</select><input id="remarks" placeholder="Remarks"><button onclick="savePayment()">Save Payment</button>
+</select>
 
-</div><div class="card"><h3>Search Payments</h3><select id="searchTransporter"></select>
+<input id="remarks" placeholder="Remarks">
 
-From
-<input type="date" id="fromDate">
+<button onclick="savePayment()">Save Payment</button>
 
-To
-<input type="date" id="toDate">
+</div>
+
+<div class="card">
+
+<h3>Search Payments</h3>
+
+<select id="searchTransporter"></select>
+
+From <input type="date" id="fromDate">
+To <input type="date" id="toDate">
 
 <button onclick="searchPayments()">Search</button>
 <button onclick="clearSearch()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
 
-</div><div class="card"><h3>Payment History</h3><table><thead>
+</div>
+
+<div class="card">
+
+<h3>Payment History</h3>
+
+<table>
+
+<thead>
 <tr>
 <th>Date</th>
 <th>Transporter</th>
@@ -110,10 +225,24 @@ To
 <th>Remarks</th>
 <th>Action</th>
 </tr>
-</thead><tbody id="paymentTable"></tbody></table><br><button onclick="prevPage()">Previous</button>
+</thead>
+
+<tbody id="paymentTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
 
-</div></div><script>
+</div>
+
+</div>
+
+<script>
+
+/* 🔥 ORIGINAL LOGIC UNTOUCHED */
 
 let transporters=[]
 let trips=[]
@@ -123,19 +252,12 @@ let allPayments=[]
 let page=1
 let pageSize=10
 
-
 init()
 
-
 async function init(){
-
 await loadTransporters()
 await loadPayments()
-
 }
-
-
-/* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
@@ -157,9 +279,6 @@ document.getElementById("transporterSelect").innerHTML=html
 document.getElementById("searchTransporter").innerHTML=search
 
 }
-
-
-/* LOAD TRIPS */
 
 async function loadTrips(){
 
@@ -183,23 +302,16 @@ html+=`
 <div>
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
 ${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable}
-</div>
-`
-
+</div>`
 })
 
 document.getElementById("tripList").innerHTML=html
 
 }
 
-
-
-/* CALCULATE TOTAL */
-
 function calculateTotal(){
 
 let checked=document.querySelectorAll("#tripList input:checked")
-
 let total=0
 
 checked.forEach(c=>{
@@ -212,9 +324,6 @@ document.getElementById("amount").value=total
 
 }
 
-
-/* SELECT ALL */
-
 function toggleAllTrips(){
 
 let checked=document.getElementById("selectAll").checked
@@ -226,9 +335,6 @@ c.checked=checked
 calculateTotal()
 
 }
-
-
-/* SAVE PAYMENT */
 
 async function savePayment(){
 
@@ -250,24 +356,18 @@ for(const c of checked){
 
 let trip=trips.find(t=>t.id==c.value)
 
-await supabaseClient
-.from("transporter_payments")
-.insert({
-
+await supabaseClient.from("transporter_payments").insert({
 trip_id: trip.id,
 transporter_name: transporter.transporter_name,
 amount:(trip.transporter_rate||0)*(trip.weight_kg/1000),
 payment_date:date,
 payment_method:method,
 remarks:remarks
-
 })
 
 }
 
 alert("Payment saved")
-
-/* CLEAR FIELDS */
 
 document.getElementById("amount").value=""
 document.getElementById("paymentDate").value=""
@@ -280,18 +380,11 @@ loadPayments()
 
 }
 
-
-
-/* LOAD PAYMENTS */
-
 async function loadPayments(){
 
 const {data}=await supabaseClient
 .from("transporter_payments")
-.select(`
-*,
-trips(trip_no)
-`)
+.select(`*,trips(trip_no)`)
 .order("created_at",{ascending:false})
 
 payments=data||[]
@@ -300,10 +393,6 @@ allPayments=data||[]
 renderPayments()
 
 }
-
-
-
-/* RENDER PAYMENTS */
 
 function renderPayments(){
 
@@ -315,7 +404,6 @@ let pageData=payments.slice(start,end)
 let html=""
 
 pageData.forEach(p=>{
-
 html+=`
 <tr>
 <td>${p.payment_date}</td>
@@ -327,18 +415,12 @@ html+=`
 <td>
 <button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
 </td>
-</tr>
-`
-
+</tr>`
 })
 
 document.getElementById("paymentTable").innerHTML=html
 
 }
-
-
-
-/* SEARCH */
 
 function searchPayments(){
 
@@ -347,16 +429,11 @@ let from=document.getElementById("fromDate").value
 let to=document.getElementById("toDate").value
 
 payments=allPayments.filter(p=>{
-
 let matchTransporter=!transporter||p.transporter_name===transporter
-
 let matchDate=true
-
 if(from) matchDate=p.payment_date>=from
 if(to) matchDate=matchDate&&p.payment_date<=to
-
 return matchTransporter&&matchDate
-
 })
 
 page=1
@@ -364,18 +441,10 @@ renderPayments()
 
 }
 
-
-/* CLEAR */
-
 function clearSearch(){
-
 payments=allPayments
 renderPayments()
-
 }
-
-
-/* PAGINATION */
 
 function nextPage(){
 page++
@@ -386,9 +455,6 @@ function prevPage(){
 if(page>1) page--
 renderPayments()
 }
-
-
-/* DELETE */
 
 async function deletePayment(id){
 
@@ -401,9 +467,6 @@ loadPayments()
 
 }
 
-
-/* PDF */
-
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
@@ -413,7 +476,6 @@ let doc=new jsPDF()
 let rows=[]
 
 payments.forEach(p=>{
-
 rows.push([
 p.payment_date,
 p.transporter_name,
@@ -422,7 +484,6 @@ p.amount,
 p.payment_method,
 p.remarks
 ])
-
 })
 
 doc.autoTable({
@@ -435,7 +496,10 @@ doc.save("transporter_payments.pdf")
 }
 
 </script>
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
-</body></html>
+
+</body>
+</html>

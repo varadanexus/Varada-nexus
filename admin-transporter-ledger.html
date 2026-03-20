@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 
-<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+<head>
 
 <title>Transporter Ledger - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -59,6 +60,8 @@ background:#eee;
 
 <script>
 
+/* SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -66,29 +69,67 @@ const supabaseClient = supabase.createClient(
 
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
 
+/* ✅ STANDARD SIDEBAR (same as dashboard) */
+
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-},300)
-
+await initSidebar()
 })
 
-</script>
+async function initSidebar(){
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
 
 <div class="main">
 
@@ -102,13 +143,11 @@ applyMenuRBAC()
 
 </div>
 
-
 <div class="card">
 
 <table>
 
 <thead>
-
 <tr>
 <th>Date</th>
 <th>Type</th>
@@ -117,7 +156,6 @@ applyMenuRBAC()
 <th>Credit</th>
 <th>Balance</th>
 </tr>
-
 </thead>
 
 <tbody id="ledgerTable"></tbody>
@@ -127,7 +165,6 @@ applyMenuRBAC()
 </div>
 
 </div>
-
 
 <script>
 
@@ -139,11 +176,10 @@ let payments=[]
 init()
 
 async function init(){
-
 await loadTransporters()
-
 }
 
+/* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
@@ -163,7 +199,7 @@ document.getElementById("transporterSelect").innerHTML=html
 
 }
 
-
+/* LOAD LEDGER */
 
 async function loadLedger(){
 
@@ -174,23 +210,20 @@ alert("Select transporter")
 return
 }
 
-
-/* LOAD TRIPS */
+/* TRIPS */
 
 const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 
-
-/* LOAD EXPENSES */
+/* EXPENSES */
 
 const {data:expenseData}=await supabaseClient
 .from("expenses")
 .select("*")
 
-
-/* LOAD PAYMENTS */
+/* PAYMENTS */
 
 let transporterName=transporters.find(x=>x.id==transporterId)?.transporter_name
 
@@ -199,70 +232,54 @@ const {data:paymentData}=await supabaseClient
 .select("*")
 .eq("transporter_name",transporterName)
 
-
-
 trips=tripData || []
 expenses=expenseData || []
 payments=paymentData || []
 
 let entries=[]
 
-
-/* TRIP DEBITS */
+/* TRIP DEBIT */
 
 trips.forEach(t=>{
 
-let weightMT=t.weight_kg/1000
-
-let gross=t.transporter_rate*weightMT
-
+let weightMT=(t.weight_kg || 0)/1000
+let gross=(t.transporter_rate || 0)*weightMT
 
 let tripExpenses=expenses
 .filter(e=>e.trip_id==t.id)
-.reduce((sum,e)=>sum+Number(e.amount),0)
-
+.reduce((sum,e)=>sum+Number(e.amount||0),0)
 
 let net=gross-tripExpenses
 
-
 entries.push({
-
-date:t.trip_date,
+date:t.trip_date || t.created_at,
 type:"Trip",
 ref:t.trip_no,
 debit:net,
 credit:0
-
 })
 
 })
 
-
-
-/* PAYMENT CREDITS */
+/* PAYMENT CREDIT */
 
 payments.forEach(p=>{
 
 entries.push({
-
-date:p.payment_date,
+date:p.payment_date || p.created_at,
 type:"Payment",
 ref:p.transaction_id || "Payment",
 debit:0,
-credit:p.amount
-
+credit:Number(p.amount || 0)
 })
 
 })
-
-
 
 /* SORT */
 
 entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
-
-/* RUNNING BALANCE */
+/* BALANCE */
 
 let balance=0
 let html=""
@@ -273,27 +290,15 @@ balance+=e.debit
 balance-=e.credit
 
 html+=`
-
 <tr>
-
 <td>${e.date || ""}</td>
-
 <td>${e.type}</td>
-
 <td>${e.ref}</td>
-
 <td>${e.debit || ""}</td>
-
 <td>${e.credit || ""}</td>
-
 <td>${balance}</td>
-
-</tr>
-
-`
-
+</tr>`
 })
-
 
 document.getElementById("ledgerTable").innerHTML=html
 
@@ -301,9 +306,9 @@ document.getElementById("ledgerTable").innerHTML=html
 
 </script>
 
-
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

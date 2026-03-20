@@ -7,60 +7,75 @@ async function checkRBAC(){
 
 try{
 
+/* 🚨 BLOCK UI IMMEDIATELY */
+document.body.style.display = "none"
+
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
-window.location="login.html"
+window.location.replace("login.html")
 return
 }
 
 const authId = session.user.id
 
-const {data:user}=await supabaseClient
+/* USER */
+const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
 if(!user){
-window.location="login.html"
+window.location.replace("login.html")
 return
 }
 
-const {data:userRoles}=await supabaseClient
+/* ROLES */
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
 
 if(!userRoles || userRoles.length===0){
-window.location="login.html"
+window.location.replace("login.html")
 return
 }
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-let currentPage = window.location.pathname.split("/").pop()
+/* CURRENT PAGE */
+let currentPage = window.location.pathname.split("/").pop().trim()
 
-const {data:permissions}=await supabaseClient
+/* PERMISSIONS */
+const {data:permissions} = await supabaseClient
 .from("role_permissions")
-.select("id")
+.select("page_name")
 .in("role_id",roleIds)
 .eq("page_name",currentPage)
 .eq("can_access",true)
 
+/* ❌ BLOCK ACCESS */
 if(!permissions || permissions.length===0){
 
 alert("Access Denied")
 
-window.location="dashboard.html"
-
+window.location.replace("dashboard.html")
+return
 }
+
+/* ✅ ALLOW PAGE */
+document.body.style.display = "block"
 
 }catch(err){
-console.error("RBAC Error:",err)
-}
+
+console.error("RBAC ERROR:",err)
+
+/* FAIL SAFE → BLOCK */
+window.location.replace("login.html")
 
 }
 
-/* RUN IMMEDIATELY */
+}
+
 checkRBAC()

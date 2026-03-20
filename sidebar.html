@@ -32,7 +32,6 @@
 </div>
 
 <style>
-
 .sidebar{
 position:fixed;
 left:0;
@@ -56,25 +55,12 @@ border-bottom:1px solid rgba(255,255,255,0.2);
 margin-bottom:10px;
 }
 
-.logo{
-height:28px;
-}
+.logo{height:28px;}
 
 .user-box{
 padding:12px 20px;
 border-bottom:1px solid rgba(255,255,255,0.2);
 margin-bottom:10px;
-}
-
-#userName{
-font-size:14px;
-font-weight:bold;
-}
-
-#userRole{
-font-size:12px;
-opacity:0.8;
-text-transform:capitalize;
 }
 
 .sidebar a{
@@ -85,182 +71,5 @@ text-decoration:none;
 font-size:14px;
 }
 
-.sidebar a:hover{
-background:#162c66;
-}
-
-.sidebar a.active{
-background:#162c66;
-font-weight:bold;
-border-left:4px solid white;
-}
-
+.sidebar a:hover{background:#162c66;}
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-
-/* SUPABASE */
-
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
-/* ACTIVE PAGE */
-
-function highlightActivePage(){
-
-const currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
-if(link.dataset.page===currentPage){
-link.classList.add("active")
-}
-})
-
-}
-
-/* LOAD USER INFO (DEBUG ON SCREEN) */
-
-async function loadUserInfo(){
-
-try{
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session){
-document.getElementById("userName").innerText="User"
-return
-}
-
-const authId = session.user.id
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-document.getElementById("userRole").innerText = "Checking..."
-
-const {data:user,error:userErr} = await supabaseClient
-.from("users")
-.select("*")
-.eq("auth_id",authId)
-
-if(userErr){
-document.getElementById("userRole").innerText = "Error: "+userErr.message
-return
-}
-
-if(!user || user.length===0){
-document.getElementById("userRole").innerText = "User not found"
-return
-}
-
-let userId = user[0].id
-
-document.getElementById("userRole").innerText = "User found ✓"
-
-const {data:userRole} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",userId)
-.single()
-
-if(!userRole){
-document.getElementById("userRole").innerText = "Role missing"
-return
-}
-
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
-
-if(role){
-document.getElementById("userRole").innerText = role.role_name
-}
-
-}catch(err){
-document.getElementById("userRole").innerText = "Error loading user"
-}
-
-}
-
-/* RBAC */
-
-async function applySidebarRBAC(){
-
-try{
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-
-const authId = session.user.id
-
-const {data:user}=await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-
-if(!user || user.length===0) return
-
-let userId = user[0].id
-
-const {data:userRole}=await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",userId)
-.single()
-
-if(!userRole) return
-
-const {data:permissions}=await supabaseClient
-.from("role_permissions")
-.select("page_name")
-.eq("role_id",userRole.role_id)
-.eq("can_access",true)
-
-if(!permissions) return
-
-let allowedPages = permissions.map(p=>p.page_name)
-
-document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
-let page = link.dataset.page
-if(!allowedPages.includes(page)){
-link.style.display="none"
-}
-})
-
-}catch(err){
-console.log("RBAC error:",err)
-}
-
-}
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-localStorage.clear()
-sessionStorage.clear()
-
-window.location.href="login.html"
-
-}
-
-/* INIT */
-
-window.addEventListener("load", async ()=>{
-
-highlightActivePage()
-
-await loadUserInfo()
-await applySidebarRBAC()
-
-})
-
-</script>

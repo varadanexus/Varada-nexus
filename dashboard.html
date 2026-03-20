@@ -7,11 +7,10 @@
 <!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- CORE SCRIPTS (ORDER VERY IMPORTANT) -->
+<!-- CORE SCRIPTS -->
 <script src="session-check.js"></script>
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script>
 
 <style>
 body{
@@ -52,6 +51,14 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+/* ENSURE RBAC AFTER LOAD */
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},200)
+
 })
 </script>
 
@@ -86,11 +93,9 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <script>
 
-/* USE GLOBAL CLIENT (IMPORTANT) */
-const supabaseClient = window.supabaseClient || supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+/* USE GLOBAL CLIENT ONLY */
+const supabaseClient = window.supabaseClient
+
 /* LOAD DASHBOARD */
 window.addEventListener("load", loadDashboard)
 
@@ -116,18 +121,25 @@ let totalProfit = 0
 
 let expenseMap = {}
 
+/* MAP EXPENSES */
+
 expensesData.forEach(e=>{
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-expenseMap[e.trip_id]+=Number(e.amount)
+expenseMap[e.trip_id]+=Number(e.amount || 0)
 })
+
+/* CALCULATIONS */
 
 tripsData.forEach(trip=>{
 
 let mt = (trip.weight_kg || 0)/1000
 let expense = expenseMap[trip.id] || 0
 
-let companyAmount = (trip.company_rate*mt) - expense
-let transporterAmount = (trip.transporter_rate*mt) - expense
+let companyRate = Number(trip.company_rate || 0)
+let transporterRate = Number(trip.transporter_rate || 0)
+
+let companyAmount = (companyRate * mt) - expense
+let transporterAmount = (transporterRate * mt) - expense
 
 let profit = companyAmount - transporterAmount
 
@@ -136,6 +148,8 @@ totalCost += transporterAmount || 0
 totalProfit += profit || 0
 
 })
+
+/* DISPLAY */
 
 document.getElementById("totalTrips").innerText = totalTrips
 document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()

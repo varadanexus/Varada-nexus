@@ -1,8 +1,107 @@
+<div class="sidebar">
+
+<div class="logo-box">
+<img src="images/logo.png" class="logo">
+<span>Varada Nexus</span>
+</div>
+
+<div class="user-box">
+<div id="userName">Loading...</div>
+<div id="userRole"></div>
+</div>
+
+<a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
+<a href="trips.html" data-page="trips.html">Trips</a>
+<a href="expenses.html" data-page="expenses.html">Expenses</a>
+<a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
+<a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
+<a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
+<a href="transporter-payments.html" data-page="transporter-payments.html">Transporter Payments</a>
+<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
+<a href="master-data.html" data-page="master-data.html">Master Data</a>
+<a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
+<a href="admin-users.html" data-page="admin-users.html">Users</a>
+<a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
+<a href="admin-maintenance.html" data-page="admin-maintenance.html">System Maintenance</a>
+<a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
+<a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
+<a href="generate-invoice.html" data-page="generate-invoice.html">Generate Invoice</a>
+
+<a href="#" onclick="logout();return false;">Logout</a>
+
+</div>
+
+<style>
+
+.sidebar{
+position:fixed;
+left:0;
+top:0;
+width:220px;
+height:100vh;
+background:#1f3c88;
+color:white;
+padding-top:20px;
+overflow-y:auto;
+}
+
+.logo-box{
+display:flex;
+align-items:center;
+gap:10px;
+padding:0 20px 20px 20px;
+font-size:18px;
+font-weight:bold;
+border-bottom:1px solid rgba(255,255,255,0.2);
+margin-bottom:10px;
+}
+
+.logo{
+height:28px;
+}
+
+.user-box{
+padding:12px 20px;
+border-bottom:1px solid rgba(255,255,255,0.2);
+margin-bottom:10px;
+}
+
+#userName{
+font-size:14px;
+font-weight:bold;
+}
+
+#userRole{
+font-size:12px;
+opacity:0.8;
+text-transform:capitalize;
+}
+
+.sidebar a{
+display:block;
+color:white;
+padding:12px 20px;
+text-decoration:none;
+font-size:14px;
+}
+
+.sidebar a:hover{
+background:#162c66;
+}
+
+.sidebar a.active{
+background:#162c66;
+font-weight:bold;
+border-left:4px solid white;
+}
+
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-/* SUPABASE CLIENT */
+/* SUPABASE */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -23,7 +122,7 @@ link.classList.add("active")
 
 }
 
-/* LOAD USER INFO (FIXED FINAL) */
+/* LOAD USER INFO (DEBUG VERSION) */
 
 async function loadUserInfo(){
 
@@ -39,28 +138,35 @@ return
 const authId = session.user.id
 const email = session.user.email
 
-/* NAME */
+console.log("AUTH ID:", authId)
+
+/* DISPLAY NAME */
 document.getElementById("userName").innerText = email.split("@")[0]
 
-/* GET USER USING auth_id (IMPORTANT FIX) */
+/* DEBUG QUERY */
 
 const {data:user,error:userErr} = await supabaseClient
 .from("users")
-.select("id")
+.select("*")
 .eq("auth_id",authId)
-.single()
 
-if(userErr || !user){
-document.getElementById("userRole").innerText=""
+console.log("USER QUERY RESULT:", user, userErr)
+
+/* STOP HERE FOR DEBUG */
+
+if(!user || user.length===0){
+document.getElementById("userRole").innerText="(user not found)"
 return
 }
+
+let userId = user[0].id
 
 /* GET ROLE */
 
 const {data:userRole} = await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",user.id)
+.eq("user_id",userId)
 .single()
 
 if(!userRole){
@@ -86,7 +192,7 @@ console.log("User load error:",err)
 
 }
 
-/* SIDEBAR RBAC */
+/* RBAC */
 
 async function applySidebarRBAC(){
 
@@ -97,23 +203,24 @@ if(!session) return
 
 const authId = session.user.id
 
-const {data:user} = await supabaseClient
+const {data:user}=await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
-.single()
 
-if(!user) return
+if(!user || user.length===0) return
 
-const {data:userRole} = await supabaseClient
+let userId = user[0].id
+
+const {data:userRole}=await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",user.id)
+.eq("user_id",userId)
 .single()
 
 if(!userRole) return
 
-const {data:permissions} = await supabaseClient
+const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .eq("role_id",userRole.role_id)

@@ -41,6 +41,8 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 
 <script>
 
+/* MAIN SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -49,38 +51,9 @@ const supabaseClient = supabase.createClient(
 </script>
 
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
-<script>
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
-
-/* FORCE RUN SIDEBAR FUNCTIONS */
-
-setTimeout(async ()=>{
-
-if(typeof highlightActivePage === "function"){
-highlightActivePage()
-}
-
-if(typeof loadUserInfo === "function"){
-await loadUserInfo()
-}
-
-if(typeof applySidebarRBAC === "function"){
-await applySidebarRBAC()
-}
-
-},200)
-
-})
-</script>
-
 <!-- MAIN -->
-
 <div class="main">
 
 <h1>Dashboard</h1>
@@ -112,6 +85,71 @@ await applySidebarRBAC()
 </div>
 
 <script>
+
+/* LOAD SIDEBAR + INIT USER */
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+})
+
+/* SIDEBAR LOGIC */
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+/* NAME */
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+/* USER */
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* ROLE */
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+/* DASHBOARD DATA */
 
 async function loadDashboard(){
 
@@ -145,17 +183,14 @@ tripsData.forEach(trip=>{
 let mt = (trip.weight_kg || 0)/1000
 let expense = expenseMap[trip.id] || 0
 
-let companyRate = Number(trip.company_rate || 0)
-let transporterRate = Number(trip.transporter_rate || 0)
-
-let companyAmount = (companyRate * mt) - expense
-let transporterAmount = (transporterRate * mt) - expense
+let companyAmount = (Number(trip.company_rate || 0)*mt) - expense
+let transporterAmount = (Number(trip.transporter_rate || 0)*mt) - expense
 
 let profit = companyAmount - transporterAmount
 
-totalRevenue += companyAmount || 0
-totalCost += transporterAmount || 0
-totalProfit += profit || 0
+totalRevenue += companyAmount
+totalCost += transporterAmount
+totalProfit += profit
 
 })
 
@@ -165,7 +200,7 @@ document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost)
 document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit)
 
 }catch(err){
-console.log("Dashboard error:",err)
+console.log(err)
 }
 
 }

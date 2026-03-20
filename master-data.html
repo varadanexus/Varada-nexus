@@ -1,296 +1,190 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Master Data - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
-<script src="menu-rbac.js"></script>
-
-<style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;}
-button{padding:8px 12px;background:#1f3c88;color:white;border:none;border-radius:4px;cursor:pointer;}
-.editBtn{background:#5bc0de;}
-.deleteBtn{background:#d9534f;}
-.saveBtn{background:#5cb85c;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
-</style>
-
-</head>
-
-<body>
-
-<script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-</script>
-
-<!-- SIDEBAR -->
-<div id="sidebar-container"></div>
-
-<script>
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
-})
-
-async function initSidebar(){
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-
-document.getElementById("userName").innerText = session.user.email.split("@")[0]
-
-window.logout = async ()=>{
-await supabaseClient.auth.signOut()
-window.location="login.html"
-}
-}
-</script>
-
-<div class="main">
-
-<h2>Master Data</h2>
-
-<!-- ADD SECTION -->
-<div class="card">
-
-<h3>Add Data</h3>
-
-<select id="type">
-<option value="routes">Route</option>
-<option value="trucks">Truck</option>
-<option value="commodities">Commodity</option>
-<option value="clients">Client</option>
-</select>
-
-<input id="value" placeholder="Enter value">
-
-<button onclick="addData()">Add</button>
-
-</div>
-
-<!-- SEARCH -->
-<div class="card">
-
-<input id="search" placeholder="Search...">
-<button onclick="applySearch()">Search</button>
-<button onclick="clearSearch()">Clear</button>
-
-</div>
-
-<!-- TABLE -->
-<table>
-
-<thead>
-<tr>
-<th>Value</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="dataTable"></tbody>
-
-</table>
-
-<br>
-
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-
-</div>
-
 <script>
 
-let dataList=[]
-let filtered=[]
-let page=1
-let pageSize=10
-let currentType="routes"
+/* ================= AUTO GENERATION ================= */
 
-init()
+/* ROUTE AUTO CODE */
 
-async function init(){
-await loadData()
+document.getElementById("origin").addEventListener("input",generateRouteCode)
+document.getElementById("destination").addEventListener("input",generateRouteCode)
+
+function generateRouteCode(){
+let from=document.getElementById("origin").value
+let to=document.getElementById("destination").value
+
+if(from && to){
+document.getElementById("routeCode").value =
+from.substring(0,4).toUpperCase()+"-"+to.substring(0,4).toUpperCase()
+}
 }
 
-/* LOAD DATA */
+/* ================= ADD FUNCTIONS ================= */
 
-async function loadData(){
+/* CLIENT */
 
-currentType=document.getElementById("type").value
+async function addClient(){
 
-let {data}=await supabaseClient.from(currentType).select("*")
+let name=document.getElementById("clientName").value
+let company=document.getElementById("clientCompany").value
+let phone=document.getElementById("clientPhone").value
+let email=document.getElementById("clientEmail").value
 
-dataList=data || []
-filtered=dataList
-
-renderTable()
-
-}
-
-/* ADD */
-
-async function addData(){
-
-let val=document.getElementById("value").value
-let type=document.getElementById("type").value
-
-if(!val){
-alert("Enter value")
+if(!company){
+alert("Enter client company")
 return
 }
 
-let obj={}
-
-if(type==="routes") obj={route_code:val}
-if(type==="trucks") obj={truck_number:val}
-if(type==="commodities") obj={name:val}
-if(type==="clients") obj={company:val}
-
-await supabaseClient.from(type).insert(obj)
-
-document.getElementById("value").value=""
-
-loadData()
-
-}
-
-/* RENDER */
-
-function renderTable(){
-
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let rows=filtered.slice(start,end)
-
-let html=""
-
-rows.forEach(r=>{
-
-let value = r.route_code || r.truck_number || r.name || r.company
-
-html+=`
-<tr id="row_${r.id}">
-<td>${value}</td>
-<td>
-<button class="editBtn" onclick="editRow('${r.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteRow('${r.id}')">Delete</button>
-</td>
-</tr>`
+await supabaseClient.from("clients").insert({
+client_name:name,
+company:company,
+phone:phone,
+email:email
 })
 
-document.getElementById("dataTable").innerHTML=html
+loadClients()
 
 }
 
-/* EDIT */
+/* TRANSPORTER */
 
-function editRow(id){
+async function addTransporter(){
 
-let row=document.getElementById("row_"+id)
-let item=dataList.find(x=>x.id==id)
-
-let value = item.route_code || item.truck_number || item.name || item.company
-
-row.innerHTML=`
-<td><input id="edit_${id}" value="${value}"></td>
-<td>
-<button class="saveBtn" onclick="saveEdit('${id}')">Save</button>
-</td>
-`
-
-}
-
-async function saveEdit(id){
-
-let val=document.getElementById("edit_"+id).value
-
-let obj={}
-
-if(currentType==="routes") obj={route_code:val}
-if(currentType==="trucks") obj={truck_number:val}
-if(currentType==="commodities") obj={name:val}
-if(currentType==="clients") obj={company:val}
-
-await supabaseClient.from(currentType).update(obj).eq("id",id)
-
-loadData()
-
-}
-
-/* DELETE */
-
-async function deleteRow(id){
-
-if(!confirm("Delete?")) return
-
-await supabaseClient.from(currentType).delete().eq("id",id)
-
-loadData()
-
-}
-
-/* SEARCH */
-
-function applySearch(){
-
-let q=document.getElementById("search").value.toLowerCase()
-
-filtered=dataList.filter(r=>{
-
-let value = r.route_code || r.truck_number || r.name || r.company
-return value.toLowerCase().includes(q)
-
+await supabaseClient.from("transporters").insert({
+transporter_name:document.getElementById("tName").value,
+phone:document.getElementById("tPhone").value,
+company:document.getElementById("tCompany").value,
+PAN:document.getElementById("tPAN").value
 })
 
-page=1
-renderTable()
+loadTransporters()
 
 }
 
-function clearSearch(){
-filtered=dataList
-page=1
-renderTable()
+/* ROUTE */
+
+async function addRoute(){
+
+let origin=document.getElementById("origin").value
+let destination=document.getElementById("destination").value
+let code=document.getElementById("routeCode").value
+
+if(!origin || !destination){
+alert("Enter route details")
+return
 }
 
-/* PAGINATION */
-
-function nextPage(){
-if(page*pageSize >= filtered.length) return
-page++
-renderTable()
-}
-
-function prevPage(){
-if(page>1){
-page--
-renderTable()
-}
-}
-
-document.getElementById("type").addEventListener("change",()=>{
-page=1
-loadData()
+await supabaseClient.from("routes").insert({
+origin:origin,
+destination:destination,
+route_code:code
 })
+
+loadRoutes()
+
+}
+
+/* TRUCK */
+
+async function addTruck(){
+
+let number=document.getElementById("truckNumber").value
+let transporter=document.getElementById("truckTransporter").value
+
+if(!number || !transporter){
+alert("Enter truck and transporter")
+return
+}
+
+/* AUTO FORMAT */
+let formatted = number.toUpperCase().replace(/\s/g,"")
+
+await supabaseClient.from("trucks").insert({
+truck_number:formatted,
+transporter_id:transporter
+})
+
+loadTrucks()
+
+}
+
+/* COMMODITY */
+
+async function addCommodity(){
+
+let name=document.getElementById("commodityName").value
+
+if(!name){
+alert("Enter commodity")
+return
+}
+
+await supabaseClient.from("commodities").insert({
+name:name
+})
+
+loadCommodities()
+
+}
+
+/* ================= SAVE FUNCTIONS ================= */
+
+async function saveTransporter(btn){
+
+let row=btn.closest("tr")
+let id=row.dataset.id
+let cells=row.querySelectorAll("td")
+
+await supabaseClient.from("transporters").update({
+transporter_name:cells[0].innerText,
+phone:cells[1].innerText,
+company:cells[2].innerText,
+PAN:cells[3].innerText
+}).eq("id",id)
+
+alert("Saved")
+
+}
+
+async function saveRoute(btn){
+
+let row=btn.closest("tr")
+let id=row.dataset.id
+let cells=row.querySelectorAll("td")
+
+let origin=cells[0].innerText
+let destination=cells[1].innerText
+
+let code=origin.substring(0,4).toUpperCase()+"-"+destination.substring(0,4).toUpperCase()
+
+await supabaseClient.from("routes").update({
+origin:origin,
+destination:destination,
+route_code:code
+}).eq("id",id)
+
+loadRoutes()
+
+}
+
+async function saveCommodity(btn){
+
+let row=btn.closest("tr")
+let id=row.dataset.id
+let val=row.querySelector("td").innerText
+
+await supabaseClient.from("commodities").update({
+name:val
+}).eq("id",id)
+
+alert("Saved")
+
+}
+
+/* ================= INIT ================= */
+
+loadClients()
+loadTransporters()
+loadRoutes()
+loadTrucks()
+loadCommodities()
 
 </script>
-
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script>
-
-</body>
-</html>

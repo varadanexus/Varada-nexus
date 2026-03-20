@@ -5,84 +5,22 @@
 
 <title>Role Permissions - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
-
-h2{
-color:#1f3c88;
-}
-
-.form-box{
-background:white;
-padding:20px;
-border-radius:6px;
-width:400px;
-margin-bottom:20px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-input{
-width:100%;
-padding:10px;
-margin-bottom:10px;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
-button{
-padding:10px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-button:hover{
-background:#162c66;
-}
-
-.save-all{
-margin-top:20px;
-padding:12px 20px;
-font-size:15px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #ddd;
-text-align:center;
-}
-
-th{
-background:#eee;
-}
-
-.role-name{
-text-align:left;
-font-weight:bold;
-}
-
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+h2{color:#1f3c88;}
+.form-box{background:white;padding:20px;border-radius:6px;width:400px;margin-bottom:20px;}
+input{width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;}
+button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
+.save-all{margin-top:20px;padding:12px 20px;}
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center;}
+th{background:#eee;}
+.role-name{text-align:left;font-weight:bold;}
 </style>
 
 </head>
@@ -90,37 +28,60 @@ font-weight:bold;
 <body>
 
 <script>
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_SUPABASE_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
-
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
-
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+})
 
-setTimeout(()=>{
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId=session.user.id
+const email=session.user.email
+
+document.getElementById("userName").innerText=email.split("@")[0]
+
+const {data:user}=await supabaseClient
+.from("users").select("id").eq("auth_id",authId).single()
+
+if(!user) return
+
+const {data:userRole}=await supabaseClient
+.from("user_roles").select("role_id").eq("user_id",user.id).single()
+
+if(!userRole) return
+
+const {data:role}=await supabaseClient
+.from("roles").select("role_name").eq("id",userRole.role_id).single()
+
+if(role){
+document.getElementById("userRole").innerText=role.role_name
+}
+
 if(typeof applyMenuRBAC==="function"){
 applyMenuRBAC()
 }
-},300)
 
-})
-
+window.logout=async()=>{
+await supabaseClient.auth.signOut()
+window.location="login.html"
+}
+}
 </script>
-
 
 <div class="main">
 
@@ -136,7 +97,6 @@ applyMenuRBAC()
 
 </div>
 
-
 <table id="permTable"></table>
 
 <button class="save-all" onclick="saveAllPermissions()">
@@ -145,13 +105,11 @@ Save All Permissions
 
 </div>
 
-
 <script>
 
 /* ERP PAGES */
 
 const pages=[
-
 {name:"Dashboard",file:"dashboard.html"},
 {name:"Trips",file:"trips.html"},
 {name:"Expenses",file:"expenses.html"},
@@ -160,119 +118,92 @@ const pages=[
 {name:"Client Ledger",file:"client-ledger.html"},
 {name:"Master Data",file:"master-data.html"},
 {name:"Rates",file:"rate-entry.html"},
-{name:"Payments",file:"transporter-payments.html"},
+{name:"Transporter Payments",file:"transporter-payments.html"},
 {name:"Transporter Ledger",file:"admin-transporter-ledger.html"},
 {name:"Users",file:"admin-users.html"},
 {name:"Role Permissions",file:"role-permissions.html"},
 {name:"System Maintenance",file:"admin-maintenance.html"},
 {name:"Profit Analysis",file:"profit-analysis.html"},
 {name:"Financial Dashboard",file:"financial-dashboard.html"},
-{name:"Generate Invoice",file:"generate-invoice.html"},
-{name:"Transporter Dashboard",file:"transporter-dashboard.html"},
-{name:"Transporter Trips",file:"transporter-trips.html"},
-{name:"Transporter Ledger",file:"transporter-ledger.html"}
-
+{name:"Generate Invoice",file:"generate-invoice.html"}
 ]
-
 
 /* CREATE ROLE */
 
 async function createRole(){
 
-let name=document.getElementById("roleName").value
+let name=roleName.value.trim()
 
 if(!name){
 alert("Enter role name")
 return
 }
 
-await supabaseClient
-.from("roles")
-.insert({role_name:name})
+await supabaseClient.from("roles").insert({role_name:name})
 
-document.getElementById("roleName").value=""
+roleName.value=""
 
 alert("Role Created")
 
 loadPermissions()
-
 }
-
 
 /* LOAD PERMISSIONS */
 
 async function loadPermissions(){
 
-const {data:roles}=await supabaseClient
-.from("roles")
-.select("*")
+const {data:roles}=await supabaseClient.from("roles").select("*")
+const {data:perms}=await supabaseClient.from("role_permissions").select("*")
 
-const {data:perms}=await supabaseClient
-.from("role_permissions")
-.select("*")
+let html=`<thead><tr><th>Role</th>`
 
-let html=""
-
-html+=`<thead><tr><th>Role</th>`
-
-pages.forEach(p=>{
-html+=`<th>${p.name}</th>`
-})
+pages.forEach(p=>{ html+=`<th>${p.name}</th>` })
 
 html+=`</tr></thead><tbody>`
 
-
-roles.forEach(role=>{
+roles?.forEach(role=>{
 
 html+=`<tr><td class="role-name">${role.role_name}</td>`
 
 pages.forEach(p=>{
 
-let existing=perms?.find(x =>
-String(x.role_id)===String(role.id) &&
-String(x.page_name)===String(p.file)
+let existing=perms?.find(x=>
+String(x.role_id)==String(role.id) &&
+x.page_name==p.file
 )
-
-let checked=existing?.can_access ? "checked":""
 
 html+=`
 <td>
 <input type="checkbox"
 id="${role.id}_${p.file}"
-${checked}>
-</td>
-`
-
+${existing?.can_access?"checked":""}>
+</td>`
 })
 
 html+=`</tr>`
-
 })
 
 html+=`</tbody>`
 
-document.getElementById("permTable").innerHTML=html
-
+permTable.innerHTML=html
 }
 
-
-/* SAVE ALL PERMISSIONS */
+/* SAVE */
 
 async function saveAllPermissions(){
 
-const {data:roles}=await supabaseClient
-.from("roles")
-.select("*")
+const {data:roles}=await supabaseClient.from("roles").select("*")
+
+let tasks=[]
 
 for(let role of roles){
 
 for(let p of pages){
 
-let checkbox=document.getElementById(role.id+"_"+p.file)
+let cb=document.getElementById(role.id+"_"+p.file)
+if(!cb) continue
 
-if(!checkbox) continue
-
-let allowed=checkbox.checked
+let allowed=cb.checked
 
 const {data:existing}=await supabaseClient
 .from("role_permissions")
@@ -282,40 +213,43 @@ const {data:existing}=await supabaseClient
 
 if(existing && existing.length>0){
 
-await supabaseClient
-.from("role_permissions")
+tasks.push(
+supabaseClient.from("role_permissions")
 .update({can_access:allowed})
 .eq("role_id",role.id)
 .eq("page_name",p.file)
+)
 
 }else{
 
-await supabaseClient
-.from("role_permissions")
+tasks.push(
+supabaseClient.from("role_permissions")
 .insert({
 role_id:role.id,
 page_name:p.file,
 can_access:allowed
 })
+)
 
 }
 
 }
-
 }
 
-alert("All Permissions Saved")
+await Promise.all(tasks)
 
+alert("Permissions Saved Successfully")
 }
-
 
 /* INIT */
 
-loadPermissions()
+window.onload=loadPermissions
 
 </script>
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

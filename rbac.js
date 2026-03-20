@@ -9,29 +9,29 @@ try{
 
 let currentPage = window.location.pathname.split("/").pop().trim()
 
-/* ✅ SKIP LOGIN PAGE */
+/* SKIP LOGIN */
 if(currentPage === "login.html" || currentPage === ""){
 return
 }
 
-/* 🔥 WAIT FOR SESSION (IMPORTANT FIX) */
-let sessionData = null
+/* WAIT FOR SESSION */
+let session = null
 
 for(let i=0;i<5;i++){
 const {data} = await supabaseClient.auth.getSession()
 if(data.session){
-sessionData = data.session
+session = data.session
 break
 }
 await new Promise(r=>setTimeout(r,200))
 }
 
-if(!sessionData){
-window.location.replace("login.html")
+if(!session){
+window.location.href="login.html"
 return
 }
 
-const authId = sessionData.user.id
+const authId = session.user.id
 
 /* USER */
 const {data:user} = await supabaseClient
@@ -41,7 +41,7 @@ const {data:user} = await supabaseClient
 .single()
 
 if(!user){
-window.location.replace("login.html")
+window.location.href="login.html"
 return
 }
 
@@ -52,13 +52,13 @@ const {data:userRoles} = await supabaseClient
 .eq("user_id",user.id)
 
 if(!userRoles || userRoles.length===0){
-window.location.replace("login.html")
+window.location.href="login.html"
 return
 }
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* PERMISSION CHECK */
+/* CHECK PERMISSION */
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
@@ -66,26 +66,20 @@ const {data:permissions} = await supabaseClient
 .eq("page_name",currentPage)
 .eq("can_access",true)
 
-/* ❌ BLOCK ACCESS */
+/* ❌ BLOCK */
 if(!permissions || permissions.length===0){
 
 alert("Access Denied")
 
-window.location.replace("dashboard.html")
+window.location.href="dashboard.html"
 return
 }
 
-/* ✅ ALLOW PAGE (NO HIDING NOW) */
-
 }catch(err){
-
-console.error("RBAC ERROR:",err)
-
-/* fallback */
-window.location.replace("login.html")
-
+console.log("RBAC ERROR",err)
 }
 
 }
 
-checkRBAC()
+/* RUN AFTER PAGE LOAD (IMPORTANT) */
+window.addEventListener("load", checkRBAC)

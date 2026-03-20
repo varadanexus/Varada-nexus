@@ -1,8 +1,7 @@
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24i"
 )
-
 
 /* ============================= */
 /* MENU RBAC */
@@ -16,7 +15,6 @@ if(!session) return
 
 const authId = session.user.id
 
-
 /* find ERP user */
 
 const {data:user} = await supabaseClient
@@ -27,41 +25,40 @@ const {data:user} = await supabaseClient
 
 if(!user) return
 
-
 /* get role */
 
-const {data:userRole} = await supabaseClient
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
 
-if(!userRole) return
+if(!userRoles || userRoles.length === 0) return
 
+let roleIds = userRoles.map(r=>r.role_id)
 
 /* get permissions */
 
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
-.eq("role_id",userRole.role_id)
+.in("role_id", roleIds)
 .eq("can_access",true)
 
 if(!permissions) return
 
-
 let allowedPages = permissions.map(p => p.page_name)
 
+/* wait until sidebar loads */
 
-/* hide unauthorized links */
+setTimeout(()=>{
 
 let links = document.querySelectorAll(".sidebar a[data-page]")
 
 links.forEach(link=>{
 
-let page = link.getAttribute("data-page").trim()
+let page = link.getAttribute("data-page")?.trim()
 
-/* always allow logout */
+/* allow logout always */
 
 if(page === "logout") return
 
@@ -70,6 +67,8 @@ link.style.display="none"
 }
 
 })
+
+},300)
 
 }
 
@@ -82,7 +81,9 @@ window.logout = async function(){
 
 await supabaseClient.auth.signOut()
 
-window.location.href="login.html"
+localStorage.clear()
+
+window.location.replace("login.html")
 
 }
 
@@ -91,4 +92,4 @@ window.location.href="login.html"
 /* RUN RBAC */
 /* ============================= */
 
-applyMenuRBAC()
+setTimeout(applyMenuRBAC, 300)

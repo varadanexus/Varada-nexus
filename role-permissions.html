@@ -28,7 +28,6 @@ th{background:#eee;}
 <body>
 
 <script>
-/* ⚠️ DO NOT redeclare supabaseClient if already in session-check.js */
 const supabaseClient = window.supabaseClient || supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -101,7 +100,7 @@ window.location="login.html"
 
 <table id="permTable"></table>
 
-<button class="save-all" onclick="saveAllPermissions()">
+<button id="saveBtn" class="save-all" onclick="saveAllPermissions()">
 Save All Permissions
 </button>
 
@@ -109,7 +108,7 @@ Save All Permissions
 
 <script>
 
-/* ERP PAGES */
+/* PAGES */
 
 const pages=[
 {name:"Dashboard",file:"dashboard.html"},
@@ -131,6 +130,8 @@ const pages=[
 
 const actions=["view","create","edit","delete"]
 
+/* CREATE ROLE */
+
 async function createRole(){
 
 let name=roleName.value.trim()
@@ -148,7 +149,7 @@ alert("Role Created")
 loadPermissions()
 }
 
-/* LOAD */
+/* LOAD DATA */
 
 async function loadPermissions(){
 
@@ -199,7 +200,7 @@ html+=`</tbody>`
 permTable.innerHTML=html
 }
 
-/* 🔥 FAST SAVE (FIXED) */
+/* SAVE (UPSERT SAFE) */
 
 async function saveAllPermissions(){
 
@@ -214,9 +215,7 @@ const {data:roles}=await supabaseClient.from("roles").select("*")
 let allData=[]
 
 for(let role of roles){
-
 for(let p of pages){
-
 for(let a of actions){
 
 let cb=document.getElementById(`${role.id}_${p.file}_${a}`)
@@ -229,15 +228,12 @@ action_name: a,
 can_access: cb.checked
 })
 
-}
-}
-}
+}}}
 
-/* 🔥 UPSERT (SAFE + FAST) */
 const {error} = await supabaseClient
 .from("role_permissions")
-.upsert(allData, {
-onConflict: "role_id,page_name,action_name"
+.upsert(allData,{
+onConflict:"role_id,page_name,action_name"
 })
 
 if(error){
@@ -247,29 +243,15 @@ return
 }
 
 alert("Permissions Saved Successfully 🚀")
-
-/* 🔄 RELOAD TO VERIFY */
 loadPermissions()
 
 }catch(err){
-
 console.error(err)
 alert("Error saving permissions")
-
 }
 
 btn.disabled = false
 btn.innerText = "Save All Permissions"
-
-}
-
-/* 🚀 2 QUERIES ONLY */
-
-await supabaseClient.from("role_permissions").delete().neq("id",0)
-
-await supabaseClient.from("role_permissions").insert(allData)
-
-alert("Permissions Saved (Fast 🚀)")
 
 }
 

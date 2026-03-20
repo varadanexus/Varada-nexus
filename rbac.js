@@ -1,6 +1,6 @@
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 async function checkRBAC(){
@@ -8,7 +8,7 @@ async function checkRBAC(){
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
-window.location.href="login.html"
+window.location.replace("login.html")
 return
 }
 
@@ -23,42 +23,40 @@ const {data:user}=await supabaseClient
 .single()
 
 if(!user){
-window.location.href="login.html"
+window.location.replace("login.html")
 return
 }
 
-/* GET ROLE */
+/* GET ROLES (FIXED) */
 
-const {data:userRole}=await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
 
-if(!userRole){
-window.location.href="login.html"
+if(!userRoles || userRoles.length===0){
+window.location.replace("login.html")
 return
 }
 
-let roleId=userRole.role_id
+let roleIds = userRoles.map(r=>r.role_id)
 
 let currentPage = window.location.pathname.split("/").pop()
 
-/* CHECK PERMISSION */
+/* CHECK PERMISSION (FIXED) */
 
-const {data:permission}=await supabaseClient
+const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("*")
-.eq("role_id",roleId)
+.in("role_id",roleIds)
 .eq("page_name",currentPage)
 .eq("can_access",true)
-.single()
 
-if(!permission){
+if(!permissions || permissions.length===0){
 
 alert("You do not have permission to access this page")
 
-window.location.href="dashboard.html"
+window.location.replace("dashboard.html")
 
 }
 

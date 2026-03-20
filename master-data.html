@@ -13,12 +13,13 @@
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 .card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}
-input,select{padding:6px;border:1px solid #ccc;border-radius:4px;}
+input,select{padding:6px;border:1px solid #ccc;border-radius:4px;margin:4px;}
 button{padding:6px 12px;background:#1f3c88;color:white;border:none;border-radius:4px;}
 .deleteBtn{background:#d9534f;}
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
+.pagination{margin-top:10px;}
 </style>
 
 </head>
@@ -28,7 +29,7 @@ th{background:#eee;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 </script>
 
@@ -46,14 +47,8 @@ await initSidebar()
 async function initSidebar(){
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
-
 document.getElementById("userName").innerText =
 session.user.email.split("@")[0]
-
-window.logout = async ()=>{
-await supabaseClient.auth.signOut()
-window.location="login.html"
-}
 }
 </script>
 
@@ -77,6 +72,11 @@ window.location="login.html"
 </thead>
 <tbody id="clientTable"></tbody>
 </table>
+
+<div class="pagination">
+<button onclick="prevClient()">Prev</button>
+<button onclick="nextClient()">Next</button>
+</div>
 </div>
 
 <!-- TRANSPORTERS -->
@@ -153,33 +153,25 @@ window.location="login.html"
 
 <script>
 
-/* ROUTE AUTO */
-function generateRoute(){
-let o=origin.value.trim()
-let d=destination.value.trim()
+/* PAGINATION */
+let clientPage=0
+const pageSize=10
 
-if(o && d){
+/* ROUTE AUTO */
+origin.oninput = destination.oninput = ()=>{
+if(origin.value && destination.value){
 routeCode.value =
-o.substring(0,4).toUpperCase()+"-"+
-d.substring(0,4).toUpperCase()
-}else{
-routeCode.value=""
+origin.value.slice(0,4).toUpperCase()+"-"+
+destination.value.slice(0,4).toUpperCase()
 }
 }
-origin.addEventListener("input",generateRoute)
-destination.addEventListener("input",generateRoute)
 
 /* TRUCK AUTO */
-truckNumber.addEventListener("input",()=>{
+truckNumber.oninput = ()=>{
 let val=truckNumber.value.toUpperCase()
 let match=val.match(/[A-Z]{2}\d{4}$/)
-
-if(match){
-truckId.value = match[0].replace(/([A-Z]{2})(\d{4})/,"$1-$2")
-}else{
-truckId.value=""
+truckId.value = match ? match[0].replace(/([A-Z]{2})(\d{4})/,"$1-$2") : ""
 }
-})
 
 /* ADD */
 
@@ -206,32 +198,18 @@ loadTransporters()
 }
 
 async function addRoute(){
-
-let o=origin.value.trim()
-let d=destination.value.trim()
-let c=routeCode.value.trim()
-
-if(!o || !d){
-alert("Enter origin & destination")
+if(!origin.value || !destination.value){
+alert("Enter both fields")
 return
 }
-
-if(!c){
-c=o.substring(0,4).toUpperCase()+"-"+d.substring(0,4).toUpperCase()
-}
-
-const {error}=await supabaseClient.from("routes")
-.insert({origin:o,destination:d,route_code:c})
-
-if(error){
-alert(error.message)
-return
-}
-
+await supabaseClient.from("routes").insert({
+origin:origin.value,
+destination:destination.value,
+route_code:routeCode.value
+})
 origin.value=""
 destination.value=""
 routeCode.value=""
-
 loadRoutes()
 }
 
@@ -256,8 +234,14 @@ loadCommodities()
 /* LOAD */
 
 async function loadClients(){
-const {data}=await supabaseClient.from("clients").select("*")
+
+const {data}=await supabaseClient
+.from("clients")
+.select("*")
+.range(clientPage*pageSize,(clientPage+1)*pageSize-1)
+
 let html=""
+
 data?.forEach(c=>{
 html+=`
 <tr>
@@ -267,12 +251,17 @@ html+=`
 <td><button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button></td>
 </tr>`
 })
+
 clientTable.innerHTML=html
 }
 
+function nextClient(){clientPage++;loadClients()}
+function prevClient(){if(clientPage>0){clientPage--;loadClients()}}
+
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
-let html="",dd='<option value="">Select</option>'
+let html="",dd='<option>Select</option>'
+
 data?.forEach(t=>{
 html+=`
 <tr>
@@ -282,6 +271,7 @@ html+=`
 </tr>`
 dd+=`<option value="${t.id}">${t.transporter_name}</option>`
 })
+
 transporterTable.innerHTML=html
 truckTransporter.innerHTML=dd
 }
@@ -302,16 +292,12 @@ routeTable.innerHTML=html
 }
 
 async function loadTrucks(){
-
 const {data:trucks}=await supabaseClient.from("trucks").select("*")
-const {data:transporters}=await supabaseClient.from("transporters").select("*")
+const {data:trs}=await supabaseClient.from("transporters").select("*")
 
 let html=""
-
 trucks?.forEach(t=>{
-
-let name = transporters.find(x=>x.id==t.transporter_id)?.transporter_name || ""
-
+let name=trs.find(x=>x.id==t.transporter_id)?.transporter_name || ""
 html+=`
 <tr>
 <td>${t.truck_number}</td>
@@ -319,7 +305,6 @@ html+=`
 <td><button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button></td>
 </tr>`
 })
-
 truckTable.innerHTML=html
 }
 
@@ -346,11 +331,13 @@ async function deleteCommodity(id){await supabaseClient.from("commodities").dele
 
 /* INIT */
 
-loadClients()
-loadTransporters()
-loadRoutes()
-loadTrucks()
-loadCommodities()
+window.onload=async ()=>{
+await loadClients()
+await loadTransporters()
+await loadRoutes()
+await loadTrucks()
+await loadCommodities()
+}
 
 </script>
 

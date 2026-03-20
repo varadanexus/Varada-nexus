@@ -86,26 +86,24 @@ const supabaseClient = supabase.createClient(
 
 <script>
 
-/* LOAD SIDEBAR + INIT USER */
+/* LOAD SIDEBAR + APPLY RBAC */
 
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR SIDEBAR RENDER */
+/* WAIT FOR DOM */
 await new Promise(r => setTimeout(r, 200))
 
-/* LOAD USER + ROLE */
 await initSidebar()
 
-/* APPLY RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 })
 
-/* SIDEBAR LOGIC */
+/* SIDEBAR USER + ROLE */
 
 async function initSidebar(){
 
@@ -117,11 +115,9 @@ const authId = session.user.id
 const email = session.user.email
 
 /* NAME */
-
 document.getElementById("userName").innerText = email.split("@")[0]
 
 /* USER */
-
 const {data:user} = await supabaseClient
 .from("users")
 .select("id")
@@ -130,20 +126,21 @@ const {data:user} = await supabaseClient
 
 if(!user) return
 
-/* ROLE */
-
-const {data:userRole} = await supabaseClient
+/* MULTI ROLE SUPPORT */
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
 
-if(!userRole) return
+if(!userRoles || userRoles.length===0) return
 
+let roleId = userRoles[0].role_id
+
+/* ROLE NAME */
 const {data:role} = await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",userRole.role_id)
+.eq("id",roleId)
 .single()
 
 if(role){
@@ -151,9 +148,9 @@ document.getElementById("userRole").innerText = role.role_name
 }
 
 /* LOGOUT */
-
 window.logout = async function(){
 await supabaseClient.auth.signOut()
+localStorage.clear()
 window.location.href="login.html"
 }
 

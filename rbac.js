@@ -14,17 +14,24 @@ if(currentPage === "login.html" || currentPage === ""){
 return
 }
 
-/* 🚨 HIDE PAGE UNTIL VERIFIED */
-document.body.style.display = "none"
+/* 🔥 WAIT FOR SESSION (IMPORTANT FIX) */
+let sessionData = null
 
-const {data:{session}} = await supabaseClient.auth.getSession()
+for(let i=0;i<5;i++){
+const {data} = await supabaseClient.auth.getSession()
+if(data.session){
+sessionData = data.session
+break
+}
+await new Promise(r=>setTimeout(r,200))
+}
 
-if(!session){
+if(!sessionData){
 window.location.replace("login.html")
 return
 }
 
-const authId = session.user.id
+const authId = sessionData.user.id
 
 /* USER */
 const {data:user} = await supabaseClient
@@ -51,7 +58,7 @@ return
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* CHECK PERMISSION */
+/* PERMISSION CHECK */
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
@@ -59,7 +66,7 @@ const {data:permissions} = await supabaseClient
 .eq("page_name",currentPage)
 .eq("can_access",true)
 
-/* ❌ BLOCK */
+/* ❌ BLOCK ACCESS */
 if(!permissions || permissions.length===0){
 
 alert("Access Denied")
@@ -68,12 +75,13 @@ window.location.replace("dashboard.html")
 return
 }
 
-/* ✅ ALLOW */
-document.body.style.display = "block"
+/* ✅ ALLOW PAGE (NO HIDING NOW) */
 
 }catch(err){
 
 console.error("RBAC ERROR:",err)
+
+/* fallback */
 window.location.replace("login.html")
 
 }

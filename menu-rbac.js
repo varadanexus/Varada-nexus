@@ -1,8 +1,3 @@
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
 async function applyMenuRBAC(){
 
 try{
@@ -35,19 +30,15 @@ const {data:permissions} = await supabaseClient
 .in("role_id",roleIds)
 .eq("can_access",true)
 
-if(!permissions) return
-
-let allowedPages = permissions.map(p=>p.page_name)
-
-/* APPLY MENU FILTER */
+let allowedPages = permissions.map(p=>p.page_name.trim())
 
 let links = document.querySelectorAll("a[data-page]")
 
 links.forEach(link=>{
 
-let page = link.getAttribute("data-page")
+let page = link.getAttribute("data-page")?.trim()
 
-if(!page) return
+if(page === "logout") return
 
 if(!allowedPages.includes(page)){
 link.style.display="none"
@@ -56,21 +47,7 @@ link.style.display="none"
 })
 
 }catch(err){
-console.error("RBAC Menu Error:",err)
+console.log("MENU RBAC ERROR",err)
 }
 
-}
-
-/* RUN AFTER LOAD */
-
-window.addEventListener("load", ()=>{
-setTimeout(applyMenuRBAC,500)
-})
-
-/* LOGOUT */
-
-window.logout = async function(){
-await supabaseClient.auth.signOut()
-localStorage.clear()
-window.location="login.html"
 }

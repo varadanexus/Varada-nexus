@@ -9,7 +9,7 @@
 <script src="session-check.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
+body{margin:0;font-family:Arial;background:#f4f6f9; display:none;}
 .main{margin-left:220px;padding:30px;}
 .card{background:white;padding:25px;border-radius:8px;max-width:600px;}
 h2{color:#1f3c88;}
@@ -24,12 +24,69 @@ button{margin-top:15px;padding:10px 14px;background:#1f3c88;color:white;border:n
 
 <script>
 
-/* SUPABASE CLIENT */
+/* SUPABASE */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
+
+/* 🔥 HARD RBAC (INLINE — NO DEPENDENCY) */
+
+async function enforceAccess(){
+
+const page = window.location.pathname.split("/").pop()
+
+const { data:{session} } = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+const authId = session.user.id
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user){
+window.location.href="login.html"
+return
+}
+
+const {data:userRoles} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+
+let roleIds = userRoles.map(r=>r.role_id)
+
+const {data:permissions} = await supabaseClient
+.from("role_permissions")
+.select("page_name")
+.in("role_id",roleIds)
+.eq("can_access",true)
+
+let allowedPages = permissions.map(p=>p.page_name.trim())
+
+/* 🚨 BLOCK HERE */
+
+if(!allowedPages.includes(page)){
+alert("Access Denied")
+window.location.href="dashboard.html"
+return
+}
+
+/* ✅ ALLOWED → SHOW PAGE */
+document.body.style.display="block"
+
+}
+
+/* RUN IMMEDIATELY */
+enforceAccess()
 
 </script>
 
@@ -45,51 +102,11 @@ document.getElementById("sidebar-container").innerHTML=data
 
 await new Promise(r => setTimeout(r, 200))
 
-await initSidebar()
-
 if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
+applyMenuRBAC()
 }
 
 })
-
-async function initSidebar(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-
-const authId=session.user.id
-const email=session.user.email
-
-document.getElementById("userName").innerText=email.split("@")[0]
-
-const {data:user}=await supabaseClient
-.from("users").select("id").eq("auth_id",authId).single()
-
-if(!user) return
-
-const {data:userRoles}=await supabaseClient
-.from("user_roles").select("role_id").eq("user_id",user.id)
-
-if(!userRoles || userRoles.length===0) return
-
-let roleId=userRoles[0].role_id
-
-const {data:role}=await supabaseClient
-.from("roles").select("role_name").eq("id",roleId).single()
-
-if(role){
-document.getElementById("userRole").innerText=role.role_name
-}
-
-/* LOGOUT */
-
-window.logout = async function(){
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-}
-
-}
 
 </script>
 
@@ -123,36 +140,15 @@ window.location.href="login.html"
 
 <script>
 
-/* INIT */
-window.onload = async function(){
-
-/* 🔥 RBAC EXECUTION (CORRECT PLACE) */
-if(typeof enforcePageAccess==="function"){
-const page = window.location.pathname.split("/").pop()
-await enforcePageAccess(page)
-}
-
-/* LOAD PAGE DATA */
-loadSettings()
-
-}
-
 /* LOAD SETTINGS */
 
 async function loadSettings(){
 
-try{
-
-const {data,error}=await supabaseClient
+const {data}=await supabaseClient
 .from("system_settings")
 .select("*")
 .eq("id",1)
 .single()
-
-if(error){
-console.error(error)
-return
-}
 
 if(!data) return
 
@@ -161,31 +157,19 @@ message.value = data.message || ""
 
 updateStatus(data.maintenance_mode)
 
-}catch(err){
-console.error("Load Error:",err)
 }
-
-}
-
-/* STATUS */
 
 function updateStatus(mode){
-
 statusText.innerText = mode
 ? "⚠️ Maintenance Mode ACTIVE"
 : "✅ System Running Normally"
-
 }
 
 maintenanceToggle.addEventListener("change", function(){
 updateStatus(this.checked)
 })
 
-/* SAVE */
-
 async function saveMaintenance(){
-
-try{
 
 await supabaseClient
 .from("system_settings")
@@ -197,20 +181,11 @@ message:message.value
 
 alert("Settings Updated")
 
-}catch(err){
-console.error(err)
-alert("Error saving settings")
 }
-
-}
-
-/* FORCE LOGOUT */
 
 async function forceLogout(){
 
 if(!confirm("Logout ALL users?")) return
-
-try{
 
 const {data}=await supabaseClient
 .from("system_settings")
@@ -229,17 +204,13 @@ maintenance_version:newVersion
 
 alert("All users logged out")
 
-}catch(err){
-console.error(err)
-alert("Error logging out users")
 }
 
-}
+/* LOAD AFTER ACCESS */
+setTimeout(loadSettings,300)
 
 </script>
 
-<!-- RBAC FILES (MUST BE LAST) -->
-<script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
 

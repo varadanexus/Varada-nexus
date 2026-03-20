@@ -1,5 +1,16 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Users - Varada Nexus ERP</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="menu-rbac.js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Users - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<script src="menu-rbac.js"></script>
+
+<style>
 
 body{
 margin:0;
@@ -71,72 +82,122 @@ th{
 background:#eee;
 }
 
-</style></head><body><script>
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+/* SUPABASE CLIENT */
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-/* LOGIN CHECK */
+</script>
 
-async function checkLogin(){
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
-const {data}=await supabaseClient.auth.getSession()
+<script>
 
-if(!data.session){
-window.location.href="login.html"
-return
-}
-
-}
-
-checkLogin()
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-
-}
-
-</script><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+/* ✅ STANDARD SIDEBAR (same as dashboard) */
 
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-/* APPLY RBAC AFTER SIDEBAR LOAD */
-
-setTimeout(()=>{
-
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-
-},300)
-
+await initSidebar()
 })
 
-</script><div class="main"><h2>Users</h2><div class="form-box"><h3>Create User</h3><input type="email" id="email" placeholder="Email"><input type="password" id="password" placeholder="Password"><select id="role"></select>
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* GLOBAL LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
+
+<div class="main">
+
+<h2>Users</h2>
+
+<div class="form-box">
+
+<h3>Create User</h3>
+
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+
+<select id="role"></select>
 
 <button onclick="createUser()">Create User</button>
 
-</div><table><thead>
+</div>
+
+<table>
+
+<thead>
 <tr>
 <th>Email</th>
 <th>Role</th>
 <th>Actions</th>
 </tr>
-</thead><tbody id="usersTable"></tbody></table></div><script>
+</thead>
+
+<tbody id="usersTable"></tbody>
+
+</table>
+
+</div>
+
+<script>
 
 const EDGE_FUNCTION =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user"
-
 
 /* LOAD ROLES */
 
@@ -161,22 +222,13 @@ document.getElementById("role").innerHTML=html
 
 }
 
-
 /* LOAD USERS */
 
 async function loadUsers(){
 
-const {data:users}=await supabaseClient
-.from("users")
-.select("*")
-
-const {data:userRoles}=await supabaseClient
-.from("user_roles")
-.select("*")
-
-const {data:roles}=await supabaseClient
-.from("roles")
-.select("*")
+const {data:users}=await supabaseClient.from("users").select("*")
+const {data:userRoles}=await supabaseClient.from("user_roles").select("*")
+const {data:roles}=await supabaseClient.from("roles").select("*")
 
 let html=""
 
@@ -188,19 +240,15 @@ let roleId=null
 let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
 
 if(ur){
-
 let role=roles.find(r=>String(r.id)===String(ur.role_id))
-
 if(role){
 roleName=role.role_name
 roleId=role.id
 }
-
 }
 
 html+=`
 <tr>
-
 <td>${user.email}</td>
 
 <td>
@@ -210,11 +258,8 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 </td>
 
 <td>
-
 <button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
-
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
-
 </td>
 
 </tr>
@@ -225,7 +270,6 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 document.getElementById("usersTable").innerHTML=html
 
 }
-
 
 /* CREATE USER */
 
@@ -265,7 +309,6 @@ loadUsers()
 
 }
 
-
 /* UPDATE ROLE */
 
 async function updateRole(userId){
@@ -274,9 +317,7 @@ let roleId=document.getElementById("role-"+userId).value
 
 await supabaseClient
 .from("user_roles")
-.update({
-role_id:roleId
-})
+.update({role_id:roleId})
 .eq("user_id",userId)
 
 alert("Role updated")
@@ -285,33 +326,29 @@ loadUsers()
 
 }
 
-
 /* DELETE USER */
 
 async function deleteUser(id){
 
 if(!confirm("Delete user?")) return
 
-await supabaseClient
-.from("user_roles")
-.delete()
-.eq("user_id",id)
-
-await supabaseClient
-.from("users")
-.delete()
-.eq("id",id)
+await supabaseClient.from("user_roles").delete().eq("user_id",id)
+await supabaseClient.from("users").delete().eq("id",id)
 
 loadUsers()
 
 }
-
 
 /* INIT */
 
 loadRoles()
 loadUsers()
 
-</script><script src="rbac.js"></script>
+</script>
+
+<script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script></body></html>
+<script src="global-logout.js"></script>
+
+</body>
+</html>

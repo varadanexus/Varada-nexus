@@ -1,4 +1,6 @@
-/* 🔐 PAGE LEVEL RBAC (FINAL) */
+/* ===========================
+   PAGE LEVEL RBAC (FIXED)
+=========================== */
 
 async function enforcePageAccess(pageName){
 
@@ -13,7 +15,7 @@ return
 
 const authId = session.user.id
 
-/* USER */
+/* GET USER */
 
 const {data:user} = await supabaseClient
 .from("users")
@@ -26,7 +28,7 @@ window.location.href="login.html"
 return
 }
 
-/* ROLES */
+/* GET ROLES */
 
 const {data:userRoles} = await supabaseClient
 .from("user_roles")
@@ -34,13 +36,14 @@ const {data:userRoles} = await supabaseClient
 .eq("user_id",user.id)
 
 if(!userRoles || userRoles.length===0){
+alert("No role assigned")
 window.location.href="dashboard.html"
 return
 }
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* PERMISSIONS */
+/* GET PERMISSIONS */
 
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
@@ -50,17 +53,19 @@ const {data:permissions} = await supabaseClient
 
 let allowedPages = permissions.map(p=>p.page_name.trim())
 
-/* FINAL CHECK */
+/* 🔥 DEBUG (VERY IMPORTANT) */
+console.log("CURRENT PAGE:", pageName)
+console.log("ALLOWED PAGES:", allowedPages)
+
+/* CHECK ACCESS */
 
 if(!allowedPages.includes(pageName)){
 alert("Access Denied")
 window.location.href="dashboard.html"
-return
 }
 
 }catch(err){
-console.log("RBAC ERROR",err)
-window.location.href="dashboard.html"
+console.log("RBAC ERROR:",err)
 }
 
 }

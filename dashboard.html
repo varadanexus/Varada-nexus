@@ -1,23 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>Dashboard - Varada Nexus ERP</title>
 
-<!-- SUPABASE FIRST (CRITICAL) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-window.supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-</script>
-
-<!-- CORE SCRIPTS -->
 <script src="session-check.js"></script>
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
 
 <style>
 body{
@@ -50,7 +39,17 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 
 <body>
 
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
 <!-- SIDEBAR -->
+
 <div id="sidebar-container"></div>
 
 <script>
@@ -58,18 +57,13 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-},200)
-
 })
 </script>
 
 <!-- MAIN -->
+
 <div class="main">
+
 <h1>Dashboard</h1>
 
 <div class="card-container">
@@ -95,29 +89,22 @@ applyMenuRBAC()
 </div>
 
 </div>
+
 </div>
 
 <script>
-
-const supabaseClient = window.supabaseClient
-
-window.addEventListener("load", loadDashboard)
 
 async function loadDashboard(){
 
 try{
 
-const {data:trips,error:tripErr} = await supabaseClient
+const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
 
-if(tripErr) console.log("Trips error:",tripErr)
-
-const {data:expenses,error:expErr} = await supabaseClient
+const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
-
-if(expErr) console.log("Expenses error:",expErr)
 
 let tripsData = trips || []
 let expensesData = expenses || []
@@ -154,9 +141,9 @@ totalProfit += profit || 0
 })
 
 document.getElementById("totalTrips").innerText = totalTrips
-document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue).toLocaleString()
-document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost).toLocaleString()
-document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit).toLocaleString()
+document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue)
+document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost)
+document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit)
 
 }catch(err){
 console.log("Dashboard error:",err)
@@ -164,7 +151,13 @@ console.log("Dashboard error:",err)
 
 }
 
+loadDashboard()
+
 </script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
 
 </body>
 </html>

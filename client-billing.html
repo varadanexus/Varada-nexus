@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html>
 
-<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+<head>
 
 <title>Client Billing - Varada Nexus ERP</title>
 
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
+<!-- SECURITY -->
+<script src="session-check.js"></script>
+
+<!-- LIBRARIES -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<!-- RBAC -->
+<script src="menu-rbac.js"></script>
 
 <style>
 
@@ -83,6 +90,7 @@ text-align:left;
 
 <script>
 
+/* SUPABASE CLIENT */
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -90,6 +98,7 @@ const supabaseClient = supabase.createClient(
 
 </script>
 
+<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
@@ -98,6 +107,14 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+/* IMPORTANT FIX (same as working pages) */
+setTimeout(()=>{
+if(typeof applyMenuRBAC==="function"){
+applyMenuRBAC()
+}
+},300)
+
 })
 
 </script>
@@ -146,7 +163,6 @@ document.getElementById("sidebar-container").innerHTML=data
 <table>
 
 <thead>
-
 <tr>
 <th>Invoice No</th>
 <th>Trips</th>
@@ -155,7 +171,6 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Status</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody id="invoiceTable"></tbody>
@@ -177,17 +192,15 @@ let invoiceAmount=0
 init()
 
 async function init(){
-
 await loadClients()
 await loadInvoices()
-
 }
+
+/* LOAD CLIENTS */
 
 async function loadClients(){
 
-const {data}=await supabaseClient
-.from("clients")
-.select("*")
+const {data}=await supabaseClient.from("clients").select("*")
 
 clients=data||[]
 
@@ -201,10 +214,11 @@ document.getElementById("clientSelect").innerHTML=html
 
 }
 
+/* LOAD TRIPS */
+
 async function loadTripsByClient(){
 
 let client=document.getElementById("clientSelect").value
-
 if(!client) return
 
 const {data}=await supabaseClient
@@ -212,9 +226,6 @@ const {data}=await supabaseClient
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
-.order("trip_no",{ascending:false})
-
-/* REMOVE INVOICED TRIPS */
 
 const {data:inv}=await supabaseClient
 .from("client_invoices")
@@ -222,7 +233,7 @@ const {data:inv}=await supabaseClient
 
 let invoicedTrips=[]
 
-inv.forEach(i=>{
+inv?.forEach(i=>{
 if(i.trip_no){
 i.trip_no.split(",").forEach(t=>{
 invoicedTrips.push(t.trim())
@@ -235,19 +246,18 @@ trips=data.filter(t=>!invoicedTrips.includes(t.trip_no))
 let html=""
 
 trips.forEach(t=>{
-
 html+=`
 <div>
 <input type="checkbox" value="${t.id}">
 ${t.trip_no} | ${t.route} | ${t.truck}
-</div>
-`
-
+</div>`
 })
 
 document.getElementById("tripList").innerHTML=html
 
 }
+
+/* GENERATE INVOICE */
 
 async function generateInvoice(){
 
@@ -282,10 +292,7 @@ const {data:expenses}=await supabaseClient
 .eq("expense_type","Fuel")
 
 let fuel=0
-
-expenses.forEach(e=>{
-fuel+=Number(e.amount)
-})
+expenses?.forEach(e=>fuel+=Number(e.amount))
 
 totalFuel+=fuel
 
@@ -294,29 +301,20 @@ totalFuel+=fuel
 invoiceAmount=totalFreight-totalFuel
 
 document.getElementById("invoicePreview").innerHTML=`
-
-Client : ${selectedTrips[0].client_name} <br>
-
-Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")} <br>
-
-Total Freight : ₹${totalFreight} <br>
-
-Fuel Deduction : ₹${totalFuel} <br>
-
+Client : ${selectedTrips[0].client_name}<br>
+Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
+Total Freight : ₹${totalFreight}<br>
+Fuel Deduction : ₹${totalFuel}<br>
 <b>Invoice Amount : ₹${invoiceAmount}</b>
-
 `
 
 }
 
+/* SAVE */
+
 function generateInvoiceNo(){
-
 let now=new Date()
-let year=now.getFullYear()
-let rand=Math.floor(Math.random()*9000)+1000
-
-return "INV-"+year+"-"+rand
-
+return "INV-"+now.getFullYear()+"-"+Math.floor(Math.random()*9000+1000)
 }
 
 async function saveInvoice(){
@@ -326,27 +324,22 @@ alert("Generate invoice first")
 return
 }
 
-let invoiceNo=generateInvoiceNo()
-
-await supabaseClient
-.from("client_invoices")
-.insert({
-
-invoice_no:invoiceNo,
+await supabaseClient.from("client_invoices").insert({
+invoice_no:generateInvoiceNo(),
 trip_no:selectedTrips.map(t=>t.trip_no).join(", "),
 client_name:selectedTrips[0].client_name,
 invoice_amount:invoiceAmount,
 amount_paid:0,
 balance_amount:invoiceAmount,
 payment_status:"Pending"
-
 })
 
 alert("Invoice Saved")
-
 loadInvoices()
 
 }
+
+/* LOAD INVOICES */
 
 async function loadInvoices(){
 
@@ -355,104 +348,57 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-invoices=data || []
-
+invoices=data||[]
 renderInvoices(invoices)
 
 }
+
+/* RENDER */
 
 function renderInvoices(data){
 
 let html=""
 
 data.forEach(i=>{
-
 html+=`
 <tr>
-
 <td>${i.invoice_no}</td>
-
 <td>${i.trip_no}</td>
-
 <td>${i.client_name}</td>
-
 <td>₹${i.invoice_amount}</td>
-
 <td>${i.payment_status}</td>
-
 <td>
-
 <button onclick="downloadInvoice('${i.id}')">PDF</button>
-
 <button class="deleteBtn" onclick="deleteInvoice('${i.id}')">Delete</button>
-
 </td>
-
-</tr>
-`
-
+</tr>`
 })
 
 document.getElementById("invoiceTable").innerHTML=html
 
 }
 
-function searchInvoices(){
-
-let client=document.getElementById("searchClient").value.toLowerCase()
-let invoice=document.getElementById("searchInvoice").value.toLowerCase()
-
-let filtered=invoices.filter(i=>{
-
-return(
-(!client || i.client_name?.toLowerCase().includes(client)) &&
-(!invoice || i.invoice_no?.toLowerCase().includes(invoice))
-)
-
-})
-
-renderInvoices(filtered)
-
-}
-
-function clearSearch(){
-
-document.getElementById("searchClient").value=""
-document.getElementById("searchInvoice").value=""
-
-renderInvoices(invoices)
-
-}
+/* DELETE */
 
 async function deleteInvoice(id){
-
 if(!confirm("Delete invoice?")) return
-
-await supabaseClient
-.from("client_invoices")
-.delete()
-.eq("id",id)
-
+await supabaseClient.from("client_invoices").delete().eq("id",id)
 loadInvoices()
-
 }
+
+/* PDF */
 
 function downloadInvoice(id){
 
 const { jsPDF } = window.jspdf
-
 let invoice=invoices.find(x=>x.id==id)
 
 let doc=new jsPDF()
 
 doc.text("Varada Nexus Private Limited",20,20)
-
 doc.text("Invoice No : "+invoice.invoice_no,20,40)
-
 doc.text("Client : "+invoice.client_name,20,50)
-
 doc.text("Trips : "+invoice.trip_no,20,60)
-
 doc.text("Amount : ₹"+invoice.invoice_amount,20,70)
 
 doc.save(invoice.invoice_no+".pdf")
@@ -462,30 +408,23 @@ doc.save(invoice.invoice_no+".pdf")
 /* SELECT ALL */
 
 function toggleAllTrips(){
-
 let checked=document.getElementById("selectAll").checked
-
-document.querySelectorAll("#tripList input").forEach(c=>{
-c.checked=checked
-})
-
+document.querySelectorAll("#tripList input").forEach(c=>c.checked=checked)
 generateInvoice()
-
 }
 
-document.addEventListener("change",function(e){
-
+document.addEventListener("change",e=>{
 if(e.target.closest("#tripList")){
 generateInvoice()
 }
+})
 
-})
-window.addEventListener("focus",function(){
-loadInvoices()
-})
 </script>
+
+<!-- FINAL SCRIPTS -->
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

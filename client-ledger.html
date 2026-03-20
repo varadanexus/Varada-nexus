@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 
-<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+<head>
 
 <title>Client Ledger - Varada Nexus ERP</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
 <script src="menu-rbac.js"></script>
 
 <style>
@@ -59,6 +60,8 @@ background:#eee;
 
 <script>
 
+/* SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
@@ -66,34 +69,71 @@ const supabaseClient = supabase.createClient(
 
 </script>
 
-
 <!-- SIDEBAR -->
-
 <div id="sidebar-container"></div>
 
 <script>
 
+/* ✅ STANDARD SIDEBAR (FIXED) */
+
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
-
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-setTimeout(()=>{
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-},300)
-
+await initSidebar()
 })
 
-</script>
+async function initSidebar(){
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
 
 <div class="main">
 
 <h2>Client Ledger</h2>
-
 
 <div class="card">
 
@@ -103,13 +143,11 @@ applyMenuRBAC()
 
 </div>
 
-
 <div class="card">
 
 <table>
 
 <thead>
-
 <tr>
 <th>Date</th>
 <th>Type</th>
@@ -118,7 +156,6 @@ applyMenuRBAC()
 <th>Credit</th>
 <th>Balance</th>
 </tr>
-
 </thead>
 
 <tbody id="ledgerTable"></tbody>
@@ -129,7 +166,6 @@ applyMenuRBAC()
 
 </div>
 
-
 <script>
 
 let invoices=[]
@@ -139,11 +175,10 @@ let clients=[]
 init()
 
 async function init(){
-
 await loadClients()
-
 }
 
+/* LOAD CLIENTS */
 
 async function loadClients(){
 
@@ -151,7 +186,7 @@ const {data}=await supabaseClient
 .from("client_invoices")
 .select("client_name")
 
-let unique=[...new Set(data.map(x=>x.client_name))]
+let unique=[...new Set((data || []).map(x=>x.client_name))]
 
 clients=unique
 
@@ -165,6 +200,7 @@ document.getElementById("clientSelect").innerHTML=html
 
 }
 
+/* LOAD LEDGER */
 
 async function loadLedger(){
 
@@ -175,58 +211,43 @@ alert("Select client")
 return
 }
 
-
-/* LOAD INVOICES */
+/* INVOICES */
 
 const {data:inv}=await supabaseClient
 .from("client_invoices")
 .select("*")
 .eq("client_name",client)
 
-
-/* LOAD PAYMENTS */
+/* PAYMENTS */
 
 const {data:pay}=await supabaseClient
 .from("client_payments")
 .select("*")
 .eq("client_name",client)
 
-
 let entries=[]
 
-
-inv.forEach(i=>{
-
+;(inv || []).forEach(i=>{
 entries.push({
-
-date:i.invoice_date,
+date:i.invoice_date || i.created_at,
 type:"Invoice",
 ref:i.invoice_no,
-debit:i.invoice_amount,
+debit:Number(i.invoice_amount || 0),
 credit:0
-
+})
 })
 
-})
-
-
-pay.forEach(p=>{
-
+;(pay || []).forEach(p=>{
 entries.push({
-
-date:p.payment_date,
+date:p.payment_date || p.created_at,
 type:"Payment",
 ref:p.invoice_no,
 debit:0,
-credit:p.amount
-
+credit:Number(p.amount || 0)
 })
-
 })
-
 
 entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
-
 
 let balance=0
 let html=""
@@ -237,25 +258,14 @@ balance += e.debit
 balance -= e.credit
 
 html+=`
-
 <tr>
-
-<td>${e.date}</td>
-
+<td>${e.date || ""}</td>
 <td>${e.type}</td>
-
 <td>${e.ref}</td>
-
 <td>${e.debit || ""}</td>
-
 <td>${e.credit || ""}</td>
-
 <td>${balance}</td>
-
-</tr>
-
-`
-
+</tr>`
 })
 
 document.getElementById("ledgerTable").innerHTML=html
@@ -267,6 +277,6 @@ document.getElementById("ledgerTable").innerHTML=html
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
-</body>
 
+</body>
 </html>

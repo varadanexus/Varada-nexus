@@ -9,7 +9,7 @@
 <script src="session-check.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9; display:none;}
+body{margin:0;font-family:Arial;background:#f4f6f9;} /* ❌ removed display:none */
 .main{margin-left:220px;padding:30px;}
 .card{background:white;padding:25px;border-radius:8px;max-width:600px;}
 h2{color:#1f3c88;}
@@ -75,21 +75,21 @@ const {data:permissions} = await supabaseClient
 .in("role_id",roleIds)
 .eq("can_access",true)
 
-/* 🔥 NULL SAFE */
+/* SAFE */
 let allowedPages = (permissions || []).map(p=>p.page_name.trim())
 
 console.log("PAGE:",page)
 console.log("ALLOWED:",allowedPages)
 
-/* 🚨 FINAL CHECK */
+/* 🚨 BLOCK */
 if(!allowedPages.includes(page)){
 alert("Access Denied")
 window.location.href="dashboard.html"
 return
 }
 
-/* ✅ SHOW PAGE */
-document.body.style.display="block"
+/* ✅ ALLOWED → LOAD DATA */
+await loadSettings()
 
 }catch(err){
 
@@ -100,7 +100,7 @@ window.location.href="dashboard.html"
 
 }
 
-/* 🔥 WAIT FOR DOM */
+/* RUN */
 window.addEventListener("DOMContentLoaded", enforceAccess)
 
 </script>
@@ -212,9 +212,6 @@ maintenance_version:newVersion
 alert("All users logged out")
 
 }
-
-/* LOAD AFTER ACCESS */
-setTimeout(loadSettings,500)
 
 </script>
 

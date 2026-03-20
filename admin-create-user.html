@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 
-<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 
 <title>Users - Varada Nexus ERP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
@@ -85,7 +85,7 @@ background:#162c66;
 
 <!-- SIDEBAR -->
 
-<div id="sidebar"></div>
+<div id="sidebar-container"></div>
 
 <script>
 fetch("sidebar.html")
@@ -93,13 +93,13 @@ fetch("sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR SIDEBAR RENDER */
+/* WAIT FOR SIDEBAR */
 await new Promise(r => setTimeout(r, 200))
 
-/* LOAD USER + ROLE */
+if(typeof initSidebar==="function"){
 await initSidebar()
+}
 
-/* APPLY RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
@@ -206,10 +206,8 @@ let password=document.getElementById("password").value
 let role=document.getElementById("role").value
 
 if(!email || !password){
-
 alert("Enter email and password")
 return
-
 }
 
 const {data,error}=await supabaseClient.auth.admin.createUser({
@@ -221,10 +219,8 @@ email_confirm:true
 })
 
 if(error){
-
 alert(error.message)
 return
-
 }
 
 let userId=data.user.id
@@ -251,8 +247,12 @@ loadUsers()
 }
 
 </script>
+
+<!-- 🔥 IMPORTANT: RBAC AT BOTTOM -->
+
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
 </body>
 </html>

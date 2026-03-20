@@ -1,3 +1,73 @@
+/* ============================= */
+/* 🔐 GLOBAL RBAC SYSTEM */
+/* ============================= */
+
+async function getCurrentUser(){
+
+const { data:{session} } = await supabaseClient.auth.getSession()
+
+if(!session) return null
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",session.user.id)
+.single()
+
+return user || null
+}
+
+/* ============================= */
+/* 🔐 GET USER ROLES */
+/* ============================= */
+
+async function getUserRoles(userId){
+
+const {data:userRoles} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",userId)
+
+if(!userRoles) return []
+
+return userRoles.map(r=>r.role_id)
+}
+
+/* ============================= */
+/* 🔐 CHECK PERMISSION */
+/* ============================= */
+
+async function checkPermission(page, action){
+
+try{
+
+const user = await getCurrentUser()
+if(!user) return false
+
+const roleIds = await getUserRoles(user.id)
+if(roleIds.length===0) return false
+
+const {data:perm} = await supabaseClient
+.from("role_permissions")
+.select("*")
+.in("role_id",roleIds)
+.eq("page_name",page)
+.eq("action_name",action)
+.eq("can_access",true)
+
+return perm && perm.length > 0
+
+}catch(err){
+console.log("Permission Error:",err)
+return false
+}
+
+}
+
+/* ============================= */
+/* 🔐 PAGE ACCESS (VIEW CONTROL) */
+/* ============================= */
+
 async function enforceRBAC(){
 
 try{
@@ -11,38 +81,25 @@ window.location.href="login.html"
 return
 }
 
-const {data:user} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",session.user.id)
-.single()
+const user = await getCurrentUser()
 
 if(!user){
 window.location.href="login.html"
 return
 }
 
-const {data:userRoles} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
+const roleIds = await getUserRoles(user.id)
 
-if(!userRoles || userRoles.length===0){
+if(roleIds.length===0){
 window.location.href="dashboard.html"
 return
 }
 
-let roleIds = userRoles.map(r=>r.role_id)
+/* ✅ CHECK VIEW PERMISSION */
 
-const {data:permissions} = await supabaseClient
-.from("role_permissions")
-.select("page_name")
-.in("role_id",roleIds)
-.eq("can_access",true)
+const canView = await checkPermission(page,"view")
 
-let allowedPages = (permissions || []).map(p=>p.page_name.trim())
-
-if(!allowedPages.includes(page)){
+if(!canView){
 alert("Access Denied")
 window.location.href="dashboard.html"
 return
@@ -55,5 +112,8 @@ window.location.href="dashboard.html"
 
 }
 
-/* AUTO RUN */
+/* ============================= */
+/* 🚀 AUTO RUN */
+/* ============================= */
+
 window.addEventListener("DOMContentLoaded", enforceRBAC)

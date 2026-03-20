@@ -3,7 +3,7 @@
 
 <head>
 
-<title>Transporter Ledger - Varada Nexus ERP</title>
+<title>Admin Transporter Ledger - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
@@ -120,7 +120,7 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
-/* LOGOUT */
+/* GLOBAL LOGOUT */
 
 window.logout = async function(){
 await supabaseClient.auth.signOut()
@@ -133,7 +133,7 @@ window.location.href="login.html"
 
 <div class="main">
 
-<h2>Transporter Ledger</h2>
+<h2>Admin Transporter Ledger</h2>
 
 <div class="card">
 
@@ -232,6 +232,8 @@ const {data:paymentData}=await supabaseClient
 .select("*")
 .eq("transporter_name",transporterName)
 
+/* SAFE ASSIGN */
+
 trips=tripData || []
 expenses=expenseData || []
 payments=paymentData || []
@@ -247,7 +249,7 @@ let gross=(t.transporter_rate || 0)*weightMT
 
 let tripExpenses=expenses
 .filter(e=>e.trip_id==t.id)
-.reduce((sum,e)=>sum+Number(e.amount||0),0)
+.reduce((sum,e)=>sum+Number(e.amount || 0),0)
 
 let net=gross-tripExpenses
 
@@ -297,7 +299,9 @@ html+=`
 <td>${e.debit || ""}</td>
 <td>${e.credit || ""}</td>
 <td>${balance}</td>
-</tr>`
+</tr>
+`
+
 })
 
 document.getElementById("ledgerTable").innerHTML=html

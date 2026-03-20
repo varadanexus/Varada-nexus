@@ -32,7 +32,6 @@
 </div>
 
 
-
 <style>
 
 .sidebar{
@@ -100,7 +99,6 @@ border-left:4px solid white;
 </style>
 
 
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -134,7 +132,7 @@ link.classList.add("active")
 }
 
 
-/* LOAD USER INFO */
+/* LOAD USER INFO (FIXED) */
 
 async function loadUserInfo(){
 
@@ -147,20 +145,19 @@ document.getElementById("userName").innerText="User"
 return
 }
 
-/* NAME FROM EMAIL */
+const authId = session.user.id
+const email = session.user.email
 
-const email=session.user.email
-const name=email.split("@")[0]
+/* DISPLAY NAME */
 
-document.getElementById("userName").innerText=name
+document.getElementById("userName").innerText = email.split("@")[0]
 
-
-/* FIND ERP USER BY EMAIL */
+/* GET USER USING auth_id */
 
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
-.eq("email",email)
+.eq("auth_id",authId)
 .single()
 
 if(!user){
@@ -168,27 +165,26 @@ document.getElementById("userRole").innerText=""
 return
 }
 
+/* GET ROLES */
 
-/* GET USER ROLE */
-
-const {data:userRole}=await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
 
-if(!userRole){
+if(!userRoles || userRoles.length===0){
 document.getElementById("userRole").innerText=""
 return
 }
 
+let roleId = userRoles[0].role_id
 
 /* GET ROLE NAME */
 
 const {data:role}=await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",userRole.role_id)
+.eq("id",roleId)
 .single()
 
 if(role){
@@ -204,8 +200,7 @@ console.log("User load error:",err)
 }
 
 
-
-/* SIDEBAR RBAC */
+/* SIDEBAR RBAC (FIXED) */
 
 async function applySidebarRBAC(){
 
@@ -215,44 +210,34 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
-const email=session.user.email
-
-
-/* FIND ERP USER */
+const authId = session.user.id
 
 const {data:user}=await supabaseClient
 .from("users")
 .select("id")
-.eq("email",email)
+.eq("auth_id",authId)
 .single()
 
 if(!user) return
 
-
-/* GET USER ROLE */
-
-const {data:userRole}=await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
 
-if(!userRole) return
+if(!userRoles || userRoles.length===0) return
 
-
-/* GET PERMISSIONS */
+let roleIds = userRoles.map(r=>r.role_id)
 
 const {data:permissions}=await supabaseClient
 .from("role_permissions")
 .select("page_name")
-.eq("role_id",userRole.role_id)
+.in("role_id",roleIds)
 .eq("can_access",true)
 
 if(!permissions) return
 
-
 const allowedPages=permissions.map(p=>p.page_name)
-
 
 document.querySelectorAll(".sidebar a[data-page]").forEach(link=>{
 
@@ -273,7 +258,6 @@ console.log("RBAC error:",err)
 }
 
 
-
 /* LOGOUT */
 
 async function logout(){
@@ -287,21 +271,23 @@ console.log(e)
 localStorage.clear()
 sessionStorage.clear()
 
-window.location.href="login.html"
+window.location.replace("login.html")
 
 }
 
 
-
-/* INITIALIZE */
+/* INIT */
 
 window.addEventListener("load", async ()=>{
 
 highlightActivePage()
 
-await loadUserInfo()
+setTimeout(async ()=>{
 
+await loadUserInfo()
 await applySidebarRBAC()
+
+},200)
 
 })
 

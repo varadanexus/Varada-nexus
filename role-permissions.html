@@ -28,9 +28,10 @@ th{background:#eee;}
 <body>
 
 <script>
-const supabaseClient = supabase.createClient(
+/* ⚠️ DO NOT redeclare supabaseClient if already in session-check.js */
+const supabaseClient = window.supabaseClient || supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 </script>
 
@@ -42,14 +43,9 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
-/* WAIT FOR SIDEBAR RENDER */
 await new Promise(r => setTimeout(r, 200))
-
-/* LOAD USER + ROLE */
 await initSidebar()
 
-/* APPLY RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
@@ -80,10 +76,6 @@ const {data:role}=await supabaseClient
 
 if(role){
 document.getElementById("userRole").innerText=role.role_name
-}
-
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
 }
 
 window.logout=async()=>{
@@ -137,11 +129,7 @@ const pages=[
 {name:"Financial Dashboard",file:"financial-dashboard.html"},
 ]
 
-/* 🔥 ACTIONS */
-
 const actions=["view","create","edit","delete"]
-
-/* CREATE ROLE */
 
 async function createRole(){
 
@@ -160,7 +148,7 @@ alert("Role Created")
 loadPermissions()
 }
 
-/* LOAD PERMISSIONS */
+/* LOAD */
 
 async function loadPermissions(){
 
@@ -201,7 +189,6 @@ ${existing?.can_access?"checked":""}>
 })
 
 html+=`</td>`
-
 })
 
 html+=`</tr>`
@@ -212,13 +199,13 @@ html+=`</tbody>`
 permTable.innerHTML=html
 }
 
-/* SAVE */
+/* 🔥 FAST SAVE (FIXED) */
 
 async function saveAllPermissions(){
 
 const {data:roles}=await supabaseClient.from("roles").select("*")
 
-let tasks=[]
+let allData=[]
 
 for(let role of roles){
 
@@ -229,50 +216,26 @@ for(let a of actions){
 let cb=document.getElementById(`${role.id}_${p.file}_${a}`)
 if(!cb) continue
 
-let allowed=cb.checked
-
-const {data:existing}=await supabaseClient
-.from("role_permissions")
-.select("*")
-.eq("role_id",role.id)
-.eq("page_name",p.file)
-.eq("action_name",a)
-
-if(existing && existing.length>0){
-
-tasks.push(
-supabaseClient.from("role_permissions")
-.update({can_access:allowed})
-.eq("role_id",role.id)
-.eq("page_name",p.file)
-.eq("action_name",a)
-)
-
-}else{
-
-tasks.push(
-supabaseClient.from("role_permissions")
-.insert({
-role_id:role.id,
-page_name:p.file,
-action_name:a,
-can_access:allowed
+allData.push({
+role_id: role.id,
+page_name: p.file,
+action_name: a,
+can_access: cb.checked
 })
-)
-
-}
-
-}
 
 }
 }
-
-await Promise.all(tasks)
-
-alert("Permissions Saved Successfully")
 }
 
-/* INIT */
+/* 🚀 2 QUERIES ONLY */
+
+await supabaseClient.from("role_permissions").delete().neq("id",0)
+
+await supabaseClient.from("role_permissions").insert(allData)
+
+alert("Permissions Saved (Fast 🚀)")
+
+}
 
 window.onload=loadPermissions
 

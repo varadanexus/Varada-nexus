@@ -46,7 +46,6 @@ await initSidebar()
 })
 
 async function initSidebar(){
-
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
@@ -192,25 +191,27 @@ window.location="login.html"
 
 <script>
 
-/* ================= AUTO GENERATION ================= */
+/* ================= ROUTE AUTO ================= */
 
-/* ROUTE */
 function generateRoute(){
-let o=document.getElementById("origin").value
-let d=document.getElementById("destination").value
+let o=origin.value.trim()
+let d=destination.value.trim()
 
 if(o && d){
-document.getElementById("routeCode").value =
+routeCode.value =
 o.substring(0,4).toUpperCase() + "-" +
 d.substring(0,4).toUpperCase()
+}else{
+routeCode.value=""
 }
 }
 
-document.getElementById("origin").addEventListener("input",generateRoute)
-document.getElementById("destination").addEventListener("input",generateRoute)
+origin.addEventListener("input",generateRoute)
+destination.addEventListener("input",generateRoute)
 
-/* TRUCK */
-document.getElementById("truckNumber").addEventListener("input",()=>{
+/* ================= TRUCK AUTO ================= */
+
+truckNumber.addEventListener("input",()=>{
 
 let val=truckNumber.value.toUpperCase()
 
@@ -256,11 +257,27 @@ loadTransporters()
 
 async function addRoute(){
 
-await supabaseClient.from("routes").insert({
-origin:origin.value,
-destination:destination.value,
-route_code:routeCode.value
-})
+let o=origin.value.trim()
+let d=destination.value.trim()
+let c=routeCode.value.trim()
+
+if(!o || !d){
+alert("Enter origin & destination")
+return
+}
+
+if(!c){
+c = o.substring(0,4).toUpperCase()+"-"+d.substring(0,4).toUpperCase()
+}
+
+const {error} = await supabaseClient
+.from("routes")
+.insert({origin:o,destination:d,route_code:c})
+
+if(error){
+alert(error.message)
+return
+}
 
 origin.value=""
 destination.value=""
@@ -299,7 +316,7 @@ let page=0,limit=10
 
 async function loadClients(){
 
-let search=document.getElementById("clientSearch").value
+let search=clientSearch.value
 
 let query=supabaseClient.from("clients").select("*")
 

@@ -23,22 +23,31 @@ button{margin-top:15px;padding:10px 14px;background:#1f3c88;color:white;border:n
 <body>
 
 <script>
+
+/* SUPABASE CLIENT */
+
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
+
+/* 🔐 PAGE RBAC (ADDED) */
+(async ()=>{
+await enforcePageAccess("system_maintenance")
+})()
+
 </script>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR SIDEBAR */
 await new Promise(r => setTimeout(r, 200))
 
 await initSidebar()
@@ -63,7 +72,6 @@ const {data:user}=await supabaseClient
 
 if(!user) return
 
-/* ✅ MULTI ROLE FIX */
 const {data:userRoles}=await supabaseClient
 .from("user_roles").select("role_id").eq("user_id",user.id)
 
@@ -79,6 +87,7 @@ document.getElementById("userRole").innerText=role.role_name
 }
 
 }
+
 </script>
 
 <div class="main">
@@ -215,8 +224,7 @@ alert("Error logging out users")
 
 </script>
 
-<!-- 🔥 RBAC MUST BE LAST -->
-
+<!-- RBAC FILES -->
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>

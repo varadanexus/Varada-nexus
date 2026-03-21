@@ -93,38 +93,86 @@ margin-top:15px;
 
 <body>  
 
-<!-- ✅ FIXED: ADMIN SIDEBAR -->
-<div id="sidebar-container"></div>  
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
-<script>  
-fetch("admin-sidebar.html")  
-.then(res=>res.text())  
-.then(data=>{  
-document.getElementById("sidebar-container").innerHTML=data  
-})  
-</script>  
 <script>
-async function loadUserInfo(){
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML = data
+
+/* ✅ INIT SIDEBAR */
+await initSidebar()
+
+/* ✅ APPLY RBAC (if exists) */
+if(typeof applyMenuRBAC === "function"){
+await applyMenuRBAC()
+}
+
+/* ✅ SHOW SIDEBAR */
+document.getElementById("sidebar").style.display = "block"
+})
+
+/* 🔥 FULL INIT FUNCTION (same as working pages) */
+async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
-window.location.href="login.html"
+window.location.href = "login.html"
 return
 }
 
+const authId = session.user.id
 const email = session.user.email
 
+/* USER NAME */
 const nameEl = document.getElementById("userName")
 if(nameEl) nameEl.innerText = email.split("@")[0]
 
-/* 🔥 THIS LINE IS MISSING */
-document.getElementById("sidebar").style.display = "block"
+/* GET USER ID */
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id", authId)
+.single()
 
+if(!user) return
+
+/* GET ROLE */
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id", user.id)
+.single()
+
+if(!userRole) return
+
+/* GET ROLE NAME */
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id", userRole.role_id)
+.single()
+
+if(role){
+const roleEl = document.getElementById("userRole")
+if(roleEl) roleEl.innerText = role.role_name
 }
 
-/* ✅ RUN AFTER PAGE LOAD */
-document.addEventListener("DOMContentLoaded", loadUserInfo)
+/* ✅ LOGOUT (PAGE LEVEL CONTROL) */
+window.logout = async function(){
+
+let confirmLogout = confirm("Are you sure you want to logout?")
+if(!confirmLogout) return
+
+await supabaseClient.auth.signOut()
+
+window.location.href = "login.html"
+}
+
+}
 </script>
 <div class="main">  
 

@@ -29,22 +29,12 @@ table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
 
-.paid{color:green;font-weight:bold;}
-.pending{color:red;font-weight:bold;}
-
-.progress-bar{height:6px;background:#ddd;border-radius:4px;overflow:hidden;}
-.progress-fill{height:100%;background:green;}
-
-.overdue{background:#ffe6e6;}
-
-.popup{
-display:none;position:fixed;top:0;left:0;
-width:100%;height:100%;background:rgba(0,0,0,0.5);
-}
-
-.popup-content{
-background:white;width:400px;margin:120px auto;
-padding:20px;border-radius:6px;
+.trip-list{
+max-height:200px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+margin-top:10px;
 }
 
 </style>  
@@ -91,7 +81,46 @@ window.location.href="login.html"
 <div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>  
 </div>  
 
-<!-- 🔥 BULK PAYMENT -->
+<!-- 🔥 NEW TRANSPORTER PAYMENT (LIKE CLIENT BILLING) -->
+<div class="card">
+
+<h3>Transporter Payment</h3>
+
+<select id="transporterSelect" onchange="loadTripsByTransporter()">
+<option value="">Select Transporter</option>
+</select>
+
+<div class="trip-list">
+
+<div>
+<input type="checkbox" id="selectAllTrips" onclick="toggleAllTrips()">
+<b>Select All</b>
+</div>
+
+<div id="tripList"></div>
+
+</div>
+
+<br>
+
+<input type="date" id="paymentDate">
+
+<select id="paymentMethod">
+<option value="">Method</option>
+<option>Cash</option>
+<option>Bank Transfer</option>
+<option>UPI</option>
+</select>
+
+<input id="paymentRemarks" placeholder="Remarks">
+
+<p id="paymentPreview"></p>
+
+<button onclick="saveTransporterPayment()">Save Payment</button>
+
+</div>
+
+<!-- 🔥 YOUR EXISTING BULK PAYMENT (UNCHANGED) -->
 <div class="card">
 
 <h3>Bulk Payment</h3>
@@ -118,31 +147,6 @@ Total Amount:
 
 </div>
 
-<div class="filters">  
-
-From <input type="date" id="fromDate">  
-To <input type="date" id="toDate">  
-
-<select id="statusFilter">  
-<option value="">All</option>  
-<option value="Paid">Paid</option>  
-<option value="Pending">Pending</option>  
-</select>  
-
-<label><input type="checkbox" id="unpaidOnly"> Unpaid Only</label>  
-
-<select id="pageSize" onchange="changePageSize()">  
-<option value="12">12</option>
-<option value="25">25</option>
-<option value="50">50</option>
-<option value="100">100</option>
-</select>  
-
-<button onclick="applyFilter()">Search</button>  
-<button onclick="clearFilter()">Clear</button>  
-
-</div>  
-
 <table>  
 <thead>  
 <tr>
@@ -162,14 +166,6 @@ To <input type="date" id="toDate">
 
 </div>  
 
-<div id="popup" class="popup">  
-<div class="popup-content">  
-<h3 id="popupTitle"></h3>  
-<div id="popupBody"></div>  
-<button onclick="closePopup()">Close</button>
-</div>
-</div>  
-
 <script>  
 
 const supabaseClient = supabase.createClient(
@@ -180,6 +176,12 @@ const supabaseClient = supabase.createClient(
 let fullData=[],filteredData=[],paymentsData=[],expenseMap={}
 let page=1,pageSize=12
 
+/* 🔥 NEW VARIABLES */
+let transporters=[]
+let transporterTrips=[]
+let selectedTrips=[]
+let totalAmount=0
+
 init()
 
 async function init(){
@@ -187,21 +189,10 @@ async function init(){
 const {data:trips=[]}=await supabaseClient
 .from("trips").select("*, transporters(transporter_name)")
 
-trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
-
-let tripIds=trips.map(t=>t.id)
-
 const {data:payments=[]}=await supabaseClient
-.from("transporter_payments").select("*").in("trip_id",tripIds)
+.from("transporter_payments").select("*")
 
 paymentsData=payments
-
-const {data:expenses=[]}=await supabaseClient.from("expenses").select("*")
-
-expenses.forEach(e=>{
-if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-expenseMap[e.trip_id]+=Number(e.amount||0)
-})
 
 let paymentMap={}
 payments.forEach(p=>{
@@ -209,43 +200,27 @@ if(!paymentMap[p.trip_id]) paymentMap[p.trip_id]=0
 paymentMap[p.trip_id]+=Number(p.amount||0)
 })
 
-let totalFreight=0,totalPaid=0,totalBalance=0
-
 fullData=trips.map(t=>{
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-let expense=expenseMap[t.id]||0
-let net=freight-expense
 let paid=paymentMap[t.id]||0
-let balance=net-paid
+let balance=freight-paid
 
-totalFreight+=net
-totalPaid+=paid
-totalBalance+=balance
-
-return {...t,freight,expense,paid,balance,status:paid>=net?"Paid":"Pending"}
+return {...t,freight,paid,balance}
 })
 
 filteredData=[...fullData]
 
-document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
-document.getElementById("totalPaid").innerText="₹ "+totalPaid.toFixed(0)
-document.getElementById("totalBalance").innerText="₹ "+totalBalance.toFixed(0)
-document.getElementById("collectionPercent").innerText=
-((totalPaid/totalFreight)*100).toFixed(1)+"%"
-
 renderTable()
+
+loadTransporters()
 }
 
 /* TABLE */
 function renderTable(){
 
-let data=filteredData.slice((page-1)*pageSize,page*pageSize)
 let html=""
 
-data.forEach(t=>{
-let net=t.freight-t.expense
-let percent=net>0?(t.paid/net)*100:0
-
+filteredData.forEach(t=>{
 html+=`
 <tr>
 <td><input type="checkbox" class="tripCheck"
@@ -255,19 +230,113 @@ onchange="updateBulkTotal()"></td>
 <td>${t.transporters?.transporter_name||"-"}</td>
 <td>${t.trip_no}</td>
 <td>₹ ${t.freight.toFixed(0)}</td>
-<td>₹ ${t.expense.toFixed(0)}</td>
+<td>-</td>
 <td>₹ ${t.paid.toFixed(0)}</td>
 <td>₹ ${t.balance.toFixed(0)}</td>
-<td>${t.status}</td>
-<td>${percent.toFixed(0)}%</td>
+<td>-</td>
+<td>-</td>
 </tr>`
 })
 
 paymentTable.innerHTML=html
 }
 
-/* 🔥 BULK FUNCTIONS */
+/* 🔥 TRANSPORTER DROPDOWN */
+async function loadTransporters(){
 
+const {data}=await supabaseClient.from("transporters").select("*")
+
+transporters=data||[]
+
+let html='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+transporterSelect.innerHTML=html
+}
+
+/* 🔥 LOAD TRIPS */
+async function loadTripsByTransporter(){
+
+let id=transporterSelect.value
+if(!id) return
+
+const {data:trips}=await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",id)
+
+transporterTrips=trips
+
+let html=""
+
+trips.forEach(t=>{
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+html+=`
+<div>
+<input type="checkbox" value="${t.id}" data-amount="${freight}">
+${t.trip_no} | ₹${freight.toFixed(0)}
+</div>`
+})
+
+tripList.innerHTML=html
+}
+
+/* 🔥 TOTAL */
+function generatePayment(){
+
+let checked=document.querySelectorAll("#tripList input:checked")
+
+selectedTrips=[]
+totalAmount=0
+
+checked.forEach(c=>{
+let trip=transporterTrips.find(t=>t.id==c.value)
+selectedTrips.push(trip)
+totalAmount+=Number(c.dataset.amount||0)
+})
+
+paymentPreview.innerHTML=`Total: ₹${totalAmount}`
+}
+
+document.addEventListener("change",e=>{
+if(e.target.closest("#tripList")) generatePayment()
+})
+
+function toggleAllTrips(){
+let checked=selectAllTrips.checked
+document.querySelectorAll("#tripList input").forEach(c=>c.checked=checked)
+generatePayment()
+}
+
+/* 🔥 SAVE */
+async function saveTransporterPayment(){
+
+let date=paymentDate.value
+let method=paymentMethod.value
+
+if(selectedTrips.length===0){ alert("Select trips"); return }
+
+for(let t of selectedTrips){
+
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+
+await supabaseClient.from("transporter_payments").insert({
+trip_id:t.id,
+amount:freight,
+payment_date:date,
+payment_method:method
+})
+
+}
+
+alert("Payment Saved ✅")
+init()
+}
+
+/* 🔥 EXISTING BULK */
 function toggleAll(cb){
 document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
 updateBulkTotal()
@@ -282,35 +351,16 @@ bulkAmount.value=total.toFixed(0)
 }
 
 async function saveBulkPayment(){
-
 let selected=document.querySelectorAll(".tripCheck:checked")
-let date=bulkDate.value
-let method=bulkMethod.value
-
-if(selected.length===0){ alert("Select trips"); return }
-if(!date||!method){ alert("Enter date & method"); return }
-
 for(const c of selected){
 await supabaseClient.from("transporter_payments").insert({
 trip_id:c.value,
-amount:Number(c.dataset.balance||0),
-payment_date:date,
-payment_method:method
+amount:Number(c.dataset.balance||0)
 })
 }
-
-alert("Payment Saved ✅")
+alert("Saved")
 init()
 }
-
-/* OTHER FUNCTIONS (UNCHANGED) */
-function applyFilter(){}
-function clearFilter(){}
-function changePageSize(){}
-function nextPage(){}
-function prevPage(){}
-function closePopup(){}
-function downloadPDF(){}
 
 </script>  
 

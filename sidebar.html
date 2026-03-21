@@ -6,8 +6,11 @@
 </div>
 
 <div class="user-box">
-<div id="userName">Loading...</div>
-<div id="userRole"></div>
+  <div class="avatar">👤</div>
+  <div>
+    <div id="userName">Loading...</div>
+    <div id="userRole">Admin</div>
+  </div>
 </div>
 
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
@@ -57,11 +60,37 @@ margin-bottom:10px;
 .logo{height:28px;}
 
 .user-box{
-padding:12px 20px;
+display:flex;
+align-items:center;
+gap:10px;
+margin:10px;
+padding:12px;
+background:rgba(255,255,255,0.08);
+border-radius:8px;
 border-bottom:1px solid rgba(255,255,255,0.2);
-margin-bottom:10px;
 }
 
+.avatar{
+width:35px;
+height:35px;
+border-radius:50%;
+background:#4c6ef5;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px;
+}
+
+#userName{
+font-weight:bold;
+font-size:14px;
+}
+
+#userRole{
+font-size:12px;
+color:#cbd5ff;
+}
+  
 .sidebar a{
 display:block;
 color:white;

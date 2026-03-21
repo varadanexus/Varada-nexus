@@ -44,10 +44,6 @@ await initSidebar()
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
-
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
-
 })
 
 async function initSidebar(){
@@ -143,40 +139,14 @@ await loadRoutes()
 await loadTrucks()
 await loadCommodities()
 await loadClients()
-await loadTrips()
 
-/* 🔥 APPLY RBAC AFTER LOAD */
-setTimeout(applyTripsRBAC,300)
-}
-/* ================= RBAC ================= */
-
-async function applyTripsRBAC(){
-
-const page="trips.html"
-
-/* CREATE */
-const canCreate = await checkPermission(page,"create")
+/* 🔥 RBAC FIRST */
+const canCreate = await checkPermission("trips.html","create")
 if(!canCreate){
 document.getElementById("createCard").style.display="none"
 }
 
-/* EDIT */
-const canEdit = await checkPermission(page,"edit")
-if(!canEdit){
-document.querySelectorAll(".editBtn").forEach(btn=>{
-btn.disabled=true
-btn.style.opacity="0.5"
-})
-}
-
-/* DELETE */
-const canDelete = await checkPermission(page,"delete")
-if(!canDelete){
-document.querySelectorAll(".deleteBtn").forEach(btn=>{
-btn.style.display="none"
-})
-}
-
+await loadTrips()
 }
 
 /* ================= LOADS ================= */
@@ -234,12 +204,15 @@ loadTrips()
 async function loadTrips(){
 const {data}=await supabaseClient.from("trips").select("*").order("created_at",{ascending:false})
 trips=data||[]
-renderTrips()
+await renderTrips()
 }
 
-/* 🔥 IMPORTANT: APPLY RBAC AFTER RENDER */
+/* 🔥 NO FLICKER RBAC */
 
 async function renderTrips(){
+
+const canEdit = await checkPermission("trips.html","edit")
+const canDelete = await checkPermission("trips.html","delete")
 
 let html=""
 
@@ -255,16 +228,16 @@ html+=`
 <td>${t.trip_date||""}</td>
 <td>${t.status||""}</td>
 <td>
-<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>
+
+${canEdit ? `<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>` : ""}
+
+${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>` : ""}
+
 </td>
 </tr>`
 })
 
 tripTable.innerHTML=html
-
-/* 🔥 APPLY RBAC AFTER BUTTONS CREATED */
-applyTripsRBAC()
 }
 
 /* ================= EDIT ================= */
@@ -278,11 +251,7 @@ return
 }
 
 let row = document.getElementById("row_"+id)
-if(!row) return
-
 let t = trips.find(x=>x.id==id)
-
-/* 🔥 CONVERT TO INPUTS */
 
 row.innerHTML = `
 <td>${t.trip_no}</td>
@@ -294,7 +263,7 @@ row.innerHTML = `
 <td><input id="date_${id}" value="${t.trip_date}"></td>
 <td><input id="status_${id}" value="${t.status}"></td>
 <td>
-<button class="saveBtn" onclick="updateTrip('${id}')">Save</button>
+<button onclick="updateTrip('${id}')">Save</button>
 </td>
 `
 }

@@ -253,13 +253,29 @@ let clientPage=0
 const pageSize=10
 
 /* ROUTE AUTO */
-origin.oninput = destination.oninput = ()=>{
-if(origin.value && destination.value){
-routeCode.value =
-origin.value.slice(0,4).toUpperCase()+"-"+
-destination.value.slice(0,4).toUpperCase()
+function generateRouteCode(){
+
+let o = origin.value.trim().toUpperCase()
+let d = destination.value.trim().toUpperCase()
+
+if(o && d){
+
+let oCode = o.substring(0,4)
+let dCode = d.substring(0,4)
+let oCode = o.split(" ")[0].substring(0,4)
+let dCode = d.split(" ")[0].substring(0,4)
+
+routeCode.value = oCode + "-" + dCode
+
+}else{
+routeCode.value = ""
 }
+
 }
+
+/* 🔥 BETTER EVENT LISTENER */
+origin.addEventListener("input", generateRouteCode)
+destination.addEventListener("input", generateRouteCode)
 
 /* TRUCK AUTO */
 truckNumber.oninput = ()=>{

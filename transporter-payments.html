@@ -10,47 +10,19 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+h2{color:#1f3c88;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+.filters{margin-bottom:15px;}
+.filters input,.filters select{padding:6px;margin-right:8px;}
 
-h2{
-color:#1f3c88;
-}
+table{width:100%;border-collapse:collapse;background:white;margin-top:15px;}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;}
+th{background:#eee;}
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-margin-top:15px;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-text-align:left;
-}
-
-th{
-background:#eee;
-}
-
-.paid{
-color:green;
-font-weight:bold;
-}
-
-.pending{
-color:red;
-font-weight:bold;
-}
+.paid{color:green;font-weight:bold;}
+.pending{color:red;font-weight:bold;}
 
 button{
 padding:8px 14px;
@@ -62,9 +34,7 @@ cursor:pointer;
 margin-top:10px;
 }
 
-.pagination{
-margin-top:15px;
-}
+.pagination{margin-top:15px;}
 
 </style>
 
@@ -82,31 +52,46 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
+
 <script>
-
 async function loadUserInfo(){
-
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
-
 const email = session.user.email
-
 document.getElementById("userName").innerText = email.split("@")[0]
-
-/* SHOW SIDEBAR AFTER LOAD */
 document.getElementById("sidebar").style.display = "block"
-
 }
-
 setTimeout(loadUserInfo, 300)
-
 </script>
+
 <div class="main">
 
 <h2>My Payments</h2>
 
+<!-- ✅ NEW FILTER UI -->
+<div class="filters">
+
+From <input type="date" id="fromDate">
+To <input type="date" id="toDate">
+
+<select id="statusFilter">
+<option value="">All Status</option>
+<option value="Paid">Paid</option>
+<option value="Pending">Pending</option>
+</select>
+
+<select id="pageSizeSelect" onchange="changePageSize()">
+<option value="12">12 rows</option>
+<option value="25">25 rows</option>
+<option value="50">50 rows</option>
+<option value="100">100 rows</option>
+</select>
+
+<button onclick="applyFilter()">Search</button>
+<button onclick="clearFilter()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
+
+</div>
 
 <table>
 <thead>
@@ -137,8 +122,10 @@ const supabaseClient = supabase.createClient(
 )
 
 let fullData=[]
+let filteredData=[]
+
 let page=1
-let pageSize=10
+let pageSize=12
 
 init()
 
@@ -153,7 +140,6 @@ return
 
 const authId = session.user.id
 
-/* GET TRANSPORTER */
 const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("id")
@@ -165,7 +151,6 @@ alert("Transporter not linked")
 return
 }
 
-/* GET TRIPS */
 const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
@@ -177,7 +162,6 @@ document.getElementById("paymentTable").innerHTML =
 return
 }
 
-/* GET PAYMENTS */
 let tripIds = trips.map(t=>t.id)
 
 const {data:payments} = await supabaseClient
@@ -185,7 +169,6 @@ const {data:payments} = await supabaseClient
 .select("*")
 .in("trip_id", tripIds)
 
-/* BUILD MAP */
 let paymentMap={}
 
 payments.forEach(p=>{
@@ -193,25 +176,24 @@ if(!paymentMap[p.trip_id]) paymentMap[p.trip_id]=0
 paymentMap[p.trip_id]+=Number(p.amount||0)
 })
 
-/* BUILD FINAL DATA */
 fullData = trips.map(t=>{
 
-let weightMT = (t.weight_kg||0)/1000
-let freight = weightMT * (t.transporter_rate||0)
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+let paid=paymentMap[t.id]||0
+let balance=freight-paid
 
-let paid = paymentMap[t.id] || 0
-let balance = freight - paid
-
-return {
-date: t.trip_date,
-trip_no: t.trip_no,
+return{
+date:t.trip_date,
+trip_no:t.trip_no,
 freight,
 paid,
 balance,
-status: paid >= freight ? "Paid" : "Pending"
+status: paid>=freight ? "Paid" : "Pending"
 }
 
 })
+
+filteredData=[...fullData]
 
 renderTable()
 
@@ -224,12 +206,11 @@ function renderTable(){
 let start=(page-1)*pageSize
 let end=start+pageSize
 
-let rows=fullData.slice(start,end)
+let rows=filteredData.slice(start,end)
 
 let html=""
 
 rows.forEach(r=>{
-
 html+=`
 <tr>
 <td>${r.date||""}</td>
@@ -240,17 +221,61 @@ html+=`
 <td class="${r.status==='Paid'?'paid':'pending'}">${r.status}</td>
 </tr>
 `
-
 })
 
 document.getElementById("paymentTable").innerHTML=html
 
 }
 
+/* FILTER */
+
+function applyFilter(){
+
+let from=document.getElementById("fromDate").value
+let to=document.getElementById("toDate").value
+let status=document.getElementById("statusFilter").value
+
+filteredData = fullData.filter(r=>{
+
+let d=new Date(r.date)
+
+return (!from || d>=new Date(from)) &&
+(!to || d<=new Date(to)) &&
+(!status || r.status===status)
+
+})
+
+page=1
+renderTable()
+
+}
+
+/* CLEAR */
+
+function clearFilter(){
+
+filteredData=[...fullData]
+
+document.getElementById("fromDate").value=""
+document.getElementById("toDate").value=""
+document.getElementById("statusFilter").value=""
+
+renderTable()
+
+}
+
+/* PAGE SIZE */
+
+function changePageSize(){
+pageSize=parseInt(document.getElementById("pageSizeSelect").value)
+page=1
+renderTable()
+}
+
 /* PAGINATION */
 
 function nextPage(){
-if(page*pageSize<fullData.length){
+if(page*pageSize<filteredData.length){
 page++
 renderTable()
 }
@@ -273,7 +298,7 @@ let doc=new jsPDF()
 
 let rows=[]
 
-fullData.forEach(r=>{
+filteredData.forEach(r=>{
 rows.push([
 r.date,
 r.trip_no,

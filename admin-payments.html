@@ -1,22 +1,17 @@
-<!DOCTYPE html>  
-<html>  
+<!DOCTYPE html>
+<html>
 
-<head>  
-<title>Admin Payments - Varada Nexus</title> 
+<head>
+<title>Admin Payments - Varada Nexus</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>  
-
-body{margin:0;font-family:Arial;background:#f4f6f9;}  
-.main{margin-left:220px;padding:30px;}  
-
-h2{color:#1f3c88;}  
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+h2{color:#1f3c88;}
 
 .cards{display:flex;gap:15px;margin-bottom:20px;}
-
 .card{
 background:white;padding:15px;border-radius:8px;
 box-shadow:0 4px 10px rgba(0,0,0,0.1);min-width:180px;
@@ -29,18 +24,18 @@ table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
 
-.trip-list{
-max-height:200px;
-overflow-y:auto;
-border:1px solid #ddd;
-padding:10px;
-margin-top:10px;
+.popup{
+display:none;position:fixed;top:0;left:0;
+width:100%;height:100%;background:rgba(0,0,0,0.5);
 }
+.popup-content{
+background:white;width:400px;margin:120px auto;
+padding:20px;border-radius:6px;
+}
+</style>
+</head>
 
-</style>  
-</head>  
-
-<body>  
+<body>
 
 <div id="sidebar-container"></div>
 
@@ -68,68 +63,25 @@ window.location.href="login.html"
 }
 </script>
 
-<div class="main">  
+<div class="main">
 
-<h2>Admin Payments Dashboard</h2>  
+<h2>Admin Payments Dashboard</h2>
 
-<button onclick="downloadPDF()">Download PDF</button>  
+<div class="cards">
+<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
+<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
+<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>
+</div>
 
-<div class="cards">  
-<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>  
-<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>  
-<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>  
-<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>  
-</div>  
-
-<!-- 🔥 NEW TRANSPORTER PAYMENT (LIKE CLIENT BILLING) -->
+<!-- BULK PAYMENT -->
 <div class="card">
-
-<h3>Transporter Payment</h3>
-
-<select id="transporterSelect" onchange="loadTripsByTransporter()">
-<option value="">Select Transporter</option>
-</select>
-
-<div class="trip-list">
-
-<div>
-<input type="checkbox" id="selectAllTrips" onclick="toggleAllTrips()">
-<b>Select All</b>
-</div>
-
-<div id="tripList"></div>
-
-</div>
-
-<br>
-
-<input type="date" id="paymentDate">
-
-<select id="paymentMethod">
-<option value="">Method</option>
-<option>Cash</option>
-<option>Bank Transfer</option>
-<option>UPI</option>
-</select>
-
-<input id="paymentRemarks" placeholder="Remarks">
-
-<p id="paymentPreview"></p>
-
-<button onclick="saveTransporterPayment()">Save Payment</button>
-
-</div>
-
-<!-- 🔥 YOUR EXISTING BULK PAYMENT (UNCHANGED) -->
-<div class="card">
-
 <h3>Bulk Payment</h3>
 
 <label><input type="checkbox" onclick="toggleAll(this)"> Select All</label>
 
 <br><br>
 
-Total Amount:
+Total:
 <input id="bulkAmount" readonly>
 
 <input type="date" id="bulkDate">
@@ -141,58 +93,63 @@ Total Amount:
 <option>UPI</option>
 </select>
 
-<input id="bulkRemarks" placeholder="Remarks">
-
 <button onclick="saveBulkPayment()">Save Payment</button>
-
 </div>
 
-<table>  
-<thead>  
+<table>
+<thead>
 <tr>
 <th>Select</th>
 <th>Transporter</th>
 <th>Trip</th>
-<th>Freight</th>
-<th>Expenses</th>
-<th>Paid</th>
 <th>Balance</th>
-<th>Status</th>
-<th>Progress</th>
+<th>Enter Amount</th>
 </tr>
-</thead>  
-<tbody id="paymentTable"></tbody>  
-</table>  
+</thead>
+<tbody id="paymentTable"></tbody>
+</table>
 
-</div>  
+</div>
 
-<script>  
+<!-- POPUP -->
+<div id="popup" class="popup">
+<div class="popup-content">
+<h3 id="popupTitle"></h3>
+<div id="popupBody"></div>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let fullData=[],filteredData=[],paymentsData=[],expenseMap={}
-let page=1,pageSize=12
-
-/* 🔥 NEW VARIABLES */
-let transporters=[]
-let transporterTrips=[]
-let selectedTrips=[]
-let totalAmount=0
+let fullData=[], paymentsData=[], expenseMap={}
 
 init()
 
 async function init(){
 
 const {data:trips=[]}=await supabaseClient
-.from("trips").select("*, transporters(transporter_name)")
+.from("trips")
+.select("*, transporters(transporter_name)")
+
+let tripIds=trips.map(t=>t.id)
 
 const {data:payments=[]}=await supabaseClient
-.from("transporter_payments").select("*")
+.from("transporter_payments").select("*").in("trip_id",tripIds)
 
 paymentsData=payments
+
+const {data:expenses=[]}=await supabaseClient.from("expenses").select("*")
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
 
 let paymentMap={}
 payments.forEach(p=>{
@@ -202,25 +159,23 @@ paymentMap[p.trip_id]+=Number(p.amount||0)
 
 fullData=trips.map(t=>{
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+let expense=expenseMap[t.id]||0
+let net=freight-expense
 let paid=paymentMap[t.id]||0
-let balance=freight-paid
+let balance=net-paid
 
-return {...t,freight,paid,balance}
+return {...t, balance, paid}
 })
 
-filteredData=[...fullData]
-
 renderTable()
-
-loadTransporters()
 }
 
-/* TABLE */
 function renderTable(){
 
 let html=""
 
-filteredData.forEach(t=>{
+fullData.forEach(t=>{
+
 html+=`
 <tr>
 <td><input type="checkbox" class="tripCheck"
@@ -228,115 +183,26 @@ value="${t.id}" data-balance="${t.balance}"
 onchange="updateBulkTotal()"></td>
 
 <td>${t.transporters?.transporter_name||"-"}</td>
-<td>${t.trip_no}</td>
-<td>₹ ${t.freight.toFixed(0)}</td>
-<td>-</td>
-<td>₹ ${t.paid.toFixed(0)}</td>
+
+<td onclick="showHistory('${t.id}','${t.trip_no}')"
+style="cursor:pointer;color:#1f3c88">
+${t.trip_no}
+</td>
+
 <td>₹ ${t.balance.toFixed(0)}</td>
-<td>-</td>
-<td>-</td>
-</tr>`
+
+<td>
+<input type="number" id="amt_${t.id}" placeholder="Amount" style="width:90px">
+</td>
+</tr>
+`
 })
 
 paymentTable.innerHTML=html
 }
 
-/* 🔥 TRANSPORTER DROPDOWN */
-async function loadTransporters(){
+/* BULK */
 
-const {data}=await supabaseClient.from("transporters").select("*")
-
-transporters=data||[]
-
-let html='<option value="">Select Transporter</option>'
-
-transporters.forEach(t=>{
-html+=`<option value="${t.id}">${t.transporter_name}</option>`
-})
-
-transporterSelect.innerHTML=html
-}
-
-/* 🔥 LOAD TRIPS */
-async function loadTripsByTransporter(){
-
-let id=transporterSelect.value
-if(!id) return
-
-const {data:trips}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",id)
-
-transporterTrips=trips
-
-let html=""
-
-trips.forEach(t=>{
-let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-html+=`
-<div>
-<input type="checkbox" value="${t.id}" data-amount="${freight}">
-${t.trip_no} | ₹${freight.toFixed(0)}
-</div>`
-})
-
-tripList.innerHTML=html
-}
-
-/* 🔥 TOTAL */
-function generatePayment(){
-
-let checked=document.querySelectorAll("#tripList input:checked")
-
-selectedTrips=[]
-totalAmount=0
-
-checked.forEach(c=>{
-let trip=transporterTrips.find(t=>t.id==c.value)
-selectedTrips.push(trip)
-totalAmount+=Number(c.dataset.amount||0)
-})
-
-paymentPreview.innerHTML=`Total: ₹${totalAmount}`
-}
-
-document.addEventListener("change",e=>{
-if(e.target.closest("#tripList")) generatePayment()
-})
-
-function toggleAllTrips(){
-let checked=selectAllTrips.checked
-document.querySelectorAll("#tripList input").forEach(c=>c.checked=checked)
-generatePayment()
-}
-
-/* 🔥 SAVE */
-async function saveTransporterPayment(){
-
-let date=paymentDate.value
-let method=paymentMethod.value
-
-if(selectedTrips.length===0){ alert("Select trips"); return }
-
-for(let t of selectedTrips){
-
-let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-
-await supabaseClient.from("transporter_payments").insert({
-trip_id:t.id,
-amount:freight,
-payment_date:date,
-payment_method:method
-})
-
-}
-
-alert("Payment Saved ✅")
-init()
-}
-
-/* 🔥 EXISTING BULK */
 function toggleAll(cb){
 document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
 updateBulkTotal()
@@ -350,19 +216,72 @@ total+=Number(c.dataset.balance||0)
 bulkAmount.value=total.toFixed(0)
 }
 
+/* SAVE */
+
 async function saveBulkPayment(){
+
 let selected=document.querySelectorAll(".tripCheck:checked")
+let date=bulkDate.value
+let method=bulkMethod.value
+
+if(selected.length===0){ alert("Select trips"); return }
+if(!date||!method){ alert("Enter date & method"); return }
+
 for(const c of selected){
+
+let tripId=c.value
+let amt=Number(document.getElementById("amt_"+tripId)?.value || c.dataset.balance)
+
+if(amt<=0) continue
+
+// SAVE PAYMENT
 await supabaseClient.from("transporter_payments").insert({
-trip_id:c.value,
-amount:Number(c.dataset.balance||0)
+trip_id:tripId,
+amount:amt,
+payment_date:date,
+payment_method:method
 })
+
+// LEDGER ENTRY
+await supabaseClient.from("transporter_ledger").insert({
+trip_id:tripId,
+amount:amt,
+type:"DEBIT",
+remarks:"Payment Made"
+})
+
 }
-alert("Saved")
+
+alert("Payment Saved ✅")
 init()
 }
 
-</script>  
+/* HISTORY */
 
-</body>  
+function showHistory(tripId, tripNo){
+
+let list=paymentsData.filter(p=>p.trip_id===tripId)
+
+let html="<b>Payment History</b><br><br>"
+
+if(list.length===0){
+html+="No payments"
+}else{
+list.forEach(p=>{
+html+=`${p.payment_date} - ₹${p.amount} (${p.payment_method||"-"})<br>`
+})
+}
+
+popupTitle.innerText="Trip "+tripNo
+popupBody.innerHTML=html
+popup.style.display="block"
+}
+
+function closePopup(){
+popup.style.display="none"
+}
+
+</script>
+
+</body>
 </html>

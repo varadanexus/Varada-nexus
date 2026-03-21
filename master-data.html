@@ -249,19 +249,18 @@ const pageSize=10
 /* ROUTE AUTO */
 function generateRouteCode(){
 
-let o = origin.value.trim().toUpperCase()
-let d = destination.value.trim().toUpperCase()
+let o = document.getElementById("origin").value.trim().toUpperCase()
+let d = document.getElementById("destination").value.trim().toUpperCase()
 
 if(o && d){
-
 
 let oCode = o.split(" ")[0].substring(0,4)
 let dCode = d.split(" ")[0].substring(0,4)
 
-routeCode.value = oCode + "-" + dCode
+document.getElementById("routeCode").value = oCode + "-" + dCode
 
 }else{
-routeCode.value = ""
+document.getElementById("routeCode").value = ""
 }
 
 }
@@ -366,18 +365,26 @@ loadTransporters()
 }
 
 async function addRoute(){
-if(!origin.value || !destination.value){
+
+let originVal = document.getElementById("origin").value.trim()
+let destinationVal = document.getElementById("destination").value.trim()
+let code = document.getElementById("routeCode").value
+
+if(!originVal || !destinationVal){
 alert("Enter both fields")
 return
 }
+
 await supabaseClient.from("routes").insert({
-origin:origin.value,
-destination:destination.value,
-route_code:routeCode.value
+origin: originVal,
+destination: destinationVal,
+route_code: code
 })
-origin.value=""
-destination.value=""
-routeCode.value=""
+
+document.getElementById("origin").value=""
+document.getElementById("destination").value=""
+document.getElementById("routeCode").value=""
+
 loadRoutes()
 }
 

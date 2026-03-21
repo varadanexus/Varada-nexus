@@ -44,8 +44,11 @@ await initSidebar()
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
-})
 
+/* ✅ SHOW SIDEBAR */
+document.getElementById("sidebar").style.display="block"
+
+})
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()

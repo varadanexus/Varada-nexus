@@ -407,25 +407,26 @@ async function deletePayment(id,e){
 
 e.stopPropagation()
 
-if(!confirm("Delete payment?")) return
+if(!confirm("Delete full invoice? This cannot be undone")) return
 
+/* 1. DELETE PAYMENTS */
 await supabaseClient
 .from("transporter_payments")
 .delete()
 .eq("invoice_id",id)
 
+/* 2. DELETE INVOICE */
 await supabaseClient
 .from("transporter_invoices")
-.update({
-paid_amount:0,
-balance_amount:0,
-status:"Pending"
-})
+.delete()
 .eq("id",id)
 
-alert("Deleted")
+alert("Invoice Deleted Completely")
 
+/* 3. REFRESH */
+loadTrips()
 loadInvoices()
+
 }
 
 async function downloadInvoice(id,e){

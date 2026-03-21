@@ -153,7 +153,7 @@ margin-top:12px;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 /* SHOW PASSWORD */
@@ -197,7 +197,7 @@ return
 
 let authId=data.user.id
 
-/* FIND USER IN ERP USERS TABLE */
+/* FIND USER */
 
 const {data:dbUser,error:userError}=await supabaseClient
 .from("users")
@@ -232,9 +232,11 @@ const {data:role}=await supabaseClient
 .eq("id",roleId)
 .single()
 
-let roleName=role.role_name.toLowerCase()
+let roleName = (role?.role_name || "").toLowerCase().trim()
 
-/* GENERATE SESSION TOKEN */
+console.log("ROLE DETECTED:", roleName)
+
+/* SESSION TOKEN */
 
 let sessionToken = crypto.randomUUID()
 
@@ -245,38 +247,38 @@ await supabaseClient
 
 localStorage.setItem("erp_session_token",sessionToken)
 
+/* FLEXIBLE ROLE CHECK */
+
+const isTransporter =
+roleName === "customer" ||
+roleName === "transporter" ||
+roleName.includes("customer") ||
+roleName.includes("transporter")
+
 /* LOGIN TYPE VALIDATION */
 
-if(loginType==="transporter" && roleName!=="customer"){
+if(loginType==="transporter" && !isTransporter){
 
 document.getElementById("error").innerText="This account is not a customer"
 
 await supabaseClient.auth.signOut()
-
 return
-
 }
 
-if(loginType==="staff" && roleName==="customer"){
+if(loginType==="staff" && isTransporter){
 
 document.getElementById("error").innerText="Customers must use customer login"
 
 await supabaseClient.auth.signOut()
-
 return
-
 }
 
 /* REDIRECT */
 
-if(roleName==="customer"){
-
+if(isTransporter){
 window.location.href="transporter-dashboard.html"
-
 }else{
-
 window.location.href="dashboard.html"
-
 }
 
 }

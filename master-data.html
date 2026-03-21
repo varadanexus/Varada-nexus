@@ -267,8 +267,8 @@ routeCode.value = ""
 }
 
 /* 🔥 BETTER EVENT LISTENER */
-origin.addEventListener("input", generateRouteCode)
-destination.addEventListener("input", generateRouteCode)
+document.getElementById("origin").addEventListener("input", generateRouteCode)
+document.getElementById("destination").addEventListener("input", generateRouteCode)
 
 /* TRUCK AUTO */
 truckNumber.oninput = ()=>{
@@ -629,6 +629,11 @@ editId = null
 /* INIT */
 
 window.onload=async ()=>{
+
+/* 🔥 FIX EVENT BINDING */
+document.getElementById("origin").addEventListener("input", generateRouteCode)
+document.getElementById("destination").addEventListener("input", generateRouteCode)
+
 await loadClients()
 await loadTransporters()
 await loadRoutes()

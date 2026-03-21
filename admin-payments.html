@@ -16,7 +16,9 @@ background:white;padding:20px;border-radius:8px;margin-bottom:20px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;}
+input,select{
+padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;
+}
 
 button{
 padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;
@@ -32,12 +34,6 @@ th{background:#eee;}
 .status-paid{color:green;font-weight:bold;}
 .status-pending{color:red;font-weight:bold;}
 .status-partial{color:orange;font-weight:bold;}
-
-.print-box{
-display:none;
-background:white;
-padding:30px;
-}
 </style>
 
 </head>
@@ -59,11 +55,6 @@ document.getElementById("sidebar").style.display="block"
 
 <h2>Transporter Payments</h2>
 
-<!-- SEARCH -->
-<div class="card">
-<input id="searchInvoice" placeholder="Search Invoice No" oninput="searchInvoices()">
-</div>
-
 <!-- SELECT TRANSPORTER -->
 <div class="card">
 <h3>Select Transporter</h3>
@@ -73,6 +64,7 @@ document.getElementById("sidebar").style.display="block"
 <!-- TRIPS -->
 <div class="card">
 <h3>Select Trips</h3>
+
 <label><input type="checkbox" onclick="toggleAll(this)"> Select All</label>
 
 <table>
@@ -86,18 +78,25 @@ document.getElementById("sidebar").style.display="block"
 </thead>
 <tbody id="tripTable"></tbody>
 </table>
+
 </div>
 
 <!-- INVOICE -->
 <div class="card">
+
 <h3>Create Invoice</h3>
+
 <button onclick="generateInvoice()">Generate Invoice</button>
+
 <p id="invoicePreview"></p>
+
 <button onclick="saveInvoice()">Save Invoice</button>
+
 </div>
 
 <!-- PAYMENT -->
 <div class="card">
+
 <h3>Payment</h3>
 
 Invoice Amount:
@@ -116,11 +115,16 @@ Enter Payment:
 </select>
 
 <button onclick="savePayment()">Save Payment</button>
+
 </div>
 
-<!-- INVOICE LIST -->
+<!-- 🔥 INVOICE LIST -->
 <div class="card">
+
 <h3>Invoices</h3>
+
+<!-- ✅ SEARCH MOVED HERE -->
+<input id="searchInvoice" placeholder="Search Invoice No" oninput="searchInvoices()">
 
 <table>
 <thead>
@@ -137,14 +141,12 @@ Enter Payment:
 </thead>
 
 <tbody id="invoiceTable"></tbody>
+
 </table>
 
 </div>
 
 </div>
-
-<!-- PRINT -->
-<div id="printBox" class="print-box"></div>
 
 <script>
 
@@ -168,10 +170,9 @@ await loadInvoices()
 /* TRANSPORTERS */
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
-transporters=data||[]
 
 transporterSelect.innerHTML='<option value="">Select</option>'+
-transporters.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
+data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 }
 
 /* TRIPS */
@@ -180,17 +181,21 @@ async function loadTrips(){
 let id=transporterSelect.value
 if(!id) return
 
-const {data}=await supabaseClient.from("trips").select("*").eq("transporter_id",id)
+const {data}=await supabaseClient.from("trips")
+.select("*")
+.eq("transporter_id",id)
 
-trips=data.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+trips=data.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
 
 renderTrips()
 }
 
+/* ✅ FIXED TRIP DISPLAY */
 function renderTrips(){
 
 tripTable.innerHTML=trips.map(t=>{
 let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
+
 return `
 <tr>
 <td><input type="checkbox" value="${t.id}"></td>
@@ -205,18 +210,18 @@ return `
 function generateInvoice(){
 
 let checked=document.querySelectorAll("#tripTable input:checked")
-if(checked.length==0){alert("Select trips");return}
+
+if(!checked.length){alert("Select trips");return}
 
 selectedTrips=[]
-let total=0, totalWeight=0
+let total=0, weight=0
 
 checked.forEach(c=>{
 let t=trips.find(x=>x.id==c.value)
 selectedTrips.push(t)
 
-let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
-total+=amt
-totalWeight+=Number(t.weight_kg||0)
+total += (t.weight_kg/1000)*(t.transporter_rate||0)
+weight += Number(t.weight_kg||0)
 })
 
 invoiceAmount=total
@@ -224,11 +229,12 @@ totalAmount.value=total.toFixed(0)
 
 invoicePreview.innerHTML=`
 Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
-Weight: ${totalWeight} KG<br>
+Weight: ${weight} KG<br>
 <b>Amount: ₹${total}</b>
 `
 }
 
+/* SAVE INVOICE */
 async function saveInvoice(){
 
 const {data}=await supabaseClient.from("transporter_invoices").insert({
@@ -242,6 +248,7 @@ status:"Pending"
 }).select().single()
 
 currentInvoice=data
+
 loadInvoices()
 }
 
@@ -258,9 +265,7 @@ amount
 let paid=(currentInvoice.paid_amount||0)+amount
 let balance=currentInvoice.total_amount-paid
 
-let status="Pending"
-if(balance<=0) status="Paid"
-else if(paid>0) status="Partial"
+let status = balance<=0 ? "Paid" : paid>0 ? "Partial" : "Pending"
 
 await supabaseClient.from("transporter_invoices")
 .update({paid_amount:paid,balance_amount:balance,status})
@@ -314,51 +319,9 @@ let q=searchInvoice.value.toLowerCase()
 renderInvoices(invoices.filter(i=>i.invoice_no.toLowerCase().includes(q)))
 }
 
-/* EDIT */
-async function editPayment(id,e){
-e.stopPropagation()
+/* PDF - PROFESSIONAL */
+async function downloadInvoice(id,e){
 
-let val=prompt("Enter new paid amount")
-if(!val) return
-
-let inv=invoices.find(i=>i.id==id)
-
-let balance=inv.total_amount-Number(val)
-
-let status="Pending"
-if(balance<=0) status="Paid"
-else if(val>0) status="Partial"
-
-await supabaseClient.from("transporter_invoices")
-.update({
-paid_amount:Number(val),
-balance_amount:balance,
-status
-})
-.eq("id",id)
-
-loadInvoices()
-}
-
-/* DELETE */
-async function deletePayment(id,e){
-e.stopPropagation()
-
-await supabaseClient.from("transporter_invoices")
-.update({paid_amount:0,balance_amount:0,status:"Pending"})
-.eq("id",id)
-
-loadInvoices()
-}
-
-/* SELECT */
-function selectInvoice(id){
-currentInvoice=invoices.find(i=>i.id==id)
-totalAmount.value=currentInvoice.total_amount
-}
-
-/* PDF */
-function downloadInvoice(id,e){
 e.stopPropagation()
 
 const { jsPDF } = window.jspdf
@@ -366,15 +329,22 @@ let inv=invoices.find(i=>i.id==id)
 
 let doc=new jsPDF()
 
-doc.setFontSize(16)
-doc.text("Varada Nexus Private Limited",20,20)
+// LOGO
+let img=new Image()
+img.src="logo.png"
+doc.addImage(img,"PNG",10,10,30,15)
 
+// COMPANY
+doc.setFontSize(16)
+doc.text("VARADA NEXUS PRIVATE LIMITED",50,20)
+
+// DETAILS
 doc.setFontSize(12)
-doc.text("Invoice: "+inv.invoice_no,20,40)
-doc.text("Amount: ₹"+inv.total_amount,20,50)
-doc.text("Paid: ₹"+(inv.paid_amount||0),20,60)
-doc.text("Balance: ₹"+inv.balance_amount,20,70)
-doc.text("Status: "+inv.status,20,80)
+doc.text("Invoice No: "+inv.invoice_no,20,50)
+doc.text("Total Amount: ₹"+inv.total_amount,20,60)
+doc.text("Paid: ₹"+(inv.paid_amount||0),20,70)
+doc.text("Balance: ₹"+inv.balance_amount,20,80)
+doc.text("Status: "+inv.status,20,90)
 
 doc.save(inv.invoice_no+".pdf")
 }

@@ -9,58 +9,57 @@
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;}
-button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;cursor:pointer;}
-.trip-list{max-height:220px;overflow-y:auto;border:1px solid #ddd;padding:10px;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;text-align:left;}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+select,input{
+padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;
+}
+
+button{
+padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;
+}
+
+.trip-list{
+max-height:250px;overflow-y:auto;border:1px solid #ddd;padding:10px;
+}
+
+table{
+width:100%;border-collapse:collapse;background:white;
+}
+
+th,td{
+padding:10px;border-bottom:1px solid #ddd;text-align:left;
+}
+
+th{background:#eee;}
 </style>
 
 </head>
 
 <body>
 
-<script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-</script>
-
-<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
+.then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
-if(typeof applyMenuRBAC==="function"){ await applyMenuRBAC() }
 document.getElementById("sidebar").style.display="block"
 })
-
-async function initSidebar(){
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session){ window.location.href="login.html"; return }
-
-const email=session.user.email
-document.getElementById("userName").innerText=email.split("@")[0]
-
-window.logout=async()=>{
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-}
-}
 </script>
 
 <div class="main">
 
 <h2>Transporter Payments</h2>
 
-<!-- 🔥 SELECT TRANSPORTER -->
 <div class="card">
 
 <h3>Select Transporter</h3>
@@ -69,29 +68,41 @@ window.location.href="login.html"
 
 <div class="trip-list">
 
-<label>
-<input type="checkbox" onclick="toggleAllTrips(this)">
-<b>Select All Trips</b>
-</label>
+<div>
+<input type="checkbox" onclick="toggleAll(this)"> <b>Select All</b>
+</div>
 
-<div id="tripList"></div>
+<table>
+<thead>
+<tr>
+<th>Select</th>
+<th>Trip</th>
+<th>Balance</th>
+<th>Pay Amount</th>
+<th>Remaining</th>
+</tr>
+</thead>
+
+<tbody id="tripTable"></tbody>
+
+</table>
 
 </div>
 
 </div>
 
-<!-- 🔥 PAYMENT SECTION -->
 <div class="card">
 
-<h3>Record Payment</h3>
+<h3>Payment</h3>
 
-<!-- TOTAL AUTO -->
-<input id="totalAmount" placeholder="Total Selected Amount" readonly>
+Total Selected:
+<input id="totalAmount" readonly>
 
-<!-- USER INPUT -->
-<input id="paymentAmount" placeholder="Enter Payment Amount">
+Enter Payment:
+<input id="paidAmount" oninput="autoDistribute()">
 
 <input type="date" id="paymentDate">
+
 <select id="paymentMethod">
 <option value="">Method</option>
 <option>Cash</option>
@@ -105,7 +116,6 @@ window.location.href="login.html"
 
 </div>
 
-<!-- 🔥 HISTORY -->
 <div class="card">
 
 <h3>Payment History</h3>
@@ -121,6 +131,7 @@ window.location.href="login.html"
 <th>Remarks</th>
 </tr>
 </thead>
+
 <tbody id="historyTable"></tbody>
 </table>
 
@@ -130,9 +141,12 @@ window.location.href="login.html"
 
 <script>
 
-let transporters=[]
-let trips=[]
-let payments=[]
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+let transporters=[], trips=[], payments=[]
 
 init()
 
@@ -159,115 +173,187 @@ transporterSelect.innerHTML=html
 /* LOAD TRIPS */
 async function loadTrips(){
 
-let transporterId=transporterSelect.value
-if(!transporterId) return
+let id=transporterSelect.value
+if(!id) return
 
-const {data}=await supabaseClient
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporterId)
+.eq("transporter_id",id)
 
-trips=data||[]
+const {data:payData}=await supabaseClient
+.from("transporter_payments")
+.select("*")
 
-let html=""
+payments=payData||[]
 
-trips.forEach(t=>{
-html+=`
-<div>
-<input type="checkbox" value="${t.id}">
-${t.trip_no} | ${t.route} | ${t.truck}
-</div>`
-})
+trips=tripData||[]
 
-tripList.innerHTML=html
+renderTrips()
+
 }
 
-/* AUTO TOTAL */
+/* RENDER TRIPS */
+function renderTrips(){
+
+let html=""
+let total=0
+
+trips.forEach(t=>{
+
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+
+let paid = payments
+.filter(p=>p.trip_id==t.id)
+.reduce((s,p)=>s+Number(p.amount||0),0)
+
+let balance=freight-paid
+
+if(balance<=0) return
+
+total+=balance
+
+html+=`
+<tr>
+<td><input type="checkbox" value="${t.id}" onchange="updateTotal()"></td>
+<td>${t.trip_no}</td>
+<td>₹${balance.toFixed(0)}</td>
+<td><input type="number" class="payInput" data-balance="${balance}" value="${balance}" oninput="updateRemaining(this)"></td>
+<td class="remain">${balance.toFixed(0)}</td>
+</tr>
+`
+})
+
+tripTable.innerHTML=html
+
+}
+
+/* SELECT ALL */
+function toggleAll(cb){
+document.querySelectorAll("#tripTable input[type=checkbox]").forEach(c=>c.checked=cb.checked)
+updateTotal()
+}
+
+/* TOTAL */
 function updateTotal(){
 
 let total=0
 
-document.querySelectorAll("#tripList input:checked").forEach(c=>{
-
-let trip=trips.find(t=>t.id==c.value)
-
-if(trip){
-let freight=(trip.weight_kg/1000)*(trip.transporter_rate||0)
-total+=freight
-}
-
+document.querySelectorAll("#tripTable input[type=checkbox]:checked").forEach(c=>{
+let row=c.closest("tr")
+let amt=row.querySelector(".payInput").value
+total+=Number(amt||0)
 })
 
 totalAmount.value=total.toFixed(0)
+
 }
 
-/* SELECT ALL */
-function toggleAllTrips(cb){
-document.querySelectorAll("#tripList input").forEach(c=>c.checked=cb.checked)
-updateTotal()
-}
+/* AUTO DISTRIBUTE */
+function autoDistribute(){
 
-/* EVENT LISTENER */
-document.addEventListener("change",e=>{
-if(e.target.closest("#tripList")){
-updateTotal()
-}
+let amount=Number(paidAmount.value||0)
+
+let selected=[...document.querySelectorAll("#tripTable input[type=checkbox]:checked")]
+
+selected.forEach(c=>{
+let row=c.closest("tr")
+let balance=Number(row.querySelector(".payInput").dataset.balance)
+
+let pay=Math.min(balance,amount)
+
+row.querySelector(".payInput").value=pay
+
+updateRemaining(row.querySelector(".payInput"))
+
+amount-=pay
 })
 
-/* SAVE PAYMENT */
+updateTotal()
+
+}
+
+/* REMAINING */
+function updateRemaining(input){
+
+let balance=Number(input.dataset.balance)
+let val=Number(input.value||0)
+
+let remain=balance-val
+
+input.closest("tr").querySelector(".remain").innerText=remain.toFixed(0)
+
+updateTotal()
+
+}
+
+/* SAVE */
 async function savePayment(){
 
-let selected=document.querySelectorAll("#tripList input:checked")
-let amount=Number(paymentAmount.value)
 let date=paymentDate.value
 let method=paymentMethod.value
 
-if(selected.length==0){ alert("Select trips"); return }
-if(!amount||!date||!method){ alert("Enter all fields"); return }
+if(!date||!method){ alert("Enter date & method"); return }
 
-let perTrip=amount/selected.length
+let rows=document.querySelectorAll("#tripTable tr")
 
-for(let c of selected){
+for(let r of rows){
+
+let cb=r.querySelector("input[type=checkbox]")
+if(!cb.checked) continue
+
+let amount=r.querySelector(".payInput").value
 
 await supabaseClient.from("transporter_payments").insert({
-trip_id:c.value,
-amount:perTrip,
+trip_id:cb.value,
+amount:Number(amount),
 payment_date:date,
 payment_method:method,
 remarks:remarks.value
 })
 
+/* LEDGER ENTRY */
+await supabaseClient.from("transporter_ledger").insert({
+trip_id:cb.value,
+amount:Number(amount),
+type:"DEBIT",
+remarks:"Payment"
+})
+
 }
 
-alert("Payment Saved ✅")
+alert("Payment Saved")
+
+loadTrips()
 loadPayments()
+
 }
 
-/* LOAD HISTORY */
+/* HISTORY */
 async function loadPayments(){
 
 const {data}=await supabaseClient
 .from("transporter_payments")
-.select("*, trips(trip_no, transporters(transporter_name))")
+.select("*, trips(trip_no), transporters(transporter_name)")
 .order("created_at",{ascending:false})
-
-payments=data||[]
 
 let html=""
 
-payments.forEach(p=>{
+data?.forEach(p=>{
 html+=`
 <tr>
 <td>${p.payment_date}</td>
 <td>${p.trips?.trip_no||""}</td>
-<td>${p.trips?.transporters?.transporter_name||""}</td>
+<td>${p.transporters?.transporter_name||""}</td>
 <td>₹${p.amount}</td>
-<td>${p.payment_method||""}</td>
+<td>${p.payment_method}</td>
 <td>${p.remarks||""}</td>
-</tr>`
+</tr>
+`
 })
 
 historyTable.innerHTML=html
+
 }
 
 </script>

@@ -11,36 +11,27 @@ body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 h2{color:#1f3c88;}
 
-.cards{
-display:flex;
-gap:15px;
-margin-bottom:20px;
-}
-
-.card{
-background:white;
-padding:15px;
-border-radius:8px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
-min-width:180px;
-}
-
+.cards{display:flex;gap:15px;margin-bottom:20px;}
+.card{background:white;padding:15px;border-radius:8px;min-width:180px;}
 .card h4{margin:0;color:#777;font-size:13px;}
 .card h2{margin:5px 0;color:#1f3c88;}
 
-table{width:100%;border-collapse:collapse;background:white;margin-top:15px;}
+.filters{margin-bottom:15px;}
+select{padding:8px;margin-right:10px;}
+button{padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;margin-right:6px;}
+
+table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
-
-.message{color:red;margin-top:10px;font-weight:bold;}
 
 .profit{color:green;font-weight:bold;}
 .loss{color:red;font-weight:bold;}
 
-/* STATUS COLORS */
 .status-green{color:green;font-weight:bold;}
 .status-orange{color:#e67e22;font-weight:bold;}
 .status-blue{color:#3498db;font-weight:bold;}
+
+.pagination{margin-top:10px;}
 
 .popup{
 display:none;
@@ -49,7 +40,6 @@ top:0;left:0;
 width:100%;height:100%;
 background:rgba(0,0,0,0.5);
 }
-
 .popup-content{
 background:white;
 width:400px;
@@ -57,7 +47,6 @@ margin:120px auto;
 padding:20px;
 border-radius:6px;
 }
-
 </style>
 
 </head>
@@ -78,7 +67,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <h2>My Trips</h2>
 
-<!-- TOTALS -->
+<!-- SUMMARY -->
 <div class="cards">
 <div class="card"><h4>Total Trips</h4><h2 id="totalTrips">0</h2></div>
 <div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
@@ -86,7 +75,21 @@ document.getElementById("sidebar-container").innerHTML=data
 <div class="card"><h4>Net Profit</h4><h2 id="totalProfit">₹0</h2></div>
 </div>
 
-<div id="message" class="message"></div>
+<!-- FILTERS -->
+<div class="filters">
+<select id="routeFilter"></select>
+<select id="truckFilter"></select>
+<select id="commodityFilter"></select>
+<select id="statusFilter">
+<option value="">All Status</option>
+<option>Completed</option>
+<option>Pending</option>
+<option>LOADED</option>
+</select>
+
+<button onclick="applyFilters()">Search</button>
+<button onclick="clearFilters()">Clear</button>
+</div>
 
 <table>
 <thead>
@@ -106,14 +109,18 @@ document.getElementById("sidebar-container").innerHTML=data
 <tbody id="tripTable"></tbody>
 </table>
 
+<div class="pagination">
+<button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
 </div>
 
-<!-- EXPENSE POPUP -->
+</div>
+
+<!-- POPUP -->
 <div id="expensePopup" class="popup">
 <div class="popup-content">
 <h3 id="popupTitle"></h3>
 <table style="width:100%">
-<thead><tr><th>Type</th><th>Amount</th></tr></thead>
 <tbody id="expenseTable"></tbody>
 </table>
 <br>
@@ -128,153 +135,185 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let expensesData = []
+let allTrips=[]
+let filteredTrips=[]
+let expensesData=[]
+
+let page=1
+let pageSize=10
 
 init()
 
 async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session){ window.location="login.html"; return }
 
-if(!session){
-window.location.href="login.html"
-return
-}
+const authId=session.user.id
 
-const authId = session.user.id
-
-/* GET TRANSPORTER */
-const {data:transporter} = await supabaseClient
+const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("id")
-.eq("auth_id", authId)
+.eq("auth_id",authId)
 .single()
 
-if(!transporter){
-document.getElementById("message").innerText="Transporter not linked ❌"
-return
-}
-
-/* GET TRIPS */
-const {data:trips} = await supabaseClient
+const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id", transporter.id)
-.order("created_at",{ascending:false})
+.eq("transporter_id",transporter.id)
 
-if(!trips || trips.length === 0){
-document.getElementById("message").innerText="No trips found"
-return
-}
-
-/* GET EXPENSES */
-const {data:expenses} = await supabaseClient
+const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
-expensesData = expenses || []
+expensesData=expenses||[]
 
-let expenseMap = {}
+allTrips=trips||[]
+filteredTrips=allTrips
 
-expensesData.forEach(e=>{
-if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-expenseMap[e.trip_id]+=Number(e.amount || 0)
-})
+buildFilters()
+render()
 
-/* TOTALS */
-let totalTrips = trips.length
-let totalFreight = 0
-let totalExpenses = 0
+}
+
+/* FILTER OPTIONS */
+function buildFilters(){
+
+let routes=[...new Set(allTrips.map(t=>t.route))]
+let trucks=[...new Set(allTrips.map(t=>t.truck))]
+let commodities=[...new Set(allTrips.map(t=>t.commodity))]
+
+routeFilter.innerHTML='<option value="">All Routes</option>'+routes.map(r=>`<option>${r}</option>`)
+truckFilter.innerHTML='<option value="">All Trucks</option>'+trucks.map(t=>`<option>${t}</option>`)
+commodityFilter.innerHTML='<option value="">All Commodities</option>'+commodities.map(c=>`<option>${c}</option>`)
+
+}
+
+/* FILTER */
+function applyFilters(){
+
+let r=routeFilter.value
+let t=truckFilter.value
+let c=commodityFilter.value
+let s=statusFilter.value
+
+filteredTrips=allTrips.filter(x=>
+(!r || x.route==r) &&
+(!t || x.truck==t) &&
+(!c || x.commodity==c) &&
+(!s || x.status==s)
+)
+
+page=1
+render()
+
+}
+
+function clearFilters(){
+filteredTrips=allTrips
+routeFilter.value=""
+truckFilter.value=""
+commodityFilter.value=""
+statusFilter.value=""
+render()
+}
+
+/* RENDER */
+function render(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+let data=filteredTrips.slice(start,end)
+
+let totalTrips=data.length
+let totalFreight=0
+let totalExpenses=0
 
 let html=""
 
-trips.forEach(t=>{
+data.forEach(t=>{
 
-let weightMT = (t.weight_kg || 0) / 1000
-let rate = t.transporter_rate || 0
-let freight = weightMT * rate
-let expense = expenseMap[t.id] || 0
-let profit = freight - expense
+let weightMT=(t.weight_kg||0)/1000
+let rate=t.transporter_rate||0
+let freight=weightMT*rate
 
-totalFreight += freight
-totalExpenses += expense
+let expense = expensesData
+.filter(e=>e.trip_id===t.id)
+.reduce((sum,e)=>sum+Number(e.amount||0),0)
 
-html += `
+let profit=freight-expense
+
+totalFreight+=freight
+totalExpenses+=expense
+
+html+=`
 <tr>
 <td onclick="showExpenses('${t.id}','${t.trip_no}')"
 style="cursor:pointer;color:#1f3c88;font-weight:bold">
-${t.trip_no || ""}
+${t.trip_no}
 </td>
-<td>${t.route || "-"}</td>
-<td>${t.truck || "-"}</td>
-<td>${t.commodity || "-"}</td>
+<td>${t.route||"-"}</td>
+<td>${t.truck||"-"}</td>
+<td>${t.commodity||"-"}</td>
 <td>${weightMT.toFixed(2)}</td>
 <td>${rate}</td>
 <td>₹ ${expense}</td>
 <td>${formatDate(t.trip_date)}</td>
-<td class="${getStatusClass(t.status)}">${t.status || "-"}</td>
-<td class="${profit>=0 ? 'profit' : 'loss'}">₹ ${profit.toFixed(2)}</td>
+<td class="${getStatusClass(t.status)}">${t.status||"-"}</td>
+<td class="${profit>=0?'profit':'loss'}">₹ ${profit.toFixed(2)}</td>
 </tr>
 `
 })
 
-document.getElementById("tripTable").innerHTML = html
+tripTable.innerHTML=html
 
-/* SET TOTALS */
-document.getElementById("totalTrips").innerText = totalTrips
-document.getElementById("totalFreight").innerText = "₹ " + totalFreight.toFixed(0)
-document.getElementById("totalExpenses").innerText = "₹ " + totalExpenses.toFixed(0)
-document.getElementById("totalProfit").innerText = "₹ " + (totalFreight-totalExpenses).toFixed(0)
+document.getElementById("totalTrips").innerText=filteredTrips.length
+document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
+document.getElementById("totalExpenses").innerText="₹ "+totalExpenses.toFixed(0)
+document.getElementById("totalProfit").innerText="₹ "+(totalFreight-totalExpenses).toFixed(0)
 
 }
 
-/* DATE FORMAT */
-function formatDate(dateStr){
-if(!dateStr) return "-"
-let d = new Date(dateStr)
-return d.toLocaleDateString("en-GB",{
-day:"2-digit",month:"short",year:"numeric"
-})
+/* PAGINATION */
+function nextPage(){
+if(page*pageSize<filteredTrips.length){page++;render()}
+}
+function prevPage(){
+if(page>1){page--;render()}
 }
 
-/* STATUS COLOR */
-function getStatusClass(status){
+/* DATE */
+function formatDate(d){
+if(!d) return "-"
+return new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
+}
 
-if(!status) return ""
-
-status = status.toLowerCase()
-
-if(status.includes("complete")) return "status-green"
-if(status.includes("pending")) return "status-orange"
-if(status.includes("load")) return "status-blue"
-
+/* STATUS */
+function getStatusClass(s){
+if(!s) return ""
+s=s.toLowerCase()
+if(s.includes("complete")) return "status-green"
+if(s.includes("pending")) return "status-orange"
+if(s.includes("load")) return "status-blue"
 return ""
-
 }
 
-/* EXPENSE POPUP */
-function showExpenses(tripId,tripNo){
+/* POPUP */
+function showExpenses(id,no){
 
-document.getElementById("expensePopup").style.display="block"
-document.getElementById("popupTitle").innerText="Expenses for "+tripNo
+expensePopup.style.display="block"
+popupTitle.innerText="Expenses - "+no
 
-let html=""
+let list=expensesData.filter(e=>e.trip_id===id)
 
-let filtered = expensesData.filter(e=>e.trip_id===tripId)
+expenseTable.innerHTML=list.length
+? list.map(e=>`<tr><td>${e.expense_type}</td><td>₹ ${e.amount}</td></tr>`).join("")
+: "<tr><td>No expenses</td></tr>"
 
-if(filtered.length===0){
-html="<tr><td colspan='2'>No expenses</td></tr>"
-}else{
-filtered.forEach(e=>{
-html+=`<tr><td>${e.expense_type || "Expense"}</td><td>₹ ${e.amount}</td></tr>`
-})
-}
-
-document.getElementById("expenseTable").innerHTML = html
 }
 
 function closePopup(){
-document.getElementById("expensePopup").style.display="none"
+expensePopup.style.display="none"
 }
 
 </script>

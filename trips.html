@@ -97,6 +97,7 @@ window.location="login.html"
 <select id="truck"></select>
 <select id="commodity"></select>
 <select id="client"></select>
+
 <input id="weight" placeholder="Weight KG">
 <input type="date" id="tripDate">
 <select id="status">
@@ -105,6 +106,11 @@ window.location="login.html"
 <option>Completed</option>
 <option>Pending</option>
 </select>
+
+<!-- 🔥 ADD THESE 2 FIELDS -->
+<input id="clientRate" placeholder="Client Rate" readonly>
+<input id="transporterRate" placeholder="Transporter Rate" readonly>
+
 </div>
 
 <br>
@@ -182,26 +188,152 @@ client.innerHTML='<option value="">Client</option>' +
 clients.map(c=>`<option value="${c.id}">${c.company}</option>`).join("")
 }
 
+async function fetchRates(){
+
+let routeId = route.value
+let truckId = truck.value
+let commodityId = commodity.value
+
+if(!routeId || !truckId || !commodityId) return
+
+/* GET TRANSPORTER FROM TRUCK */
+let selectedTruck = trucks.find(t=>t.id==truckId)
+if(!selectedTruck) return
+
+let transporterId = selectedTruck.transporter_id
+
+/* FETCH FROM RATES TABLE */
+const {data,error} = await supabaseClient
+.from("rates")
+.select("*")
+.eq("route_id", routeId)
+.eq("transporter_id", transporterId)
+.eq("commodity_id", commodityId)
+.single()
+
+if(error || !data){
+document.getElementById("clientRate").value=""
+document.getElementById("transporterRate").value=""
+return
+}
+
+/* SET VALUES */
+document.getElementById("clientRate").value = data.client_rate || ""
+document.getElementById("transporterRate").value = data.transporter_rate || ""
+}
+  
+async function generateTripNo(){
+
+let today = new Date()
+let year = String(today.getFullYear()).slice(2)
+let month = String(today.getMonth()+1).padStart(2,'0')
+
+let prefix = `TR${year}${month}`
+
+const {data} = await supabaseClient
+.from("trips")
+.select("trip_no")
+.ilike("trip_no", `${prefix}%`)
+.order("trip_no",{ascending:false})
+.limit(1)
+
+let next = 1
+
+if(data && data.length){
+let last = data[0].trip_no
+let num = parseInt(last.slice(-3))
+next = num + 1
+}
+
+return prefix + String(next).padStart(3,'0')
+}
+
+route.addEventListener("change", fetchRates)
+truck.addEventListener("change", fetchRates)
+commodity.addEventListener("change", fetchRates)
+  
 /* ================= SAVE ================= */
 
 async function saveTrip(){
 
 const canCreate = await checkPermission("trips.html","create")
 if(!canCreate){
-alert("No permission to create")
+alert("No permission")
 return
 }
 
-await supabaseClient.from("trips").insert({
-route:routes.find(r=>r.id==route.value)?.route_code,
-truck:trucks.find(t=>t.id==truck.value)?.truck_number,
-commodity:commodities.find(c=>c.id==commodity.value)?.name,
-client_name:clients.find(c=>c.id==client.value)?.company
-})
+/* GET VALUES */
+let routeId = route.value
+let truckId = truck.value
+let commodityId = commodity.value
+let clientId = client.value
 
-loadTrips()
+let weightVal = document.getElementById("weight").value
+let dateVal = document.getElementById("tripDate").value
+let statusVal = document.getElementById("status").value
+
+/* VALIDATION */
+if(!routeId || !truckId || !commodityId || !clientId){
+alert("Fill all dropdowns")
+return
 }
 
+/* FETCH RELATED DATA */
+let selectedRoute = routes.find(r=>r.id==routeId)
+let selectedTruck = trucks.find(t=>t.id==truckId)
+let selectedCommodity = commodities.find(c=>c.id==commodityId)
+let selectedClient = clients.find(c=>c.id==clientId)
+
+/* AUTO TRIP NO */
+let tripNo = await generateTripNo()
+
+/* INSERT */
+const {error} = await supabaseClient.from("trips").insert({
+
+trip_no: tripNo,
+
+route: selectedRoute?.route_code,
+truck: selectedTruck?.truck_number,
+commodity: selectedCommodity?.name,
+client_name: selectedClient?.company,
+
+/* 🔥 IDs */
+route_id: routeId,
+truck_id: truckId,
+commodity_id: commodityId,
+client_id: clientId,
+
+/* 🔥 MISSING FIELDS FIX */
+weight_kg: weightVal,
+trip_date: dateVal,
+status: statusVal,
+
+client_rate: document.getElementById("clientRate").value,
+transporter_rate: document.getElementById("transporterRate").value
+})
+
+if(error){
+console.error(error)
+alert("Error saving ❌")
+return
+}
+
+alert("Trip Saved ✅")
+
+/* CLEAR FORM */
+route.value=""
+truck.value=""
+commodity.value=""
+client.value=""
+document.getElementById("weight").value=""
+document.getElementById("tripDate").value=""
+document.getElementById("status").value=""
+document.getElementById("clientRate").value=""
+document.getElementById("transporterRate").value=""
+
+/* RELOAD */
+loadTrips()
+}
 /* ================= TABLE ================= */
 
 /* 🔥 FINAL FIXED FUNCTION */

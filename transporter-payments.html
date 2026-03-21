@@ -6,6 +6,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 
@@ -82,6 +83,10 @@ padding:20px;
 border-radius:6px;
 }
 
+.pagination{
+margin-top:15px;
+}
+
 </style>
 
 </head>
@@ -97,29 +102,23 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
+
 <script>
-
 async function loadUserInfo(){
-
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
-
 const email = session.user.email
-
 document.getElementById("userName").innerText = email.split("@")[0]
-
-/* SHOW SIDEBAR AFTER LOAD */
 document.getElementById("sidebar").style.display = "block"
-
 }
-
-setTimeout(loadUserInfo, 300)
-
+setTimeout(loadUserInfo,300)
 </script>
+
 <div class="main">
 
 <h2>My Payments Dashboard</h2>
+
+<button onclick="downloadPDF()">Download PDF</button>
 
 <!-- 🔥 CARDS -->
 <div class="cards">
@@ -145,6 +144,13 @@ To <input type="date" id="toDate">
 <input type="checkbox" id="unpaidOnly"> Unpaid Only
 </label>
 
+<select id="pageSize" onchange="changePageSize()">
+<option value="12">12</option>
+<option value="25">25</option>
+<option value="50">50</option>
+<option value="100">100</option>
+</select>
+
 <button onclick="applyFilter()">Search</button>
 <button onclick="clearFilter()">Clear</button>
 
@@ -163,6 +169,11 @@ To <input type="date" id="toDate">
 </thead>
 <tbody id="paymentTable"></tbody>
 </table>
+
+<div class="pagination">
+<button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+</div>
 
 </div>
 
@@ -184,14 +195,17 @@ const supabaseClient = supabase.createClient(
 )
 
 let fullData=[]
+let filteredData=[]
 let paymentsData=[]
+
+let page=1
+let pageSize=12
 
 init()
 
 async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 const authId = session.user.id
 
 const {data:transporter} = await supabaseClient
@@ -204,6 +218,9 @@ const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id", transporter.id)
+
+/* 🔥 SORT LATEST FIRST */
+trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
 
 let tripIds=trips.map(t=>t.id)
 
@@ -242,24 +259,30 @@ status:paid>=freight?"Paid":"Pending"
 
 })
 
+filteredData=[...fullData]
+
 document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
 document.getElementById("totalPaid").innerText="₹ "+totalPaid.toFixed(0)
 document.getElementById("totalBalance").innerText="₹ "+totalBalance.toFixed(0)
 document.getElementById("collectionPercent").innerText=
 ((totalPaid/totalFreight)*100).toFixed(1)+"%"
 
-renderTable(fullData)
+renderTable()
 
 }
 
-function renderTable(data){
+function renderTable(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let data=filteredData.slice(start,end)
 
 let html=""
 
 data.forEach(t=>{
 
 let percent=(t.paid/t.freight)*100||0
-
 let overdue = t.status==="Pending" && new Date(t.trip_date)<new Date()
 
 html+=`
@@ -279,10 +302,8 @@ style="cursor:pointer;color:#1f3c88;font-weight:bold">${t.trip_no}</td>
 </div>
 ${percent.toFixed(0)}%
 </td>
-
 </tr>
 `
-
 })
 
 document.getElementById("paymentTable").innerHTML=html
@@ -296,27 +317,46 @@ let to=document.getElementById("toDate").value
 let status=document.getElementById("statusFilter").value
 let unpaid=document.getElementById("unpaidOnly").checked
 
-let filtered=fullData.filter(t=>{
-
+filteredData=fullData.filter(t=>{
 let d=new Date(t.trip_date)
-
 return (!from||d>=new Date(from)) &&
 (!to||d<=new Date(to)) &&
 (!status||t.status===status) &&
 (!unpaid||t.status==="Pending")
-
 })
 
-renderTable(filtered)
+page=1
+renderTable()
 
 }
 
 function clearFilter(){
+filteredData=[...fullData]
 document.getElementById("fromDate").value=""
 document.getElementById("toDate").value=""
 document.getElementById("statusFilter").value=""
 document.getElementById("unpaidOnly").checked=false
-renderTable(fullData)
+renderTable()
+}
+
+function changePageSize(){
+pageSize=parseInt(document.getElementById("pageSize").value)
+page=1
+renderTable()
+}
+
+function nextPage(){
+if(page*pageSize<filteredData.length){
+page++
+renderTable()
+}
+}
+
+function prevPage(){
+if(page>1){
+page--
+renderTable()
+}
 }
 
 function showDetails(tripId,tripNo){
@@ -337,6 +377,38 @@ document.getElementById("popup").style.display="block"
 
 function closePopup(){
 document.getElementById("popup").style.display="none"
+}
+
+/* PDF */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+filteredData.forEach(r=>{
+rows.push([
+r.trip_no,
+r.freight.toFixed(0),
+r.paid.toFixed(0),
+r.balance.toFixed(0),
+r.status
+])
+})
+
+doc.text("My Payments Report",14,15)
+
+doc.autoTable({
+head:[["Trip","Freight","Paid","Balance","Status"]],
+body:rows,
+startY:20
+})
+
+doc.save("my-payments.pdf")
+
 }
 
 </script>

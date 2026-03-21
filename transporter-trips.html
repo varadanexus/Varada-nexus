@@ -105,24 +105,27 @@ let authId = session.user.id
 
 console.log("AUTH ID:", authId)
 
-/* GET TRANSPORTER */
+/* ✅ SAFE TRANSPORTER FETCH */
 
-const {data:transporter,error} = await supabaseClient
+const {data:transporters,error} = await supabaseClient
 .from("transporters")
 .select("*")
 .eq("auth_id",authId)
-.single()
 
-console.log("TRANSPORTER:", transporter)
+console.log("TRANSPORTERS:", transporters)
+
+let transporter = transporters?.[0]
+
+console.log("SELECTED TRANSPORTER:", transporter)
 
 if(!transporter){
 document.getElementById("message").innerText="Transporter not found"
 return
 }
 
-/* GET TRIPS */
+/* ✅ FETCH TRIPS */
 
-let {data:trips} = await supabaseClient
+const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id", transporter.id)
@@ -148,6 +151,8 @@ if(!expensesMap[e.trip_id]) expensesMap[e.trip_id]=0
 expensesMap[e.trip_id]+=Number(e.amount||0)
 })
 }
+
+/* BUILD UI */
 
 buildFilters()
 renderTrips()

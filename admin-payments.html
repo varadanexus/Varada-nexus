@@ -11,14 +11,11 @@ body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 h2{color:#1f3c88;}
 
-.cards{display:flex;gap:15px;margin-bottom:20px;}
 .card{
 background:white;padding:15px;border-radius:8px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);min-width:180px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+margin-bottom:20px;
 }
-
-.filters{margin-bottom:15px;}
-.filters input,.filters select{padding:6px;margin-right:8px;}
 
 table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
@@ -43,10 +40,9 @@ padding:20px;border-radius:6px;
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
-document.getElementById("sidebar-container").innerHTML = data
+document.getElementById("sidebar-container").innerHTML=data
 await initSidebar()
-if(typeof applyMenuRBAC === "function"){ await applyMenuRBAC() }
-document.getElementById("sidebar").style.display = "block"
+document.getElementById("sidebar").style.display="block"
 })
 
 async function initSidebar(){
@@ -67,10 +63,13 @@ window.location.href="login.html"
 
 <h2>Admin Payments Dashboard</h2>
 
-<div class="cards">
-<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
-<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
-<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>
+<!-- TRANSPORTER SELECT -->
+<div class="card">
+<h3>Select Transporter</h3>
+
+<select id="transporterSelect" onchange="loadTrips()">
+<option value="">Select Transporter</option>
+</select>
 </div>
 
 <!-- BULK PAYMENT -->
@@ -96,11 +95,11 @@ Total:
 <button onclick="saveBulkPayment()">Save Payment</button>
 </div>
 
+<!-- TABLE -->
 <table>
 <thead>
 <tr>
 <th>Select</th>
-<th>Transporter</th>
 <th>Trip</th>
 <th>Balance</th>
 <th>Enter Amount</th>
@@ -127,25 +126,55 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let fullData=[], paymentsData=[], expenseMap={}
+let fullData=[]
+let paymentsData=[]
+let expenseMap={}
 
 init()
 
 async function init(){
+await loadTransporters()
+}
+
+/* LOAD TRANSPORTERS */
+async function loadTransporters(){
+
+const {data}=await supabaseClient
+.from("transporters")
+.select("*")
+
+let html='<option value="">Select Transporter</option>'
+
+data?.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporterSelect").innerHTML=html
+}
+
+/* LOAD TRIPS */
+async function loadTrips(){
+
+let transporterId=document.getElementById("transporterSelect").value
+if(!transporterId) return
 
 const {data:trips=[]}=await supabaseClient
 .from("trips")
-.select("*, transporters(transporter_name)")
-
-let tripIds=trips.map(t=>t.id)
+.select("*")
+.eq("transporter_id",transporterId)
+.eq("status","Completed")
 
 const {data:payments=[]}=await supabaseClient
-.from("transporter_payments").select("*").in("trip_id",tripIds)
+.from("transporter_payments")
+.select("*")
 
 paymentsData=payments
 
-const {data:expenses=[]}=await supabaseClient.from("expenses").select("*")
+const {data:expenses=[]}=await supabaseClient
+.from("expenses")
+.select("*")
 
+expenseMap={}
 expenses.forEach(e=>{
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount||0)
@@ -164,12 +193,13 @@ let net=freight-expense
 let paid=paymentMap[t.id]||0
 let balance=net-paid
 
-return {...t, balance, paid}
+return {...t,balance}
 })
 
 renderTable()
 }
 
+/* RENDER */
 function renderTable(){
 
 let html=""
@@ -181,8 +211,6 @@ html+=`
 <td><input type="checkbox" class="tripCheck"
 value="${t.id}" data-balance="${t.balance}"
 onchange="updateBulkTotal()"></td>
-
-<td>${t.transporters?.transporter_name||"-"}</td>
 
 <td onclick="showHistory('${t.id}','${t.trip_no}')"
 style="cursor:pointer;color:#1f3c88">
@@ -202,7 +230,6 @@ paymentTable.innerHTML=html
 }
 
 /* BULK */
-
 function toggleAll(cb){
 document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
 updateBulkTotal()
@@ -217,12 +244,12 @@ bulkAmount.value=total.toFixed(0)
 }
 
 /* SAVE */
-
 async function saveBulkPayment(){
 
 let selected=document.querySelectorAll(".tripCheck:checked")
 let date=bulkDate.value
 let method=bulkMethod.value
+let transporterId=document.getElementById("transporterSelect").value
 
 if(selected.length===0){ alert("Select trips"); return }
 if(!date||!method){ alert("Enter date & method"); return }
@@ -234,7 +261,6 @@ let amt=Number(document.getElementById("amt_"+tripId)?.value || c.dataset.balanc
 
 if(amt<=0) continue
 
-// SAVE PAYMENT
 await supabaseClient.from("transporter_payments").insert({
 trip_id:tripId,
 amount:amt,
@@ -242,8 +268,8 @@ payment_date:date,
 payment_method:method
 })
 
-// LEDGER ENTRY
 await supabaseClient.from("transporter_ledger").insert({
+transporter_id: transporterId,
 trip_id:tripId,
 amount:amt,
 type:"DEBIT",
@@ -253,12 +279,11 @@ remarks:"Payment Made"
 }
 
 alert("Payment Saved ✅")
-init()
+loadTrips()
 }
 
 /* HISTORY */
-
-function showHistory(tripId, tripNo){
+function showHistory(tripId,tripNo){
 
 let list=paymentsData.filter(p=>p.trip_id===tripId)
 

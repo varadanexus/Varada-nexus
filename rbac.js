@@ -115,9 +115,11 @@ if(isTransporter){
 
 /* ✅ ONLY transporter allowed pages */
 const allowedTransporterPages = [
-"transporter-dashboard.html"
+"transporter-dashboard.html",
+"transporter-trips.html",
+"transporter-ledger.html",
+"transporter-profit.html"
 ]
-
 if(!allowedTransporterPages.includes(page)){
 window.location.href = "transporter-dashboard.html"
 }

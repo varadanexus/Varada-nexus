@@ -260,8 +260,7 @@ let d = destination.value.trim().toUpperCase()
 
 if(o && d){
 
-let oCode = o.substring(0,4)
-let dCode = d.substring(0,4)
+
 let oCode = o.split(" ")[0].substring(0,4)
 let dCode = d.split(" ")[0].substring(0,4)
 
@@ -440,7 +439,7 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-transporterData = data || []
+
 
 let html="",dd='<option>Select</option>'
 
@@ -639,10 +638,7 @@ alert("Invalid GST")
 return
 }
 
-function closePopup(){
-document.getElementById("editPopup").style.display="none"
-editId = null
-}
+
   
 /* UPDATE */
 await supabaseClient
@@ -666,7 +662,10 @@ alert("Updated ✅")
 closePopup()
 loadTransporters()
 }
-  
+function closePopup(){
+document.getElementById("editPopup").style.display="none"
+editId = null
+}
 /* INIT */
 
 window.onload=async ()=>{

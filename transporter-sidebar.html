@@ -20,7 +20,7 @@
 <a href="transporter-ledger.html">Ledger</a>
 <a href="transporter-profit.html">Trip Profit</a>
 
-<a href="#" onclick="logout()">Logout</a>
+<a href="javascript:void(0)" onclick="logout()">Logout</a>
 
 </div>
 
@@ -101,3 +101,48 @@ background:#162c66;
 }
 
 </style>
+
+<!-- ✅ GLOBAL LOGIC -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+/* 🔐 INIT SIDEBAR */
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+/* SHOW SIDEBAR */
+document.getElementById("sidebar").style.display = "block"
+
+}
+
+/* 🚪 LOGOUT */
+async function logout(){
+
+if(!confirm("Are you sure you want to logout?")) return
+
+await supabaseClient.auth.signOut()
+
+window.location.href = "login.html"
+
+}
+
+/* 🚀 AUTO LOAD */
+document.addEventListener("DOMContentLoaded", initSidebar)
+
+</script>

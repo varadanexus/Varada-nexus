@@ -138,14 +138,37 @@ window.location.href="login.html"
 <div class="card">
 <h3>Transporters</h3>
 
+<input id="searchTransporter" placeholder="Search..." oninput="filterTransporters()">
+
 <input id="tName" placeholder="Name">
 <input id="tPhone" placeholder="Phone">
+<input id="tGST" placeholder="GST Number">
+<input id="tAddress" placeholder="Address">
+<input id="tPAN" placeholder="PAN">
+<input id="tAadhar" placeholder="Aadhar Number">
+
+<input id="tBank" placeholder="Bank Name">
+<input id="tAccount" placeholder="Account Number">
+<input id="tIFSC" placeholder="IFSC Code">
+
+<select id="tStatus">
+<option value="Active">Active</option>
+<option value="Inactive">Inactive</option>
+</select>
 
 <button onclick="addTransporter()">Add</button>
 
 <table>
 <thead>
-<tr><th>Name</th><th>Phone</th><th>Action</th></tr>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>GST</th>
+<th>Status</th>
+<th>Created</th>
+<th>Trucks</th>
+<th>Action</th>
+</tr>
 </thead>
 <tbody id="transporterTable"></tbody>
 </table>
@@ -243,15 +266,67 @@ loadClients()
 }
 
 async function addTransporter(){
-await supabaseClient.from("transporters").insert({
-transporter_name:tName.value,
-phone:tPhone.value
-})
-tName.value=""
-tPhone.value=""
-loadTransporters()
+
+let name = tName.value.trim()
+let phone = tPhone.value.trim()
+let gst = document.getElementById("tGST").value.trim()
+
+/* VALIDATION */
+if(!name){
+alert("Enter transporter name")
+return
 }
 
+if(phone && !/^[0-9]{10}$/.test(phone)){
+alert("Invalid phone")
+return
+}
+
+if(gst && !/^[0-9A-Z]{15}$/.test(gst)){
+alert("Invalid GST")
+return
+}
+
+/* DUPLICATE CHECK */
+const {data:exists} = await supabaseClient
+.from("transporters")
+.select("*")
+.eq("transporter_name",name)
+
+if(exists.length){
+alert("Transporter already exists")
+return
+}
+
+/* INSERT */
+await supabaseClient.from("transporters").insert({
+transporter_name:name,
+phone:phone,
+gst_number:document.getElementById("tGST").value,
+address:document.getElementById("tAddress").value,
+pan:document.getElementById("tPAN").value,
+aadhar_number:document.getElementById("tAadhar").value,
+bank_name:document.getElementById("tBank").value,
+account_number:document.getElementById("tAccount").value,
+ifsc_code:document.getElementById("tIFSC").value,
+status:document.getElementById("tStatus").value
+})
+
+/* CLEAR */
+tName.value=""
+tPhone.value=""
+tGST.value=""
+tAddress.value=""
+tPAN.value=""
+tAadhar.value=""
+tBank.value=""
+tAccount.value=""
+tIFSC.value=""
+
+alert("Saved ✅")
+
+loadTransporters()
+}
 async function addRoute(){
 if(!origin.value || !destination.value){
 alert("Enter both fields")
@@ -314,23 +389,84 @@ function nextClient(){clientPage++;loadClients()}
 function prevClient(){if(clientPage>0){clientPage--;loadClients()}}
 
 async function loadTransporters(){
-const {data}=await supabaseClient.from("transporters").select("*")
+
+const {data}=await supabaseClient
+.from("transporters")
+.select("*")
+transporterData = data || []
+.order("created_at",{ascending:false})
+
 let html="",dd='<option>Select</option>'
 
-data?.forEach(t=>{
+for(let t of data){
+
+/* TRUCK COUNT */
+const {count} = await supabaseClient
+.from("trucks")
+.select("*",{count:"exact",head:true})
+.eq("transporter_id",t.id)
+
 html+=`
 <tr>
 <td>${t.transporter_name}</td>
 <td>${t.phone||""}</td>
-<td><button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button></td>
-</tr>`
-dd+=`<option value="${t.id}">${t.transporter_name}</option>`
-})
+<td>${t.gst_number||"-"}</td>
+<td>${t.status||"Active"}</td>
+<td>${t.created_at?.split("T")[0]}</td>
+<td>${count||0}</td>
+
+<td>
+<button onclick="editTransporter('${t.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
+</td>
+</tr>
+`
+
+/* DROPDOWN IMPROVED */
+dd+=`<option value="${t.id}">
+${t.transporter_name} (${t.phone||"-"} | ${t.gst_number||"No GST"})
+</option>`
+}
 
 transporterTable.innerHTML=html
 truckTransporter.innerHTML=dd
+
 }
 
+let transporterData=[]
+
+function filterTransporters(){
+
+let q = document.getElementById("searchTransporter").value.toLowerCase()
+
+let filtered = transporterData.filter(t=>
+t.transporter_name.toLowerCase().includes(q) ||
+(t.phone||"").includes(q)
+)
+
+renderFilteredTransporters(filtered)
+}
+
+function renderFilteredTransporters(data){
+
+let html=""
+
+data.forEach(t=>{
+html+=`
+<tr>
+<td>${t.transporter_name}</td>
+<td>${t.phone||""}</td>
+<td>${t.gst_number||"-"}</td>
+<td>${t.status||"Active"}</td>
+<td>${t.created_at?.split("T")[0]}</td>
+<td>-</td>
+<td></td>
+</tr>`
+})
+
+document.getElementById("transporterTable").innerHTML=html
+}
+  
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
 let html=""
@@ -384,6 +520,27 @@ async function deleteRoute(id){await supabaseClient.from("routes").delete().eq("
 async function deleteTruck(id){await supabaseClient.from("trucks").delete().eq("id",id);loadTrucks()}
 async function deleteCommodity(id){await supabaseClient.from("commodities").delete().eq("id",id);loadCommodities()}
 
+async function editTransporter(id){
+
+const {data:t} = await supabaseClient
+.from("transporters")
+.select("*")
+.eq("id",id)
+.single()
+
+let name = prompt("Name",t.transporter_name)
+if(!name) return
+
+await supabaseClient
+.from("transporters")
+.update({transporter_name:name})
+.eq("id",id)
+
+alert("Updated ✅")
+loadTransporters()
+
+}
+  
 /* INIT */
 
 window.onload=async ()=>{

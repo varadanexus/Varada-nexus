@@ -5,50 +5,65 @@
 <title>Transporter Trips</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
-h2{color:#1f3c88;}
+h2{color:#1f3c88;margin-bottom:10px;}
 
+/* CARDS */
 .cards{display:flex;gap:15px;margin-bottom:20px;}
-.card{background:white;padding:15px;border-radius:8px;min-width:180px;}
+.card{
+background:white;padding:15px;border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+min-width:180px;
+}
 .card h4{margin:0;color:#777;font-size:13px;}
 .card h2{margin:5px 0;color:#1f3c88;}
 
+/* FILTERS */
 .filters{margin-bottom:15px;}
-select{padding:8px;margin-right:10px;}
-button{padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;margin-right:6px;}
+select,input{padding:8px;margin-right:10px;}
+button{
+padding:8px 14px;background:#1f3c88;color:white;
+border:none;border-radius:4px;cursor:pointer;
+}
 
+/* TABLE */
 table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
 
+/* COLORS */
 .profit{color:green;font-weight:bold;}
 .loss{color:red;font-weight:bold;}
-
 .status-green{color:green;font-weight:bold;}
 .status-orange{color:#e67e22;font-weight:bold;}
 .status-blue{color:#3498db;font-weight:bold;}
 
 .pagination{margin-top:10px;}
 
+/* POPUP */
 .popup{
-display:none;
-position:fixed;
-top:0;left:0;
+display:none;position:fixed;top:0;left:0;
 width:100%;height:100%;
 background:rgba(0,0,0,0.5);
 }
 .popup-content{
-background:white;
-width:400px;
-margin:120px auto;
-padding:20px;
-border-radius:6px;
+background:white;width:400px;margin:120px auto;
+padding:20px;border-radius:6px;
 }
-</style>
 
+/* CHART */
+.chart-box{
+background:white;
+padding:15px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+</style>
 </head>
 
 <body>
@@ -65,9 +80,9 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <div class="main">
 
-<h2>My Trips</h2>
+<h2>My Trips Dashboard</h2>
 
-<!-- SUMMARY -->
+<!-- KPI CARDS -->
 <div class="cards">
 <div class="card"><h4>Total Trips</h4><h2 id="totalTrips">0</h2></div>
 <div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
@@ -75,11 +90,20 @@ document.getElementById("sidebar-container").innerHTML=data
 <div class="card"><h4>Net Profit</h4><h2 id="totalProfit">₹0</h2></div>
 </div>
 
+<!-- CHART -->
+<div class="chart-box">
+<canvas id="profitChart"></canvas>
+</div>
+
 <!-- FILTERS -->
 <div class="filters">
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+
 <select id="routeFilter"></select>
 <select id="truckFilter"></select>
 <select id="commodityFilter"></select>
+
 <select id="statusFilter">
 <option value="">All Status</option>
 <option>Completed</option>
@@ -132,15 +156,12 @@ document.getElementById("sidebar-container").innerHTML=data
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
-let allTrips=[]
-let filteredTrips=[]
-let expensesData=[]
-
-let page=1
-let pageSize=10
+let allTrips=[], filteredTrips=[], expensesData=[]
+let page=1, pageSize=10
+let chart
 
 init()
 
@@ -167,7 +188,6 @@ const {data:expenses}=await supabaseClient
 .select("*")
 
 expensesData=expenses||[]
-
 allTrips=trips||[]
 filteredTrips=allTrips
 
@@ -176,33 +196,36 @@ render()
 
 }
 
-/* FILTER OPTIONS */
+/* FILTERS */
 function buildFilters(){
 
-let routes=[...new Set(allTrips.map(t=>t.route))]
-let trucks=[...new Set(allTrips.map(t=>t.truck))]
-let commodities=[...new Set(allTrips.map(t=>t.commodity))]
-
-routeFilter.innerHTML='<option value="">All Routes</option>'+routes.map(r=>`<option>${r}</option>`)
-truckFilter.innerHTML='<option value="">All Trucks</option>'+trucks.map(t=>`<option>${t}</option>`)
-commodityFilter.innerHTML='<option value="">All Commodities</option>'+commodities.map(c=>`<option>${c}</option>`)
+routeFilter.innerHTML='<option value="">All Routes</option>'+[...new Set(allTrips.map(t=>t.route))].map(r=>`<option>${r}</option>`)
+truckFilter.innerHTML='<option value="">All Trucks</option>'+[...new Set(allTrips.map(t=>t.truck))].map(t=>`<option>${t}</option>`)
+commodityFilter.innerHTML='<option value="">All Commodities</option>'+[...new Set(allTrips.map(t=>t.commodity))].map(c=>`<option>${c}</option>`)
 
 }
 
-/* FILTER */
 function applyFilters(){
 
+let from=fromDate.value
+let to=toDate.value
 let r=routeFilter.value
 let t=truckFilter.value
 let c=commodityFilter.value
 let s=statusFilter.value
 
-filteredTrips=allTrips.filter(x=>
+filteredTrips=allTrips.filter(x=>{
+
+let d=new Date(x.trip_date)
+
+return (!from || d>=new Date(from)) &&
+(!to || d<=new Date(to)) &&
 (!r || x.route==r) &&
 (!t || x.truck==t) &&
 (!c || x.commodity==c) &&
 (!s || x.status==s)
-)
+
+})
 
 page=1
 render()
@@ -211,10 +234,7 @@ render()
 
 function clearFilters(){
 filteredTrips=allTrips
-routeFilter.value=""
-truckFilter.value=""
-commodityFilter.value=""
-statusFilter.value=""
+document.querySelectorAll("select,input").forEach(e=>e.value="")
 render()
 }
 
@@ -222,24 +242,20 @@ render()
 function render(){
 
 let start=(page-1)*pageSize
-let end=start+pageSize
-let data=filteredTrips.slice(start,end)
+let data=filteredTrips.slice(start,start+pageSize)
 
-let totalTrips=data.length
-let totalFreight=0
-let totalExpenses=0
-
+let totalFreight=0, totalExpenses=0
 let html=""
 
 data.forEach(t=>{
 
-let weightMT=(t.weight_kg||0)/1000
+let weight=(t.weight_kg||0)/1000
 let rate=t.transporter_rate||0
-let freight=weightMT*rate
+let freight=weight*rate
 
-let expense = expensesData
+let expense=expensesData
 .filter(e=>e.trip_id===t.id)
-.reduce((sum,e)=>sum+Number(e.amount||0),0)
+.reduce((s,e)=>s+Number(e.amount||0),0)
 
 let profit=freight-expense
 
@@ -248,21 +264,19 @@ totalExpenses+=expense
 
 html+=`
 <tr>
-<td onclick="showExpenses('${t.id}','${t.trip_no}')"
-style="cursor:pointer;color:#1f3c88;font-weight:bold">
+<td onclick="showExpenses('${t.id}','${t.trip_no}')" style="cursor:pointer;color:#1f3c88">
 ${t.trip_no}
 </td>
 <td>${t.route||"-"}</td>
 <td>${t.truck||"-"}</td>
 <td>${t.commodity||"-"}</td>
-<td>${weightMT.toFixed(2)}</td>
+<td>${weight.toFixed(2)}</td>
 <td>${rate}</td>
 <td>₹ ${expense}</td>
 <td>${formatDate(t.trip_date)}</td>
 <td class="${getStatusClass(t.status)}">${t.status||"-"}</td>
 <td class="${profit>=0?'profit':'loss'}">₹ ${profit.toFixed(2)}</td>
-</tr>
-`
+</tr>`
 })
 
 tripTable.innerHTML=html
@@ -272,23 +286,33 @@ document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
 document.getElementById("totalExpenses").innerText="₹ "+totalExpenses.toFixed(0)
 document.getElementById("totalProfit").innerText="₹ "+(totalFreight-totalExpenses).toFixed(0)
 
+updateChart(totalFreight,totalExpenses)
+
 }
 
-/* PAGINATION */
-function nextPage(){
-if(page*pageSize<filteredTrips.length){page++;render()}
+/* CHART */
+function updateChart(freight,expenses){
+
+let profit=freight-expenses
+
+if(chart) chart.destroy()
+
+chart=new Chart(document.getElementById("profitChart"),{
+type:"bar",
+data:{
+labels:["Freight","Expenses","Profit"],
+datasets:[{data:[freight,expenses,profit]}]
 }
-function prevPage(){
-if(page>1){page--;render()}
+})
+
 }
 
-/* DATE */
+/* HELPERS */
 function formatDate(d){
 if(!d) return "-"
 return new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
 }
 
-/* STATUS */
 function getStatusClass(s){
 if(!s) return ""
 s=s.toLowerCase()
@@ -298,9 +322,12 @@ if(s.includes("load")) return "status-blue"
 return ""
 }
 
+/* PAGINATION */
+function nextPage(){ if(page*pageSize<filteredTrips.length){page++;render()} }
+function prevPage(){ if(page>1){page--;render()} }
+
 /* POPUP */
 function showExpenses(id,no){
-
 expensePopup.style.display="block"
 popupTitle.innerText="Expenses - "+no
 
@@ -309,12 +336,9 @@ let list=expensesData.filter(e=>e.trip_id===id)
 expenseTable.innerHTML=list.length
 ? list.map(e=>`<tr><td>${e.expense_type}</td><td>₹ ${e.amount}</td></tr>`).join("")
 : "<tr><td>No expenses</td></tr>"
-
 }
 
-function closePopup(){
-expensePopup.style.display="none"
-}
+function closePopup(){ expensePopup.style.display="none" }
 
 </script>
 

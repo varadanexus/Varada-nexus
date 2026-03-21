@@ -148,6 +148,13 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+function formatCurrency(val){
+return "₹ " + Number(val || 0).toLocaleString("en-IN", {
+minimumFractionDigits: 2,
+maximumFractionDigits: 2
+})
+}
+  
 let transporters=[], trips=[], invoices=[]
 let selectedTrips=[]
 let invoiceAmount=0
@@ -452,7 +459,7 @@ t.route || "-",
 t.truck || "-",
 t.trip_date || "-",
 (mt.toFixed(2)),
-("₹ "+amount.toFixed(2))
+formatCurrency(amount)
 ])
 })
 
@@ -490,11 +497,14 @@ styles: {fontSize:10}
 let finalY = doc.lastAutoTable.finalY + 10
 
 doc.setFont("helvetica","bold")
+doc.setCharSpace(0)
 
 doc.text("Total Weight (MT) : "+ totalWeight.toFixed(2),15,finalY)
-doc.text("Total Amount      : ₹ "+ Number(inv.total_amount).toFixed(2),15,finalY+7)
-doc.text("Paid              : ₹ "+ Number(inv.paid_amount||0).toFixed(2),15,finalY+14)
-doc.text("Balance           : ₹ "+ Number(inv.balance_amount).toFixed(2),15,finalY+21)
+doc.text("Total Amount : " + formatCurrency(inv.total_amount),15,finalY+7)
+
+doc.text("Paid : " + formatCurrency(inv.paid_amount||0),15,finalY+14)
+
+doc.text("Balance : " + formatCurrency(inv.balance_amount),15,finalY+21)
 
 /* FOOTER */
 doc.setFont("helvetica","normal")

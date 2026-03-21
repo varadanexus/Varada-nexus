@@ -398,21 +398,92 @@ await supabaseClient.from("client_invoices").delete().eq("id",id)
 loadInvoices()
 }
 
-function downloadInvoice(id){
+async function downloadClientInvoice(id,e){
+
+e.stopPropagation()
 
 const { jsPDF } = window.jspdf
-let invoice=invoices.find(x=>x.id==id)
 
-let doc=new jsPDF()
+let inv = invoices.find(i=>i.id==id)
 
-doc.text("Varada Nexus Private Limited",20,20)
-doc.text("Invoice No : "+invoice.invoice_no,20,40)
-doc.text("Client : "+invoice.client_name,20,50)
-doc.text("Trips : "+invoice.trip_no,20,60)
-doc.text("Amount : ₹"+invoice.invoice_amount,20,70)
+/* GET TRIPS */
+let tripIds = inv.trip_ids.split(",")
 
-doc.save(invoice.invoice_no+".pdf")
+const {data:tripData} = await supabaseClient
+.from("trips")
+.select("trip_no,route,truck,trip_date,weight_kg,client_rate")
+.in("id",tripIds)
 
+/* CREATE PDF */
+let doc = new jsPDF()
+
+/* LOGO */
+try{
+doc.addImage("images/logo.png","PNG",15,10,20,20)
+}catch{}
+
+/* COMPANY NAME */
+doc.setFontSize(16)
+doc.setFont("helvetica","bold")
+doc.text("VARADA NEXUS PRIVATE LIMITED",40,20)
+
+doc.setFontSize(11)
+doc.setFont("helvetica","normal")
+doc.text("Client Invoice",40,27)
+
+/* INVOICE DETAILS */
+doc.setFontSize(11)
+doc.text(`Invoice No : ${inv.invoice_no}`,15,45)
+doc.text(`Status     : ${inv.status}`,15,52)
+
+/* TABLE */
+let rows=[]
+let totalWeight=0
+
+tripData.forEach(t=>{
+
+let weightMT = (t.weight_kg||0)/1000
+let amount = weightMT*(t.client_rate||0)
+
+totalWeight += weightMT
+
+rows.push([
+t.trip_no,
+t.route||"-",
+t.truck||"-",
+t.trip_date||"-",
+weightMT.toFixed(2),
+amount.toFixed(2)
+])
+
+})
+
+doc.autoTable({
+startY:60,
+head:[["Trip","Route","Truck","Date","Weight (MT)","Amount"]],
+body:rows,
+theme:"grid",
+styles:{fontSize:9},
+headStyles:{fillColor:[41,128,185]}
+})
+
+/* TOTALS */
+let finalY = doc.lastAutoTable.finalY + 10
+
+doc.setFont("helvetica","bold")
+doc.text(`Total Weight (MT): ${totalWeight.toFixed(2)}`,15,finalY)
+
+doc.text(`Total Amount: ${Number(inv.total_amount).toFixed(2)}`,15,finalY+10)
+doc.text(`Paid: ${Number(inv.paid_amount||0).toFixed(2)}`,15,finalY+20)
+doc.text(`Balance: ${Number(inv.balance_amount).toFixed(2)}`,15,finalY+30)
+
+/* FOOTER */
+doc.setFont("helvetica","normal")
+doc.setFontSize(9)
+doc.text("This is a system generated invoice.",15,finalY+45)
+
+/* SAVE */
+doc.save(inv.invoice_no + ".pdf")
 }
 
 function toggleAllTrips(){

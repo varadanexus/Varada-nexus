@@ -2,7 +2,6 @@
 <html>
 
 <head>
-
 <title>Transporter Payments - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,20 +10,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-<script src="menu-rbac.js"></script>
-
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
-
-.main{
-margin-left:220px;
-padding:30px;
-}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
 
 .card{
 background:white;
@@ -76,84 +64,27 @@ text-align:left;
 .deleteBtn{
 background:#d9534f;
 }
-
 </style>
-
 </head>
 
 <body>
 
 <script>
-
-/* SUPABASE CLIENT */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
-
 </script>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
-
-/* ✅ STANDARD SIDEBAR (same as dashboard) */
-
-fetch("sidebar.html")
+fetch("transporter-sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
+.then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
 })
-
-async function initSidebar(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session) return
-
-const authId = session.user.id
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-const {data:user} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-if(!user) return
-
-const {data:userRole} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
-.single()
-
-if(!userRole) return
-
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
-
-if(role){
-document.getElementById("userRole").innerText = role.role_name
-}
-
-/* LOGOUT */
-
-window.logout = async function(){
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-}
-
-}
-
 </script>
 
 <div class="main">
@@ -161,24 +92,19 @@ window.location.href="login.html"
 <h2>Transporter Payments</h2>
 
 <div class="card">
-
 <h3>Record Payment</h3>
 
 <select id="transporterSelect"></select>
 <button onclick="loadTrips()">Load Trips</button>
 
 <div class="trip-list">
-
 <div>
 <input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> Select All
 </div>
-
 <div id="tripList"></div>
-
 </div>
 
 <input id="amount" placeholder="Total Amount" readonly>
-
 <input type="date" id="paymentDate">
 
 <select id="method">
@@ -191,30 +117,12 @@ window.location.href="login.html"
 <input id="remarks" placeholder="Remarks">
 
 <button onclick="savePayment()">Save Payment</button>
-
 </div>
 
 <div class="card">
-
-<h3>Search Payments</h3>
-
-<select id="searchTransporter"></select>
-
-From <input type="date" id="fromDate">
-To <input type="date" id="toDate">
-
-<button onclick="searchPayments()">Search</button>
-<button onclick="clearSearch()">Clear</button>
-<button onclick="downloadPDF()">Download PDF</button>
-
-</div>
-
-<div class="card">
-
 <h3>Payment History</h3>
 
 <table>
-
 <thead>
 <tr>
 <th>Date</th>
@@ -226,15 +134,8 @@ To <input type="date" id="toDate">
 <th>Action</th>
 </tr>
 </thead>
-
 <tbody id="paymentTable"></tbody>
-
 </table>
-
-<br>
-
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
 
 </div>
 
@@ -242,15 +143,9 @@ To <input type="date" id="toDate">
 
 <script>
 
-/* 🔥 ORIGINAL LOGIC UNTOUCHED */
-
 let transporters=[]
 let trips=[]
 let payments=[]
-let allPayments=[]
-
-let page=1
-let pageSize=10
 
 init()
 
@@ -268,16 +163,12 @@ const {data}=await supabaseClient
 transporters=data||[]
 
 let html='<option value="">Select Transporter</option>'
-let search='<option value="">All Transporters</option>'
 
 transporters.forEach(t=>{
 html+=`<option value="${t.id}">${t.transporter_name}</option>`
-search+=`<option value="${t.transporter_name}">${t.transporter_name}</option>`
 })
 
 document.getElementById("transporterSelect").innerHTML=html
-document.getElementById("searchTransporter").innerHTML=search
-
 }
 
 async function loadTrips(){
@@ -288,25 +179,22 @@ const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
-.order("trip_no",{ascending:false})
 
 trips=data||[]
 
 let html=""
 
 trips.forEach(t=>{
-
 let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
 
 html+=`
 <div>
 <input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ${t.route} | ${t.truck} | ₹${payable}
+${t.trip_no} | ₹${payable.toFixed(0)}
 </div>`
 })
 
 document.getElementById("tripList").innerHTML=html
-
 }
 
 function calculateTotal(){
@@ -316,12 +204,10 @@ let total=0
 
 checked.forEach(c=>{
 let trip=trips.find(t=>t.id==c.value)
-let payable=(trip.transporter_rate||0)*(trip.weight_kg/1000)
-total+=payable
+total+=(trip.transporter_rate||0)*(trip.weight_kg/1000)
 })
 
-document.getElementById("amount").value=total
-
+document.getElementById("amount").value=total.toFixed(0)
 }
 
 function toggleAllTrips(){
@@ -333,7 +219,6 @@ c.checked=checked
 })
 
 calculateTotal()
-
 }
 
 async function savePayment(){
@@ -347,159 +232,64 @@ let remarks=document.getElementById("remarks").value
 
 let checked=document.querySelectorAll("#tripList input:checked")
 
-if(checked.length===0){
-alert("Select trips")
-return
-}
-
 for(const c of checked){
 
 let trip=trips.find(t=>t.id==c.value)
 
 await supabaseClient.from("transporter_payments").insert({
 trip_id: trip.id,
+transporter_id: transporterId,   // ✅ FIXED
 transporter_name: transporter.transporter_name,
 amount:(trip.transporter_rate||0)*(trip.weight_kg/1000),
 payment_date:date,
 payment_method:method,
 remarks:remarks
 })
-
 }
 
 alert("Payment saved")
 
-document.getElementById("amount").value=""
-document.getElementById("paymentDate").value=""
-document.getElementById("remarks").value=""
-document.getElementById("method").value=""
-document.getElementById("selectAll").checked=false
-document.getElementById("tripList").innerHTML=""
-
 loadPayments()
-
 }
 
 async function loadPayments(){
 
 const {data}=await supabaseClient
 .from("transporter_payments")
-.select(`*,trips(trip_no)`)
+.select(`*,trips(trip_no),transporters(transporter_name)`)
 .order("created_at",{ascending:false})
 
 payments=data||[]
-allPayments=data||[]
 
 renderPayments()
-
 }
 
 function renderPayments(){
 
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageData=payments.slice(start,end)
-
 let html=""
 
-pageData.forEach(p=>{
+payments.forEach(p=>{
 html+=`
 <tr>
-<td>${p.payment_date}</td>
-<td>${p.transporter_name}</td>
+<td>${p.payment_date||""}</td>
+<td>${p.transporters?.transporter_name || p.transporter_name}</td>
 <td>${p.trips?.trip_no||""}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method||""}</td>
 <td>${p.remarks||""}</td>
-<td>
-<button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button>
-</td>
+<td><button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button></td>
 </tr>`
 })
 
 document.getElementById("paymentTable").innerHTML=html
-
-}
-
-function searchPayments(){
-
-let transporter=document.getElementById("searchTransporter").value
-let from=document.getElementById("fromDate").value
-let to=document.getElementById("toDate").value
-
-payments=allPayments.filter(p=>{
-let matchTransporter=!transporter||p.transporter_name===transporter
-let matchDate=true
-if(from) matchDate=p.payment_date>=from
-if(to) matchDate=matchDate&&p.payment_date<=to
-return matchTransporter&&matchDate
-})
-
-page=1
-renderPayments()
-
-}
-
-function clearSearch(){
-payments=allPayments
-renderPayments()
-}
-
-function nextPage(){
-page++
-renderPayments()
-}
-
-function prevPage(){
-if(page>1) page--
-renderPayments()
 }
 
 async function deletePayment(id){
-
-await supabaseClient
-.from("transporter_payments")
-.delete()
-.eq("id",id)
-
+await supabaseClient.from("transporter_payments").delete().eq("id",id)
 loadPayments()
-
-}
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-payments.forEach(p=>{
-rows.push([
-p.payment_date,
-p.transporter_name,
-p.trips?.trip_no||"",
-p.amount,
-p.payment_method,
-p.remarks
-])
-})
-
-doc.autoTable({
-head:[["Date","Transporter","Trip","Amount","Method","Remarks"]],
-body:rows
-})
-
-doc.save("transporter_payments.pdf")
-
 }
 
 </script>
-
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script>
 
 </body>
 </html>

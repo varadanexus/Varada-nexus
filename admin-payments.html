@@ -199,7 +199,7 @@ let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
 return `
 <tr>
 <td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
-<td>${t.trip_no}</td>
+<td>${t.trip_no} | ${t.route||"-"} | ${t.truck||"-"} | ${t.trip_date||"-"}</td>
 <td>${t.weight_kg||0}</td>
 <td>₹${amt.toFixed(0)}</td>
 </tr>
@@ -306,14 +306,28 @@ const {data}=await supabaseClient
 
 invoices=data||[]
 
-renderInvoices(invoices)
+await renderInvoices(invoices)
 }
 
-function renderInvoices(data){
+/* 🔥 FIXED PART */
+async function renderInvoices(data){
 
 let html=""
 
-data.forEach(i=>{
+for(let i of data){
+
+let tripIds=i.trip_ids.split(",")
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select("trip_no,route,truck,trip_date,weight_kg")
+.in("id",tripIds)
+
+let tripDetails = tripData.map(t=>`
+${t.trip_no} | ${t.route||"-"} | ${t.truck||"-"} | ${t.trip_date||"-"} | ${t.weight_kg||0} KG
+`).join("<br>")
+
+let totalWeight = tripData.reduce((s,t)=>s+Number(t.weight_kg||0),0)
 
 let statusClass =
 i.status==="Paid"?"status-paid":
@@ -322,8 +336,8 @@ i.status==="Partial"?"status-partial":"status-pending"
 html+=`
 <tr onclick="selectInvoice('${i.id}')">
 <td>${i.invoice_no}</td>
-<td>${i.trip_ids}</td>
-<td>-</td>
+<td>${tripDetails}</td>
+<td>${totalWeight} KG</td>
 <td>₹${i.total_amount}</td>
 <td>₹${i.paid_amount||0}</td>
 <td>₹${i.balance_amount}</td>
@@ -335,7 +349,7 @@ html+=`
 </td>
 </tr>
 `
-})
+}
 
 invoiceTable.innerHTML=html
 }

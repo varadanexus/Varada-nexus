@@ -218,8 +218,8 @@ return
 }
 
 /* SET VALUES */
-document.getElementById("clientRate").value = data.client_rate || ""
-document.getElementById("transporterRate").value = data.transporter_rate || ""
+document.getElementById("clientRate").value = data.company_rate_per_mt || ""
+document.getElementById("transporterRate").value = data.transporter_rate_per_mt || ""
 }
   
 async function generateTripNo(){
@@ -308,8 +308,8 @@ weight_kg: weightVal,
 trip_date: dateVal,
 status: statusVal,
 
-client_rate: document.getElementById("clientRate").value,
-transporter_rate: document.getElementById("transporterRate").value
+company_rate: parseFloat(document.getElementById("clientRate").value) || 0,
+transporter_rate: parseFloat(document.getElementById("transporterRate").value) || 0
 })
 
 if(error){

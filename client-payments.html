@@ -96,16 +96,15 @@ fetch("sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR SIDEBAR RENDER */
-await new Promise(r => setTimeout(r, 200))
-
-/* LOAD USER + ROLE */
 await initSidebar()
 
-/* APPLY RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
+
+/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+document.getElementById("sidebar").style.display="block"
+
 })
 
 async function initSidebar(){

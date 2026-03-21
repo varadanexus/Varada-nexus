@@ -251,7 +251,7 @@ window.location.href="login.html"
 /* PAGINATION */
 let clientPage=0
 const pageSize=10
-
+let clientPage=0
 /* ROUTE AUTO */
 function generateRouteCode(){
 
@@ -434,16 +434,23 @@ function prevClient(){if(clientPage>0){clientPage--;loadClients()}}
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("transporters")
 .select("*")
 .order("created_at",{ascending:false})
+
+/* 🔥 ERROR CHECK */
+if(error){
+console.error("Transporter load error:", error)
+alert("Error loading transporters: " + error.message)
+return
+}
 
 transporterData = data || []
 
 let html="",dd='<option>Select</option>'
 
-for(let t of (data || [])){
+for(let t of transporterData){
 
 /* TRUCK COUNT */
 const {count} = await supabaseClient
@@ -467,55 +474,14 @@ html+=`
 </tr>
 `
 
-/* DROPDOWN IMPROVED */
 dd+=`<option value="${t.id}">
 ${t.transporter_name} (${t.phone||"-"} | ${t.gst_number||"No GST"})
 </option>`
 }
 
-transporterTable.innerHTML=html
-truckTransporter.innerHTML=dd
-
-}
-
-let transporterData=[]
-
-function filterTransporters(){
-
-let q = document.getElementById("searchTransporter").value.toLowerCase()
-
-let filtered = transporterData.filter(t=>
-(t.transporter_name||"").toLowerCase().includes(q) ||
-(t.phone||"").includes(q) ||
-(t.gst_number||"").toLowerCase().includes(q) ||
-(t.status||"").toLowerCase().includes(q)
-)
-
-renderFilteredTransporters(filtered)
-}
-
-function renderFilteredTransporters(data){
-
-let html=""
-
-data.forEach(t=>{
-html+=`
-<tr>
-<td>${t.transporter_name}</td>
-<td>${t.phone||""}</td>
-<td>${t.gst_number||"-"}</td>
-<td>${t.status||"Active"}</td>
-<td>${t.created_at?.split("T")[0]}</td>
-<td>--</td>
-
-<td>
-<button onclick="editTransporter('${t.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
-</td>
-</tr>`
-})
-
 document.getElementById("transporterTable").innerHTML=html
+document.getElementById("truckTransporter").innerHTML=dd
+
 }
   
 async function loadRoutes(){

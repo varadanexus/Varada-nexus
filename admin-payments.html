@@ -103,7 +103,29 @@ fetch("admin-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data  
 })  
 </script>  
+<script>
+async function loadUserInfo(){
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+const email = session.user.email
+
+const nameEl = document.getElementById("userName")
+if(nameEl) nameEl.innerText = email.split("@")[0]
+
+/* 🔥 THIS LINE IS MISSING */
+document.getElementById("sidebar").style.display = "block"
+
+}
+
+/* ✅ RUN AFTER PAGE LOAD */
+document.addEventListener("DOMContentLoaded", loadUserInfo)
+</script>
 <div class="main">  
 
 <h2>Admin Payments Dashboard</h2>  

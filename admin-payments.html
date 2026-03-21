@@ -12,11 +12,14 @@ body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 
 .card{
-background:white;padding:20px;border-radius:8px;margin-bottom:20px;
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-input,select{
+select,input{
 padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;
 }
 
@@ -55,13 +58,11 @@ document.getElementById("sidebar").style.display="block"
 
 <h2>Transporter Payments</h2>
 
-<!-- SELECT TRANSPORTER -->
 <div class="card">
 <h3>Select Transporter</h3>
 <select id="transporterSelect" onchange="loadTrips()"></select>
 </div>
 
-<!-- TRIPS -->
 <div class="card">
 <h3>Select Trips</h3>
 
@@ -76,27 +77,21 @@ document.getElementById("sidebar").style.display="block"
 <th>Amount</th>
 </tr>
 </thead>
+
 <tbody id="tripTable"></tbody>
 </table>
-
 </div>
 
-<!-- INVOICE -->
 <div class="card">
-
 <h3>Create Invoice</h3>
 
 <button onclick="generateInvoice()">Generate Invoice</button>
-
 <p id="invoicePreview"></p>
 
 <button onclick="saveInvoice()">Save Invoice</button>
-
 </div>
 
-<!-- PAYMENT -->
 <div class="card">
-
 <h3>Payment</h3>
 
 Invoice Amount:
@@ -115,16 +110,13 @@ Enter Payment:
 </select>
 
 <button onclick="savePayment()">Save Payment</button>
-
 </div>
 
-<!-- 🔥 INVOICE LIST -->
 <div class="card">
 
 <h3>Invoices</h3>
 
-<!-- ✅ SEARCH MOVED HERE -->
-<input id="searchInvoice" placeholder="Search Invoice No" oninput="searchInvoices()">
+<input id="searchInvoice" placeholder="Search Invoice" oninput="searchInvoices()">
 
 <table>
 <thead>
@@ -167,51 +159,66 @@ await loadTransporters()
 await loadInvoices()
 }
 
-/* TRANSPORTERS */
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
-
 transporterSelect.innerHTML='<option value="">Select</option>'+
 data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 }
 
-/* TRIPS */
 async function loadTrips(){
 
 let id=transporterSelect.value
 if(!id) return
 
-const {data}=await supabaseClient.from("trips")
+const {data:tripData}=await supabaseClient
+.from("trips")
 .select("*")
 .eq("transporter_id",id)
 
-trips=data.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
+const {data:inv}=await supabaseClient
+.from("transporter_invoices")
+.select("trip_ids")
+
+let usedTrips=[]
+inv?.forEach(i=>{
+i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
+})
+
+trips = tripData
+.filter(t=>!usedTrips.includes(t.id))
+.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
 
 renderTrips()
 }
 
-/* ✅ FIXED TRIP DISPLAY */
 function renderTrips(){
 
-tripTable.innerHTML=trips.map(t=>{
+tripTable.innerHTML = trips.map(t=>{
 let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
 
 return `
 <tr>
-<td><input type="checkbox" value="${t.id}"></td>
+<td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
 <td>${t.trip_no}</td>
 <td>${t.weight_kg||0}</td>
 <td>₹${amt.toFixed(0)}</td>
-</tr>`
+</tr>
+`
 }).join("")
 }
 
-/* INVOICE */
+function toggleAll(cb){
+document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
+}
+
 function generateInvoice(){
 
-let checked=document.querySelectorAll("#tripTable input:checked")
+let checked=document.querySelectorAll(".tripCheck:checked")
 
-if(!checked.length){alert("Select trips");return}
+if(!checked.length){
+alert("Select trips")
+return
+}
 
 selectedTrips=[]
 let total=0, weight=0
@@ -229,12 +236,11 @@ totalAmount.value=total.toFixed(0)
 
 invoicePreview.innerHTML=`
 Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
-Weight: ${weight} KG<br>
+Total Weight: ${weight} KG<br>
 <b>Amount: ₹${total}</b>
 `
 }
 
-/* SAVE INVOICE */
 async function saveInvoice(){
 
 const {data}=await supabaseClient.from("transporter_invoices").insert({
@@ -249,35 +255,55 @@ status:"Pending"
 
 currentInvoice=data
 
+alert("Invoice Created")
+
+loadTrips()
 loadInvoices()
 }
 
-/* PAYMENT */
 async function savePayment(){
 
 let amount=Number(paidAmount.value)
 
+if(!currentInvoice){
+alert("Select invoice")
+return
+}
+
 await supabaseClient.from("transporter_payments").insert({
 invoice_id:currentInvoice.id,
-amount
+amount,
+payment_date:paymentDate.value,
+payment_method:paymentMethod.value
 })
 
 let paid=(currentInvoice.paid_amount||0)+amount
 let balance=currentInvoice.total_amount-paid
 
-let status = balance<=0 ? "Paid" : paid>0 ? "Partial" : "Pending"
+let status="Pending"
+if(balance<=0) status="Paid"
+else if(paid>0) status="Partial"
 
 await supabaseClient.from("transporter_invoices")
-.update({paid_amount:paid,balance_amount:balance,status})
+.update({
+paid_amount:paid,
+balance_amount:balance,
+status
+})
 .eq("id",currentInvoice.id)
+
+alert("Payment Saved")
 
 loadInvoices()
 }
 
-/* LOAD INVOICES */
 async function loadInvoices(){
 
-const {data}=await supabaseClient.from("transporter_invoices").select("*")
+const {data}=await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.order("created_at",{ascending:false})
+
 invoices=data||[]
 
 renderInvoices(invoices)
@@ -307,19 +333,79 @@ html+=`
 <button onclick="editPayment('${i.id}',event)">Edit</button>
 <button class="deleteBtn" onclick="deletePayment('${i.id}',event)">Delete</button>
 </td>
-</tr>`
+</tr>
+`
 })
 
 invoiceTable.innerHTML=html
 }
 
-/* SEARCH */
 function searchInvoices(){
 let q=searchInvoice.value.toLowerCase()
-renderInvoices(invoices.filter(i=>i.invoice_no.toLowerCase().includes(q)))
+let filtered=invoices.filter(i=>i.invoice_no.toLowerCase().includes(q))
+renderInvoices(filtered)
 }
 
-/* PDF - PROFESSIONAL */
+function selectInvoice(id){
+currentInvoice=invoices.find(i=>i.id==id)
+totalAmount.value=currentInvoice.total_amount
+}
+
+async function editPayment(id,e){
+
+e.stopPropagation()
+
+let val=prompt("Enter new paid amount")
+if(!val) return
+
+let inv=invoices.find(i=>i.id==id)
+
+let paid=Number(val)
+let balance=inv.total_amount-paid
+
+let status="Pending"
+if(balance<=0) status="Paid"
+else if(paid>0) status="Partial"
+
+await supabaseClient
+.from("transporter_invoices")
+.update({
+paid_amount:paid,
+balance_amount:balance,
+status
+})
+.eq("id",id)
+
+alert("Updated")
+
+loadInvoices()
+}
+
+async function deletePayment(id,e){
+
+e.stopPropagation()
+
+if(!confirm("Delete payment?")) return
+
+await supabaseClient
+.from("transporter_payments")
+.delete()
+.eq("invoice_id",id)
+
+await supabaseClient
+.from("transporter_invoices")
+.update({
+paid_amount:0,
+balance_amount:0,
+status:"Pending"
+})
+.eq("id",id)
+
+alert("Deleted")
+
+loadInvoices()
+}
+
 async function downloadInvoice(id,e){
 
 e.stopPropagation()
@@ -329,22 +415,15 @@ let inv=invoices.find(i=>i.id==id)
 
 let doc=new jsPDF()
 
-// LOGO
-let img=new Image()
-img.src="logo.png"
-doc.addImage(img,"PNG",10,10,30,15)
-
-// COMPANY
 doc.setFontSize(16)
-doc.text("VARADA NEXUS PRIVATE LIMITED",50,20)
+doc.text("VARADA NEXUS PRIVATE LIMITED",20,20)
 
-// DETAILS
 doc.setFontSize(12)
-doc.text("Invoice No: "+inv.invoice_no,20,50)
-doc.text("Total Amount: ₹"+inv.total_amount,20,60)
-doc.text("Paid: ₹"+(inv.paid_amount||0),20,70)
-doc.text("Balance: ₹"+inv.balance_amount,20,80)
-doc.text("Status: "+inv.status,20,90)
+doc.text("Invoice No: "+inv.invoice_no,20,40)
+doc.text("Amount: ₹"+inv.total_amount,20,50)
+doc.text("Paid: ₹"+(inv.paid_amount||0),20,60)
+doc.text("Balance: ₹"+inv.balance_amount,20,70)
+doc.text("Status: "+inv.status,20,80)
 
 doc.save(inv.invoice_no+".pdf")
 }

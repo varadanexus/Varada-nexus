@@ -20,6 +20,23 @@ table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
 .pagination{margin-top:10px;}
+/* 🔥 POPUP */
+.popup{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+z-index:2000;
+}
+
+.popup-content{
+background:white;
+width:400px;
+margin:80px auto;
+padding:20px;
+border-radius:8px;
+}
 </style>
 
 </head>
@@ -551,7 +568,11 @@ async function deleteRoute(id){await supabaseClient.from("routes").delete().eq("
 async function deleteTruck(id){await supabaseClient.from("trucks").delete().eq("id",id);loadTrucks()}
 async function deleteCommodity(id){await supabaseClient.from("commodities").delete().eq("id",id);loadCommodities()}
 
+let editId = null
+
 async function editTransporter(id){
+
+editId = id
 
 const {data:t} = await supabaseClient
 .from("transporters")
@@ -559,20 +580,62 @@ const {data:t} = await supabaseClient
 .eq("id",id)
 .single()
 
-let name = prompt("Name",t.transporter_name)
-let phone = prompt("Phone",t.phone)
-let gst = prompt("GST",t.gst_number)
+/* FILL FORM */
+eName.value = t.transporter_name || ""
+ePhone.value = t.phone || ""
+eGST.value = t.gst_number || ""
+eAddress.value = t.address || ""
+ePAN.value = t.pan || ""
+eAadhar.value = t.aadhar_number || ""
+eBank.value = t.bank_name || ""
+eAccount.value = t.account_number || ""
+eIFSC.value = t.ifsc_code || ""
+eStatus.value = t.status || "Active"
 
+/* SHOW POPUP */
+document.getElementById("editPopup").style.display="block"
+}
+
+async function updateTransporter(){
+
+if(!editId) return
+
+/* VALIDATION */
+if(ePhone.value && !/^[0-9]{10}$/.test(ePhone.value)){
+alert("Invalid phone")
+return
+}
+
+if(eGST.value && !/^[0-9A-Z]{15}$/.test(eGST.value)){
+alert("Invalid GST")
+return
+}
+
+function closePopup(){
+document.getElementById("editPopup").style.display="none"
+editId = null
+}
+  
+/* UPDATE */
 await supabaseClient
 .from("transporters")
 .update({
-transporter_name:name,
-phone:phone,
-gst_number:gst
+transporter_name:eName.value,
+phone:ePhone.value,
+gst_number:eGST.value,
+address:eAddress.value,
+pan:ePAN.value,
+aadhar_number:eAadhar.value,
+bank_name:eBank.value,
+account_number:eAccount.value,
+ifsc_code:eIFSC.value,
+status:eStatus.value
 })
-.eq("id",id)
+.eq("id",editId)
 
 alert("Updated ✅")
+
+closePopup()
 loadTransporters()
 }
   
@@ -591,6 +654,34 @@ await loadCommodities()
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+<!-- 🔥 EDIT TRANSPORTER POPUP -->
+<div id="editPopup" class="popup">
+  <div class="popup-content">
 
+    <h3>Edit Transporter</h3>
+
+    <input id="eName" placeholder="Name">
+    <input id="ePhone" placeholder="Phone">
+    <input id="eGST" placeholder="GST">
+    <input id="eAddress" placeholder="Address">
+    <input id="ePAN" placeholder="PAN">
+    <input id="eAadhar" placeholder="Aadhar">
+
+    <input id="eBank" placeholder="Bank Name">
+    <input id="eAccount" placeholder="Account Number">
+    <input id="eIFSC" placeholder="IFSC">
+
+    <select id="eStatus">
+      <option value="Active">Active</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+
+    <br><br>
+
+    <button onclick="updateTransporter()">Update</button>
+    <button class="deleteBtn" onclick="closePopup()">Cancel</button>
+
+  </div>
+</div>
 </body>
 </html>

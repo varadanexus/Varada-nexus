@@ -1,1 +1,399 @@
+<!DOCTYPE html>  
+<html>  
 
+<head>  
+<title>Admin Payments - Varada Nexus</title> 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>  
+
+<style>  
+
+body{margin:0;font-family:Arial;background:#f4f6f9;}  
+.main{margin-left:220px;padding:30px;}  
+
+h2{color:#1f3c88;}  
+
+.cards{
+display:flex;
+gap:15px;
+margin-bottom:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:8px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+min-width:180px;
+}
+
+.card h4{margin:0;color:#777;font-size:13px;}
+.card h2{margin:5px 0;color:#1f3c88;}
+
+.filters{margin-bottom:15px;}
+.filters input,.filters select{padding:6px;margin-right:8px;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{background:#eee;}
+
+.paid{color:green;font-weight:bold;}
+.pending{color:red;font-weight:bold;}
+
+.progress-bar{
+height:6px;
+background:#ddd;
+border-radius:4px;
+overflow:hidden;
+}
+
+.progress-fill{
+height:100%;
+background:green;
+}
+
+.overdue{
+background:#ffe6e6;
+}
+
+.popup{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+}
+
+.popup-content{
+background:white;
+width:400px;
+margin:120px auto;
+padding:20px;
+border-radius:6px;
+}
+
+.pagination{
+margin-top:15px;
+}
+
+</style>  
+
+</head>  
+
+<body>  
+
+<!-- ✅ FIXED: ADMIN SIDEBAR -->
+<div id="sidebar-container"></div>  
+
+<script>  
+fetch("admin-sidebar.html")  
+.then(res=>res.text())  
+.then(data=>{  
+document.getElementById("sidebar-container").innerHTML=data  
+})  
+</script>  
+
+<div class="main">  
+
+<h2>Admin Payments Dashboard</h2>  
+
+<button onclick="downloadPDF()">Download PDF</button>  
+
+<div class="cards">  
+<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>  
+<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>  
+<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>  
+<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>  
+</div>  
+
+<div class="filters">  
+
+From <input type="date" id="fromDate">  
+To <input type="date" id="toDate">  
+
+<select id="statusFilter">  
+<option value="">All</option>  
+<option value="Paid">Paid</option>  
+<option value="Pending">Pending</option>  
+</select>  
+
+<label>  
+<input type="checkbox" id="unpaidOnly"> Unpaid Only  
+</label>  
+
+<select id="pageSize" onchange="changePageSize()">  
+<option value="12">12</option>  
+<option value="25">25</option>  
+<option value="50">50</option>  
+<option value="100">100</option>  
+</select>  
+
+<button onclick="applyFilter()">Search</button>  
+<button onclick="clearFilter()">Clear</button>  
+
+</div>  
+
+<table>  
+<thead>  
+<tr>
+<th>Transporter</th> <!-- ✅ ADDED -->
+<th>Trip</th>
+<th>Freight</th>
+<th>Expenses</th>
+<th>Paid</th>
+<th>Balance</th>
+<th>Status</th>
+<th>Progress</th>
+</tr>
+</thead>  
+<tbody id="paymentTable"></tbody>  
+</table>  
+
+<div class="pagination">  
+<button onclick="prevPage()">Previous</button>  
+<button onclick="nextPage()">Next</button>  
+</div>  
+
+</div>  
+
+<div id="popup" class="popup">  
+<div class="popup-content">  
+<h3 id="popupTitle"></h3>  
+<div id="popupBody"></div>  
+<br>  
+<button onclick="closePopup()">Close</button>  
+</div>  
+</div>  
+
+<script>  
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)  
+
+let fullData=[]
+let filteredData=[]
+let paymentsData=[]
+let expenseMap={}
+
+let page=1
+let pageSize=12
+
+init()
+
+async function init(){
+
+const {data:trips=[]} = await supabaseClient
+.from("trips")
+.select("*, transporters(transporter_name)")
+
+trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
+
+let tripIds=trips.map(t=>t.id)
+
+const {data:payments=[]} = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("trip_id", tripIds)
+
+paymentsData=payments
+
+const {data:expenses=[]} = await supabaseClient
+.from("expenses")
+.select("*")
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
+
+let paymentMap={}
+payments.forEach(p=>{
+if(!paymentMap[p.trip_id]) paymentMap[p.trip_id]=0
+paymentMap[p.trip_id]+=Number(p.amount||0)
+})
+
+let totalFreight=0,totalPaid=0,totalBalance=0
+
+fullData=await Promise.all(trips.map(async t=>{
+
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+let expense=expenseMap[t.id]||0
+let net=freight-expense
+
+let paid=paymentMap[t.id]||0
+let balance=net-paid
+
+if(paid>=net && t.status!=="Paid"){
+await supabaseClient.from("trips").update({status:"Paid"}).eq("id",t.id)
+}
+
+totalFreight+=net
+totalPaid+=paid
+totalBalance+=balance
+
+return{
+...t,
+freight,
+expense,
+paid,
+balance,
+status:paid>=net?"Paid":"Pending"
+}
+
+}))
+
+filteredData=[...fullData]
+
+document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
+document.getElementById("totalPaid").innerText="₹ "+totalPaid.toFixed(0)
+document.getElementById("totalBalance").innerText="₹ "+totalBalance.toFixed(0)
+document.getElementById("collectionPercent").innerText=
+totalFreight ? ((totalPaid/totalFreight)*100).toFixed(1)+"%" : "0%"
+
+renderTable()
+
+}
+
+function renderTable(){
+
+let start=(page-1)*pageSize
+let data=filteredData.slice(start,start+pageSize)
+
+let html=""
+
+data.forEach(t=>{
+
+let net = t.freight - t.expense
+let percent = net>0 ? (t.paid/net)*100 : 0
+
+let overdue = t.status==="Pending" && new Date(t.trip_date)<new Date()
+
+html+=`
+<tr class="${overdue?'overdue':''}">
+<td>${t.transporters?.transporter_name||"-"}</td>
+<td onclick="showDetails('${t.id}','${t.trip_no}')"
+style="cursor:pointer;color:#1f3c88;font-weight:bold">${t.trip_no}</td>
+
+<td>₹ ${t.freight.toFixed(0)}</td>
+<td>₹ ${t.expense.toFixed(0)}</td>
+<td>₹ ${t.paid.toFixed(0)}</td>
+<td>₹ ${t.balance.toFixed(0)}</td>
+
+<td class="${t.status==='Paid'?'paid':'pending'}">${t.status}</td>
+
+<td>
+<div class="progress-bar">
+<div class="progress-fill" style="width:${percent}%"></div>
+</div>
+${percent.toFixed(0)}%
+</td>
+</tr>
+`
+})
+
+document.getElementById("paymentTable").innerHTML=html
+
+}
+
+function applyFilter(){
+
+let from=fromDate.value
+let to=toDate.value
+let status=statusFilter.value
+let unpaid=unpaidOnly.checked
+
+filteredData=fullData.filter(t=>{
+let d=new Date(t.trip_date)
+return (!from||d>=new Date(from)) &&
+(!to||d<=new Date(to)) &&
+(!status||t.status===status) &&
+(!unpaid||t.status==="Pending")
+})
+
+page=1
+renderTable()
+
+}
+
+function clearFilter(){
+filteredData=[...fullData]
+renderTable()
+}
+
+function changePageSize(){
+pageSize=parseInt(pageSize.value)
+page=1
+renderTable()
+}
+
+function nextPage(){ if(page*pageSize<filteredData.length){page++;renderTable()} }
+function prevPage(){ if(page>1){page--;renderTable()} }
+
+function showDetails(tripId,tripNo){
+
+let payList=paymentsData.filter(p=>p.trip_id===tripId)
+
+let html="<b>Payments:</b><br>"
+
+payList.forEach(p=>{
+html+=`${p.payment_date} - ₹${p.amount} (${p.payment_method||"-"})<br>`
+})
+
+html+=`<hr><b>Total Expenses:</b> ₹ ${expenseMap[tripId]||0}`
+
+popupTitle.innerText="Details - "+tripNo
+popupBody.innerHTML=html
+
+popup.style.display="block"
+}
+
+function closePopup(){ popup.style.display="none" }
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+let doc=new jsPDF()
+
+let rows=[]
+
+filteredData.forEach(r=>{
+rows.push([
+r.transporters?.transporter_name||"-",
+r.trip_no,
+r.freight.toFixed(0),
+r.expense.toFixed(0),
+r.paid.toFixed(0),
+r.balance.toFixed(0),
+r.status
+])
+})
+
+doc.text("Admin Payments Report",14,15)
+
+doc.autoTable({
+head:[["Transporter","Trip","Freight","Expenses","Paid","Balance","Status"]],
+body:rows,
+startY:20
+})
+
+doc.save("admin-payments.pdf")
+
+}
+
+</script>  
+
+</body>  
+</html>

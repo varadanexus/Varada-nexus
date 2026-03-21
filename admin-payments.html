@@ -5,22 +5,18 @@
 <title>Transporter Payments - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 
 .card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
+background:white;padding:20px;border-radius:8px;margin-bottom:20px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-select,input{
-padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;
-}
+input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;}
 
 button{
 padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;
@@ -36,6 +32,12 @@ th{background:#eee;}
 .status-paid{color:green;font-weight:bold;}
 .status-pending{color:red;font-weight:bold;}
 .status-partial{color:orange;font-weight:bold;}
+
+.print-box{
+display:none;
+background:white;
+padding:30px;
+}
 </style>
 
 </head>
@@ -57,17 +59,20 @@ document.getElementById("sidebar").style.display="block"
 
 <h2>Transporter Payments</h2>
 
+<!-- SEARCH -->
+<div class="card">
+<input id="searchInvoice" placeholder="Search Invoice No" oninput="searchInvoices()">
+</div>
+
 <!-- SELECT TRANSPORTER -->
 <div class="card">
 <h3>Select Transporter</h3>
 <select id="transporterSelect" onchange="loadTrips()"></select>
 </div>
 
-<!-- TRIP SELECTION -->
+<!-- TRIPS -->
 <div class="card">
-
 <h3>Select Trips</h3>
-
 <label><input type="checkbox" onclick="toggleAll(this)"> Select All</label>
 
 <table>
@@ -75,32 +80,24 @@ document.getElementById("sidebar").style.display="block"
 <tr>
 <th>Select</th>
 <th>Trip</th>
+<th>Weight (KG)</th>
 <th>Amount</th>
 </tr>
 </thead>
-
 <tbody id="tripTable"></tbody>
-
 </table>
-
 </div>
 
 <!-- INVOICE -->
 <div class="card">
-
 <h3>Create Invoice</h3>
-
 <button onclick="generateInvoice()">Generate Invoice</button>
-
 <p id="invoicePreview"></p>
-
 <button onclick="saveInvoice()">Save Invoice</button>
-
 </div>
 
 <!-- PAYMENT -->
 <div class="card">
-
 <h3>Payment</h3>
 
 Invoice Amount:
@@ -119,12 +116,10 @@ Enter Payment:
 </select>
 
 <button onclick="savePayment()">Save Payment</button>
-
 </div>
 
 <!-- INVOICE LIST -->
 <div class="card">
-
 <h3>Invoices</h3>
 
 <table>
@@ -132,6 +127,7 @@ Enter Payment:
 <tr>
 <th>Invoice</th>
 <th>Trips</th>
+<th>Weight</th>
 <th>Amount</th>
 <th>Paid</th>
 <th>Balance</th>
@@ -141,12 +137,14 @@ Enter Payment:
 </thead>
 
 <tbody id="invoiceTable"></tbody>
-
 </table>
 
 </div>
 
 </div>
+
+<!-- PRINT -->
+<div id="printBox" class="print-box"></div>
 
 <script>
 
@@ -167,166 +165,106 @@ await loadTransporters()
 await loadInvoices()
 }
 
-/* LOAD TRANSPORTERS */
+/* TRANSPORTERS */
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
 transporters=data||[]
 
-let html='<option value="">Select Transporter</option>'
-transporters.forEach(t=>{
-html+=`<option value="${t.id}">${t.transporter_name}</option>`
-})
-transporterSelect.innerHTML=html
+transporterSelect.innerHTML='<option value="">Select</option>'+
+transporters.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 }
 
-/* LOAD TRIPS */
+/* TRIPS */
 async function loadTrips(){
 
 let id=transporterSelect.value
 if(!id) return
 
-const {data:tripData}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",id)
+const {data}=await supabaseClient.from("trips").select("*").eq("transporter_id",id)
 
-const {data:inv}=await supabaseClient
-.from("transporter_invoices")
-.select("trip_ids")
-
-let usedTrips=[]
-
-inv?.forEach(i=>{
-i.trip_ids.split(",").forEach(t=>usedTrips.push(t))
-})
-
-trips=tripData
-.filter(t=>!usedTrips.includes(t.id))
-.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
+trips=data.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
 
 renderTrips()
 }
 
-/* RENDER TRIPS */
 function renderTrips(){
 
-let html=""
-
-trips.forEach(t=>{
+tripTable.innerHTML=trips.map(t=>{
 let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
-
-html+=`
+return `
 <tr>
 <td><input type="checkbox" value="${t.id}"></td>
 <td>${t.trip_no}</td>
+<td>${t.weight_kg||0}</td>
 <td>₹${amt.toFixed(0)}</td>
-</tr>
-`
-})
-
-tripTable.innerHTML=html
+</tr>`
+}).join("")
 }
 
-/* SELECT ALL */
-function toggleAll(cb){
-document.querySelectorAll("#tripTable input").forEach(c=>c.checked=cb.checked)
-}
-
-/* GENERATE INVOICE */
+/* INVOICE */
 function generateInvoice(){
 
 let checked=document.querySelectorAll("#tripTable input:checked")
-
-if(checked.length==0){
-alert("Select trips")
-return
-}
+if(checked.length==0){alert("Select trips");return}
 
 selectedTrips=[]
-let total=0
+let total=0, totalWeight=0
 
 checked.forEach(c=>{
-let trip=trips.find(t=>t.id==c.value)
-selectedTrips.push(trip)
+let t=trips.find(x=>x.id==c.value)
+selectedTrips.push(t)
 
-let amt=(trip.weight_kg/1000)*(trip.transporter_rate||0)
+let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
 total+=amt
+totalWeight+=Number(t.weight_kg||0)
 })
 
 invoiceAmount=total
 totalAmount.value=total.toFixed(0)
 
 invoicePreview.innerHTML=`
-Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
-<b>Invoice Amount : ₹${total}</b>
+Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
+Weight: ${totalWeight} KG<br>
+<b>Amount: ₹${total}</b>
 `
-}
-
-/* SAVE INVOICE */
-function generateInvoiceNo(){
-return "TINV-"+Math.floor(Math.random()*100000)
 }
 
 async function saveInvoice(){
 
-if(selectedTrips.length==0){
-alert("Generate invoice first")
-return
-}
-
 const {data}=await supabaseClient.from("transporter_invoices").insert({
-invoice_no:generateInvoiceNo(),
+invoice_no:"TINV-"+Math.floor(Math.random()*100000),
 transporter_id:transporterSelect.value,
 trip_ids:selectedTrips.map(t=>t.id).join(","),
 total_amount:invoiceAmount,
 balance_amount:invoiceAmount,
+paid_amount:0,
 status:"Pending"
 }).select().single()
 
 currentInvoice=data
-
-alert("Invoice Created ✅")
-
-loadTrips()
 loadInvoices()
 }
 
-/* SAVE PAYMENT */
+/* PAYMENT */
 async function savePayment(){
 
-if(!currentInvoice){
-alert("Select invoice")
-return
-}
-
 let amount=Number(paidAmount.value)
-let date=paymentDate.value
-let method=paymentMethod.value
-
-if(!amount||!date||!method){
-alert("Fill all fields")
-return
-}
 
 await supabaseClient.from("transporter_payments").insert({
 invoice_id:currentInvoice.id,
-amount,
-payment_date:date,
-payment_method:method
+amount
 })
 
-let newPaid=(currentInvoice.paid_amount||0)+amount
-let newBalance=currentInvoice.total_amount-newPaid
+let paid=(currentInvoice.paid_amount||0)+amount
+let balance=currentInvoice.total_amount-paid
+
+let status="Pending"
+if(balance<=0) status="Paid"
+else if(paid>0) status="Partial"
 
 await supabaseClient.from("transporter_invoices")
-.update({
-paid_amount:newPaid,
-balance_amount:newBalance,
-status:newBalance<=0?"Paid":"Partial"
-})
+.update({paid_amount:paid,balance_amount:balance,status})
 .eq("id",currentInvoice.id)
-
-alert("Payment Saved")
 
 loadInvoices()
 }
@@ -334,27 +272,17 @@ loadInvoices()
 /* LOAD INVOICES */
 async function loadInvoices(){
 
-const {data}=await supabaseClient
-.from("transporter_invoices")
-.select("*")
-.order("created_at",{ascending:false})
-
+const {data}=await supabaseClient.from("transporter_invoices").select("*")
 invoices=data||[]
+
+renderInvoices(invoices)
+}
+
+function renderInvoices(data){
 
 let html=""
 
-for(let i of invoices){
-
-let tripIds=i.trip_ids.split(",")
-
-const {data:tripData}=await supabaseClient
-.from("trips")
-.select("trip_no,route,truck,trip_date")
-.in("id",tripIds)
-
-let tripDetails=tripData.map(t=>
-`${t.trip_no} (${t.route}, ${t.truck}, ${t.trip_date||""})`
-).join("<br>")
+data.forEach(i=>{
 
 let statusClass =
 i.status==="Paid"?"status-paid":
@@ -363,20 +291,64 @@ i.status==="Partial"?"status-partial":"status-pending"
 html+=`
 <tr onclick="selectInvoice('${i.id}')">
 <td>${i.invoice_no}</td>
-<td>${tripDetails}</td>
+<td>${i.trip_ids}</td>
+<td>-</td>
 <td>₹${i.total_amount}</td>
 <td>₹${i.paid_amount||0}</td>
 <td>₹${i.balance_amount}</td>
 <td class="${statusClass}">${i.status}</td>
 <td>
+<button onclick="downloadInvoice('${i.id}',event)">PDF</button>
 <button onclick="editPayment('${i.id}',event)">Edit</button>
 <button class="deleteBtn" onclick="deletePayment('${i.id}',event)">Delete</button>
 </td>
-</tr>
-`
-}
+</tr>`
+})
 
 invoiceTable.innerHTML=html
+}
+
+/* SEARCH */
+function searchInvoices(){
+let q=searchInvoice.value.toLowerCase()
+renderInvoices(invoices.filter(i=>i.invoice_no.toLowerCase().includes(q)))
+}
+
+/* EDIT */
+async function editPayment(id,e){
+e.stopPropagation()
+
+let val=prompt("Enter new paid amount")
+if(!val) return
+
+let inv=invoices.find(i=>i.id==id)
+
+let balance=inv.total_amount-Number(val)
+
+let status="Pending"
+if(balance<=0) status="Paid"
+else if(val>0) status="Partial"
+
+await supabaseClient.from("transporter_invoices")
+.update({
+paid_amount:Number(val),
+balance_amount:balance,
+status
+})
+.eq("id",id)
+
+loadInvoices()
+}
+
+/* DELETE */
+async function deletePayment(id,e){
+e.stopPropagation()
+
+await supabaseClient.from("transporter_invoices")
+.update({paid_amount:0,balance_amount:0,status:"Pending"})
+.eq("id",id)
+
+loadInvoices()
 }
 
 /* SELECT */
@@ -385,47 +357,26 @@ currentInvoice=invoices.find(i=>i.id==id)
 totalAmount.value=currentInvoice.total_amount
 }
 
-/* EDIT PAYMENT */
-async function editPayment(id,e){
+/* PDF */
+function downloadInvoice(id,e){
 e.stopPropagation()
 
-let val=prompt("Enter new paid amount")
+const { jsPDF } = window.jspdf
+let inv=invoices.find(i=>i.id==id)
 
-if(!val) return
+let doc=new jsPDF()
 
-await supabaseClient
-.from("transporter_invoices")
-.update({paid_amount:Number(val)})
-.eq("id",id)
+doc.setFontSize(16)
+doc.text("Varada Nexus Private Limited",20,20)
 
-alert("Updated")
+doc.setFontSize(12)
+doc.text("Invoice: "+inv.invoice_no,20,40)
+doc.text("Amount: ₹"+inv.total_amount,20,50)
+doc.text("Paid: ₹"+(inv.paid_amount||0),20,60)
+doc.text("Balance: ₹"+inv.balance_amount,20,70)
+doc.text("Status: "+inv.status,20,80)
 
-loadInvoices()
-}
-
-/* DELETE PAYMENT */
-async function deletePayment(id,e){
-e.stopPropagation()
-
-if(!confirm("Delete payment?")) return
-
-await supabaseClient
-.from("transporter_payments")
-.delete()
-.eq("invoice_id",id)
-
-await supabaseClient
-.from("transporter_invoices")
-.update({
-paid_amount:0,
-balance_amount:0,
-status:"Pending"
-})
-.eq("id",id)
-
-alert("Deleted")
-
-loadInvoices()
+doc.save(inv.invoice_no+".pdf")
 }
 
 </script>

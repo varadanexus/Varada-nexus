@@ -1,409 +1,232 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Trip Profit Analysis</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+<head>
+<title>Trip Profit Analysis</title>
 
-/* Fix sidebar title */
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-.sidebar h2{
-color:white;
-text-align:center;
-margin-bottom:30px;
-}
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+h2{color:#1f3c88;}
 
-/* Main layout */
+.cards{display:flex;gap:15px;margin-bottom:20px;}
+.card{background:white;padding:15px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);min-width:180px;}
+.card h4{margin:0;color:#777;}
+.card h2{margin:5px 0;color:#1f3c88;}
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+th{background:#eee;}
 
-.main h2{
-color:#1f3c88;
-}
+.profit{color:green;font-weight:bold;}
+.loss{color:red;font-weight:bold;}
+</style>
 
-/* Filters */
+</head>
 
-.filters{
-margin-bottom:15px;
-}
+<body>
 
-select{
-padding:8px;
-margin-right:10px;
-}
+<div id="sidebar-container"></div>
 
-/* Buttons */
-
-button{
-padding:8px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-margin-right:6px;
-}
-
-/* Table */
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-margin-top:15px;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-text-align:left;
-}
-
-th{
-background:#eee;
-}
-
-/* Profit colors */
-
-.profit{
-color:green;
-font-weight:bold;
-}
-
-.loss{
-color:red;
-font-weight:bold;
-}
-
-/* Pagination */
-
-.pagination{
-margin-top:10px;
-}
-
-</style></head><body><!-- SIDEBAR --><div id="sidebar-container"></div><script>
+<script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script><div class="main"><h2>Trip Profit Analysis</h2><div class="filters"><select id="routeFilter"></select>
-<select id="truckFilter"></select>
-<select id="commodityFilter"></select>
+</script>
 
-<button onclick="applyFilters()">Search</button>
-<button onclick="clearFilters()">Clear</button>
-<button onclick="downloadPDF()">Download PDF</button>
+<div class="main">
 
-</div><table><thead>
+<h2>Trip Profit Analysis</h2>
+
+<!-- SUMMARY -->
+<div class="cards">
+<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
+<div class="card"><h4>Total Expenses</h4><h2 id="totalExpenses">₹0</h2></div>
+<div class="card"><h4>Net Profit</h4><h2 id="netProfit">₹0</h2></div>
+<div class="card"><h4>Avg Profit %</h4><h2 id="avgProfit">0%</h2></div>
+</div>
+
+<table>
+<thead>
 <tr>
 <th>Trip No</th>
 <th>Route</th>
 <th>Truck</th>
 <th>Commodity</th>
-<th>Weight</th>
+<th>Weight (MT)</th>
 <th>Freight</th>
 <th>Expenses</th>
 <th>Net Profit</th>
 <th>Profit %</th>
 </tr>
-</thead><tbody id="profitTable"></tbody></table><div class="pagination"><button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
+</thead>
+<tbody id="profitTable"></tbody>
+</table>
 
-</div></div><script>
+</div>
+
+<!-- EXPENSE POPUP -->
+<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5)">
+<div style="background:white;width:400px;margin:120px auto;padding:20px;border-radius:6px">
+<h3 id="popupTitle"></h3>
+<table style="width:100%">
+<tbody id="popupBody"></tbody>
+</table>
+<br>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
-let allTrips=[]
-let filteredTrips=[]
+let trips=[]
 let expenseMap={}
-
-let page=1
-let pageSize=10
-
+let expenseDetails={}
 
 init()
 
-
 async function init(){
 
-const {data}=await supabaseClient.auth.getSession()
+const {data:{session}} = await supabaseClient.auth.getSession()
 
-if(!data.session){
+if(!session){
 window.location.href="login.html"
 return
 }
 
-let authId=data.session.user.id
+const authId=session.user.id
 
-
-/* FIND TRANSPORTER */
-
+/* GET TRANSPORTER */
 const {data:transporter}=await supabaseClient
 .from("transporters")
-.select("*")
+.select("id")
 .eq("auth_id",authId)
 .single()
 
-
 /* GET TRIPS */
-
-const {data:trips}=await supabaseClient
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
 
-
 /* GET EXPENSES */
-
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
 
-
-expenses.forEach(e=>{
+/* BUILD MAP */
+expenses?.forEach(e=>{
 
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-
 expenseMap[e.trip_id]+=Number(e.amount||0)
+
+if(!expenseDetails[e.trip_id]) expenseDetails[e.trip_id]=[]
+expenseDetails[e.trip_id].push(e)
 
 })
 
+trips=tripData||[]
 
-allTrips=trips
-filteredTrips=trips
-
-
-buildFilters()
-renderTable()
+render()
 
 }
 
+function render(){
 
-
-/* BUILD FILTER OPTIONS */
-
-function buildFilters(){
-
-let routes=[...new Set(allTrips.map(t=>t.route))]
-let trucks=[...new Set(allTrips.map(t=>t.truck))]
-let commodities=[...new Set(allTrips.map(t=>t.commodity))]
-
-let routeHTML='<option value="">All Routes</option>'
-let truckHTML='<option value="">All Trucks</option>'
-let commodityHTML='<option value="">All Commodities</option>'
-
-routes.forEach(r=>routeHTML+=`<option>${r}</option>`)
-trucks.forEach(t=>truckHTML+=`<option>${t}</option>`)
-commodities.forEach(c=>commodityHTML+=`<option>${c}</option>`)
-
-document.getElementById("routeFilter").innerHTML=routeHTML
-document.getElementById("truckFilter").innerHTML=truckHTML
-document.getElementById("commodityFilter").innerHTML=commodityHTML
-
-}
-
-
-
-/* APPLY FILTERS */
-
-function applyFilters(){
-
-let route=document.getElementById("routeFilter").value
-let truck=document.getElementById("truckFilter").value
-let commodity=document.getElementById("commodityFilter").value
-
-filteredTrips=allTrips.filter(t=>
-
-(!route || t.route==route) &&
-(!truck || t.truck==truck) &&
-(!commodity || t.commodity==commodity)
-
-)
-
-page=1
-
-renderTable()
-
-}
-
-
-
-/* CLEAR FILTERS */
-
-function clearFilters(){
-
-filteredTrips=allTrips
-
-document.getElementById("routeFilter").value=""
-document.getElementById("truckFilter").value=""
-document.getElementById("commodityFilter").value=""
-
-renderTable()
-
-}
-
-
-
-/* RENDER TABLE */
-
-function renderTable(){
-
-let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageTrips=filteredTrips.slice(start,end)
+let totalFreight=0
+let totalExpenses=0
+let totalProfit=0
 
 let html=""
 
-pageTrips.forEach(t=>{
+trips.forEach(t=>{
 
-let rate=t.transporter_rate || 0
+let weightMT=(t.weight_kg||0)/1000
+let rate=t.transporter_rate||0
 
-let freight=(t.weight_kg/1000)*rate
+let freight=weightMT*rate
+let expense=expenseMap[t.id]||0
+let profit=freight-expense
 
-let expenses=expenseMap[t.id] || 0
+let percent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
 
-let profit=freight-expenses
-
-let profitPercent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
+totalFreight+=freight
+totalExpenses+=expense
+totalProfit+=profit
 
 html+=`
-
-<tr>
+<tr onclick="showExpenses('${t.id}','${t.trip_no}')"
+style="cursor:pointer">
 
 <td>${t.trip_no}</td>
-
 <td>${t.route}</td>
-
 <td>${t.truck}</td>
-
 <td>${t.commodity}</td>
-
-<td>${t.weight_kg}</td>
-
-<td>₹ ${freight.toFixed(2)}</td>
-
-<td>₹ ${expenses.toFixed(2)}</td>
-
-<td class="${profit>=0?'profit':'loss'}">
-₹ ${profit.toFixed(2)}
-</td>
-
-<td>${profitPercent}%</td>
+<td>${weightMT.toFixed(2)}</td>
+<td>₹ ${freight.toFixed(0)}</td>
+<td>₹ ${expense.toFixed(0)}</td>
+<td class="${profit>=0?'profit':'loss'}">₹ ${profit.toFixed(0)}</td>
+<td>${percent}%</td>
 
 </tr>
-
 `
 
 })
 
 document.getElementById("profitTable").innerHTML=html
 
-}
+/* SUMMARY */
+document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
+document.getElementById("totalExpenses").innerText="₹ "+totalExpenses.toFixed(0)
+document.getElementById("netProfit").innerText="₹ "+totalProfit.toFixed(0)
 
-
-
-/* PAGINATION */
-
-function nextPage(){
-
-if(page*pageSize<filteredTrips.length){
-
-page++
-
-renderTable()
+let avg = totalFreight>0 ? (totalProfit/totalFreight)*100 : 0
+document.getElementById("avgProfit").innerText=avg.toFixed(1)+"%"
 
 }
 
-}
+/* POPUP */
 
-function prevPage(){
+function showExpenses(tripId,tripNo){
 
-if(page>1){
+document.getElementById("popup").style.display="block"
+document.getElementById("popupTitle").innerText="Expenses - "+tripNo
 
-page--
+let data=expenseDetails[tripId]||[]
 
-renderTable()
+let html=""
 
-}
-
-}
-
-
-
-/* DOWNLOAD PDF */
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-
-let doc=new jsPDF()
-
-let rows=[]
-
-filteredTrips.forEach(t=>{
-
-let rate=t.transporter_rate || 0
-
-let freight=(t.weight_kg/1000)*rate
-
-let expenses=expenseMap[t.id] || 0
-
-let profit=freight-expenses
-
-let percent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
-
-rows.push([
-t.trip_no,
-t.route,
-t.truck,
-t.commodity,
-t.weight_kg,
-freight.toFixed(2),
-expenses.toFixed(2),
-profit.toFixed(2),
-percent+"%"
-])
-
+if(data.length===0){
+html="<tr><td>No expenses</td></tr>"
+}else{
+data.forEach(e=>{
+html+=`<tr>
+<td>${e.expense_type||"Expense"}</td>
+<td>₹ ${e.amount}</td>
+</tr>`
 })
+}
 
-doc.text("Trip Profit Analysis",14,15)
-
-doc.autoTable({
-head:[["Trip No","Route","Truck","Commodity","Weight","Freight","Expenses","Net Profit","Profit %"]],
-body:rows,
-startY:20
-})
-
-doc.save("trip-profit-report.pdf")
+document.getElementById("popupBody").innerHTML=html
 
 }
 
-
-
-/* LOGOUT */
-
-async function logout(){
-
-await supabaseClient.auth.signOut()
-
-window.location.href="login.html"
-
+function closePopup(){
+document.getElementById("popup").style.display="none"
 }
 
 </script>
+
 </body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script>
 </html>

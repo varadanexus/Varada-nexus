@@ -2,13 +2,10 @@
 <html>
 
 <head>
-<title>Transporter Payments - Varada Nexus ERP</title>
+<title>My Payments - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -22,28 +19,7 @@ margin-bottom:20px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-select,input{
-padding:10px;
-margin:5px;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
-button{
-padding:10px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-.trip-list{
-max-height:200px;
-overflow-y:auto;
-border:1px solid #ddd;
-padding:10px;
-}
+h2{color:#1f3c88;}
 
 table{
 width:100%;
@@ -56,14 +32,10 @@ padding:10px;
 border-bottom:1px solid #ddd;
 }
 
-th{
-background:#eee;
-text-align:left;
-}
+th{background:#eee;}
 
-.deleteBtn{
-background:#d9534f;
-}
+.credit{color:green;font-weight:bold;}
+.debit{color:red;font-weight:bold;}
 </style>
 </head>
 
@@ -72,7 +44,7 @@ background:#d9534f;
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -86,226 +58,111 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
-<script>
 
-async function loadUserInfo(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session) return
-
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-/* SHOW SIDEBAR AFTER LOAD */
-document.getElementById("sidebar").style.display = "block"
-
-}
-
-setTimeout(loadUserInfo, 300)
-
-</script>
 <div class="main">
 
-<h2>Transporter Payments</h2>
+<h2>My Payments</h2>
 
 <div class="card">
-<h3>Record Payment</h3>
-
-<select id="transporterSelect"></select>
-<button onclick="loadTrips()">Load Trips</button>
-
-<div class="trip-list">
-<div>
-<input type="checkbox" id="selectAll" onclick="toggleAllTrips()"> Select All
-</div>
-<div id="tripList"></div>
-</div>
-
-<input id="amount" placeholder="Total Amount" readonly>
-<input type="date" id="paymentDate">
-
-<select id="method">
-<option value="">Method</option>
-<option>Cash</option>
-<option>Bank Transfer</option>
-<option>UPI</option>
-</select>
-
-<input id="remarks" placeholder="Remarks">
-
-<button onclick="savePayment()">Save Payment</button>
-</div>
-
-<div class="card">
-<h3>Payment History</h3>
-
 <table>
 <thead>
 <tr>
 <th>Date</th>
-<th>Transporter</th>
 <th>Trip</th>
 <th>Amount</th>
 <th>Method</th>
 <th>Remarks</th>
-<th>Action</th>
 </tr>
 </thead>
-<tbody id="paymentTable"></tbody>
-</table>
 
+<tbody id="paymentTable"></tbody>
+
+</table>
 </div>
 
 </div>
 
 <script>
 
-let transporters=[]
-let trips=[]
 let payments=[]
 
 init()
 
 async function init(){
-await loadTransporters()
-await loadPayments()
+
+/* 🔐 SESSION */
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
 }
 
-async function loadTransporters(){
+const authId = session.user.id
 
-const {data}=await supabaseClient
+console.log("AUTH:", authId)
+
+/* 🔗 GET TRANSPORTER */
+const {data:transporter,error:terr} = await supabaseClient
 .from("transporters")
-.select("id,transporter_name")
+.select("id, transporter_name")
+.eq("auth_id",authId)
+.single()
 
-transporters=data||[]
-
-let html='<option value="">Select Transporter</option>'
-
-transporters.forEach(t=>{
-html+=`<option value="${t.id}">${t.transporter_name}</option>`
-})
-
-document.getElementById("transporterSelect").innerHTML=html
+if(!transporter){
+alert("Transporter not linked ❌")
+return
 }
 
-async function loadTrips(){
+console.log("TRANSPORTER:", transporter)
 
-let transporterId=document.getElementById("transporterSelect").value
-
-const {data}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",transporterId)
-
-trips=data||[]
-
-let html=""
-
-trips.forEach(t=>{
-let payable=(t.transporter_rate||0)*(t.weight_kg/1000)
-
-html+=`
-<div>
-<input type="checkbox" value="${t.id}" onchange="calculateTotal()">
-${t.trip_no} | ₹${payable.toFixed(0)}
-</div>`
-})
-
-document.getElementById("tripList").innerHTML=html
-}
-
-function calculateTotal(){
-
-let checked=document.querySelectorAll("#tripList input:checked")
-let total=0
-
-checked.forEach(c=>{
-let trip=trips.find(t=>t.id==c.value)
-total+=(trip.transporter_rate||0)*(trip.weight_kg/1000)
-})
-
-document.getElementById("amount").value=total.toFixed(0)
-}
-
-function toggleAllTrips(){
-
-let checked=document.getElementById("selectAll").checked
-
-document.querySelectorAll("#tripList input").forEach(c=>{
-c.checked=checked
-})
-
-calculateTotal()
-}
-
-async function savePayment(){
-
-let transporterId=document.getElementById("transporterSelect").value
-let transporter=transporters.find(t=>t.id==transporterId)
-
-let date=document.getElementById("paymentDate").value
-let method=document.getElementById("method").value
-let remarks=document.getElementById("remarks").value
-
-let checked=document.querySelectorAll("#tripList input:checked")
-
-for(const c of checked){
-
-let trip=trips.find(t=>t.id==c.value)
-
-await supabaseClient.from("transporter_payments").insert({
-trip_id: trip.id,
-transporter_id: transporterId,   // ✅ FIXED
-transporter_name: transporter.transporter_name,
-amount:(trip.transporter_rate||0)*(trip.weight_kg/1000),
-payment_date:date,
-payment_method:method,
-remarks:remarks
-})
-}
-
-alert("Payment saved")
-
-loadPayments()
-}
-
-async function loadPayments(){
-
-const {data}=await supabaseClient
+/* 💰 GET PAYMENTS (ONLY THIS TRANSPORTER) */
+const {data,error} = await supabaseClient
 .from("transporter_payments")
-.select(`*,trips(trip_no),transporters(transporter_name)`)
+.select(`*, trips(trip_no)`)
+.eq("transporter_id", transporter.id)
 .order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+alert("Error loading payments")
+return
+}
 
 payments=data||[]
 
-renderPayments()
+if(payments.length===0){
+document.getElementById("paymentTable").innerHTML =
+"<tr><td colspan='5'>No payments found</td></tr>"
+return
 }
+
+renderPayments()
+
+}
+
+/* 📊 RENDER */
 
 function renderPayments(){
 
 let html=""
 
 payments.forEach(p=>{
+
 html+=`
 <tr>
-<td>${p.payment_date||""}</td>
-<td>${p.transporters?.transporter_name || p.transporter_name}</td>
-<td>${p.trips?.trip_no||""}</td>
-<td>₹${p.amount}</td>
-<td>${p.payment_method||""}</td>
-<td>${p.remarks||""}</td>
-<td><button class="deleteBtn" onclick="deletePayment('${p.id}')">Delete</button></td>
-</tr>`
+<td>${p.payment_date || ""}</td>
+<td>${p.trips?.trip_no || ""}</td>
+<td class="credit">₹ ${Number(p.amount).toFixed(0)}</td>
+<td>${p.payment_method || ""}</td>
+<td>${p.remarks || ""}</td>
+</tr>
+`
+
 })
 
-document.getElementById("paymentTable").innerHTML=html
-}
+document.getElementById("paymentTable").innerHTML = html
 
-async function deletePayment(id){
-await supabaseClient.from("transporter_payments").delete().eq("id",id)
-loadPayments()
 }
 
 </script>

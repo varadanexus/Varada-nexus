@@ -6,6 +6,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -427,45 +428,81 @@ e.stopPropagation()
 const { jsPDF } = window.jspdf
 let inv=invoices.find(i=>i.id==id)
 
+/* 🔥 GET TRIP DETAILS */
+let tripIds = inv.trip_ids.split(",")
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select("trip_no,route,truck,trip_date,weight_kg,transporter_rate")
+.in("id",tripIds)
+
+/* CALCULATIONS */
+let totalWeight = 0
+let tableRows = []
+
+tripData.forEach(t=>{
+let mt = (t.weight_kg||0)/1000
+let amount = mt * (t.transporter_rate||0)
+
+totalWeight += mt
+
+tableRows.push([
+t.trip_no,
+t.route || "-",
+t.truck || "-",
+t.trip_date || "-",
+(mt.toFixed(2)),
+("₹ "+amount.toFixed(2))
+])
+})
+
+/* PDF START */
 let doc=new jsPDF()
+
+/* 🔥 LOGO (PUT logo.png in same folder) */
+doc.addImage("images/logo.png","PNG",15,10,20,20)
 
 /* HEADER */
 doc.setFont("helvetica","bold")
-doc.setFontSize(18)
-doc.text("VARADA NEXUS PRIVATE LIMITED",105,20,null,null,"center")
+doc.setFontSize(16)
+doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
 
 doc.setFont("helvetica","normal")
 doc.setFontSize(11)
-doc.text("Transporter Invoice",105,28,null,null,"center")
+doc.text("Transporter Invoice",40,25)
 
-/* INVOICE DETAILS */
-doc.setFontSize(12)
+/* INVOICE INFO */
+doc.text("Invoice No : "+inv.invoice_no,15,40)
+doc.text("Status     : "+inv.status,15,47)
 
-doc.text(`Invoice No : ${inv.invoice_no}`,20,45)
-doc.text(`Status     : ${inv.status}`,20,52)
+/* TABLE HEADER */
+let startY = 60
 
-/* BOX */
-doc.setDrawColor(0)
-doc.rect(15,60,180,40)
+doc.autoTable({
+startY: startY,
+head: [["Trip","Route","Truck","Date","Weight (MT)","Amount"]],
+body: tableRows,
+theme: "grid",
+styles: {fontSize:10}
+})
 
-/* AMOUNTS */
+/* TOTALS */
+let finalY = doc.lastAutoTable.finalY + 10
+
 doc.setFont("helvetica","bold")
-doc.text("Total Amount :",20,75)
-doc.text("Paid         :",20,85)
-doc.text("Balance      :",20,95)
 
-doc.setFont("helvetica","normal")
-doc.text(`₹ ${Number(inv.total_amount).toFixed(2)}`,80,75)
-doc.text(`₹ ${Number(inv.paid_amount||0).toFixed(2)}`,80,85)
-doc.text(`₹ ${Number(inv.balance_amount).toFixed(2)}`,80,95)
+doc.text("Total Weight (MT) : "+ totalWeight.toFixed(2),15,finalY)
+doc.text("Total Amount      : ₹ "+ Number(inv.total_amount).toFixed(2),15,finalY+7)
+doc.text("Paid              : ₹ "+ Number(inv.paid_amount||0).toFixed(2),15,finalY+14)
+doc.text("Balance           : ₹ "+ Number(inv.balance_amount).toFixed(2),15,finalY+21)
 
 /* FOOTER */
+doc.setFont("helvetica","normal")
 doc.setFontSize(10)
-doc.text("This is a system generated invoice.",20,120)
+doc.text("This is a system generated invoice.",15,finalY+35)
 
 doc.save(inv.invoice_no+".pdf")
 }
-
 </script>
 
 </body>

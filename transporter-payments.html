@@ -1,20 +1,20 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-<title>My Payments - Varada Nexus</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
-<style>
-
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-
-h2{color:#1f3c88;}
-
+<!DOCTYPE html>  
+<html>  
+  
+<head>  
+<title>My Payments - Varada Nexus</title>  
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>  
+  
+<style>  
+  
+body{margin:0;font-family:Arial;background:#f4f6f9;}  
+.main{margin-left:220px;padding:30px;}  
+  
+h2{color:#1f3c88;}  
+  
 .cards{
 display:flex;
 gap:15px;
@@ -87,135 +87,115 @@ border-radius:6px;
 margin-top:15px;
 }
 
-</style>
+</style>  
+  
+</head>  
+  
+<body>  
+  
+<div id="sidebar-container"></div>  
+  
+<script>  
+fetch("transporter-sidebar.html")  
+.then(res=>res.text())  
+.then(data=>{  
+document.getElementById("sidebar-container").innerHTML=data  
+})  
+</script>  
 
-</head>
-
-<body>
-
-<div id="sidebar-container"></div>
-
-<script>
-fetch("transporter-sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
-})
-</script>
-<script>
-
-async function loadUserInfo(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session) return
-
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-/* SHOW SIDEBAR AFTER LOAD */
-document.getElementById("sidebar").style.display = "block"
-
-}
-
-setTimeout(loadUserInfo, 300)
-
-</script>
-<script>
-async function loadUserInfo(){
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-const email = session.user.email
-document.getElementById("userName").innerText = email.split("@")[0]
-document.getElementById("sidebar").style.display = "block"
-}
-setTimeout(loadUserInfo,300)
-</script>
-
-<div class="main">
-
-<h2>My Payments Dashboard</h2>
-
-<button onclick="downloadPDF()">Download PDF</button>
-
-<!-- 🔥 CARDS -->
-<div class="cards">
-<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
-<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
-<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>
-<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>
-</div>
-
-<!-- 🔍 FILTERS -->
-<div class="filters">
-
-From <input type="date" id="fromDate">
-To <input type="date" id="toDate">
-
-<select id="statusFilter">
-<option value="">All</option>
-<option value="Paid">Paid</option>
-<option value="Pending">Pending</option>
-</select>
-
-<label>
-<input type="checkbox" id="unpaidOnly"> Unpaid Only
-</label>
-
-<select id="pageSize" onchange="changePageSize()">
-<option value="12">12</option>
-<option value="25">25</option>
-<option value="50">50</option>
-<option value="100">100</option>
-</select>
-
-<button onclick="applyFilter()">Search</button>
-<button onclick="clearFilter()">Clear</button>
-
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Trip</th>
-<th>Freight</th>
-<th>Paid</th>
-<th>Balance</th>
-<th>Status</th>
-<th>Progress</th>
-</tr>
-</thead>
-<tbody id="paymentTable"></tbody>
-</table>
-
-<div class="pagination">
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-</div>
-
-</div>
-
-<!-- 📄 POPUP -->
-<div id="popup" class="popup">
-<div class="popup-content">
-<h3 id="popupTitle"></h3>
-<div id="popupBody"></div>
-<br>
-<button onclick="closePopup()">Close</button>
-</div>
-</div>
-
-<script>
-
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+<script>  
+async function loadUserInfo(){  
+const {data:{session}} = await supabaseClient.auth.getSession()  
+if(!session) return  
+const email = session.user.email  
+document.getElementById("userName").innerText = email.split("@")[0]  
+document.getElementById("sidebar").style.display = "block"  
+}  
+setTimeout(loadUserInfo,300)  
+</script>  
+  
+<div class="main">  
+  
+<h2>My Payments Dashboard</h2>  
+  
+<button onclick="downloadPDF()">Download PDF</button>  
+  
+<div class="cards">  
+<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>  
+<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>  
+<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>  
+<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>  
+</div>  
+  
+<div class="filters">  
+  
+From <input type="date" id="fromDate">  
+To <input type="date" id="toDate">  
+  
+<select id="statusFilter">  
+<option value="">All</option>  
+<option value="Paid">Paid</option>  
+<option value="Pending">Pending</option>  
+</select>  
+  
+<label>  
+<input type="checkbox" id="unpaidOnly"> Unpaid Only  
+</label>  
+  
+<select id="pageSize" onchange="changePageSize()">  
+<option value="12">12</option>  
+<option value="25">25</option>  
+<option value="50">50</option>  
+<option value="100">100</option>  
+</select>  
+  
+<button onclick="applyFilter()">Search</button>  
+<button onclick="clearFilter()">Clear</button>  
+  
+</div>  
+  
+<table>  
+<thead>  
+<tr>  
+<th>Trip</th>  
+<th>Freight</th>  
+<th>Expenses</th>  
+<th>Paid</th>  
+<th>Balance</th>  
+<th>Status</th>  
+<th>Progress</th>  
+</tr>  
+</thead>  
+<tbody id="paymentTable"></tbody>  
+</table>  
+  
+<div class="pagination">  
+<button onclick="prevPage()">Previous</button>  
+<button onclick="nextPage()">Next</button>  
+</div>  
+  
+</div>  
+  
+<div id="popup" class="popup">  
+<div class="popup-content">  
+<h3 id="popupTitle"></h3>  
+<div id="popupBody"></div>  
+<br>  
+<button onclick="closePopup()">Close</button>  
+</div>  
+</div>  
+  
+<script>  
+  
+const supabaseClient = supabase.createClient(  
+"https://ticsgbtxfhhihamejiss.supabase.co",  
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24i","...ignored continuation..."  
+)  
 
 let fullData=[]
 let filteredData=[]
 let paymentsData=[]
+let expenseMap={}
 
 let page=1
 let pageSize=12
@@ -238,7 +218,6 @@ const {data:trips} = await supabaseClient
 .select("*")
 .eq("transporter_id", transporter.id)
 
-/* 🔥 SORT LATEST FIRST */
 trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
 
 let tripIds=trips.map(t=>t.id)
@@ -250,6 +229,15 @@ const {data:payments} = await supabaseClient
 
 paymentsData=payments||[]
 
+const {data:expenses} = await supabaseClient
+.from("expenses")
+.select("*")
+
+expenses.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
+})
+
 let paymentMap={}
 payments.forEach(p=>{
 if(!paymentMap[p.trip_id]) paymentMap[p.trip_id]=0
@@ -258,25 +246,34 @@ paymentMap[p.trip_id]+=Number(p.amount)
 
 let totalFreight=0,totalPaid=0,totalBalance=0
 
-fullData=trips.map(t=>{
+fullData=await Promise.all(trips.map(async t=>{
 
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-let paid=paymentMap[t.id]||0
-let balance=freight-paid
+let expense=expenseMap[t.id]||0
+let net=freight-expense
 
-totalFreight+=freight
+let paid=paymentMap[t.id]||0
+let balance=net-paid
+
+/* AUTO MARK PAID */
+if(paid>=net && t.status!=="Paid"){
+await supabaseClient.from("trips").update({status:"Paid"}).eq("id",t.id)
+}
+
+totalFreight+=net
 totalPaid+=paid
 totalBalance+=balance
 
 return{
 ...t,
 freight,
+expense,
 paid,
 balance,
-status:paid>=freight?"Paid":"Pending"
+status:paid>=net?"Paid":"Pending"
 }
 
-})
+}))
 
 filteredData=[...fullData]
 
@@ -301,7 +298,7 @@ let html=""
 
 data.forEach(t=>{
 
-let percent=(t.paid/t.freight)*100||0
+let percent=(t.paid/(t.freight-t.expense))*100||0
 let overdue = t.status==="Pending" && new Date(t.trip_date)<new Date()
 
 html+=`
@@ -310,6 +307,7 @@ html+=`
 style="cursor:pointer;color:#1f3c88;font-weight:bold">${t.trip_no}</td>
 
 <td>₹ ${t.freight.toFixed(0)}</td>
+<td>₹ ${t.expense.toFixed(0)}</td>
 <td>₹ ${t.paid.toFixed(0)}</td>
 <td>₹ ${t.balance.toFixed(0)}</td>
 
@@ -351,10 +349,6 @@ renderTable()
 
 function clearFilter(){
 filteredData=[...fullData]
-document.getElementById("fromDate").value=""
-document.getElementById("toDate").value=""
-document.getElementById("statusFilter").value=""
-document.getElementById("unpaidOnly").checked=false
 renderTable()
 }
 
@@ -388,8 +382,10 @@ data.forEach(p=>{
 html+=`<div>${p.payment_date} - ₹${p.amount} (${p.payment_method})</div>`
 })
 
+html+=`<hr><b>Expenses:</b> ₹ ${expenseMap[tripId]||0}`
+
 document.getElementById("popupTitle").innerText="Payments - "+tripNo
-document.getElementById("popupBody").innerHTML=html||"No payments"
+document.getElementById("popupBody").innerHTML=html||"No data"
 
 document.getElementById("popup").style.display="block"
 }
@@ -397,8 +393,6 @@ document.getElementById("popup").style.display="block"
 function closePopup(){
 document.getElementById("popup").style.display="none"
 }
-
-/* PDF */
 
 function downloadPDF(){
 
@@ -412,6 +406,7 @@ filteredData.forEach(r=>{
 rows.push([
 r.trip_no,
 r.freight.toFixed(0),
+r.expense.toFixed(0),
 r.paid.toFixed(0),
 r.balance.toFixed(0),
 r.status
@@ -421,7 +416,7 @@ r.status
 doc.text("My Payments Report",14,15)
 
 doc.autoTable({
-head:[["Trip","Freight","Paid","Balance","Status"]],
+head:[["Trip","Freight","Expenses","Paid","Balance","Status"]],
 body:rows,
 startY:20
 })
@@ -430,7 +425,7 @@ doc.save("my-payments.pdf")
 
 }
 
-</script>
-
-</body>
+</script>  
+  
+</body>  
 </html>

@@ -321,6 +321,41 @@ doc.save("ledger.pdf")
 }
 
 </script>
+<script>
 
+/* LOAD USER INTO SIDEBAR */
+async function loadUserInfo(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+document.getElementById("sidebar").style.display = "block"
+
+}
+
+/* LOGOUT FUNCTION (PAGE LEVEL) */
+async function logout(){
+
+let confirmLogout = confirm("Are you sure you want to logout?")
+if(!confirmLogout) return
+
+await supabaseClient.auth.signOut()
+
+window.location.href = "login.html"
+
+}
+
+/* INIT */
+document.addEventListener("DOMContentLoaded", loadUserInfo)
+
+</script>
 </body>
 </html>

@@ -49,6 +49,7 @@ await applyMenuRBAC()
 document.getElementById("sidebar").style.display="block"
 
 })
+
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -143,7 +144,6 @@ await loadTrucks()
 await loadCommodities()
 await loadClients()
 
-/* 🔥 RBAC FIRST */
 const canCreate = await checkPermission("trips.html","create")
 if(!canCreate){
 document.getElementById("createCard").style.display="none"
@@ -204,9 +204,78 @@ loadTrips()
 
 /* ================= TABLE ================= */
 
+/* 🔥 FINAL FIXED FUNCTION */
 async function loadTrips(){
-const {data}=await supabaseClient.from("trips").select("*").order("created_at",{ascending:false})
-trips=data||[]
+
+const { data:{session} } = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+
+/* GET USER */
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* GET ROLES */
+const {data:userRoles} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+
+let roleIds = (userRoles || []).map(r=>r.role_id)
+
+/* GET ROLE NAMES */
+const {data:rolesData} = await supabaseClient
+.from("roles")
+.select("role_name")
+.in("id", roleIds)
+
+let roleNames = (rolesData || []).map(r=>r.role_name.toLowerCase())
+
+const isTransporter = roleNames.some(r =>
+r.includes("customer") || r.includes("transporter")
+)
+
+/* 🚀 FILTER */
+
+if(isTransporter){
+
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("id")
+.eq("auth_id", authId)
+.single()
+
+if(!transporter){
+trips=[]
+renderTrips()
+return
+}
+
+const {data} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id", transporter.id)
+.order("created_at",{ascending:false})
+
+trips = data || []
+
+}else{
+
+const {data} = await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+
+trips = data || []
+
+}
+
 await renderTrips()
 }
 

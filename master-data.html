@@ -310,13 +310,15 @@ const {data:exists} = await supabaseClient
 .select("*")
 .eq("transporter_name",name)
 
-if(exists.length){
+if(exists && exists.length){
 alert("Transporter already exists")
 return
 }
 
-/* INSERT */
-await supabaseClient.from("transporters").insert({
+/* 🔥 INSERT WITH ERROR CHECK */
+const {error} = await supabaseClient
+.from("transporters")
+.insert({
 transporter_name:name,
 phone:phone,
 gst_number:document.getElementById("tGST").value,
@@ -329,6 +331,16 @@ ifsc_code:document.getElementById("tIFSC").value,
 status:document.getElementById("tStatus").value
 })
 
+/* 🔥 HANDLE ERROR */
+if(error){
+console.error(error)
+alert("Error: " + error.message)
+return
+}
+
+/* SUCCESS */
+alert("Saved ✅")
+
 /* CLEAR */
 tName.value=""
 tPhone.value=""
@@ -338,12 +350,12 @@ tPAN.value=""
 tAadhar.value=""
 tBank.value=""
 tAccount.value=""
-document.getElementById("tStatus").value = "Active"
-
-alert("Saved ✅")
+tIFSC.value=""
+document.getElementById("tStatus").value="Active"
 
 loadTransporters()
 }
+
 async function addRoute(){
 if(!origin.value || !destination.value){
 alert("Enter both fields")

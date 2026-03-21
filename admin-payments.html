@@ -78,8 +78,6 @@ document.getElementById("sidebar").style.display="block"
 <th>Select</th>
 <th>Trip</th>
 <th>Balance</th>
-<th>Pay Amount</th>
-<th>Remaining</th>
 </tr>
 </thead>
 
@@ -91,15 +89,28 @@ document.getElementById("sidebar").style.display="block"
 
 </div>
 
+<!-- ✅ NEW: INVOICE SECTION -->
+<div class="card">
+
+<h3>Generate Invoice</h3>
+
+<button onclick="generateInvoice()">Generate Invoice</button>
+
+<p id="invoicePreview"></p>
+
+<button onclick="saveInvoice()">Save Invoice</button>
+
+</div>
+
 <div class="card">
 
 <h3>Payment</h3>
 
-Total Selected:
+Invoice Amount:
 <input id="totalAmount" readonly>
 
 Enter Payment:
-<input id="paidAmount" oninput="autoDistribute()">
+<input id="paidAmount">
 
 <input type="date" id="paymentDate">
 
@@ -124,8 +135,7 @@ Enter Payment:
 <thead>
 <tr>
 <th>Date</th>
-<th>Trip</th>
-<th>Transporter</th>
+<th>Invoice</th>
 <th>Amount</th>
 <th>Method</th>
 <th>Remarks</th>
@@ -147,6 +157,9 @@ const supabaseClient = supabase.createClient(
 )
 
 let transporters=[], trips=[], payments=[]
+let selectedTrips=[]
+let invoiceAmount=0
+let currentInvoice=null
 
 init()
 
@@ -176,156 +189,136 @@ async function loadTrips(){
 let id=transporterSelect.value
 if(!id) return
 
-const {data:tripData}=await supabaseClient
+const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",id)
 
-const {data:payData}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-
-payments=payData||[]
-
-trips=tripData||[]
+trips=data||[]
 
 renderTrips()
-
 }
 
 /* RENDER TRIPS */
 function renderTrips(){
 
 let html=""
-let total=0
 
 trips.forEach(t=>{
 
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
 
-let paid = payments
-.filter(p=>p.trip_id==t.id)
-.reduce((s,p)=>s+Number(p.amount||0),0)
-
-let balance=freight-paid
-
-if(balance<=0) return
-
-total+=balance
-
 html+=`
 <tr>
-<td><input type="checkbox" value="${t.id}" onchange="updateTotal()"></td>
+<td><input type="checkbox" value="${t.id}"></td>
 <td>${t.trip_no}</td>
-<td>₹${balance.toFixed(0)}</td>
-<td><input type="number" class="payInput" data-balance="${balance}" value="${balance}" oninput="updateRemaining(this)"></td>
-<td class="remain">${balance.toFixed(0)}</td>
+<td>₹${freight.toFixed(0)}</td>
 </tr>
 `
 })
 
 tripTable.innerHTML=html
-
 }
 
 /* SELECT ALL */
 function toggleAll(cb){
-document.querySelectorAll("#tripTable input[type=checkbox]").forEach(c=>c.checked=cb.checked)
-updateTotal()
+document.querySelectorAll("#tripTable input").forEach(c=>c.checked=cb.checked)
 }
 
-/* TOTAL */
-function updateTotal(){
+/* GENERATE INVOICE */
+function generateInvoice(){
 
+let checked=document.querySelectorAll("#tripTable input:checked")
+
+if(checked.length==0){
+alert("Select trips")
+return
+}
+
+selectedTrips=[]
 let total=0
 
-document.querySelectorAll("#tripTable input[type=checkbox]:checked").forEach(c=>{
-let row=c.closest("tr")
-let amt=row.querySelector(".payInput").value
-total+=Number(amt||0)
+checked.forEach(c=>{
+let trip=trips.find(t=>t.id==c.value)
+selectedTrips.push(trip)
+
+let freight=(trip.weight_kg/1000)*(trip.transporter_rate||0)
+total+=freight
 })
 
+invoiceAmount=total
 totalAmount.value=total.toFixed(0)
 
-}
-
-/* AUTO DISTRIBUTE */
-function autoDistribute(){
-
-let amount=Number(paidAmount.value||0)
-
-let selected=[...document.querySelectorAll("#tripTable input[type=checkbox]:checked")]
-
-selected.forEach(c=>{
-let row=c.closest("tr")
-let balance=Number(row.querySelector(".payInput").dataset.balance)
-
-let pay=Math.min(balance,amount)
-
-row.querySelector(".payInput").value=pay
-
-updateRemaining(row.querySelector(".payInput"))
-
-amount-=pay
-})
-
-updateTotal()
+invoicePreview.innerHTML=`
+Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
+<b>Invoice Amount : ₹${total}</b>
+`
 
 }
 
-/* REMAINING */
-function updateRemaining(input){
+/* SAVE INVOICE */
+function generateInvoiceNo(){
+return "TINV-"+Math.floor(Math.random()*100000)
+}
 
-let balance=Number(input.dataset.balance)
-let val=Number(input.value||0)
+async function saveInvoice(){
 
-let remain=balance-val
+if(selectedTrips.length==0){
+alert("Generate invoice first")
+return
+}
 
-input.closest("tr").querySelector(".remain").innerText=remain.toFixed(0)
+const {data}=await supabaseClient.from("transporter_invoices").insert({
+invoice_no:generateInvoiceNo(),
+transporter_id:transporterSelect.value,
+trip_ids:selectedTrips.map(t=>t.id).join(","),
+total_amount:invoiceAmount,
+balance_amount:invoiceAmount
+}).select().single()
 
-updateTotal()
+currentInvoice=data
+
+alert("Invoice Created ✅")
 
 }
 
-/* SAVE */
+/* SAVE PAYMENT */
 async function savePayment(){
 
+if(!currentInvoice){
+alert("Create invoice first")
+return
+}
+
+let amount=Number(paidAmount.value)
 let date=paymentDate.value
 let method=paymentMethod.value
 
-if(!date||!method){ alert("Enter date & method"); return }
-
-let rows=document.querySelectorAll("#tripTable tr")
-
-for(let r of rows){
-
-let cb=r.querySelector("input[type=checkbox]")
-if(!cb.checked) continue
-
-let amount=r.querySelector(".payInput").value
+if(!amount||!date||!method){
+alert("Fill all fields")
+return
+}
 
 await supabaseClient.from("transporter_payments").insert({
-trip_id:cb.value,
-amount:Number(amount),
+invoice_id:currentInvoice.id,
+amount:amount,
 payment_date:date,
 payment_method:method,
 remarks:remarks.value
 })
 
-/* LEDGER ENTRY */
-await supabaseClient.from("transporter_ledger").insert({
-trip_id:cb.value,
-amount:Number(amount),
-type:"DEBIT",
-remarks:"Payment"
+let newPaid=(currentInvoice.paid_amount||0)+amount
+let newBalance=currentInvoice.total_amount-newPaid
+
+await supabaseClient.from("transporter_invoices")
+.update({
+paid_amount:newPaid,
+balance_amount:newBalance,
+status:newBalance<=0?"Paid":"Partial"
 })
+.eq("id",currentInvoice.id)
 
-}
-
-alert("Payment Saved")
-
-loadTrips()
-loadPayments()
+alert("Payment Saved ✅")
 
 }
 
@@ -334,7 +327,7 @@ async function loadPayments(){
 
 const {data}=await supabaseClient
 .from("transporter_payments")
-.select("*, trips(trip_no), transporters(transporter_name)")
+.select("*, transporter_invoices(invoice_no)")
 .order("created_at",{ascending:false})
 
 let html=""
@@ -343,8 +336,7 @@ data?.forEach(p=>{
 html+=`
 <tr>
 <td>${p.payment_date}</td>
-<td>${p.trips?.trip_no||""}</td>
-<td>${p.transporters?.transporter_name||""}</td>
+<td>${p.transporter_invoices?.invoice_no||""}</td>
 <td>₹${p.amount}</td>
 <td>${p.payment_method}</td>
 <td>${p.remarks||""}</td>

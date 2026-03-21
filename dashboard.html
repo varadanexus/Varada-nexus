@@ -91,21 +91,20 @@ const supabaseClient = supabase.createClient(
 <script>
 
 /* LOAD SIDEBAR + RBAC */
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* WAIT FOR DOM */
-await new Promise(r => setTimeout(r, 200))
-
 await initSidebar()
 
-/* APPLY MENU RBAC */
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
+
+/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+document.getElementById("sidebar").style.display="block"
+
 })
 
 /* SIDEBAR USER + ROLE */

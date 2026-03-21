@@ -113,20 +113,31 @@ r.includes("customer") || r.includes("transporter")
 
 if(isTransporter){
 
-/* ✅ ONLY transporter allowed pages */
+let cleanPage = page?.toLowerCase().trim()
+
+/* fallback if empty */
+if(!cleanPage || cleanPage === ""){
+cleanPage = "transporter-dashboard.html"
+}
+
+/* ALLOWED PAGES */
 const allowedTransporterPages = [
 "transporter-dashboard.html",
 "transporter-trips.html",
 "transporter-ledger.html",
 "transporter-profit.html"
 ]
-if(!allowedTransporterPages.includes(page)){
+
+/* 🔥 DEBUG (keep temporarily) */
+console.log("PAGE:", cleanPage)
+
+/* CHECK */
+if(!allowedTransporterPages.some(p => cleanPage.includes(p))){
 window.location.href = "transporter-dashboard.html"
 }
 
 return
 }
-
 /* ============================= */
 /* 🔐 STAFF RBAC (UNCHANGED) */
 /* ============================= */

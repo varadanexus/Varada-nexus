@@ -325,10 +325,9 @@ popup.style.display="none"
 }
 
 </script>
+<script>
 
-</bo<script>
-
-/* LOAD USER INTO SIDEBAR */
+/* LOAD USER */
 async function loadUserInfo(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -346,7 +345,7 @@ document.getElementById("sidebar").style.display = "block"
 
 }
 
-/* LOGOUT FUNCTION (PAGE LEVEL) */
+/* LOGOUT */
 async function logout(){
 
 let confirmLogout = confirm("Are you sure you want to logout?")
@@ -360,6 +359,7 @@ window.location.href = "login.html"
 
 /* INIT */
 document.addEventListener("DOMContentLoaded", loadUserInfo)
-  </script>
-</script></body>
+
+</script>
+</body>
 </html>

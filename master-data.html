@@ -393,8 +393,9 @@ async function loadTransporters(){
 const {data}=await supabaseClient
 .from("transporters")
 .select("*")
-transporterData = data || []
 .order("created_at",{ascending:false})
+
+transporterData = data || []
 
 let html="",dd='<option>Select</option>'
 
@@ -460,7 +461,11 @@ html+=`
 <td>${t.status||"Active"}</td>
 <td>${t.created_at?.split("T")[0]}</td>
 <td>-</td>
-<td></td>
+
+<td>
+<button onclick="editTransporter('${t.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
+</td>
 </tr>`
 })
 
@@ -515,7 +520,31 @@ commodityTable.innerHTML=html
 /* DELETE */
 
 async function deleteClient(id){await supabaseClient.from("clients").delete().eq("id",id);loadClients()}
-async function deleteTransporter(id){await supabaseClient.from("transporters").delete().eq("id",id);loadTransporters()}
+async function deleteTransporter(id){
+
+if(!confirm("Delete transporter?")) return
+
+/* CHECK USAGE */
+const {count:truckCount} = await supabaseClient
+.from("trucks")
+.select("*",{count:"exact",head:true})
+.eq("transporter_id",id)
+
+if(truckCount > 0){
+alert("Cannot delete: transporter has trucks")
+return
+}
+
+/* DELETE */
+await supabaseClient
+.from("transporters")
+.delete()
+.eq("id",id)
+
+alert("Deleted ✅")
+
+loadTransporters()
+}
 async function deleteRoute(id){await supabaseClient.from("routes").delete().eq("id",id);loadRoutes()}
 async function deleteTruck(id){await supabaseClient.from("trucks").delete().eq("id",id);loadTrucks()}
 async function deleteCommodity(id){await supabaseClient.from("commodities").delete().eq("id",id);loadCommodities()}
@@ -529,16 +558,20 @@ const {data:t} = await supabaseClient
 .single()
 
 let name = prompt("Name",t.transporter_name)
-if(!name) return
+let phone = prompt("Phone",t.phone)
+let gst = prompt("GST",t.gst_number)
 
 await supabaseClient
 .from("transporters")
-.update({transporter_name:name})
+.update({
+transporter_name:name,
+phone:phone,
+gst_number:gst
+})
 .eq("id",id)
 
 alert("Updated ✅")
 loadTransporters()
-
 }
   
 /* INIT */

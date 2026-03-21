@@ -321,7 +321,7 @@ tPAN.value=""
 tAadhar.value=""
 tBank.value=""
 tAccount.value=""
-tIFSC.value=""
+document.getElementById("tStatus").value = "Active"
 
 alert("Saved ✅")
 
@@ -399,7 +399,7 @@ transporterData = data || []
 
 let html="",dd='<option>Select</option>'
 
-for(let t of data){
+for(let t of (data || [])){
 
 /* TRUCK COUNT */
 const {count} = await supabaseClient
@@ -441,8 +441,10 @@ function filterTransporters(){
 let q = document.getElementById("searchTransporter").value.toLowerCase()
 
 let filtered = transporterData.filter(t=>
-t.transporter_name.toLowerCase().includes(q) ||
-(t.phone||"").includes(q)
+(t.transporter_name||"").toLowerCase().includes(q) ||
+(t.phone||"").includes(q) ||
+(t.gst_number||"").toLowerCase().includes(q) ||
+(t.status||"").toLowerCase().includes(q)
 )
 
 renderFilteredTransporters(filtered)

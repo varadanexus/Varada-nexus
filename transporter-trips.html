@@ -37,6 +37,11 @@ th{background:#eee;}
 .profit{color:green;font-weight:bold;}
 .loss{color:red;font-weight:bold;}
 
+/* STATUS COLORS */
+.status-green{color:green;font-weight:bold;}
+.status-orange{color:#e67e22;font-weight:bold;}
+.status-blue{color:#3498db;font-weight:bold;}
+
 .popup{
 display:none;
 position:fixed;
@@ -73,7 +78,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <h2>My Trips</h2>
 
-<!-- ✅ TOTALS -->
+<!-- TOTALS -->
 <div class="cards">
 <div class="card"><h4>Total Trips</h4><h2 id="totalTrips">0</h2></div>
 <div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
@@ -103,7 +108,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 </div>
 
-<!-- ✅ EXPENSE POPUP -->
+<!-- EXPENSE POPUP -->
 <div id="expensePopup" class="popup">
 <div class="popup-content">
 <h3 id="popupTitle"></h3>
@@ -120,7 +125,7 @@ document.getElementById("sidebar-container").innerHTML=data
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
 let expensesData = []
@@ -138,7 +143,7 @@ return
 
 const authId = session.user.id
 
-/* 🔗 GET TRANSPORTER */
+/* GET TRANSPORTER */
 const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("id")
@@ -150,7 +155,7 @@ document.getElementById("message").innerText="Transporter not linked ❌"
 return
 }
 
-/* 🚚 GET TRIPS */
+/* GET TRIPS */
 const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
@@ -162,7 +167,7 @@ document.getElementById("message").innerText="No trips found"
 return
 }
 
-/* 💰 GET EXPENSES */
+/* GET EXPENSES */
 const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
@@ -176,7 +181,7 @@ if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount || 0)
 })
 
-/* 🔢 TOTALS */
+/* TOTALS */
 let totalTrips = trips.length
 let totalFreight = 0
 let totalExpenses = 0
@@ -200,14 +205,14 @@ html += `
 style="cursor:pointer;color:#1f3c88;font-weight:bold">
 ${t.trip_no || ""}
 </td>
-<td>${t.route || ""}</td>
-<td>${t.truck || ""}</td>
-<td>${t.commodity || ""}</td>
+<td>${t.route || "-"}</td>
+<td>${t.truck || "-"}</td>
+<td>${t.commodity || "-"}</td>
 <td>${weightMT.toFixed(2)}</td>
 <td>${rate}</td>
 <td>₹ ${expense}</td>
-<td>${t.trip_date || ""}</td>
-<td>${t.status || ""}</td>
+<td>${formatDate(t.trip_date)}</td>
+<td class="${getStatusClass(t.status)}">${t.status || "-"}</td>
 <td class="${profit>=0 ? 'profit' : 'loss'}">₹ ${profit.toFixed(2)}</td>
 </tr>
 `
@@ -215,7 +220,7 @@ ${t.trip_no || ""}
 
 document.getElementById("tripTable").innerHTML = html
 
-/* ✅ SET TOTALS */
+/* SET TOTALS */
 document.getElementById("totalTrips").innerText = totalTrips
 document.getElementById("totalFreight").innerText = "₹ " + totalFreight.toFixed(0)
 document.getElementById("totalExpenses").innerText = "₹ " + totalExpenses.toFixed(0)
@@ -223,8 +228,31 @@ document.getElementById("totalProfit").innerText = "₹ " + (totalFreight-totalE
 
 }
 
-/* 🔍 POPUP */
+/* DATE FORMAT */
+function formatDate(dateStr){
+if(!dateStr) return "-"
+let d = new Date(dateStr)
+return d.toLocaleDateString("en-GB",{
+day:"2-digit",month:"short",year:"numeric"
+})
+}
 
+/* STATUS COLOR */
+function getStatusClass(status){
+
+if(!status) return ""
+
+status = status.toLowerCase()
+
+if(status.includes("complete")) return "status-green"
+if(status.includes("pending")) return "status-orange"
+if(status.includes("load")) return "status-blue"
+
+return ""
+
+}
+
+/* EXPENSE POPUP */
 function showExpenses(tripId,tripNo){
 
 document.getElementById("expensePopup").style.display="block"

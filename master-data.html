@@ -439,7 +439,7 @@ const {data}=await supabaseClient
 .select("*")
 .order("created_at",{ascending:false})
 
-
+transporterData = data || []
 
 let html="",dd='<option>Select</option>'
 
@@ -506,7 +506,7 @@ html+=`
 <td>${t.gst_number||"-"}</td>
 <td>${t.status||"Active"}</td>
 <td>${t.created_at?.split("T")[0]}</td>
-<td>-</td>
+<td>--</td>
 
 <td>
 <button onclick="editTransporter('${t.id}')">Edit</button>

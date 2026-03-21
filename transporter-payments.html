@@ -82,7 +82,26 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
+<script>
 
+async function loadUserInfo(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+/* SHOW SIDEBAR AFTER LOAD */
+document.getElementById("sidebar").style.display = "block"
+
+}
+
+setTimeout(loadUserInfo, 300)
+
+</script>
 <div class="main">
 
 <h2>My Payments</h2>

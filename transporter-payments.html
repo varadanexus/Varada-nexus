@@ -5,48 +5,72 @@
 <title>My Payments - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
 
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
 }
 
-h2{color:#1f3c88;}
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+h2{
+color:#1f3c88;
+}
 
 table{
 width:100%;
 border-collapse:collapse;
 background:white;
+margin-top:15px;
 }
 
 th,td{
 padding:10px;
 border-bottom:1px solid #ddd;
+text-align:left;
 }
 
-th{background:#eee;}
+th{
+background:#eee;
+}
 
-.credit{color:green;font-weight:bold;}
-.debit{color:red;font-weight:bold;}
+.paid{
+color:green;
+font-weight:bold;
+}
+
+.pending{
+color:red;
+font-weight:bold;
+}
+
+button{
+padding:8px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.pagination{
+margin-top:15px;
+}
+
 </style>
+
 </head>
 
 <body>
-
-<script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-</script>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
@@ -63,34 +87,44 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <h2>My Payments</h2>
 
-<div class="card">
+<button onclick="downloadPDF()">Download PDF</button>
+
 <table>
 <thead>
 <tr>
 <th>Date</th>
-<th>Trip</th>
-<th>Amount</th>
-<th>Method</th>
-<th>Remarks</th>
+<th>Trip No</th>
+<th>Freight</th>
+<th>Paid</th>
+<th>Balance</th>
+<th>Status</th>
 </tr>
 </thead>
-
 <tbody id="paymentTable"></tbody>
-
 </table>
+
+<div class="pagination">
+<button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
 </div>
 
 </div>
 
 <script>
 
-let payments=[]
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+let fullData=[]
+let page=1
+let pageSize=10
 
 init()
 
 async function init(){
 
-/* 🔐 SESSION */
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
@@ -100,68 +134,146 @@ return
 
 const authId = session.user.id
 
-console.log("AUTH:", authId)
-
-/* 🔗 GET TRANSPORTER */
-const {data:transporter,error:terr} = await supabaseClient
+/* GET TRANSPORTER */
+const {data:transporter} = await supabaseClient
 .from("transporters")
-.select("id, transporter_name")
+.select("id")
 .eq("auth_id",authId)
 .single()
 
 if(!transporter){
-alert("Transporter not linked ❌")
+alert("Transporter not linked")
 return
 }
 
-console.log("TRANSPORTER:", transporter)
-
-/* 💰 GET PAYMENTS (ONLY THIS TRANSPORTER) */
-const {data,error} = await supabaseClient
-.from("transporter_payments")
-.select(`*, trips(trip_no)`)
+/* GET TRIPS */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("*")
 .eq("transporter_id", transporter.id)
-.order("created_at",{ascending:false})
 
-if(error){
-console.error(error)
-alert("Error loading payments")
-return
-}
-
-payments=data||[]
-
-if(payments.length===0){
+if(!trips || trips.length===0){
 document.getElementById("paymentTable").innerHTML =
-"<tr><td colspan='5'>No payments found</td></tr>"
+"<tr><td colspan='6'>No trips found</td></tr>"
 return
 }
 
-renderPayments()
+/* GET PAYMENTS */
+let tripIds = trips.map(t=>t.id)
+
+const {data:payments} = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("trip_id", tripIds)
+
+/* BUILD MAP */
+let paymentMap={}
+
+payments.forEach(p=>{
+if(!paymentMap[p.trip_id]) paymentMap[p.trip_id]=0
+paymentMap[p.trip_id]+=Number(p.amount||0)
+})
+
+/* BUILD FINAL DATA */
+fullData = trips.map(t=>{
+
+let weightMT = (t.weight_kg||0)/1000
+let freight = weightMT * (t.transporter_rate||0)
+
+let paid = paymentMap[t.id] || 0
+let balance = freight - paid
+
+return {
+date: t.trip_date,
+trip_no: t.trip_no,
+freight,
+paid,
+balance,
+status: paid >= freight ? "Paid" : "Pending"
+}
+
+})
+
+renderTable()
 
 }
 
-/* 📊 RENDER */
+/* RENDER */
 
-function renderPayments(){
+function renderTable(){
+
+let start=(page-1)*pageSize
+let end=start+pageSize
+
+let rows=fullData.slice(start,end)
 
 let html=""
 
-payments.forEach(p=>{
+rows.forEach(r=>{
 
 html+=`
 <tr>
-<td>${p.payment_date || ""}</td>
-<td>${p.trips?.trip_no || ""}</td>
-<td class="credit">₹ ${Number(p.amount).toFixed(0)}</td>
-<td>${p.payment_method || ""}</td>
-<td>${p.remarks || ""}</td>
+<td>${r.date||""}</td>
+<td>${r.trip_no||""}</td>
+<td>₹ ${r.freight.toFixed(0)}</td>
+<td>₹ ${r.paid.toFixed(0)}</td>
+<td>₹ ${r.balance.toFixed(0)}</td>
+<td class="${r.status==='Paid'?'paid':'pending'}">${r.status}</td>
 </tr>
 `
 
 })
 
-document.getElementById("paymentTable").innerHTML = html
+document.getElementById("paymentTable").innerHTML=html
+
+}
+
+/* PAGINATION */
+
+function nextPage(){
+if(page*pageSize<fullData.length){
+page++
+renderTable()
+}
+}
+
+function prevPage(){
+if(page>1){
+page--
+renderTable()
+}
+}
+
+/* PDF */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+let rows=[]
+
+fullData.forEach(r=>{
+rows.push([
+r.date,
+r.trip_no,
+r.freight.toFixed(0),
+r.paid.toFixed(0),
+r.balance.toFixed(0),
+r.status
+])
+})
+
+doc.text("My Payments Report",14,15)
+
+doc.autoTable({
+head:[["Date","Trip","Freight","Paid","Balance","Status"]],
+body:rows,
+startY:20
+})
+
+doc.save("my-payments.pdf")
 
 }
 

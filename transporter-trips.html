@@ -1,82 +1,63 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Transporter Trips</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><style>
+<!DOCTYPE html>
+<html>
 
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
-}
+<head>
 
-.main{
-margin-left:220px;
-padding:30px;
-}
+<title>Transporter Trips</title>
 
-.main h2{
-color:#1f3c88;
-}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+<script src="rbac.js"></script>
 
-.filters{
-margin-bottom:15px;
-}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-select{
-padding:8px;
-margin-right:10px;
-}
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+.main h2{color:#1f3c88;}
+.filters{margin-bottom:15px;}
+select{padding:8px;margin-right:10px;}
+button{padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;cursor:pointer;margin-right:6px;}
+table{width:100%;border-collapse:collapse;background:white;margin-top:15px;}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;}
+th{background:#eee;}
+.pagination{margin-top:10px;}
+.message{color:red;margin-top:10px;font-weight:bold;}
+</style>
 
-button{
-padding:8px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-margin-right:6px;
-}
+</head>
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-margin-top:15px;
-}
+<body>
 
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-text-align:left;
-}
+<div id="sidebar-container"></div>
 
-th{
-background:#eee;
-}
-
-.pagination{
-margin-top:10px;
-}
-
-.message{
-color:red;
-margin-top:10px;
-font-weight:bold;
-}
-
-</style></head><body><div id="sidebar-container"></div><script>
+<script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data
 })
-</script><div class="main"><h2>My Trips</h2><div class="filters"><select id="routeFilter"></select>
+</script>
+
+<div class="main">
+
+<h2>My Trips</h2>
+
+<div class="filters">
+<select id="routeFilter"></select>
 <select id="truckFilter"></select>
 <select id="commodityFilter"></select>
 
 <button onclick="applyFilters()">Search</button>
 <button onclick="clearFilters()">Clear</button>
 <button onclick="downloadPDF()">Download PDF</button>
+</div>
 
-</div><div class="message" id="message"></div><table><thead>
+<div class="message" id="message"></div>
+
+<table>
+<thead>
 <tr>
 <th>Trip No</th>
 <th>Route</th>
@@ -89,36 +70,20 @@ document.getElementById("sidebar-container").innerHTML=data
 <th>Status</th>
 <th>Earnings</th>
 </tr>
-</thead><tbody id="tripTable"></tbody></table><div class="pagination"><button onclick="prevPage()">Previous</button>
+</thead>
+<tbody id="tripTable"></tbody>
+</table>
+
+<div class="pagination">
+<button onclick="prevPage()">Previous</button>
 <button onclick="nextPage()">Next</button>
+</div>
 
-</div></div><!-- EXPENSE POPUP --><div id="expensePopup" style="
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-"><div style="
-background:white;
-width:420px;
-margin:120px auto;
-padding:20px;
-border-radius:6px;
-"><h3 id="expenseTitle"></h3><table style="width:100%;border-collapse:collapse"><thead>
-<tr>
-<th>Expense Type</th>
-<th>Amount</th>
-</tr>
-</thead><tbody id="expenseTable"></tbody></table><br><button onclick="closeExpenses()">Close</button>
+</div>
 
-</div></div><script>
+<script>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+const supabaseClient = window.supabaseClient
 
 let allTrips=[]
 let filteredTrips=[]
@@ -131,66 +96,66 @@ init()
 
 async function init(){
 
-const {data:sessionData}=await supabaseClient.auth.getSession()
+const {data:{session}} = await supabaseClient.auth.getSession()
 
-if(!sessionData.session){
+if(!session){
 window.location.href="login.html"
 return
 }
 
-let authId=sessionData.session.user.id
+const authId = session.user.id
 
-const {data:transporter}=await supabaseClient
+console.log("AUTH ID:", authId)
+
+/* 🔥 GET TRANSPORTER */
+const {data:transporter, error} = await supabaseClient
 .from("transporters")
-.select("*")
-.eq("auth_id",authId)
+.select("id, transporter_name")
+.eq("auth_id", authId)
 .single()
 
-if(!transporter){
+if(error || !transporter){
 document.getElementById("message").innerText="Transporter record not found."
+console.log("Transporter Error:", error)
 return
 }
 
-let {data:trips}=await supabaseClient
+console.log("TRANSPORTER:", transporter)
+
+/* 🔥 STRICT FILTER (NO FALLBACK) */
+const {data:trips, error:tripError} = await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporter.id)
+.eq("transporter_id", transporter.id)
 
-if(!trips || trips.length==0){
-
-let {data:tripsByName}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_name",transporter.transporter_name)
-
-trips=tripsByName
+if(tripError){
+console.log("Trip Error:", tripError)
 }
 
-if(!trips || trips.length==0){
-document.getElementById("message").innerText="No trips found for this transporter."
+if(!trips || trips.length===0){
+document.getElementById("message").innerText="No trips found."
 }
 
-allTrips=trips || []
-filteredTrips=trips || []
+allTrips = trips || []
+filteredTrips = [...allTrips]
 
-const {data:expenses}=await supabaseClient
+/* EXPENSES */
+const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
 
 if(expenses){
-
 expenses.forEach(e=>{
 if(!expensesMap[e.trip_id]) expensesMap[e.trip_id]=0
 expensesMap[e.trip_id]+=Number(e.amount || 0)
 })
-
 }
 
 buildFilters()
 renderTrips()
-
 }
 
+/* FILTERS */
 
 function buildFilters(){
 
@@ -198,28 +163,25 @@ let routes=[...new Set(allTrips.map(t=>t.route))]
 let trucks=[...new Set(allTrips.map(t=>t.truck))]
 let commodities=[...new Set(allTrips.map(t=>t.commodity))]
 
-let routeHTML='<option value="">All Routes</option>'
-let truckHTML='<option value="">All Trucks</option>'
-let commodityHTML='<option value="">All Commodities</option>'
+document.getElementById("routeFilter").innerHTML =
+'<option value="">All Routes</option>' + routes.map(r=>`<option>${r}</option>`).join("")
 
-routes.forEach(r=>routeHTML+=`<option>${r}</option>`)
-trucks.forEach(t=>truckHTML+=`<option>${t}</option>`)
-commodities.forEach(c=>commodityHTML+=`<option>${c}</option>`)
+document.getElementById("truckFilter").innerHTML =
+'<option value="">All Trucks</option>' + trucks.map(t=>`<option>${t}</option>`).join("")
 
-document.getElementById("routeFilter").innerHTML=routeHTML
-document.getElementById("truckFilter").innerHTML=truckHTML
-document.getElementById("commodityFilter").innerHTML=commodityHTML
-
+document.getElementById("commodityFilter").innerHTML =
+'<option value="">All Commodities</option>' + commodities.map(c=>`<option>${c}</option>`).join("")
 }
 
+/* FILTER APPLY */
 
 function applyFilters(){
 
-let route=document.getElementById("routeFilter").value
-let truck=document.getElementById("truckFilter").value
-let commodity=document.getElementById("commodityFilter").value
+let route=routeFilter.value
+let truck=truckFilter.value
+let commodity=commodityFilter.value
 
-filteredTrips=allTrips.filter(t=>
+filteredTrips = allTrips.filter(t=>
 (!route || t.route==route) &&
 (!truck || t.truck==truck) &&
 (!commodity || t.commodity==commodity)
@@ -227,29 +189,22 @@ filteredTrips=allTrips.filter(t=>
 
 page=1
 renderTrips()
-
 }
-
 
 function clearFilters(){
-
-filteredTrips=allTrips
-
-document.getElementById("routeFilter").value=""
-document.getElementById("truckFilter").value=""
-document.getElementById("commodityFilter").value=""
-
+filteredTrips=[...allTrips]
+routeFilter.value=""
+truckFilter.value=""
+commodityFilter.value=""
 renderTrips()
-
 }
 
+/* RENDER */
 
 function renderTrips(){
 
 let start=(page-1)*pageSize
-let end=start+pageSize
-
-let pageTrips=filteredTrips.slice(start,end)
+let pageTrips=filteredTrips.slice(start,start+pageSize)
 
 let html=""
 
@@ -257,18 +212,14 @@ pageTrips.forEach(t=>{
 
 let rate=t.transporter_rate || 0
 let freight=(t.weight_kg/1000)*rate
-
 let expenses=expensesMap[t.id] || 0
-
 let earnings=(freight-expenses).toFixed(2)
 
 html+=`
 <tr>
-<td onclick="showExpenses('${t.id}','${t.trip_no}')"
-style="cursor:pointer;color:#1f3c88;font-weight:bold">
+<td onclick="showExpenses('${t.id}','${t.trip_no}')" style="cursor:pointer;color:#1f3c88;font-weight:bold">
 ${t.trip_no || ""}
 </td>
-
 <td>${t.route || ""}</td>
 <td>${t.truck || ""}</td>
 <td>${t.commodity || ""}</td>
@@ -278,58 +229,36 @@ ${t.trip_no || ""}
 <td>${t.trip_date || ""}</td>
 <td>${t.status || ""}</td>
 <td>${earnings}</td>
-</tr>
-`
-
+</tr>`
 })
 
-document.getElementById("tripTable").innerHTML=html
-
+tripTable.innerHTML = html
 }
 
+/* PAGINATION */
 
 function nextPage(){
-if(page*pageSize<filteredTrips.length){
-page++
-renderTrips()
-}
+if(page*pageSize<filteredTrips.length){page++;renderTrips()}
 }
 
 function prevPage(){
-if(page>1){
-page--
-renderTrips()
-}
+if(page>1){page--;renderTrips()}
 }
 
+/* PDF */
 
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
 let doc=new jsPDF()
 
-let rows=[]
-
-filteredTrips.forEach(t=>{
-
+let rows = filteredTrips.map(t=>{
 let rate=t.transporter_rate || 0
 let freight=(t.weight_kg/1000)*rate
 let expenses=expensesMap[t.id] || 0
 let earnings=(freight-expenses).toFixed(2)
 
-rows.push([
-t.trip_no,
-t.route,
-t.truck,
-t.commodity,
-t.weight_kg,
-rate,
-expenses,
-t.trip_date,
-t.status,
-earnings
-])
-
+return [t.trip_no,t.route,t.truck,t.commodity,t.weight_kg,rate,expenses,t.trip_date,t.status,earnings]
 })
 
 doc.text("Transporter Trips",14,15)
@@ -341,50 +270,33 @@ startY:20
 })
 
 doc.save("transporter-trips.pdf")
-
 }
 
-
-/* EXPENSE VIEW */
+/* EXPENSE POPUP */
 
 async function showExpenses(tripId,tripNo){
 
-document.getElementById("expensePopup").style.display="block"
+expensePopup.style.display="block"
+expenseTitle.innerText="Expenses for "+tripNo
 
-document.getElementById("expenseTitle").innerText="Expenses for "+tripNo
-
-const {data}=await supabaseClient
-.from("expenses")
-.select("*")
-.eq("trip_id",tripId)
+const {data}=await supabaseClient.from("expenses").select("*").eq("trip_id",tripId)
 
 let html=""
 
-if(data && data.length>0){
-
+if(data?.length){
 data.forEach(e=>{
-html+=`
-<tr>
-<td>${e.expense_type || "Expense"}</td>
-<td>₹ ${e.amount}</td>
-</tr>
-`
+html+=`<tr><td>${e.expense_type || "Expense"}</td><td>₹ ${e.amount}</td></tr>`
 })
-
 }else{
-
 html="<tr><td colspan='2'>No expenses found</td></tr>"
-
 }
 
-document.getElementById("expenseTable").innerHTML=html
-
+expenseTable.innerHTML=html
 }
 
 function closeExpenses(){
-document.getElementById("expensePopup").style.display="none"
+expensePopup.style.display="none"
 }
-
 
 async function logout(){
 await supabaseClient.auth.signOut()
@@ -392,10 +304,8 @@ window.location.href="login.html"
 }
 
 </script>
-<script src="global-logout.js"></script></body>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
 
+</body>
 </html>

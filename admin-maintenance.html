@@ -111,11 +111,18 @@ window.addEventListener("DOMContentLoaded", enforceAccess)
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+await initSidebar()
+
 if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
+await applyMenuRBAC()
 }
+
+/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+document.getElementById("sidebar").style.display="block"
+
 })
 </script>
 

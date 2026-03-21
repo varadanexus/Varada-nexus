@@ -1,5 +1,15 @@
-<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="session-check.js"></script><title>Trip Details</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><style>
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Trip Details</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+<script src="rbac.js"></script>
+
+<style>
 
 body{
 font-family:Arial;
@@ -23,41 +33,76 @@ cursor:pointer;
 margin-top:10px;
 }
 
-</style></head><body><div class="card"><h2>Trip Details</h2><div id="tripInfo"></div><button onclick="markComplete()">Mark Completed</button>
+</style>
 
-</div><script>
+</head>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"sb_publishable_RPOioXKgFLT3H9GUt7hPAw_R9bUoGVs"
-)
+<body>
+
+<div class="card">
+
+<h2>Trip Details</h2>
+
+<div id="tripInfo"></div>
+
+<button id="completeBtn" onclick="markComplete()">Mark Completed</button>
+
+</div>
+
+<script>
+
+/* ✅ USE GLOBAL CLIENT */
+const supabaseClient = window.supabaseClient
 
 const urlParams = new URLSearchParams(window.location.search)
 const tripId = urlParams.get("id")
 
+/* ================= LOAD ================= */
+
 async function loadTrip(){
 
-const { data } = await supabaseClient
+const { data, error } = await supabaseClient
 .from("trips")
 .select("*")
 .eq("id",tripId)
 .single()
 
+if(error || !data){
+document.getElementById("tripInfo").innerHTML = "Trip not found"
+return
+}
+
 document.getElementById("tripInfo").innerHTML=`
 
 <b>Route:</b> ${data.route ?? "-"} <br><br>
 <b>Truck:</b> ${data.truck ?? "-"} <br><br>
-<b>Commodity:</b> ${data.commodity} <br><br>
-<b>Weight:</b> ${data.weight_kg} KG <br><br>
+<b>Commodity:</b> ${data.commodity ?? "-"} <br><br>
+<b>Weight:</b> ${data.weight_kg ?? "-"} KG <br><br>
 <b>Status:</b> ${data.status ?? "-"}
 
 `
+
+/* 🔥 RBAC: CONTROL BUTTON */
+const canEdit = await checkPermission("trips.html","edit")
+
+if(!canEdit){
+document.getElementById("completeBtn").style.display="none"
+}
 
 }
 
 loadTrip()
 
+/* ================= UPDATE ================= */
+
 async function markComplete(){
+
+const canEdit = await checkPermission("trips.html","edit")
+
+if(!canEdit){
+alert("No permission")
+return
+}
 
 await supabaseClient
 .from("trips")
@@ -70,6 +115,10 @@ location.reload()
 
 }
 
-</script><script src="rbac.js"></script>
+</script>
+
 <script src="menu-rbac.js"></script>
-<script src="global-logout.js"></script></body></html>
+<script src="global-logout.js"></script>
+
+</body>
+</html>

@@ -1,21 +1,29 @@
-<div class="sidebar">
+<div class="sidebar" id="sidebar" style="display:none;">
   
 <div class="logo-box">
 <img src="images/logo.png" class="logo">
 <span>Varada Nexus</span>
 </div>
-  
+
+<!-- 🔥 USER INFO -->
+<div class="user-box">
+<div class="avatar">👤</div>
+<div>
+<div id="userName">Loading...</div>
+<div id="userRole">Transporter</div>
+</div>
+</div>
+
 <a href="transporter-dashboard.html">Dashboard</a>
-
 <a href="transporter-trips.html">My Trips</a>
-
 <a href="transporter-ledger.html">Ledger</a>
-
 <a href="transporter-profit.html">Trip Profit</a>
-  
+
 <a href="#" onclick="logout()">Logout</a>
 
-</div><style>
+</div>
+
+<style>
 
 .sidebar{
 position:fixed;
@@ -29,19 +37,12 @@ padding-top:20px;
 z-index:1000;
 }
 
-.sidebar h2{
-text-align:center;
-margin-bottom:30px;
-font-size:20px;
-font-weight:bold;
-display:block;
-}
-
+/* LOGO */
 .logo-box{
 display:flex;
 align-items:center;
 gap:10px;
-padding:0 20px 20px 20px;
+padding:0 20px 20px;
 font-size:18px;
 font-weight:bold;
 border-bottom:1px solid rgba(255,255,255,0.2);
@@ -50,9 +51,42 @@ margin-bottom:10px;
 
 .logo{
 height:28px;
-width:auto;
 }
-  
+
+/* USER BOX */
+.user-box{
+display:flex;
+align-items:center;
+gap:10px;
+margin:10px;
+padding:12px;
+background:rgba(255,255,255,0.08);
+border-radius:8px;
+border-bottom:1px solid rgba(255,255,255,0.2);
+}
+
+.avatar{
+width:35px;
+height:35px;
+border-radius:50%;
+background:#4c6ef5;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px;
+}
+
+#userName{
+font-weight:bold;
+font-size:14px;
+}
+
+#userRole{
+font-size:12px;
+color:#cbd5ff;
+}
+
+/* LINKS */
 .sidebar a{
 display:block;
 color:white;

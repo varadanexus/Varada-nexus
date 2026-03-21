@@ -149,7 +149,7 @@ const supabaseClient = supabase.createClient(
 )
 
 function formatCurrency(val){
-return "₹ " + Number(val || 0).toLocaleString("en-IN", {
+return Number(val || 0).toLocaleString("en-IN", {
 minimumFractionDigits: 2,
 maximumFractionDigits: 2
 })
@@ -500,11 +500,11 @@ doc.setFont("helvetica","bold")
 doc.setCharSpace(0)
 
 doc.text("Total Weight (MT) : "+ totalWeight.toFixed(2),15,finalY)
-doc.text("Total Amount : " + formatCurrency(inv.total_amount),15,finalY+7)
+doc.text("Total Amount (INR) : " + formatCurrency(inv.total_amount),15,finalY+7)
 
-doc.text("Paid : " + formatCurrency(inv.paid_amount||0),15,finalY+14)
+doc.text("Paid (INR) : " + formatCurrency(inv.paid_amount||0),15,finalY+14)
 
-doc.text("Balance : " + formatCurrency(inv.balance_amount),15,finalY+21)
+doc.text("Balance (INR) : " + formatCurrency(inv.balance_amount),15,finalY+21)
 
 /* FOOTER */
 doc.setFont("helvetica","normal")

@@ -26,19 +26,13 @@ button{
 padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;
 }
 
-.trip-list{
-max-height:250px;overflow-y:auto;border:1px solid #ddd;padding:10px;
-}
-
-table{
-width:100%;border-collapse:collapse;background:white;
-}
-
-th,td{
-padding:10px;border-bottom:1px solid #ddd;text-align:left;
-}
-
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
+
+.status-paid{color:green;font-weight:bold;}
+.status-pending{color:red;font-weight:bold;}
+.status-partial{color:orange;font-weight:bold;}
 </style>
 
 </head>
@@ -60,24 +54,25 @@ document.getElementById("sidebar").style.display="block"
 
 <h2>Transporter Payments</h2>
 
+<!-- SELECT TRANSPORTER -->
+<div class="card">
+<h3>Select Transporter</h3>
+<select id="transporterSelect" onchange="loadTrips()"></select>
+</div>
+
+<!-- TRIP SELECTION -->
 <div class="card">
 
-<h3>Select Transporter</h3>
+<h3>Select Trips</h3>
 
-<select id="transporterSelect" onchange="loadTrips()"></select>
-
-<div class="trip-list">
-
-<div>
-<input type="checkbox" onclick="toggleAll(this)"> <b>Select All</b>
-</div>
+<label><input type="checkbox" onclick="toggleAll(this)"> Select All</label>
 
 <table>
 <thead>
 <tr>
 <th>Select</th>
 <th>Trip</th>
-<th>Balance</th>
+<th>Amount</th>
 </tr>
 </thead>
 
@@ -87,12 +82,10 @@ document.getElementById("sidebar").style.display="block"
 
 </div>
 
-</div>
-
-<!-- ✅ NEW: INVOICE SECTION -->
+<!-- INVOICE -->
 <div class="card">
 
-<h3>Generate Invoice</h3>
+<h3>Create Invoice</h3>
 
 <button onclick="generateInvoice()">Generate Invoice</button>
 
@@ -102,6 +95,7 @@ document.getElementById("sidebar").style.display="block"
 
 </div>
 
+<!-- PAYMENT -->
 <div class="card">
 
 <h3>Payment</h3>
@@ -121,28 +115,29 @@ Enter Payment:
 <option>UPI</option>
 </select>
 
-<input id="remarks" placeholder="Remarks">
-
 <button onclick="savePayment()">Save Payment</button>
 
 </div>
 
+<!-- 🔥 INVOICE LIST -->
 <div class="card">
 
-<h3>Payment History</h3>
+<h3>Invoices</h3>
 
 <table>
 <thead>
 <tr>
-<th>Date</th>
 <th>Invoice</th>
+<th>Trips</th>
 <th>Amount</th>
-<th>Method</th>
-<th>Remarks</th>
+<th>Paid</th>
+<th>Balance</th>
+<th>Status</th>
 </tr>
 </thead>
 
-<tbody id="historyTable"></tbody>
+<tbody id="invoiceTable"></tbody>
+
 </table>
 
 </div>
@@ -156,7 +151,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let transporters=[], trips=[], payments=[]
+let transporters=[], trips=[], invoices=[]
 let selectedTrips=[]
 let invoiceAmount=0
 let currentInvoice=null
@@ -165,21 +160,18 @@ init()
 
 async function init(){
 await loadTransporters()
-await loadPayments()
+await loadInvoices()
 }
 
 /* LOAD TRANSPORTERS */
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
-
 transporters=data||[]
 
 let html='<option value="">Select Transporter</option>'
-
 transporters.forEach(t=>{
 html+=`<option value="${t.id}">${t.transporter_name}</option>`
 })
-
 transporterSelect.innerHTML=html
 }
 
@@ -189,14 +181,29 @@ async function loadTrips(){
 let id=transporterSelect.value
 if(!id) return
 
-const {data}=await supabaseClient
+const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",id)
 
-trips=data||[]
+/* 🔥 GET INVOICED TRIPS */
+const {data:inv}=await supabaseClient
+.from("transporter_invoices")
+.select("trip_ids")
+
+let usedTrips=[]
+
+inv?.forEach(i=>{
+i.trip_ids.split(",").forEach(t=>usedTrips.push(t))
+})
+
+/* 🔥 FILTER + SORT */
+trips=tripData
+.filter(t=>!usedTrips.includes(t.id))
+.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
 
 renderTrips()
+
 }
 
 /* RENDER TRIPS */
@@ -205,14 +212,13 @@ function renderTrips(){
 let html=""
 
 trips.forEach(t=>{
-
-let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
 
 html+=`
 <tr>
 <td><input type="checkbox" value="${t.id}"></td>
 <td>${t.trip_no}</td>
-<td>₹${freight.toFixed(0)}</td>
+<td>₹${amt.toFixed(0)}</td>
 </tr>
 `
 })
@@ -242,8 +248,8 @@ checked.forEach(c=>{
 let trip=trips.find(t=>t.id==c.value)
 selectedTrips.push(trip)
 
-let freight=(trip.weight_kg/1000)*(trip.transporter_rate||0)
-total+=freight
+let amt=(trip.weight_kg/1000)*(trip.transporter_rate||0)
+total+=amt
 })
 
 invoiceAmount=total
@@ -280,13 +286,16 @@ currentInvoice=data
 
 alert("Invoice Created ✅")
 
+loadTrips()
+loadInvoices()
+
 }
 
 /* SAVE PAYMENT */
 async function savePayment(){
 
 if(!currentInvoice){
-alert("Create invoice first")
+alert("Select/Create invoice first")
 return
 }
 
@@ -303,8 +312,7 @@ await supabaseClient.from("transporter_payments").insert({
 invoice_id:currentInvoice.id,
 amount:amount,
 payment_date:date,
-payment_method:method,
-remarks:remarks.value
+payment_method:method
 })
 
 let newPaid=(currentInvoice.paid_amount||0)+amount
@@ -318,34 +326,50 @@ status:newBalance<=0?"Paid":"Partial"
 })
 .eq("id",currentInvoice.id)
 
-alert("Payment Saved ✅")
+alert("Payment Saved")
+
+loadInvoices()
 
 }
 
-/* HISTORY */
-async function loadPayments(){
+/* LOAD INVOICES */
+async function loadInvoices(){
 
 const {data}=await supabaseClient
-.from("transporter_payments")
-.select("*, transporter_invoices(invoice_no)")
+.from("transporter_invoices")
+.select("*")
 .order("created_at",{ascending:false})
+
+invoices=data||[]
 
 let html=""
 
-data?.forEach(p=>{
+invoices.forEach(i=>{
+
+let statusClass =
+i.status==="Paid" ? "status-paid" :
+i.status==="Partial" ? "status-partial" : "status-pending"
+
 html+=`
-<tr>
-<td>${p.payment_date}</td>
-<td>${p.transporter_invoices?.invoice_no||""}</td>
-<td>₹${p.amount}</td>
-<td>${p.payment_method}</td>
-<td>${p.remarks||""}</td>
+<tr onclick="selectInvoice('${i.id}')">
+<td>${i.invoice_no}</td>
+<td>${i.trip_ids}</td>
+<td>₹${i.total_amount}</td>
+<td>₹${i.paid_amount||0}</td>
+<td>₹${i.balance_amount}</td>
+<td class="${statusClass}">${i.status}</td>
 </tr>
 `
 })
 
-historyTable.innerHTML=html
+invoiceTable.innerHTML=html
 
+}
+
+/* SELECT INVOICE */
+function selectInvoice(id){
+currentInvoice=invoices.find(i=>i.id==id)
+totalAmount.value=currentInvoice.total_amount
 }
 
 </script>

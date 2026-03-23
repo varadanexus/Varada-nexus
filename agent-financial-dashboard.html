@@ -37,6 +37,18 @@ font-size:18px;
 
 <body>
 
+<!-- ✅ GLOBAL SUPABASE (FIX) -->
+<script>
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+
+<!-- ✅ GLOBAL LOGOUT (LOAD BEFORE SIDEBAR) -->
+<script src="agent-global.js"></script>
+
+<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
@@ -45,10 +57,9 @@ fetch("agent-sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* 🔥 LOAD AGENT NAME */
+/* LOAD AGENT NAME */
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
 const {data:agent} = await supabaseClient
@@ -90,17 +101,16 @@ Balance<br>
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
 init()
 
 async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
+
+if(!session){
+window.location="login.html"
+return
+}
 
 const authId = session.user.id
 
@@ -136,6 +146,6 @@ document.getElementById("balance").innerText = balance.toFixed(2)
 }
 
 </script>
-<script src="agent-global.js"></script>
+
 </body>
 </html>

@@ -256,16 +256,21 @@ return
 
 const { data: { session } } = await supabaseClient.auth.getSession()
 
-let res = await fetch(EDGE_FUNCTION,{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "Authorization": `Bearer ${session.access_token}` // 🔥 FIX
+if (!session) {
+  alert("Session expired. Login again ❌")
+  return
+}
+
+let res = await fetch(EDGE_FUNCTION, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + session.access_token   // 🔥 THIS FIXES EVERYTHING
   },
-  body:JSON.stringify({
-    email:email,
-    password:password,
-    role_id:role
+  body: JSON.stringify({
+    email: email,
+    password: password,
+    role_id: role
   })
 })
 let data = await res.json()

@@ -211,17 +211,25 @@ const {data} = await supabaseClient
 .select("*")
 
 agents = data || []
+console.log("Agents loaded:", agents)
 
 let html='<option value="">Select Agent</option>'
 
 agents.forEach(a=>{
-html += `<option value="${a.id}">${a.name}</option>`
+html += `<option value="${a.id}">
+${a.name || "No Name"} (${a.phone || "-"})
+</option>`
 })
 
 document.getElementById("agentSelect").innerHTML = html
 
 }
 
+  window.onload = async () => {
+  await loadAgents()
+  await loadPayments()
+}
+  
 /* SAVE PAYMENT */
 
 async function savePayment(){

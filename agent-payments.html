@@ -153,6 +153,9 @@ window.location.href="login.html"
 
 <select id="agentSelect"></select>
 
+<!-- 🔥 ADD THIS LINE -->
+<button onclick="settleAgent()">Settle Full</button>
+
 <input id="amount" placeholder="Amount">
 
 <select id="mode">
@@ -296,6 +299,50 @@ html += `
 
 document.getElementById("paymentTable").innerHTML = html
 
+}
+
+async function settleAgent(){
+
+let agentId = document.getElementById("agentSelect").value
+
+if(!agentId){
+alert("Select agent")
+return
+}
+
+/* GET TOTAL EARNED */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("commission_amount")
+.eq("agent_id",agentId)
+
+/* GET TOTAL PAID */
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("amount")
+.eq("agent_id",agentId)
+
+let earned = (trips || []).reduce((s,t)=>s+Number(t.commission_amount||0),0)
+let paid = (payments || []).reduce((s,p)=>s+Number(p.amount||0),0)
+
+let balance = earned - paid
+
+if(balance <= 0){
+alert("No pending amount")
+return
+}
+
+/* INSERT PAYMENT */
+await supabaseClient.from("agent_payments").insert({
+agent_id:agentId,
+amount:balance,
+payment_mode:"Auto Settlement",
+remarks:"Full settlement"
+})
+
+alert("Settled ₹ " + balance.toFixed(2))
+
+loadPayments()
 }
 
 </script>

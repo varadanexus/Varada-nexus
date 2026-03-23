@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Withdraw Approvals</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+table{width:100%;background:white;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+button{padding:6px 10px;margin:2px;}
+</style>
+
+</head>
+
+<body>
+
+<script>
+const supabaseClient = supabase.createClient("URL","KEY")
+</script>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
+document.getElementById("sidebar").style.display="block"
+})
+</script>
+
+<div class="main">
+
+<h2>Withdraw Approvals</h2>
+
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+let agents=[]
+
+init()
+
+async function init(){
+
+const {data:a}=await supabaseClient.from("commission_agents").select("*")
+agents=a||[]
+
+loadRequests()
+}
+
+async function loadRequests(){
+
+const {data}=await supabaseClient
+.from("agent_withdraw_requests")
+.select("*")
+.order("requested_at",{ascending:false})
+
+let html=""
+
+data?.forEach(r=>{
+
+let agent=agents.find(a=>a.id==r.agent_id)
+
+html+=`
+<tr>
+<td>${agent?.name || "-"}</td>
+<td>₹ ${r.amount}</td>
+<td>${r.status}</td>
+<td>
+<button onclick="approve('${r.id}','${r.agent_id}',${r.amount})">Approve</button>
+<button onclick="reject('${r.id}')">Reject</button>
+</td>
+</tr>
+`
+})
+
+table.innerHTML=html
+}
+
+async function approve(id,agentId,amount){
+
+/* INSERT PAYMENT */
+
+await supabaseClient.from("agent_payments").insert({
+agent_id:agentId,
+amount:amount,
+payment_mode:"Auto",
+remarks:"Withdraw Approved"
+})
+
+/* UPDATE STATUS */
+
+await supabaseClient
+.from("agent_withdraw_requests")
+.update({status:"approved",processed_at:new Date()})
+.eq("id",id)
+
+loadRequests()
+}
+
+async function reject(id){
+
+await supabaseClient
+.from("agent_withdraw_requests")
+.update({status:"rejected"})
+.eq("id",id)
+
+loadRequests()
+}
+
+</script>
+
+</body>
+</html>

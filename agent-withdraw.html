@@ -19,25 +19,28 @@ button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radiu
 
 <body>  
 
+<!-- ✅ GLOBAL SUPABASE (FIX) -->
 <script>  
-const supabaseClient = supabase.createClient(  
+window.supabaseClient = supabase.createClient(  
 "https://ticsgbtxfhhihamejiss.supabase.co",  
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )  
 </script>  
 
+<!-- ✅ GLOBAL LOGOUT -->
+<script src="agent-global.js"></script>
+
 <div id="sidebar-container"></div>  
 
+<!-- ✅ SIDEBAR AFTER GLOBAL -->
 <script>  
 fetch("agent-sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* 🔥 LOAD AGENT NAME */
-
+/* LOAD AGENT NAME */
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
 const {data:agent} = await supabaseClient
@@ -56,7 +59,7 @@ document.getElementById("userName").innerText = agent.name
 
 <h2>Withdraw Request</h2>  
 
-<!-- ✅ NEW: BALANCE CARD -->
+<!-- BALANCE -->
 <div class="card">
 
 <div><b>Total Earned:</b> ₹ <span id="earned">0</span></div>
@@ -69,6 +72,7 @@ document.getElementById("userName").innerText = agent.name
 
 </div>
 
+<!-- FORM -->
 <div class="card">  
 
 <input id="amount" placeholder="Enter amount">  
@@ -76,6 +80,7 @@ document.getElementById("userName").innerText = agent.name
 
 </div>  
 
+<!-- TABLE -->
 <div class="card">  
 
 <h3>My Requests</h3>  
@@ -127,17 +132,15 @@ await loadBalance()
 await loadRequests()  
 }  
 
-/* ✅ NEW: LOAD BALANCE */
+/* BALANCE */
 
 async function loadBalance(){
 
-/* EARNED */
 const {data:trips} = await supabaseClient
 .from("trips")
 .select("commission_amount")
 .eq("agent_id",agentId)
 
-/* PAID */
 const {data:payments} = await supabaseClient
 .from("agent_payments")
 .select("amount")
@@ -154,7 +157,7 @@ document.getElementById("balance").innerText = currentBalance.toFixed(2)
 
 }
 
-/* ✅ UPDATED: VALIDATION ADDED */
+/* REQUEST */
 
 async function requestWithdraw(){  
 
@@ -183,7 +186,7 @@ await loadBalance()
 loadRequests()  
 }  
 
-/* LOAD REQUESTS */
+/* TABLE */
 
 async function loadRequests(){  
 
@@ -207,13 +210,13 @@ html+=`
 reqTable.innerHTML=html  
 }  
 
-/* ✅ NEW: FULL WITHDRAW BUTTON */
+/* FULL WITHDRAW */
 
 function withdrawFull(){
 document.getElementById("amount").value = currentBalance.toFixed(2)
 }
 
 </script>  
-<script src="agent-global.js"></script>
+
 </body>  
 </html>

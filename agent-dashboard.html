@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agent Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+
+.cards{display:flex;gap:15px;margin-bottom:20px;}
+.card{
+background:white;padding:15px;border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+min-width:200px;
+}
+
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+th{background:#eee;}
+
+.profit{color:green;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
+<h2>Agent Dashboard</h2>
+
+<div class="cards">
+<div class="card"><h4>Total Trips</h4><h2 id="totalTrips">0</h2></div>
+<div class="card"><h4>Total Commission</h4><h2 id="totalCommission">₹0</h2></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Trip No</th>
+<th>Route</th>
+<th>Truck</th>
+<th>Date</th>
+<th>Weight (MT)</th>
+<th>Commission</th>
+</tr>
+</thead>
+<tbody id="tripTable"></tbody>
+</table>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+let trips=[]
+
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session){
+window.location="login.html"
+return
+}
+
+const authId = session.user.id
+
+/* GET AGENT */
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("id")
+.eq("auth_id", authId)
+.single()
+
+if(!agent){
+alert("No agent found")
+return
+}
+
+/* GET TRIPS */
+const {data} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("agent_id", agent.id)
+.order("created_at",{ascending:false})
+
+trips = data || []
+
+render()
+}
+
+function render(){
+
+let totalCommission = 0
+let html=""
+
+trips.forEach(t=>{
+
+let weight = (t.weight_kg||0)/1000
+let commission = t.commission_amount || 0
+
+totalCommission += commission
+
+html+=`
+<tr>
+<td>${t.trip_no}</td>
+<td>${t.route}</td>
+<td>${t.truck}</td>
+<td>${formatDate(t.trip_date)}</td>
+<td>${weight.toFixed(2)}</td>
+<td class="profit">₹ ${commission.toFixed(2)}</td>
+</tr>`
+})
+
+tripTable.innerHTML = html
+
+document.getElementById("totalTrips").innerText = trips.length
+document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(0)
+
+}
+
+function formatDate(d){
+if(!d) return "-"
+return new Date(d).toLocaleDateString("en-GB")
+}
+
+</script>
+
+</body>
+</html>

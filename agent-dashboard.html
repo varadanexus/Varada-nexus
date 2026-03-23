@@ -31,8 +31,20 @@ th{background:#eee;}
 
 <body>
 
+<!-- ✅ SUPABASE FIRST (VERY IMPORTANT) -->
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+
+<!-- ✅ GLOBAL LOGOUT -->
+<script src="agent-global.js"></script>
+
 <div id="sidebar-container"></div>
 
+<!-- ✅ SIDEBAR LOAD AFTER GLOBAL -->
 <script>
 fetch("agent-sidebar.html")
 .then(res=>res.text())
@@ -73,7 +85,7 @@ document.getElementById("userName").innerText = agent.name
 <h2 id="totalCommission">₹0</h2>
 </div>
 
-<!-- 🔥 NAVIGATION CARDS -->
+<!-- NAVIGATION -->
 
 <div class="card" onclick="goLedger()" style="cursor:pointer;">
 <h4>📄 Ledger</h4>
@@ -110,11 +122,6 @@ document.getElementById("userName").innerText = agent.name
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-
 let trips=[]
 
 init()
@@ -122,6 +129,7 @@ init()
 async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
+
 if(!session){
 window.location="login.html"
 return
@@ -188,12 +196,7 @@ if(!d) return "-"
 return new Date(d).toLocaleDateString("en-GB")
 }
 
-function formatDate(d){
-if(!d) return "-"
-return new Date(d).toLocaleDateString("en-GB")
-}
-
-/* 🔥 PASTE HERE EXACTLY */
+/* NAVIGATION */
 
 function goLedger(){
 window.location.href="agent-my-ledger.html"
@@ -206,8 +209,8 @@ window.location.href="agent-withdraw.html"
 function goSummary(){
 window.location.href="agent-financial-dashboard.html"
 }
-  
+
 </script>
-<script src="agent-global.js"></script>
+
 </body>
 </html>

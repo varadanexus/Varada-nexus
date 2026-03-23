@@ -16,6 +16,11 @@ box-shadow:0 4px 10px rgba(0,0,0,0.08);
 min-width:200px;
 }
 
+.card:hover{
+transform:translateY(-3px);
+transition:0.2s;
+}
+  
 table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
@@ -167,6 +172,25 @@ if(!d) return "-"
 return new Date(d).toLocaleDateString("en-GB")
 }
 
+function formatDate(d){
+if(!d) return "-"
+return new Date(d).toLocaleDateString("en-GB")
+}
+
+/* 🔥 PASTE HERE EXACTLY */
+
+function goLedger(){
+window.location.href="agent-my-ledger.html"
+}
+
+function goWithdraw(){
+window.location.href="agent-withdraw.html"
+}
+
+function goSummary(){
+window.location.href="agent-financial-dashboard.html"
+}
+  
 </script>
 
 </body>

@@ -278,12 +278,41 @@ return
 /* FETCH RELATED DATA */
 let selectedRoute = routes.find(r=>r.id==routeId)
 let selectedTruck = trucks.find(t=>t.id==truckId)
+let agentId = selectedTruck?.agent_id || null
 let selectedCommodity = commodities.find(c=>c.id==commodityId)
 let selectedClient = clients.find(c=>c.id==clientId)
+let agent = null
 
+if(agentId){
+const {data} = await supabaseClient
+.from("commission_agents")
+.select("*")
+.eq("id", agentId)
+.single()
+
+agent = data
+}
+  
 /* AUTO TRIP NO */
 let tripNo = await generateTripNo()
+let commissionAmount = 0
 
+let weightMT = (parseFloat(weightVal) || 0) / 1000
+let companyRate = parseFloat(document.getElementById("clientRate").value) || 0
+let transporterRate = parseFloat(document.getElementById("transporterRate").value) || 0
+
+if(agent){
+
+if(agent.commission_type === "per_mt"){
+commissionAmount = weightMT * agent.commission_value
+}
+
+if(agent.commission_type === "percentage"){
+let profit = (companyRate - transporterRate) * weightMT
+commissionAmount = (profit * agent.commission_value) / 100
+}
+
+}
 /* INSERT */
 const {error} = await supabaseClient.from("trips").insert({
 
@@ -306,6 +335,9 @@ weight_kg: weightVal,
 trip_date: dateVal,
 status: statusVal,
 
+agent_id: agentId,
+commission_amount: commissionAmount,
+  
 company_rate: parseFloat(document.getElementById("clientRate").value) || 0,
 transporter_rate: parseFloat(document.getElementById("transporterRate").value) || 0
 })

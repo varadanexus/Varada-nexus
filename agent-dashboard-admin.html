@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Agent Financial Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+<script src="menu-rbac.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+.summary{
+display:flex;
+gap:20px;
+}
+
+.box{
+flex:1;
+padding:20px;
+border-radius:8px;
+color:white;
+font-size:18px;
+}
+
+.earn{background:#28a745;}
+.paid{background:#dc3545;}
+.balance{background:#1f3c88;}
+</style>
+
+</head>
+
+<body>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+
+await initSidebar()
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+document.getElementById("sidebar").style.display="block"
+})
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const email = session.user.email
+document.getElementById("userName").innerText = email.split("@")[0]
+
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+}
+</script>
+
+<div class="main">
+
+<h2>Agent Financial Dashboard</h2>
+
+<div class="card">
+<select id="agentSelect"></select>
+<button onclick="loadSummary()">Load</button>
+</div>
+
+<div class="summary">
+
+<div class="box earn">
+Total Earned<br>
+₹ <span id="totalEarned">0</span>
+</div>
+
+<div class="box paid">
+Total Paid<br>
+₹ <span id="totalPaid">0</span>
+</div>
+
+<div class="box balance">
+Balance<br>
+₹ <span id="balance">0</span>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let agents=[]
+
+window.onload = async ()=>{
+await loadAgents()
+}
+
+async function loadAgents(){
+
+const {data} = await supabaseClient
+.from("commission_agents")
+.select("*")
+
+agents = data || []
+
+let html='<option value="">Select Agent</option>'
+
+agents.forEach(a=>{
+html += `<option value="${a.id}">${a.name}</option>`
+})
+
+document.getElementById("agentSelect").innerHTML = html
+}
+
+async function loadSummary(){
+
+let agentId = document.getElementById("agentSelect").value
+
+if(!agentId){
+alert("Select agent")
+return
+}
+
+/* GET TOTAL EARNED */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("commission_amount")
+.eq("agent_id",agentId)
+
+/* GET TOTAL PAID */
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("amount")
+.eq("agent_id",agentId)
+
+let totalEarned = trips?.reduce((sum,t)=> sum + Number(t.commission_amount || 0),0) || 0
+let totalPaid = payments?.reduce((sum,p)=> sum + Number(p.amount || 0),0) || 0
+
+let balance = totalEarned - totalPaid
+
+document.getElementById("totalEarned").innerText = totalEarned.toFixed(2)
+document.getElementById("totalPaid").innerText = totalPaid.toFixed(2)
+document.getElementById("balance").innerText = balance.toFixed(2)
+
+}
+
+</script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
+
+</body>
+</html>

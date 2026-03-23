@@ -1,133 +1,203 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html>  
+<html>  
 
-<head>
+<head>  
 
-<title>Withdraw Request</title>
+<title>Withdraw Request</title>  
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
 
-<style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}
-input{padding:10px;width:200px;margin-right:10px;}
-button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
-</style>
+<style>  
+body{margin:0;font-family:Arial;background:#f4f6f9;}  
+.main{margin-left:220px;padding:30px;}  
+.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}  
+input{padding:10px;width:200px;margin-right:10px;}  
+button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}  
+</style>  
 
-</head>
+</head>  
 
-<body>
+<body>  
 
-<script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
-)
-</script>
+<script>  
+const supabaseClient = supabase.createClient(  
+"https://ticsgbtxfhhihamejiss.supabase.co",  
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)  
+</script>  
 
-<div id="sidebar-container"></div>
+<div id="sidebar-container"></div>  
 
-<script>
-fetch("agent-sidebar.html")
-.then(res=>res.text())
-.then(data=>{
-document.getElementById("sidebar-container").innerHTML=data
-})
-</script>
+<script>  
+fetch("agent-sidebar.html")  
+.then(res=>res.text())  
+.then(data=>{  
+document.getElementById("sidebar-container").innerHTML=data  
+})  
+</script>  
 
-<div class="main">
+<div class="main">  
 
-<h2>Withdraw Request</h2>
+<h2>Withdraw Request</h2>  
 
+<!-- ✅ NEW: BALANCE CARD -->
 <div class="card">
 
-<input id="amount" placeholder="Enter amount">
-<button onclick="requestWithdraw()">Request</button>
+<div><b>Total Earned:</b> ₹ <span id="earned">0</span></div>
+<div><b>Total Paid:</b> ₹ <span id="paid">0</span></div>
+<div><b>Available Balance:</b> ₹ <span id="balance">0</span></div>
+
+<br>
+
+<button onclick="withdrawFull()">Withdraw Full Balance</button>
 
 </div>
 
-<div class="card">
+<div class="card">  
 
-<h3>My Requests</h3>
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Amount</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="reqTable"></tbody>
-</table>
+<input id="amount" placeholder="Enter amount">  
+<button onclick="requestWithdraw()">Request</button>  
 
-</div>
+</div>  
 
-</div>
+<div class="card">  
 
-<script>
+<h3>My Requests</h3>  
+<table>  
+<thead>  
+<tr>  
+<th>Date</th>  
+<th>Amount</th>  
+<th>Status</th>  
+</tr>  
+</thead>  
+<tbody id="reqTable"></tbody>  
+</table>  
 
-let agentId=null
+</div>  
 
-init()
+</div>  
 
-async function init(){
+<script>  
 
-const {data:{session}} = await supabaseClient.auth.getSession()
+let agentId=null  
+let currentBalance=0  
 
-const {data:agent} = await supabaseClient
-.from("commission_agents")
-.select("*")
-.eq("auth_id",session.user.id)
-.single()
+init()  
 
-agentId = agent.id
+async function init(){  
 
-loadRequests()
-}
+const {data:{session}} = await supabaseClient.auth.getSession()  
 
-async function requestWithdraw(){
-
-let amt = document.getElementById("amount").value
-
-if(!amt){
-alert("Enter amount")
+if(!session){
+window.location="login.html"
 return
 }
 
-await supabaseClient.from("agent_withdraw_requests").insert({
-agent_id:agentId,
-amount:amt
-})
+const {data:agent} = await supabaseClient  
+.from("commission_agents")  
+.select("*")  
+.eq("auth_id",session.user.id)  
+.single()  
 
-alert("Request sent ✅")
-
-loadRequests()
+if(!agent){
+alert("Agent not found")
+return
 }
 
-async function loadRequests(){
+agentId = agent.id  
 
-const {data} = await supabaseClient
-.from("agent_withdraw_requests")
-.select("*")
+await loadBalance()
+await loadRequests()  
+}  
+
+/* ✅ NEW: LOAD BALANCE */
+
+async function loadBalance(){
+
+/* EARNED */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("commission_amount")
 .eq("agent_id",agentId)
-.order("requested_at",{ascending:false})
 
-let html=""
+/* PAID */
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("amount")
+.eq("agent_id",agentId)
 
-data?.forEach(r=>{
-html+=`
-<tr>
-<td>${(r.requested_at || "").split("T")[0]}</td>
-<td>₹ ${r.amount}</td>
-<td>${r.status}</td>
-</tr>`
-})
+let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
+let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
 
-reqTable.innerHTML=html
+currentBalance = earned - paid
+
+document.getElementById("earned").innerText = earned.toFixed(2)
+document.getElementById("paid").innerText = paid.toFixed(2)
+document.getElementById("balance").innerText = currentBalance.toFixed(2)
+
 }
 
-</script>
+/* ✅ UPDATED: VALIDATION ADDED */
 
-</body>
+async function requestWithdraw(){  
+
+let amt = Number(document.getElementById("amount").value)  
+
+if(!amt){  
+alert("Enter amount")  
+return  
+}  
+
+if(amt > currentBalance){
+alert("Insufficient balance ❌")
+return
+}
+
+await supabaseClient.from("agent_withdraw_requests").insert({  
+agent_id:agentId,  
+amount:amt  
+})  
+
+alert("Request sent ✅")  
+
+document.getElementById("amount").value=""
+
+await loadBalance()
+loadRequests()  
+}  
+
+/* LOAD REQUESTS */
+
+async function loadRequests(){  
+
+const {data} = await supabaseClient  
+.from("agent_withdraw_requests")  
+.select("*")  
+.eq("agent_id",agentId)  
+.order("requested_at",{ascending:false})  
+
+let html=""  
+
+data?.forEach(r=>{  
+html+=`  
+<tr>  
+<td>${(r.requested_at || "").split("T")[0]}</td>  
+<td>₹ ${Number(r.amount).toFixed(2)}</td>  
+<td>${r.status}</td>  
+</tr>`  
+})  
+
+reqTable.innerHTML=html  
+}  
+
+/* ✅ NEW: FULL WITHDRAW BUTTON */
+
+function withdrawFull(){
+document.getElementById("amount").value = currentBalance.toFixed(2)
+}
+
+</script>  
+
+</body>  
 </html>

@@ -89,7 +89,11 @@ background:#eee;
 <body>
 
 <script>
-
+supabaseClient.auth.getSession().then(({data})=>{
+  if(!data.session){
+    window.location.href="login.html"
+  }
+})
 
 
 </script>
@@ -213,6 +217,9 @@ const {data,error}=await supabaseClient
 .from("roles")
 .select("*")
 
+console.log("ROLES:", data)
+console.log("ROLES ERROR:", error)
+
 if(error){
 console.log(error)
 return
@@ -233,7 +240,10 @@ document.getElementById("role").innerHTML=html
 async function loadUsers(){
 
 /* STAFF USERS */
-const {data:users}=await supabaseClient.from("users").select("*")
+const {data:users,error:usersError}=await supabaseClient.from("users").select("*")
+
+console.log("USERS:", users)
+console.log("USERS ERROR:", usersError)
 
 /* ROLES */
 const {data:userRoles}=await supabaseClient.from("user_roles").select("*")

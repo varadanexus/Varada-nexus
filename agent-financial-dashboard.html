@@ -45,16 +45,20 @@ fetch("agent-sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
+/* 🔥 LOAD AGENT NAME */
+
 const {data:{session}} = await supabaseClient.auth.getSession()
 
-if(!session){
-window.location="login.html"
-return
-}
+if(!session) return
 
-window.logout = async ()=>{
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("name")
+.eq("auth_id", session.user.id)
+.single()
+
+if(agent){
+document.getElementById("userName").innerText = agent.name
 }
 })
 </script>

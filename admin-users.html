@@ -7,26 +7,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
-
 <script src="menu-rbac.js"></script>
 
 <style>
-
 body{
 margin:0;
 font-family:Arial;
 background:#f4f6f9;
 }
-
 .main{
 margin-left:220px;
 padding:30px;
 }
-
 h2{
 color:#1f3c88;
 }
-
 .form-box{
 background:white;
 padding:20px;
@@ -35,7 +30,6 @@ width:420px;
 margin-bottom:25px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
-
 input,select{
 width:100%;
 padding:10px;
@@ -43,7 +37,6 @@ margin-bottom:10px;
 border:1px solid #ccc;
 border-radius:4px;
 }
-
 button{
 padding:10px 14px;
 background:#1f3c88;
@@ -53,35 +46,22 @@ border-radius:4px;
 cursor:pointer;
 margin-right:5px;
 }
-
 button:hover{
 background:#162c66;
 }
-
-.edit-btn{
-background:#f0ad4e;
-}
-
-.delete-btn{
-background:#d9534f;
-}
-
+.edit-btn{ background:#f0ad4e; }
+.delete-btn{ background:#d9534f; }
 table{
 width:100%;
 border-collapse:collapse;
 background:white;
 }
-
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
 text-align:left;
 }
-
-th{
-background:#eee;
-}
-
+th{ background:#eee; }
 </style>
 
 </head>
@@ -89,55 +69,39 @@ background:#eee;
 <body>
 
 <script>
-
-<script>
-
 /* SUPABASE CLIENT */
-
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR-ANON-KEY"
 )
 
 /* SESSION CHECK */
-
 supabaseClient.auth.getSession().then(({data})=>{
   if(!data.session){
     window.location.href="login.html"
   }
 })
-
-</script>
-
-
 </script>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
-
-/* ✅ STANDARD SIDEBAR (same as dashboard) */
-
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
 await initSidebar()
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
 document.getElementById("sidebar").style.display="block"
-
 })
+
 async function initSidebar(){
-
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
 const authId = session.user.id
@@ -171,15 +135,11 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
-/* GLOBAL LOGOUT */
-
 window.logout = async function(){
 await supabaseClient.auth.signOut()
 window.location.href="login.html"
 }
-
 }
-
 </script>
 
 <div class="main">
@@ -187,20 +147,14 @@ window.location.href="login.html"
 <h2>Users</h2>
 
 <div class="form-box">
-
 <h3>Create User</h3>
-
 <input type="email" id="email" placeholder="Email">
 <input type="password" id="password" placeholder="Password">
-
 <select id="role"></select>
-
 <button onclick="createUser()">Create User</button>
-
 </div>
 
 <table>
-
 <thead>
 <tr>
 <th>Email</th>
@@ -208,9 +162,7 @@ window.location.href="login.html"
 <th>Actions</th>
 </tr>
 </thead>
-
 <tbody id="usersTable"></tbody>
-
 </table>
 
 </div>
@@ -224,15 +176,8 @@ const ADMIN_FN =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/admin-user-actions"
 
 /* LOAD ROLES */
-
 async function loadRoles(){
-
-const {data,error}=await supabaseClient
-.from("roles")
-.select("*")
-
-console.log("ROLES:", data)
-console.log("ROLES ERROR:", error)
+const {data,error}=await supabaseClient.from("roles").select("*")
 
 if(error){
 console.log(error)
@@ -240,56 +185,37 @@ return
 }
 
 let html=""
-
 data.forEach(role=>{
 html+=`<option value="${role.id}">${role.role_name}</option>`
 })
 
 document.getElementById("role").innerHTML=html
-
 }
 
 /* LOAD USERS */
-
 async function loadUsers(){
 
-/* STAFF USERS */
 const {data:users,error:usersError}=await supabaseClient.from("users").select("*")
+if(usersError){ console.log(usersError); return }
 
-console.log("USERS:", users)
-console.log("USERS ERROR:", usersError)
-
-/* ROLES */
 const {data:userRoles}=await supabaseClient.from("user_roles").select("*")
 const {data:roles}=await supabaseClient.from("roles").select("*")
 
-/* AGENTS */
-const {data:agents}=await supabaseClient
-.from("commission_agents")
-.select("id,name,email")
-
-/* TRANSPORTERS */
-const {data:transporters}=await supabaseClient
-.from("transporters")
-.select("id,name,email")
-
 let html=""
 
-/* ===== STAFF USERS ===== */
+if(!users || users.length===0){
+document.getElementById("usersTable").innerHTML="<tr><td colspan='3'>No users found</td></tr>"
+return
+}
 
 users.forEach(user=>{
 
-let roleName="Not Assigned"
 let roleId=null
-
 let ur=userRoles.find(r=>String(r.user_id)===String(user.id))
 
 if(ur){
 let role=roles.find(r=>String(r.id)===String(ur.role_id))
-if(role){
-roleName=role.role_name
-roleId=role.id
-}
+if(role){ roleId=role.id }
 }
 
 html+=`
@@ -304,69 +230,19 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 
 <td>
 <button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
-
 <button onclick="resetPassword('${user.auth_id}')">Reset</button>
-
 <button onclick="disableUser('${user.auth_id}')">Disable</button>
-
 <button onclick="enableUser('${user.auth_id}')">Enable</button>
-
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
 </td>
-
 </tr>
 `
-
-})
-
-/* ===== AGENTS (READ ONLY) ===== */
-
-agents?.forEach(a=>{
-
-html+=`
-<tr style="background:#f9fafb;">
-<td>${a.email || a.name}</td>
-
-<td>
-<span style="color:#16a34a;font-weight:bold;">Agent</span>
-</td>
-
-<td>
-<span style="color:gray;">Managed in Agent Panel</span>
-</td>
-
-</tr>
-`
-
-})
-
-/* ===== TRANSPORTERS (READ ONLY) ===== */
-
-transporters?.forEach(t=>{
-
-html+=`
-<tr style="background:#f1f5f9;">
-<td>${t.email || t.name}</td>
-
-<td>
-<span style="color:#2563eb;font-weight:bold;">Customer</span>
-</td>
-
-<td>
-<span style="color:gray;">Managed in Customer Panel</span>
-</td>
-
-</tr>
-`
-
 })
 
 document.getElementById("usersTable").innerHTML=html
-
 }
 
 /* CREATE USER */
-
 async function createUser(){
 
 let email=document.getElementById("email").value
@@ -378,42 +254,26 @@ alert("Enter email and password")
 return
 }
 
-let res=await fetch(EDGE_FUNCTION,{
+let res = await fetch(EDGE_FUNCTION,{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-email:email,
-password:password,
-role_id:role
-})
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({ email,password,role_id:role })
 })
 
 let data = await res.json()
-
-let data = await res.json()
+console.log("CREATE USER RESPONSE:", data)
 
 if(!res.ok){
-  alert(data.error || JSON.stringify(data))
-  console.log("FULL ERROR:", data)
-  return
+alert(data.error || "Error creating user ❌")
+return
 }
 
-if(data.success){
-  alert("User created ✅")
-}else{
-  alert("Something went wrong ❌")
-}
-
+alert("User created ✅")
 loadUsers()
-
 }
 
 /* UPDATE ROLE */
-
 async function updateRole(userId){
-
 let roleId=document.getElementById("role-"+userId).value
 
 await supabaseClient
@@ -422,75 +282,65 @@ await supabaseClient
 .eq("user_id",userId)
 
 alert("Role updated")
-
 loadUsers()
-
 }
 
 /* DELETE USER */
-
 async function deleteUser(id){
-
 if(!confirm("Delete user?")) return
 
 await supabaseClient.from("user_roles").delete().eq("user_id",id)
 await supabaseClient.from("users").delete().eq("id",id)
 
 loadUsers()
-
 }
 
 /* RESET PASSWORD */
 async function resetPassword(userId){
-
 let newPass = prompt("Enter new password")
 if(!newPass) return
 
-await fetch(ADMIN_FN,{
+let res = await fetch(ADMIN_FN,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-action:"reset_password",
-user_id:userId,
-password:newPass
+body:JSON.stringify({ action:"reset_password", user_id:userId, password:newPass })
 })
-})
+
+let data = await res.json()
+if(!res.ok){ alert(data.error); return }
 
 alert("Password updated ✅")
 }
 
 /* DISABLE USER */
 async function disableUser(userId){
-
-await fetch(ADMIN_FN,{
+let res = await fetch(ADMIN_FN,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-action:"disable",
-user_id:userId
+body:JSON.stringify({ action:"disable", user_id:userId })
 })
-})
+
+let data = await res.json()
+if(!res.ok){ alert(data.error); return }
 
 alert("User disabled 🚫")
 }
 
 /* ENABLE USER */
 async function enableUser(userId){
-
-await fetch(ADMIN_FN,{
+let res = await fetch(ADMIN_FN,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-action:"enable",
-user_id:userId
+body:JSON.stringify({ action:"enable", user_id:userId })
 })
-})
+
+let data = await res.json()
+if(!res.ok){ alert(data.error); return }
 
 alert("User enabled ✅")
 }
-  
-/* INIT */
 
+/* INIT */
 loadRoles()
 loadUsers()
 

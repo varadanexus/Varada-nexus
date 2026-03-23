@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agent Summary</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+.summary{
+display:flex;
+gap:20px;
+}
+
+.box{
+flex:1;
+padding:20px;
+border-radius:8px;
+color:white;
+font-size:18px;
+}
+
+.earn{background:#16a34a;}
+.paid{background:#dc2626;}
+.balance{background:#1f3c88;}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location="login.html"
+return
+}
+
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+})
+</script>
+
+<div class="main">
+
+<h2>Agent Summary</h2>
+
+<div class="summary">
+
+<div class="box earn">
+Total Earned<br>
+₹ <span id="earned">0</span>
+</div>
+
+<div class="box paid">
+Total Paid<br>
+₹ <span id="paid">0</span>
+</div>
+
+<div class="box balance">
+Balance<br>
+₹ <span id="balance">0</span>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+
+/* GET AGENT */
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!agent) return
+
+/* TOTAL EARNED */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("commission_amount")
+.eq("agent_id",agent.id)
+
+/* TOTAL PAID */
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("amount")
+.eq("agent_id",agent.id)
+
+let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
+let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
+let balance = earned - paid
+
+document.getElementById("earned").innerText = earned.toFixed(2)
+document.getElementById("paid").innerText = paid.toFixed(2)
+document.getElementById("balance").innerText = balance.toFixed(2)
+
+}
+
+</script>
+
+</body>
+</html>

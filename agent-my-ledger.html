@@ -43,14 +43,18 @@ background:#eee;
 
 <body>
 
+<!-- ✅ GLOBAL SUPABASE (FIX) -->
 <script>
-const supabaseClient = supabase.createClient(
+window.supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI:ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
-<!-- AGENT SIDEBAR -->
+<!-- ✅ GLOBAL LOGOUT -->
+<script src="agent-global.js"></script>
+
+<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
@@ -59,10 +63,9 @@ fetch("agent-sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* 🔥 LOAD AGENT NAME */
+/* LOAD AGENT NAME */
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
 const {data:agent} = await supabaseClient
@@ -112,8 +115,6 @@ init()
 
 async function init(){
 
-/* SESSION */
-
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
@@ -143,26 +144,19 @@ loadLedger()
 
 async function loadLedger(){
 
-/* GET TRIPS */
-
 const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("agent_id", agentId)
-
-/* GET PAYMENTS */
 
 const {data:payments} = await supabaseClient
 .from("agent_payments")
 .select("*")
 .eq("agent_id", agentId)
 
-/* BUILD ENTRIES */
-
 let entries=[]
 
 /* EARNINGS */
-
 trips?.forEach(t=>{
 entries.push({
 date:t.trip_date || t.created_at,
@@ -174,7 +168,6 @@ debit:0
 })
 
 /* PAYMENTS */
-
 payments?.forEach(p=>{
 entries.push({
 date:p.created_at,
@@ -186,11 +179,9 @@ debit:Number(p.amount || 0)
 })
 
 /* SORT */
-
 entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
 
 /* BALANCE */
-
 let balance=0
 let html=""
 
@@ -209,7 +200,6 @@ html += `
 <td><b>₹ ${balance.toFixed(2)}</b></td>
 </tr>
 `
-
 })
 
 document.getElementById("ledgerTable").innerHTML = html
@@ -217,6 +207,6 @@ document.getElementById("ledgerTable").innerHTML = html
 }
 
 </script>
-<script src="agent-global.js"></script>
+
 </body>
 </html>

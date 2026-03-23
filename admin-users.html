@@ -368,8 +368,11 @@ role_id:role
 
 let data = await res.json()
 
+let data = await res.json()
+
 if(!res.ok){
-  alert(data.error || "Error creating user ❌")
+  alert(data.error || JSON.stringify(data))
+  console.log("FULL ERROR:", data)
   return
 }
 

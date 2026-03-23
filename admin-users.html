@@ -234,11 +234,26 @@ document.getElementById("role").innerHTML=html
 
 async function loadUsers(){
 
+/* STAFF USERS */
 const {data:users}=await supabaseClient.from("users").select("*")
+
+/* ROLES */
 const {data:userRoles}=await supabaseClient.from("user_roles").select("*")
 const {data:roles}=await supabaseClient.from("roles").select("*")
 
+/* AGENTS */
+const {data:agents}=await supabaseClient
+.from("commission_agents")
+.select("id,name,email")
+
+/* TRANSPORTERS */
+const {data:transporters}=await supabaseClient
+.from("transporters")
+.select("id,name,email")
+
 let html=""
+
+/* ===== STAFF USERS ===== */
 
 users.forEach(user=>{
 
@@ -268,6 +283,48 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 <td>
 <button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
+</td>
+
+</tr>
+`
+
+})
+
+/* ===== AGENTS (READ ONLY) ===== */
+
+agents?.forEach(a=>{
+
+html+=`
+<tr style="background:#f9fafb;">
+<td>${a.email || a.name}</td>
+
+<td>
+<span style="color:#16a34a;font-weight:bold;">Agent</span>
+</td>
+
+<td>
+<span style="color:gray;">Managed in Agent Panel</span>
+</td>
+
+</tr>
+`
+
+})
+
+/* ===== TRANSPORTERS (READ ONLY) ===== */
+
+transporters?.forEach(t=>{
+
+html+=`
+<tr style="background:#f1f5f9;">
+<td>${t.email || t.name}</td>
+
+<td>
+<span style="color:#2563eb;font-weight:bold;">Customer</span>
+</td>
+
+<td>
+<span style="color:gray;">Managed in Customer Panel</span>
 </td>
 
 </tr>

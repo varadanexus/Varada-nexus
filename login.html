@@ -206,6 +206,32 @@ const {data:dbUser,error:userError}=await supabaseClient
 .single()
 
 if(userError || !dbUser){
+
+// 🔥 CHECK TRANSPORTER
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("*")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(transporter){
+window.location.href = "transporter-dashboard.html"
+return
+}
+
+// 🔥 CHECK AGENT
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("*")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agent){
+window.location.href = "agent-dashboard.html"
+return
+}
+
+// ❌ NOT FOUND ANYWHERE
 document.getElementById("error").innerText="User not registered in ERP"
 return
 }

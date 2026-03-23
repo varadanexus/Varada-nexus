@@ -41,8 +41,34 @@ document.getElementById("sidebar-container").innerHTML=data
 <h2>Agent Dashboard</h2>
 
 <div class="cards">
-<div class="card"><h4>Total Trips</h4><h2 id="totalTrips">0</h2></div>
-<div class="card"><h4>Total Commission</h4><h2 id="totalCommission">₹0</h2></div>
+
+<div class="card">
+<h4>Total Trips</h4>
+<h2 id="totalTrips">0</h2>
+</div>
+
+<div class="card">
+<h4>Total Commission</h4>
+<h2 id="totalCommission">₹0</h2>
+</div>
+
+<!-- 🔥 NAVIGATION CARDS -->
+
+<div class="card" onclick="goLedger()" style="cursor:pointer;">
+<h4>📄 Ledger</h4>
+<h2>View</h2>
+</div>
+
+<div class="card" onclick="goWithdraw()" style="cursor:pointer;">
+<h4>💸 Withdraw</h4>
+<h2>Request</h2>
+</div>
+
+<div class="card" onclick="goSummary()" style="cursor:pointer;">
+<h4>📊 Summary</h4>
+<h2>View</h2>
+</div>
+
 </div>
 
 <table>

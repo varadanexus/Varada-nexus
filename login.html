@@ -275,12 +275,14 @@ localStorage.setItem("erp_session_token",sessionToken)
 
 /* FLEXIBLE ROLE CHECK */
 
-const isTransporter =
-roleName === "customer" ||
-roleName === "transporter" ||
-roleName === "agent" ||
-roleName.includes("customer") ||
+const isTransporter =  
+roleName === "customer" ||  
+roleName === "transporter" ||  
+roleName.includes("customer") ||  
 roleName.includes("transporter")
+
+const isAgent =
+roleName === "agent" ||
 roleName.includes("agent")
 
 /* LOGIN TYPE VALIDATION */
@@ -310,7 +312,7 @@ else if(isTransporter){
   window.location.href="transporter-dashboard.html"
 }
 else{
-  window.location.href="dashboard.html"
+  window.location.href="dashboard.html" // staff/admin
 }
 
 }

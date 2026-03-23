@@ -29,11 +29,27 @@ const supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>  
 
 <script>  
-fetch("agent-sidebar.html")  
-.then(res=>res.text())  
-.then(data=>{  
-document.getElementById("sidebar-container").innerHTML=data  
-})  
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+
+/* 🔥 LOAD AGENT NAME */
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("name")
+.eq("auth_id", session.user.id)
+.single()
+
+if(agent){
+document.getElementById("userName").innerText = agent.name
+}
+})
 </script>  
 
 <div class="main">  

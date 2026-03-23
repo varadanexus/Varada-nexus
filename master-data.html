@@ -239,6 +239,34 @@ window.location.href="login.html"
 </table>
 </div>
 
+<div class="card">
+<h3>Commission Agents</h3>
+
+<input id="agentName" placeholder="Agent Name">
+<input id="agentPhone" placeholder="Phone">
+
+<select id="agentType">
+<option value="per_mt">Per MT</option>
+<option value="percentage">Percentage</option>
+</select>
+
+<input id="agentValue" placeholder="Commission Value">
+
+<button onclick="addAgent()">Add Agent</button>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody id="agentTable"></tbody>
+</table>
+</div>
+  
 </div>
 
 <script>
@@ -420,7 +448,33 @@ name:commodityName.value
 commodityName.value=""
 loadCommodities()
 }
+  
+async function addAgent(){
 
+const {error} = await supabaseClient
+.from("commission_agents")
+.insert({
+name: document.getElementById("agentName").value,
+phone: document.getElementById("agentPhone").value,
+commission_type: document.getElementById("agentType").value,
+commission_value: parseFloat(document.getElementById("agentValue").value)
+})
+
+if(error){
+console.error(error)
+alert("Error adding agent ❌")
+return
+}
+
+alert("Agent added ✅")
+
+document.getElementById("agentName").value=""
+document.getElementById("agentPhone").value=""
+document.getElementById("agentValue").value=""
+
+loadAgents()
+}
+  
 /* LOAD */
 
 async function loadClients(){
@@ -521,6 +575,19 @@ dd += `<option value="${a.id}">${a.name}</option>`
 })
 
 document.getElementById("agentDropdown").innerHTML = dd
+
+let html=""
+agents.forEach(a=>{
+html+=`
+<tr>
+<td>${a.name}</td>
+<td>${a.phone||""}</td>
+<td>${a.commission_type}</td>
+<td>${a.commission_value}</td>
+</tr>`
+})
+
+document.getElementById("agentTable").innerHTML = html
 }
   
 async function loadRoutes(){

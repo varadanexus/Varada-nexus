@@ -264,8 +264,9 @@ let data = await res.json()
 console.log("CREATE USER RESPONSE:", data)
 
 if(!res.ok){
-alert(data.error || "Error creating user ❌")
-return
+  alert(data.error || JSON.stringify(data))
+  console.log("FULL ERROR:", data)
+  return
 }
 
 alert("User created ✅")

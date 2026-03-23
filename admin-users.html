@@ -366,14 +366,18 @@ role_id:role
 })
 })
 
-let data=await res.json()
+let data = await res.json()
 
 if(!res.ok){
-alert(data.error)
-return
+  alert(data.error || "Error creating user ❌")
+  return
 }
 
-alert("User created")
+if(data.success){
+  alert("User created ✅")
+}else{
+  alert("Something went wrong ❌")
+}
 
 loadUsers()
 

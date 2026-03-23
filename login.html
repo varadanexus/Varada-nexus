@@ -278,8 +278,10 @@ localStorage.setItem("erp_session_token",sessionToken)
 const isTransporter =
 roleName === "customer" ||
 roleName === "transporter" ||
+roleName === "agent" ||
 roleName.includes("customer") ||
 roleName.includes("transporter")
+roleName.includes("agent")
 
 /* LOGIN TYPE VALIDATION */
 
@@ -301,10 +303,14 @@ return
 
 /* REDIRECT */
 
-if(isTransporter){
-window.location.href="transporter-dashboard.html"
-}else{
-window.location.href="dashboard.html"
+if(isAgent){
+  window.location.href="agent-dashboard.html"
+}
+else if(isTransporter){
+  window.location.href="transporter-dashboard.html"
+}
+else{
+  window.location.href="dashboard.html"
 }
 
 }

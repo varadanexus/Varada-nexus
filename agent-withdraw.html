@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Withdraw Request</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}
+input{padding:10px;width:200px;margin-right:10px;}
+button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
+</style>
+
+</head>
+
+<body>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+</script>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
+<h2>Withdraw Request</h2>
+
+<div class="card">
+
+<input id="amount" placeholder="Enter amount">
+<button onclick="requestWithdraw()">Request</button>
+
+</div>
+
+<div class="card">
+
+<h3>My Requests</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Amount</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="reqTable"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let agentId=null
+
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("*")
+.eq("auth_id",session.user.id)
+.single()
+
+agentId = agent.id
+
+loadRequests()
+}
+
+async function requestWithdraw(){
+
+let amt = document.getElementById("amount").value
+
+if(!amt){
+alert("Enter amount")
+return
+}
+
+await supabaseClient.from("agent_withdraw_requests").insert({
+agent_id:agentId,
+amount:amt
+})
+
+alert("Request sent ✅")
+
+loadRequests()
+}
+
+async function loadRequests(){
+
+const {data} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("*")
+.eq("agent_id",agentId)
+.order("requested_at",{ascending:false})
+
+let html=""
+
+data?.forEach(r=>{
+html+=`
+<tr>
+<td>${(r.requested_at || "").split("T")[0]}</td>
+<td>₹ ${r.amount}</td>
+<td>${r.status}</td>
+</tr>`
+})
+
+reqTable.innerHTML=html
+}
+
+</script>
+
+</body>
+</html>

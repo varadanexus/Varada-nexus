@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>My Earnings - Agent Portal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#eee;
+}
+</style>
+
+</head>
+
+<body>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+
+<!-- AGENT SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
+<h2>My Earnings Ledger</h2>
+
+<div class="card">
+
+<table>
+
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Reference</th>
+<th>Earned</th>
+<th>Paid</th>
+<th>Balance</th>
+</tr>
+</thead>
+
+<tbody id="ledgerTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let agentId=null
+
+init()
+
+async function init(){
+
+/* SESSION */
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+/* GET AGENT */
+
+const {data:agent} = await supabaseClient
+.from("commission_agents")
+.select("*")
+.eq("auth_id", session.user.id)
+.single()
+
+if(!agent){
+alert("Agent not found")
+return
+}
+
+agentId = agent.id
+
+loadLedger()
+}
+
+/* LOAD LEDGER */
+
+async function loadLedger(){
+
+/* GET TRIPS */
+
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("agent_id", agentId)
+
+/* GET PAYMENTS */
+
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("*")
+.eq("agent_id", agentId)
+
+/* BUILD ENTRIES */
+
+let entries=[]
+
+/* EARNINGS */
+
+trips?.forEach(t=>{
+entries.push({
+date:t.trip_date || t.created_at,
+type:"Trip",
+ref:t.trip_no,
+credit:Number(t.commission_amount || 0),
+debit:0
+})
+})
+
+/* PAYMENTS */
+
+payments?.forEach(p=>{
+entries.push({
+date:p.created_at,
+type:"Payment",
+ref:"Payment",
+credit:0,
+debit:Number(p.amount || 0)
+})
+})
+
+/* SORT */
+
+entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+/* BALANCE */
+
+let balance=0
+let html=""
+
+entries.forEach(e=>{
+
+balance += e.credit
+balance -= e.debit
+
+html += `
+<tr>
+<td>${(e.date || "").split("T")[0]}</td>
+<td>${e.type}</td>
+<td>${e.ref}</td>
+<td style="color:green">₹ ${e.credit || ""}</td>
+<td style="color:red">₹ ${e.debit || ""}</td>
+<td><b>₹ ${balance.toFixed(2)}</b></td>
+</tr>
+`
+
+})
+
+document.getElementById("ledgerTable").innerHTML = html
+
+}
+
+</script>
+
+</body>
+</html>

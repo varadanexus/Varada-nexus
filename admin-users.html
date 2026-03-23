@@ -207,6 +207,9 @@ window.location.href="login.html"
 const EDGE_FUNCTION =
 "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user"
 
+const ADMIN_FN =
+"https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/admin-user-actions"
+
 /* LOAD ROLES */
 
 async function loadRoles(){
@@ -282,6 +285,13 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 
 <td>
 <button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
+
+<button onclick="resetPassword('${user.auth_id}')">Reset</button>
+
+<button onclick="disableUser('${user.auth_id}')">Disable</button>
+
+<button onclick="enableUser('${user.auth_id}')">Enable</button>
+
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
 </td>
 
@@ -404,6 +414,55 @@ loadUsers()
 
 }
 
+/* RESET PASSWORD */
+async function resetPassword(userId){
+
+let newPass = prompt("Enter new password")
+if(!newPass) return
+
+await fetch(ADMIN_FN,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+action:"reset_password",
+user_id:userId,
+password:newPass
+})
+})
+
+alert("Password updated ✅")
+}
+
+/* DISABLE USER */
+async function disableUser(userId){
+
+await fetch(ADMIN_FN,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+action:"disable",
+user_id:userId
+})
+})
+
+alert("User disabled 🚫")
+}
+
+/* ENABLE USER */
+async function enableUser(userId){
+
+await fetch(ADMIN_FN,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+action:"enable",
+user_id:userId
+})
+})
+
+alert("User enabled ✅")
+}
+  
 /* INIT */
 
 loadRoles()

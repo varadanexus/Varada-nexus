@@ -211,6 +211,7 @@ window.location.href="login.html"
 <input id="truckId" placeholder="Auto ID" readonly>
 
 <select id="truckTransporter"></select>
+<select id="agentDropdown"></select>
 
 <button onclick="addTruck()">Add Truck</button>
 
@@ -244,6 +245,7 @@ window.location.href="login.html"
 
 /* PAGINATION */
 let clientPage=0
+let agents = []
 const pageSize=10
 
 /* ROUTE AUTO */
@@ -389,12 +391,25 @@ loadRoutes()
 }
 
 async function addTruck(){
-await supabaseClient.from("trucks").insert({
-truck_number:truckNumber.value,
-transporter_id:truckTransporter.value
+
+const {error} = await supabaseClient.from("trucks").insert({
+truck_number: truckNumber.value,
+transporter_id: truckTransporter.value,
+agent_id: document.getElementById("agentDropdown").value || null
 })
+
+if(error){
+console.error(error)
+alert("Error adding truck ❌")
+return
+}
+
 truckNumber.value=""
 truckId.value=""
+document.getElementById("agentDropdown").value=""
+
+alert("Truck added ✅")
+
 loadTrucks()
 }
 
@@ -483,6 +498,33 @@ ${t.transporter_name} (${t.phone||"-"} | ${t.gst_number||"No GST"})
 document.getElementById("transporterTable").innerHTML=html
 document.getElementById("truckTransporter").innerHTML=dd
 
+}
+document.getElementById("transporterTable").innerHTML=html
+document.getElementById("truckTransporter").innerHTML=dd
+
+}
+
+/* 🔥 PASTE HERE */
+async function loadAgents(){
+
+const {data,error} = await supabaseClient
+.from("commission_agents")
+.select("*")
+
+if(error){
+console.error("Agent load error:", error)
+return
+}
+
+agents = data || []
+
+let dd = '<option value="">Select Agent</option>'
+
+agents.forEach(a=>{
+dd += `<option value="${a.id}">${a.name}</option>`
+})
+
+document.getElementById("agentDropdown").innerHTML = dd
 }
   
 async function loadRoutes(){
@@ -646,6 +688,7 @@ await loadTransporters()
 await loadRoutes()
 await loadTrucks()
 await loadCommodities()
+await loadAgents()
 }
 
 </script>

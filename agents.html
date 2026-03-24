@@ -187,6 +187,10 @@ html+=`
 
 <td>
 <button class="edit-btn" onclick="updateAgent('${a.id}')">Save</button>
+<button onclick="resetPassword('${a.auth_id}')">Reset Password</button>
+<button onclick="toggleAgent('${a.id}', ${a.is_active})">
+${a.is_active ? "Disable" : "Enable"}
+</button>
 <button class="delete-btn" onclick="deleteAgent('${a.id}')">Delete</button>
 </td>
 </tr>
@@ -297,6 +301,54 @@ alert(error.message)
 return
 }
 
+loadAgents()
+}
+
+/* RESET PASSWORD */
+async function resetPassword(authId){
+
+let newPass = prompt("Enter new password")
+if(!newPass) return
+
+const { data: { session } } = await supabaseClient.auth.getSession()
+
+let res = await fetch(
+"https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/admin-user-actions",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization": "Bearer " + session.access_token
+},
+body: JSON.stringify({
+action:"reset_password",
+user_id: authId,
+password: newPass
+})
+})
+
+let data = await res.json()
+
+if(!res.ok){
+alert(data.error || "Failed ❌")
+return
+}
+
+alert("Password updated ✅")
+}
+
+
+/* ENABLE / DISABLE */
+async function toggleAgent(agentId, currentStatus){
+
+let newStatus = !currentStatus
+
+await supabaseClient
+.from("agents")
+.update({ is_active: newStatus })
+.eq("id", agentId)
+
+alert(newStatus ? "Enabled ✅" : "Disabled 🚫")
 loadAgents()
 }
 

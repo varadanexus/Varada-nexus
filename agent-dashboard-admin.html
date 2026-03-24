@@ -48,7 +48,7 @@ button{padding:8px 12px;margin-left:5px;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -160,6 +160,8 @@ ${a.agents?.name || "No Name"}
 })
 
 document.getElementById("agentSelect").innerHTML = html
+
+}
 
 async function loadSummary(){
 

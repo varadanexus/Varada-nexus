@@ -59,7 +59,73 @@ th{ background:#eee; }
 </head>
 
 <body>
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
+<script>
+
+/* LOAD SIDEBAR + INIT */
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+
+await initSidebar()
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+document.getElementById("sidebar").style.display="block"
+
+})
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+</script>
 <div class="main">
 
 <h2>Agents</h2>
@@ -192,6 +258,8 @@ loadAgents()
 loadAgents()
 
 </script>
-
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
 </body>
 </html>

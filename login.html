@@ -221,7 +221,7 @@ return
 
 // 🔥 CHECK AGENT
 const {data:agent} = await supabaseClient
-.from("commission_agents")
+.from("agents")
 .select("*")
 .eq("auth_id", authId)
 .maybeSingle()

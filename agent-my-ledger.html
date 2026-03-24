@@ -125,6 +125,8 @@ return
 
 /* GET AGENT */
 
+const {data:{session}} = await supabaseClient.auth.getSession()
+
 const {data:agent,error} = await supabaseClient
 .from("commission_agents")
 .select("*")

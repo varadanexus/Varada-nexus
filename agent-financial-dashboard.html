@@ -63,7 +63,7 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
 const {data:agent} = await supabaseClient
-.from("commission_agents")
+.from("agents")
 .select("name")
 .eq("auth_id", session.user.id)
 .single()
@@ -100,7 +100,37 @@ Balance<br>
 </div>
 
 <script>
+<script>
 
+async function getAgentId(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location="login.html"
+return null
+}
+
+const authId = session.user.id
+
+const {data:agent, error} = await supabaseClient
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
+.single()
+
+if(error || !agent){
+console.error(error)
+alert("Agent not found")
+return null
+}
+
+return agent
+}
+
+init()
+
+async function init(){
 init()
 
 async function init(){

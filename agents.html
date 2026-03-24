@@ -197,27 +197,68 @@ document.getElementById("agentsTable").innerHTML = html
 }
 
 /* CREATE */
+/* CREATE */
 async function createAgent(){
 
-let name=document.getElementById("name").value
-let phone=document.getElementById("phone").value
-let email=document.getElementById("email").value
+let name = document.getElementById("name").value
+let phone = document.getElementById("phone").value
+let email = document.getElementById("email").value
+let password = prompt("Enter password for agent")
 
-if(!name){
-alert("Name required")
+if(!name || !email || !password){
+alert("Name, email & password required")
 return
 }
 
-const {error} = await supabaseClient
+/* 🔥 GET SESSION */
+const { data: { session } } = await supabaseClient.auth.getSession()
+
+if(!session){
+alert("Session expired ❌")
+return
+}
+
+/* 🔥 CREATE AUTH USER VIA EDGE FUNCTION */
+let res = await fetch(
+"https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/create-user",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization": "Bearer " + session.access_token
+},
+body: JSON.stringify({
+email: email,
+password: password,
+role_id: 3   // ⚠️ PUT YOUR AGENT ROLE ID HERE
+})
+})
+
+let result = await res.json()
+
+if(!res.ok){
+alert(result.error || "User creation failed")
+console.log(result)
+return
+}
+
+/* 🔥 SAVE IN AGENTS TABLE */
+const { error } = await supabaseClient
 .from("agents")
-.insert({ name, phone, email })
+.insert({
+name,
+phone,
+email,
+auth_id: result.user_id,   // 🔥 IMPORTANT
+is_active: true
+})
 
 if(error){
 alert(error.message)
 return
 }
 
-alert("Agent created ✅")
+alert("Agent created with login ✅")
 loadAgents()
 }
 

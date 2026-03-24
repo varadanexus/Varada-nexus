@@ -4,6 +4,8 @@
 <title>Agents - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+<script src="menu-rbac.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -91,18 +93,8 @@ document.getElementById("sidebar").style.display="block"
 
 async function initSidebar(){
 
-let { data: { session } } = await supabaseClient.auth.getSession()
-
-// 🔥 try refresh if null
-if(!session){
-const { data } = await supabaseClient.auth.refreshSession()
-session = data?.session
-}
-
-if(!session){
-window.location.href = "login.html"
-return
-}
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
 
 const authId = session.user.id
 const email = session.user.email
@@ -272,7 +264,6 @@ loadAgents()
 
 </script>
 <script src="rbac.js"></script>
-<script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
 </body>
 </html>

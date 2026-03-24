@@ -456,6 +456,33 @@ loadCommodities()
 }
   
 async function addAgent(){
+
+if(!document.getElementById("agentSelect").value){
+alert("Select agent ❌")
+return
+}
+
+const {error} = await supabaseClient
+.from("commission_agents")
+.insert({
+agent_id: document.getElementById("agentSelect").value,
+commission_type: document.getElementById("agentType").value,
+commission_value: parseFloat(document.getElementById("agentValue").value)
+})
+
+if(error){
+console.error(error)
+alert("Error adding agent ❌")
+return
+}
+
+alert("Agent added ✅")
+
+document.getElementById("agentSelect").value=""
+document.getElementById("agentValue").value=""
+
+loadAgents()
+}
   
 /* LOAD */
 

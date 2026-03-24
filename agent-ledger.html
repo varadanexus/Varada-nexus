@@ -25,7 +25,7 @@ th{background:#eee;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -101,16 +101,26 @@ await loadAgents()
 /* LOAD AGENTS */
 async function loadAgents(){
 
-const {data} = await supabaseClient
+const {data,error} = await supabaseClient
 .from("commission_agents")
-.select("*")
+.select(`
+id,
+agents(name)
+`)
+
+if(error){
+console.error(error)
+return
+}
 
 agents = data || []
 
 let html='<option value="">Select Agent</option>'
 
 agents.forEach(a=>{
-html += `<option value="${a.id}">${a.name}</option>`
+html += `<option value="${a.id}">
+${a.agents?.name || "No Name"}
+</option>`
 })
 
 document.getElementById("agentSelect").innerHTML = html
@@ -143,9 +153,9 @@ let entries=[]
 /* EARNINGS */
 tripData?.forEach(t=>{
 entries.push({
-date:t.trip_date || t.created_at,
+date: t.trip_date || t.created_at || new Date().toISOString(),
 type:"Trip",
-ref:t.trip_no,
+ref: t.trip_no || t.id || "Trip",
 debit:Number(t.commission_amount || 0),
 credit:0
 })
@@ -180,7 +190,9 @@ html += `
 <td>${e.ref}</td>
 <td>${e.debit ? e.debit.toFixed(2) : ""}</td>
 <td>${e.credit ? e.credit.toFixed(2) : ""}</td>
-<td>${balance.toFixed(2)}</td>
+<td style="font-weight:bold;color:${balance>=0?'green':'red'}">
+${balance.toFixed(2)}
+</td>
 </tr>
 `
 })

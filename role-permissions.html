@@ -138,17 +138,26 @@ const actions=["view","create","edit","delete"]
 
 async function createRole(){
 
-let name=roleName.value.trim()
+let name = document.getElementById("roleName").value.trim()
 
 if(!name){
 alert("Enter role name")
 return
 }
 
-await supabaseClient.from("roles").insert({role_name:name})
+const { error } = await supabaseClient
+.from("roles")
+.insert({ role_name: name })
 
-roleName.value=""
-alert("Role Created")
+if(error){
+console.error(error)
+alert("Error creating role")
+return
+}
+
+document.getElementById("roleName").value = ""
+
+alert("Role Created ✅")
 
 loadPermissions()
 }

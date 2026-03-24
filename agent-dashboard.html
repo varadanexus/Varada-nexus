@@ -51,19 +51,27 @@ fetch("agent-sidebar.html")
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* 🔥 LOAD AGENT NAME */
-
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
-/* 🔥 GET AGENT FROM agents TABLE */
+/* ✅ DEFINE authId */
+const authId = session.user.id
 
+/* ✅ GET AGENT FROM agents TABLE */
 const {data:agent} = await supabaseClient
 .from("agents")
-.select("id")
+.select("name")   // also fix here
 .eq("auth_id", authId)
 .single()
+
+if(!agent){
+alert("Agent not found")
+return
+}
+
+document.getElementById("userName").innerText = agent.name
+})
 
 if(!agent){
 alert("Agent not found")
@@ -148,7 +156,7 @@ const authId = session.user.id
 /* ✅ GET AGENT FROM agents TABLE */
 const {data:agent, error} = await supabaseClient
 .from("agents")
-.select("id")
+.select("name")
 .eq("auth_id", authId)
 .single()
 

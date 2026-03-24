@@ -278,20 +278,27 @@ return
 /* FETCH RELATED DATA */
 let selectedRoute = routes.find(r=>r.id==routeId)
 let selectedTruck = trucks.find(t=>t.id==truckId)
-let agentId = selectedTruck?.agent_id || null
-let selectedCommodity = commodities.find(c=>c.id==commodityId)
-let selectedClient = clients.find(c=>c.id==clientId)
+
+let agentId = null
 let agent = null
 
-if(agentId){
-const {data} = await supabaseClient
-.from("commission_agents")
+if(selectedTruck?.agent_id){
+
+const {data:agentData} = await supabaseClient
+.from("agents")
 .select("*")
-.eq("id", agentId)
+.eq("id", selectedTruck.agent_id)
 .single()
 
-agent = data
+if(agentData){
+agentId = agentData.id
+agent = agentData
 }
+
+}
+
+let selectedCommodity = commodities.find(c=>c.id==commodityId)
+let selectedClient = clients.find(c=>c.id==clientId)
   
 /* AUTO TRIP NO */
 let tripNo = await generateTripNo()

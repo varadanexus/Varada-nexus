@@ -223,7 +223,7 @@ return
 
 // CHECK AGENT
 const {data:agentData} = await supabaseClient
-.from("agents")
+.from("commission_agents")
 .select("*")
 .eq("auth_id", authId)
 .maybeSingle()
@@ -310,7 +310,7 @@ return
 /* 🔥 PRIORITY BASED REDIRECT */
 
 if(agent){
-  window.location.href="dashboard.html"
+  window.location.href="agent-dashboard.html"
   return
 }
 

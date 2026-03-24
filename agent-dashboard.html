@@ -46,6 +46,7 @@ window.supabaseClient = supabase.createClient(
 
 <!-- ✅ SIDEBAR LOAD AFTER GLOBAL -->
 <script>
+
 fetch("agent-sidebar.html")
 .then(res=>res.text())
 .then(async (data)=>{
@@ -53,7 +54,6 @@ document.getElementById("sidebar-container").innerHTML = data
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 
-/* ✅ SAFE CHECK */
 if(!session){
 console.log("No session")
 return
@@ -63,46 +63,19 @@ const authId = session.user.id
 
 const {data:agent, error} = await supabaseClient
 .from("agents")
-.select("name")
+.select("id,name")
 .eq("auth_id", authId)
 .single()
 
 if(error || !agent){
-console.error(error)
 console.log("Agent not found")
 return
 }
 
-document.getElementById("userName").innerText = agent.name
-})fetch("agent-sidebar.html")
-.then(res=>res.text())
-.then(async (data)=>{
-document.getElementById("sidebar-container").innerHTML = data
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-/* ✅ SAFE CHECK */
-if(!session){
-console.log("No session")
-return
-}
-
-const authId = session.user.id
-
-const {data:agent, error} = await supabaseClient
-.from("agents")
-.select("name")
-.eq("auth_id", authId)
-.single()
-
-if(error || !agent){
-console.error(error)
-console.log("Agent not found")
-return
-}
-
-document.getElementById("userName").innerText = agent.name
+const el = document.getElementById("userName")
+if(el) el.innerText = agent.name
 })
+  
 </script>
 
 <div class="main">
@@ -177,7 +150,7 @@ const authId = session.user.id
 /* ✅ GET AGENT FROM agents TABLE */
 const {data:agent, error} = await supabaseClient
 .from("agents")
-.select("name")
+.select("id,name")
 .eq("auth_id", authId)
 .single()
 
@@ -194,7 +167,7 @@ const {data} = await supabaseClient
 .eq("agent_id", agent.id)
 .order("created_at",{ascending:false})
 
-trips = data || []
+trips = Array.isArray(data) ? data : []
 
 render()
 }

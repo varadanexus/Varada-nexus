@@ -105,43 +105,28 @@ init()
 
 async function init(){
 
-const {data:{session}} = await supabaseClient.auth.getSession()
+  const agent = await getAgentId()
+  if(!agent) return
 
-if(!session){
-window.location="login.html"
-return
-}
+  /* TOTAL EARNED */
+  const {data:trips} = await supabaseClient
+  .from("trips")
+  .select("commission_amount")
+  .eq("agent_id",agent.id)
 
-const authId = session.user.id
+  /* TOTAL PAID */
+  const {data:payments} = await supabaseClient
+  .from("agent_payments")
+  .select("amount")
+  .eq("agent_id",agent.id)
 
-/* GET AGENT */
-const {data:agent} = await supabaseClient
-.from("commission_agents")
-.select("id")
-.eq("auth_id",authId)
-.single()
+  let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
+  let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
+  let balance = earned - paid
 
-if(!agent) return
-
-/* TOTAL EARNED */
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("commission_amount")
-.eq("agent_id",agent.id)
-
-/* TOTAL PAID */
-const {data:payments} = await supabaseClient
-.from("agent_payments")
-.select("amount")
-.eq("agent_id",agent.id)
-
-let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
-let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
-let balance = earned - paid
-
-document.getElementById("earned").innerText = earned.toFixed(2)
-document.getElementById("paid").innerText = paid.toFixed(2)
-document.getElementById("balance").innerText = balance.toFixed(2)
+  document.getElementById("earned").innerText = earned.toFixed(2)
+  document.getElementById("paid").innerText = paid.toFixed(2)
+  document.getElementById("balance").innerText = balance.toFixed(2)
 
 }
 

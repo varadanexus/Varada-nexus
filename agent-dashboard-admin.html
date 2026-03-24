@@ -137,14 +137,29 @@ await loadLeaderboard()
 }
 
 async function loadAgents(){
-const {data} = await supabaseClient.from("commission_agents").select("*")
-agents = data || []
-let html='<option value="">Select Agent</option>'
-agents.forEach(a=>{
-html += `<option value="${a.id}">${a.name}</option>`
-})
-document.getElementById("agentSelect").innerHTML = html
+const {data,error} = await supabaseClient
+.from("commission_agents")
+.select(`
+id,
+agents(name)
+`)
+
+if(error){
+console.error(error)
+return
 }
+
+agents = data || []
+
+let html='<option value="">Select Agent</option>'
+
+agents.forEach(a=>{
+html += `<option value="${a.id}">
+${a.agents?.name || "No Name"}
+</option>`
+})
+
+document.getElementById("agentSelect").innerHTML = html
 
 async function loadSummary(){
 
@@ -243,7 +258,8 @@ let sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5)
 
 let html=""
 sorted.forEach(([id,val])=>{
-let name=agents.find(a=>a.id==id)?.name||id
+let agent = agents.find(a=>a.id==id)
+let name = agent?.agents?.name || "Unknown"
 html+=`<li>${name} — ₹ ${val.toFixed(2)}</li>`
 })
 

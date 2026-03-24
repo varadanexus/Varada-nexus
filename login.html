@@ -205,9 +205,11 @@ const {data:dbUser,error:userError}=await supabaseClient
 .eq("auth_id",authId)
 .single()
 
+let agent = null;  // ✅ ADD THIS LINE (VERY IMPORTANT)
+
 if(userError || !dbUser){
 
-// 🔥 CHECK TRANSPORTER
+// CHECK TRANSPORTER
 const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("*")
@@ -219,23 +221,23 @@ window.location.href = "transporter-dashboard.html"
 return
 }
 
-// 🔥 CHECK AGENT
-const {data:agent} = await supabaseClient
+// CHECK AGENT
+const {data:agentData} = await supabaseClient
 .from("agents")
 .select("*")
 .eq("auth_id", authId)
 .maybeSingle()
 
-if(agent){
+if(agentData){
+agent = agentData   // ✅ STORE HERE
 window.location.href = "agent-dashboard.html"
 return
 }
 
-// ❌ NOT FOUND ANYWHERE
+// NOT FOUND
 document.getElementById("error").innerText="User not registered in ERP"
 return
 }
-
 /* GET ROLE */
 
 const {data:userRoles,error:roleError}=await supabaseClient
@@ -308,7 +310,7 @@ return
 /* 🔥 PRIORITY BASED REDIRECT */
 
 if(agent){
-  window.location.href="agent-dashboard.html"
+  window.location.href="dashboard.html"
   return
 }
 

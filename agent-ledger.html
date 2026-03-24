@@ -102,11 +102,8 @@ await loadAgents()
 async function loadAgents(){
 
 const {data,error} = await supabaseClient
-.from("commission_agents")
-.select(`
-id,
-agents(name)
-`)
+.from("agents")
+.select("id,name")
 
 if(error){
 console.error(error)
@@ -119,7 +116,7 @@ let html='<option value="">Select Agent</option>'
 
 agents.forEach(a=>{
 html += `<option value="${a.id}">
-${a.agents?.name || "No Name"}
+${a.name || "No Name"}
 </option>`
 })
 

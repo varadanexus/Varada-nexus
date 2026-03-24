@@ -70,7 +70,7 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
 const {data:agent} = await supabaseClient
-.from("commission_agents")
+.from("agents")
 .select("name")
 .eq("auth_id", session.user.id)
 .single()
@@ -125,11 +125,11 @@ return
 
 /* GET AGENT */
 
-const {data:{session}} = await supabaseClient.auth.getSession()
+
 
 const {data:agent,error} = await supabaseClient
-.from("commission_agents")
-.select("*")
+.from("agents")
+.select("id")
 .eq("auth_id", session.user.id)
 .single()
 

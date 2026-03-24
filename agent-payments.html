@@ -198,29 +198,31 @@ window.location.href="login.html"
 let agents=[]
 let payments=[]
 
-init()
 
-async function init(){
-await loadAgents()
-await loadPayments()
-}
 
 /* LOAD AGENTS */
 
 async function loadAgents(){
 
-const {data} = await supabaseClient
+const {data,error} = await supabaseClient
 .from("commission_agents")
-.select("*")
+.select(`
+id,
+agents(name, phone)
+`)
+
+if(error){
+console.error(error)
+return
+}
 
 agents = data || []
-console.log("Agents loaded:", agents)
 
 let html='<option value="">Select Agent</option>'
 
 agents.forEach(a=>{
 html += `<option value="${a.id}">
-${a.name || "No Name"} (${a.phone || "-"})
+${a.agents?.name || "No Name"} (${a.agents?.phone || "-"})
 </option>`
 })
 
@@ -265,7 +267,8 @@ alert("Payment saved ✅")
 document.getElementById("amount").value=""
 document.getElementById("remarks").value=""
 
-loadPayments()
+await loadAgents()
+await loadPayments()
 }
 
 /* LOAD PAYMENTS */
@@ -284,11 +287,11 @@ let html=""
 payments.forEach(p=>{
 
 let agent = agents.find(a=>a.id==p.agent_id)
-
+let name = agent?.agents?.name || "-"
 html += `
 <tr>
 <td>${(p.created_at || "").split("T")[0]}</td>
-<td>${agent?.name || "-"}</td>
+<td>${name}</td>
 <td>₹ ${p.amount}</td>
 <td>${p.payment_mode}</td>
 <td>${p.remarks || ""}</td>
@@ -342,7 +345,8 @@ remarks:"Full settlement"
 
 alert("Settled ₹ " + balance.toFixed(2))
 
-loadPayments()
+await loadAgents()
+await loadPayments()
 }
 
 </script>

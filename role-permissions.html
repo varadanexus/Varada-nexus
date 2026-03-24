@@ -145,23 +145,22 @@ alert("Enter role name")
 return
 }
 
-const { error } = await supabaseClient
+const { data, error } = await supabaseClient
 .from("roles")
 .insert({ role_name: name })
 
 if(error){
-console.error(error)
-alert("Error creating role")
+console.error("FULL ERROR:", error)
+alert(error.message)   // 👈 THIS WILL SHOW REAL ISSUE
 return
 }
 
-document.getElementById("roleName").value = ""
-
 alert("Role Created ✅")
+
+document.getElementById("roleName").value = ""
 
 loadPermissions()
 }
-
 /* LOAD DATA */
 
 /* LOAD DATA */

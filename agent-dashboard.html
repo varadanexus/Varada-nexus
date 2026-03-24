@@ -135,23 +135,39 @@ init()
 
 async function init(){
 
-  const agent = await getAgentId()
-  if(!agent) return
+const {data:{session}} = await supabaseClient.auth.getSession()
 
-  // SET NAME ONCE (no need sidebar duplicate)
-  const nameEl = document.getElementById("userName")
-  if(nameEl) nameEl.innerText = agent.name
+if(!session){
+window.location="login.html"
+return
+}
 
-  /* GET TRIPS */
-  const {data} = await supabaseClient
-  .from("trips")
-  .select("*")
-  .eq("agent_id", agent.id)
-  .order("created_at",{ascending:false})
+/* ✅ DEFINE authId FIRST */
+const authId = session.user.id
 
-  trips = data || []
+/* ✅ GET AGENT FROM agents TABLE */
+const {data:agent, error} = await supabaseClient
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
+.single()
 
-  render()
+if(error || !agent){
+console.error(error)
+alert("Agent not found")
+return
+}
+
+/* GET TRIPS */
+const {data} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("agent_id", agent.id)
+.order("created_at",{ascending:false})
+
+trips = data || []
+
+render()
 }
 
 function render(){

@@ -197,6 +197,34 @@ return
 
 let authId=data.user.id
 
+/* 🔥 AUTO LINK AGENT */
+
+const {data:agentDataAuto} = await supabaseClient
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agentDataAuto){
+
+  const {data:existing} = await supabaseClient
+  .from("commission_agents")
+  .select("id, auth_id")
+  .eq("agent_id", agentDataAuto.id)
+  .maybeSingle()
+
+  if(existing && !existing.auth_id){
+
+    await supabaseClient
+    .from("commission_agents")
+    .update({ auth_id: authId })
+    .eq("agent_id", agentDataAuto.id)
+
+    console.log("✅ Agent auto-linked")
+  }
+
+}
+  
 /* FIND USER */
 
 const {data:dbUser,error:userError}=await supabaseClient
@@ -222,6 +250,8 @@ return
 }
 
 // CHECK AGENT
+/* 🔥 CHECK AGENT FROM COMMISSION TABLE */
+
 const {data:agentData} = await supabaseClient
 .from("commission_agents")
 .select("*")
@@ -229,9 +259,8 @@ const {data:agentData} = await supabaseClient
 .maybeSingle()
 
 if(agentData){
-agent = agentData   // ✅ STORE HERE
-window.location.href = "agent-dashboard.html"
-return
+  window.location.href = "agent-dashboard.html"
+  return
 }
 
 // NOT FOUND

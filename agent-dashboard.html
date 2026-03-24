@@ -57,11 +57,18 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
+/* 🔥 GET AGENT FROM agents TABLE */
+
 const {data:agent} = await supabaseClient
-.from("commission_agents")
-.select("name")
-.eq("auth_id", session.user.id)
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
 .single()
+
+if(!agent){
+alert("Agent not found")
+return
+}
 
 if(agent){
 document.getElementById("userName").innerText = agent.name

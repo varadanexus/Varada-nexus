@@ -138,11 +138,8 @@ await loadLeaderboard()
 
 async function loadAgents(){
 const {data,error} = await supabaseClient
-.from("commission_agents")
-.select(`
-id,
-agents(name)
-`)
+.from("agents")
+.select("id,name")
 
 if(error){
 console.error(error)
@@ -155,7 +152,7 @@ let html='<option value="">Select Agent</option>'
 
 agents.forEach(a=>{
 html += `<option value="${a.id}">
-${a.agents?.name || "No Name"}
+${a.name || "No Name"}
 </option>`
 })
 
@@ -248,7 +245,7 @@ loadSummary()
 
 /* 🏆 LEADERBOARD */
 async function loadLeaderboard(){
-
+if(!agents.length) await loadAgents()
 const {data}=await supabaseClient.from("trips").select("agent_id,commission_amount")
 
 let map={}
@@ -261,7 +258,7 @@ let sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5)
 let html=""
 sorted.forEach(([id,val])=>{
 let agent = agents.find(a=>a.id==id)
-let name = agent?.agents?.name || "Unknown"
+let name = agent?.name || "Unknown"
 html+=`<li>${name} — ₹ ${val.toFixed(2)}</li>`
 })
 

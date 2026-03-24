@@ -637,14 +637,14 @@ const {data:trs} = await supabaseClient.from("transporters").select("*")
 
 const {data:ags} = await supabaseClient
 .from("commission_agents")
-.select(`*, agents(name)`)
+.select(`*, agents(name)`) || []
 
 let html=""
 
 trucks?.forEach(t=>{
 
 let transporterName = trs.find(x=>x.id==t.transporter_id)?.transporter_name || "-"
-let agentName = ags.find(a=>a.id==t.agent_id)?.agents?.name || "-"
+let agentName = (ags || []).find(a=>a.id==t.agent_id)?.agents?.name || "-"
 
 html+=`
 <tr>

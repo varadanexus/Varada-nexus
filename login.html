@@ -233,10 +233,22 @@ const {data:dbUser,error:userError}=await supabaseClient
 .eq("auth_id",authId)
 .single()
 
-let agent = null;  // ✅ ADD THIS LINE (VERY IMPORTANT)
 
 if(userError || !dbUser){
 
+/* 🔥 PRIORITY: CHECK AGENT FIRST */
+
+const {data:agentCheck} = await supabaseClient
+.from("commission_agents")
+.select("*")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agentCheck){
+  window.location.href = "agent-dashboard.html"
+  return
+}
+  
 // CHECK TRANSPORTER
 const {data:transporter} = await supabaseClient
 .from("transporters")
@@ -338,10 +350,7 @@ return
 
 /* 🔥 PRIORITY BASED REDIRECT */
 
-if(agent){
-  window.location.href="agent-dashboard.html"
-  return
-}
+
 
 if(isTransporter){
   window.location.href="transporter-dashboard.html"

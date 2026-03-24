@@ -40,23 +40,38 @@ document.body.appendChild(badge)
 
 
 /* CHECK LOGIN */
-
 async function checkLogin(){
 
 const page = window.location.pathname.split("/").pop()
 
 if(page === "login.html") return null
 
-const {data} = await supabaseClient.auth.getSession()
+const { data } = await supabaseClient.auth.getSession()
 
 if(!data.session){
 window.location.replace("login.html")
 return null
 }
 
-return data.session
-}
+const session = data.session
 
+/* 🔥 ADD THIS BLOCK HERE */
+const { data: agent } = await supabaseClient
+  .from("agents")
+  .select("is_active")
+  .eq("auth_id", session.user.id)
+  .single()
+
+if(agent && agent.is_active === false){
+  await supabaseClient.auth.signOut()
+  alert("Account disabled 🚫")
+  window.location.replace("login.html")
+  return null
+}
+/* 🔥 END BLOCK */
+
+return session
+}
 
 /* SINGLE SESSION */
 

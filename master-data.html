@@ -614,6 +614,26 @@ dd += `<option value="${a.id}">${a.name}</option>`
 
 document.getElementById("agentSelect").innerHTML = dd
 }
+
+async function loadTruckAgentDropdown(){
+
+const {data,error} = await supabaseClient
+.from("commission_agents")
+.select(`id, agents(name)`)
+
+if(error){
+console.error("Truck agent dropdown error:", error)
+return
+}
+
+let dd = '<option value="">Select Agent</option>'
+
+data.forEach(a=>{
+dd += `<option value="${a.id}">${a.agents?.name || "-"}</option>`
+})
+
+document.getElementById("agentDropdown").innerHTML = dd
+}
   
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
@@ -724,7 +744,7 @@ document.getElementById("eTruckNumber").value = t.truck_number || ""
 
 /* LOAD DROPDOWNS */
 const {data:trs} = await supabaseClient.from("transporters").select("*")
-const {data:ags} = await supabaseClient.from("commission_agents").select("*")
+const {data:ags} = await supabaseClient .from("commission_agents") .select(`*, agents(name)`)
 
 /* TRANSPORTER DROPDOWN */
 let tdd = trs.map(x=>`<option value="${x.id}">${x.transporter_name}</option>`).join("")
@@ -733,7 +753,7 @@ document.getElementById("eTruckTransporter").value = t.transporter_id
 
 /* AGENT DROPDOWN */
 let add = '<option value="">No Agent</option>' +
-ags.map(a=>`<option value="${a.id}">${a.name}</option>`).join("")
+ags.map(a=>`<option value="${a.id}">${a.agents?.name || "-"}</option>`).join("")
 document.getElementById("eTruckAgent").innerHTML = add
 document.getElementById("eTruckAgent").value = t.agent_id || ""
 
@@ -855,6 +875,7 @@ await loadTrucks()
 await loadCommodities()
 await loadAgents()
 await loadAgentDropdown()
+await loadTruckAgentDropdown()
 }
 
 </script>

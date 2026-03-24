@@ -244,11 +244,13 @@ window.location.href="login.html"
 </table>
 </div>
 
+<!-- 🔥 COMMISSION AGENTS UI -->
 <div class="card">
 <h3>Commission Agents</h3>
 
-<input id="agentName" placeholder="Agent Name">
-<input id="agentPhone" placeholder="Phone">
+<select id="agentSelect">
+<option value="">Select Agent</option>
+</select>
 
 <select id="agentType">
 <option value="per_mt">Per MT</option>
@@ -263,7 +265,6 @@ window.location.href="login.html"
 <thead>
 <tr>
 <th>Name</th>
-<th>Phone</th>
 <th>Type</th>
 <th>Value</th>
 </tr>
@@ -455,30 +456,6 @@ loadCommodities()
 }
   
 async function addAgent(){
-
-const {error} = await supabaseClient
-.from("commission_agents")
-.insert({
-name: document.getElementById("agentName").value,
-phone: document.getElementById("agentPhone").value,
-commission_type: document.getElementById("agentType").value,
-commission_value: parseFloat(document.getElementById("agentValue").value)
-})
-
-if(error){
-console.error(error)
-alert("Error adding agent ❌")
-return
-}
-
-alert("Agent added ✅")
-
-document.getElementById("agentName").value=""
-document.getElementById("agentPhone").value=""
-document.getElementById("agentValue").value=""
-
-loadAgents()
-}
   
 /* LOAD */
 
@@ -564,7 +541,10 @@ async function loadAgents(){
 
 const {data,error} = await supabaseClient
 .from("commission_agents")
-.select("*")
+.select(`
+*,
+agents(name)
+`)
 
 if(error){
 console.error("Agent load error:", error)
@@ -573,26 +553,39 @@ return
 
 agents = data || []
 
-let dd = '<option value="">Select Agent</option>'
-
-agents.forEach(a=>{
-dd += `<option value="${a.id}">${a.name}</option>`
-})
-
-document.getElementById("agentDropdown").innerHTML = dd
-
 let html=""
 agents.forEach(a=>{
 html+=`
 <tr>
-<td>${a.name}</td>
-<td>${a.phone||""}</td>
+<td>${a.agents?.name || "-"}</td>
 <td>${a.commission_type}</td>
 <td>${a.commission_value}</td>
 </tr>`
 })
 
 document.getElementById("agentTable").innerHTML = html
+}
+
+/* 🔥 LOAD AGENTS FROM agents TABLE (FOR DROPDOWN) */
+async function loadAgentDropdown(){
+
+const {data,error} = await supabaseClient
+.from("agents")
+.select("id, name")
+.eq("is_active", true)
+
+if(error){
+console.error("Dropdown error:", error)
+return
+}
+
+let dd = '<option value="">Select Agent</option>'
+
+data.forEach(a=>{
+dd += `<option value="${a.id}">${a.name}</option>`
+})
+
+document.getElementById("agentSelect").innerHTML = dd
 }
   
 async function loadRoutes(){
@@ -614,21 +607,23 @@ async function loadTrucks(){
 
 const {data:trucks} = await supabaseClient.from("trucks").select("*")
 const {data:trs} = await supabaseClient.from("transporters").select("*")
-const {data:ags} = await supabaseClient.from("commission_agents").select("*")
+
+const {data:ags} = await supabaseClient
+.from("commission_agents")
+.select(`*, agents(name)`)
 
 let html=""
 
 trucks?.forEach(t=>{
 
 let transporterName = trs.find(x=>x.id==t.transporter_id)?.transporter_name || "-"
-let agentName = ags.find(a=>a.id==t.agent_id)?.name || "-"
+let agentName = ags.find(a=>a.id==t.agent_id)?.agents?.name || "-"
 
 html+=`
 <tr>
 <td>${t.truck_number}</td>
 <td>${transporterName}</td>
 <td>${agentName}</td>
-
 <td>
 <button onclick="editTruck('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button>
@@ -638,7 +633,6 @@ html+=`
 
 truckTable.innerHTML=html
 }
-
 async function loadCommodities(){
 const {data}=await supabaseClient.from("commodities").select("*")
 let html=""
@@ -833,6 +827,7 @@ await loadRoutes()
 await loadTrucks()
 await loadCommodities()
 await loadAgents()
+await loadAgentDropdown()
 }
 
 </script>

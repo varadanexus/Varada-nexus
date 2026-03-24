@@ -11,9 +11,8 @@
 <link rel="stylesheet" href="style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  
-<style>
 
+<style>
 .login-container{
 display:flex;
 justify-content:center;
@@ -38,25 +37,14 @@ margin-bottom:25px;
 .login-card select,
 .login-card input{
 width:100%;
-box-sizing:border-box;
 padding:10px;
 margin-bottom:15px;
 border:1px solid #ccc;
 border-radius:4px;
-font-size:14px;
 }
 
 .password-wrapper{
 position:relative;
-width:100%;
-margin-bottom:15px;
-}
-
-.password-wrapper input{
-width:100%;
-box-sizing:border-box;
-padding-right:60px;
-margin-bottom:0;
 }
 
 .show-password{
@@ -76,19 +64,13 @@ background:#1f3c88;
 color:white;
 border:none;
 border-radius:4px;
-font-size:15px;
 cursor:pointer;
 }
 
-.login-card button:hover{
-background:#162f6d;
-}
-
 .error{
-color:#d9534f;
-margin-top:12px;
+color:red;
+margin-top:10px;
 }
-
 </style>
 
 </head>
@@ -96,20 +78,10 @@ margin-top:12px;
 <body>
 
 <header>
-
 <div class="logo-wrapper">
-<img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
+<img src="images/logo.png" class="logo">
 <h1>Varada Nexus Private Limited</h1>
 </div>
-
-<nav>
-<a href="index.html">Home</a>
-<a href="founder.html">Founder</a>
-<a href="services.html">Services</a>
-<a href="contact.html">Contact</a>
-<a href="login.html">Login</a>
-</nav>
-
 </header>
 
 <main>
@@ -128,11 +100,8 @@ margin-top:12px;
 <input type="email" id="email" placeholder="Email">
 
 <div class="password-wrapper">
-
 <input type="password" id="password" placeholder="Password">
-
 <span class="show-password" onclick="togglePassword()">Show</span>
-
 </div>
 
 <button onclick="login()">Login</button>
@@ -145,49 +114,30 @@ margin-top:12px;
 
 </main>
 
-<footer>
-&copy; 2025 Varada Nexus Private Limited
-</footer>
-
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
-/* SHOW PASSWORD */
-
+/* TOGGLE PASSWORD */
 function togglePassword(){
-
 let pass=document.getElementById("password")
-let btn=document.querySelector(".show-password")
-
-if(pass.type==="password"){
-pass.type="text"
-btn.innerText="Hide"
-}else{
-pass.type="password"
-btn.innerText="Show"
-}
-
+pass.type = pass.type==="password" ? "text" : "password"
 }
 
 /* LOGIN */
-
 async function login(){
 
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
-let loginType=document.getElementById("loginType").value
 
 document.getElementById("error").innerText=""
 
-/* AUTH LOGIN */
-
+/* AUTH */
 const {data,error}=await supabaseClient.auth.signInWithPassword({
-email:email,
-password:password
+email,password
 })
 
 if(error){
@@ -198,168 +148,99 @@ return
 let authId=data.user.id
 
 /* 🔥 AUTO LINK AGENT */
-
-const {data:agentDataAuto} = await supabaseClient
+const {data:agentAuto} = await supabaseClient
 .from("agents")
 .select("id")
 .eq("auth_id", authId)
 .maybeSingle()
 
-if(agentDataAuto){
-
+if(agentAuto){
   const {data:existing} = await supabaseClient
   .from("commission_agents")
   .select("id, auth_id")
-  .eq("agent_id", agentDataAuto.id)
+  .eq("agent_id", agentAuto.id)
   .maybeSingle()
 
   if(existing && !existing.auth_id){
-
     await supabaseClient
     .from("commission_agents")
     .update({ auth_id: authId })
-    .eq("agent_id", agentDataAuto.id)
-
-    console.log("✅ Agent auto-linked")
+    .eq("agent_id", agentAuto.id)
   }
-
 }
-  
-/* FIND USER */
 
+/* 🔥 AGENT LOGIN */
+const {data:agentCheck} = await supabaseClient
+.from("commission_agents")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agentCheck){
+window.location.href="agent-dashboard.html"
+return
+}
+
+/* 🔥 TRANSPORTER LOGIN */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(transporter){
+window.location.href="transporter-dashboard.html"
+return
+}
+
+/* 🔥 STAFF LOGIN */
 const {data:dbUser,error:userError}=await supabaseClient
 .from("users")
 .select("*")
 .eq("auth_id",authId)
 .single()
 
-
 if(userError || !dbUser){
-
-/* 🔥 PRIORITY: CHECK AGENT FIRST */
-
-const {data:agentCheck} = await supabaseClient
-.from("commission_agents")
-.select("*")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agentCheck){
-  window.location.href = "agent-dashboard.html"
-  return
-}
-  
-// CHECK TRANSPORTER
-const {data:transporter} = await supabaseClient
-.from("transporters")
-.select("*")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(transporter){
-window.location.href = "transporter-dashboard.html"
-return
-}
-
-// CHECK AGENT
-/* 🔥 CHECK AGENT FROM COMMISSION TABLE */
-
-const {data:agentData} = await supabaseClient
-.from("commission_agents")
-.select("*")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agentData){
-  window.location.href = "agent-dashboard.html"
-  return
-}
-
-// NOT FOUND
 document.getElementById("error").innerText="User not registered in ERP"
 return
 }
-/* GET ROLE */
 
-const {data:userRoles,error:roleError}=await supabaseClient
+const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",dbUser.id)
 
-if(roleError || !userRoles || userRoles.length===0){
+if(!userRoles || userRoles.length===0){
 document.getElementById("error").innerText="User role not assigned"
 return
 }
 
-let roleId=userRoles[0].role_id
-
-/* GET ROLE NAME */
-
 const {data:role}=await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",roleId)
+.eq("id",userRoles[0].role_id)
 .single()
 
-let roleName = (role?.role_name || "").toLowerCase().trim()
+let roleName = (role?.role_name || "").toLowerCase()
 
-console.log("ROLE DETECTED:", roleName)
-
-/* SESSION TOKEN */
-
-let sessionToken = crypto.randomUUID()
+/* SESSION */
+let token = crypto.randomUUID()
 
 await supabaseClient
 .from("users")
-.update({session_token:sessionToken})
+.update({session_token:token})
 .eq("id",dbUser.id)
 
-localStorage.setItem("erp_session_token",sessionToken)
-
-/* FLEXIBLE ROLE CHECK */
-
-const isTransporter =  
-roleName === "customer" ||  
-roleName === "transporter" ||  
-roleName.includes("customer") ||  
-roleName.includes("transporter")
-
-const isAgent =
-roleName === "agent" ||
-roleName.includes("agent")
-
-/* LOGIN TYPE VALIDATION */
-
-if(loginType==="transporter" && !isTransporter){
-
-document.getElementById("error").innerText="This account is not a customer"
-
-await supabaseClient.auth.signOut()
-return
-}
-
-if(loginType==="staff" && isTransporter){
-
-document.getElementById("error").innerText="Customers must use customer login"
-
-await supabaseClient.auth.signOut()
-return
-}
+localStorage.setItem("erp_session_token",token)
 
 /* REDIRECT */
-
-/* 🔥 PRIORITY BASED REDIRECT */
-
-
-
-if(isTransporter){
-  window.location.href="transporter-dashboard.html"
-  return
+if(roleName.includes("transporter") || roleName.includes("customer")){
+window.location.href="transporter-dashboard.html"
+}else{
+window.location.href="dashboard.html"
 }
 
-window.location.href="dashboard.html" // staff/admin
 }
-
 
 </script>
 

@@ -59,6 +59,14 @@ th{ background:#eee; }
 </head>
 
 <body>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+  
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
@@ -83,8 +91,18 @@ document.getElementById("sidebar").style.display="block"
 
 async function initSidebar(){
 
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
+let { data: { session } } = await supabaseClient.auth.getSession()
+
+// 🔥 try refresh if null
+if(!session){
+const { data } = await supabaseClient.auth.refreshSession()
+session = data?.session
+}
+
+if(!session){
+window.location.href = "login.html"
+return
+}
 
 const authId = session.user.id
 const email = session.user.email
@@ -117,7 +135,6 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
-/* LOGOUT */
 window.logout = async function(){
 await supabaseClient.auth.signOut()
 window.location.href="login.html"
@@ -156,10 +173,6 @@ window.location.href="login.html"
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
-)
 
 /* LOAD AGENTS */
 async function loadAgents(){

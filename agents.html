@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agents - Varada Nexus ERP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+h2{color:#1f3c88;}
+
+.form-box{
+background:white;
+padding:20px;
+border-radius:6px;
+width:420px;
+margin-bottom:25px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+padding:10px 14px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+margin-right:5px;
+}
+
+button:hover{background:#162c66;}
+
+.delete-btn{ background:#d9534f; }
+.edit-btn{ background:#f0ad4e; }
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{ background:#eee; }
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+<h2>Agents</h2>
+
+<div class="form-box">
+<h3>Create Agent</h3>
+
+<input type="text" id="name" placeholder="Agent Name">
+<input type="text" id="phone" placeholder="Phone">
+<input type="email" id="email" placeholder="Email">
+
+<button onclick="createAgent()">Create Agent</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Email</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="agentsTable"></tbody>
+</table>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+/* LOAD AGENTS */
+async function loadAgents(){
+
+const {data,error} = await supabaseClient
+.from("agents")
+.select("*")
+.order("created_at",{ascending:false})
+
+if(error){ console.log(error); return }
+
+let html=""
+
+data.forEach(a=>{
+html+=`
+<tr>
+<td><input value="${a.name}" id="name-${a.id}"></td>
+<td><input value="${a.phone||""}" id="phone-${a.id}"></td>
+<td><input value="${a.email||""}" id="email-${a.id}"></td>
+
+<td>
+<button class="edit-btn" onclick="updateAgent('${a.id}')">Save</button>
+<button class="delete-btn" onclick="deleteAgent('${a.id}')">Delete</button>
+</td>
+</tr>
+`
+})
+
+document.getElementById("agentsTable").innerHTML = html
+}
+
+/* CREATE */
+async function createAgent(){
+
+let name=document.getElementById("name").value
+let phone=document.getElementById("phone").value
+let email=document.getElementById("email").value
+
+if(!name){
+alert("Name required")
+return
+}
+
+const {error} = await supabaseClient
+.from("agents")
+.insert({ name, phone, email })
+
+if(error){
+alert(error.message)
+return
+}
+
+alert("Agent created ✅")
+loadAgents()
+}
+
+/* UPDATE */
+async function updateAgent(id){
+
+let name=document.getElementById("name-"+id).value
+let phone=document.getElementById("phone-"+id).value
+let email=document.getElementById("email-"+id).value
+
+const {error} = await supabaseClient
+.from("agents")
+.update({ name, phone, email })
+.eq("id",id)
+
+if(error){
+alert(error.message)
+return
+}
+
+alert("Updated ✅")
+}
+
+/* DELETE */
+async function deleteAgent(id){
+
+if(!confirm("Delete agent?")) return
+
+const {error} = await supabaseClient
+.from("agents")
+.delete()
+.eq("id",id)
+
+if(error){
+alert(error.message)
+return
+}
+
+loadAgents()
+}
+
+/* INIT */
+loadAgents()
+
+</script>
+
+</body>
+</html>

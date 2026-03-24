@@ -68,9 +68,8 @@ const {data:agent} = await supabaseClient
 .eq("auth_id", session.user.id)
 .single()
 
-if(agent){
-document.getElementById("userName").innerText = agent.name
-}
+const el = document.getElementById("userName")
+if(el && agent) el.innerText = agent.name
 })
 </script>
 
@@ -99,20 +98,24 @@ Balance<br>
 
 </div>
 
-<script>
+
+
 <script>
 
-async function getAgentId(){
+init()
+
+async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session){
 window.location="login.html"
-return null
+return
 }
 
 const authId = session.user.id
 
+/* GET AGENT */
 const {data:agent, error} = await supabaseClient
 .from("agents")
 .select("id")
@@ -120,47 +123,33 @@ const {data:agent, error} = await supabaseClient
 .single()
 
 if(error || !agent){
-console.error(error)
-alert("Agent not found")
-return null
+console.log("Agent not found")
+return
 }
 
-return agent
-}
+/* TOTAL EARNED */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("commission_amount")
+.eq("agent_id",agent.id)
 
-init()
+/* TOTAL PAID */
+const {data:payments} = await supabaseClient
+.from("agent_payments")
+.select("amount")
+.eq("agent_id",agent.id)
 
-async function init(){
-init()
+let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
+let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
+let balance = earned - paid
 
-async function init(){
-
-  const agent = await getAgentId()
-  if(!agent) return
-
-  /* TOTAL EARNED */
-  const {data:trips} = await supabaseClient
-  .from("trips")
-  .select("commission_amount")
-  .eq("agent_id",agent.id)
-
-  /* TOTAL PAID */
-  const {data:payments} = await supabaseClient
-  .from("agent_payments")
-  .select("amount")
-  .eq("agent_id",agent.id)
-
-  let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
-  let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
-  let balance = earned - paid
-
-  document.getElementById("earned").innerText = earned.toFixed(2)
-  document.getElementById("paid").innerText = paid.toFixed(2)
-  document.getElementById("balance").innerText = balance.toFixed(2)
+document.getElementById("earned").innerText = earned.toFixed(2)
+document.getElementById("paid").innerText = paid.toFixed(2)
+document.getElementById("balance").innerText = balance.toFixed(2)
 
 }
 
 </script>
-
+  
 </body>
 </html>

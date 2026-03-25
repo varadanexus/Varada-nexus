@@ -279,50 +279,24 @@ return
 let selectedRoute = routes.find(r=>r.id==routeId)
 let selectedTruck = trucks.find(t=>t.id==truckId)
 
-let agentId = null
-let agent = null
 
-if(selectedTruck?.agent_id){
-
-const {data:agentData} = await supabaseClient
-.from("agents")
-.select("*")
-.eq("id", selectedTruck.agent_id)
-.single()
-
-if(agentData){
-agentId = agentData.id
-agent = agentData
-}
-
-}
 
 let selectedCommodity = commodities.find(c=>c.id==commodityId)
 let selectedClient = clients.find(c=>c.id==clientId)
   
 /* AUTO TRIP NO */
 let tripNo = await generateTripNo()
-let commissionAmount = 0
+
 
 let weightMT = (parseFloat(weightVal) || 0) / 1000
 let companyRate = parseFloat(document.getElementById("clientRate").value) || 0
 let transporterRate = parseFloat(document.getElementById("transporterRate").value) || 0
 
-if(agent){
+let totalAmount = weightMT * companyRate
 
-if(agent.commission_type === "per_mt"){
-commissionAmount = weightMT * agent.commission_value
-}
-
-if(agent.commission_type === "percentage"){
-let profit = (companyRate - transporterRate) * weightMT
-commissionAmount = (profit * agent.commission_value) / 100
-}
-
-}
-/* INSERT */
-const {error} = await supabaseClient.from("trips").insert({
-
+const {data:trip, error} = await supabaseClient
+.from("trips")
+.insert({
 trip_no: tripNo,
 
 route: selectedRoute?.route_code,
@@ -331,29 +305,70 @@ commodity: selectedCommodity?.name,
 client_name: selectedClient?.company,
 transporter_id: selectedTruck?.transporter_id,
 
-/* 🔥 IDs */
 route_id: routeId,
 truck_id: truckId,
 commodity_id: commodityId,
 client_id: clientId,
 
-/* 🔥 MISSING FIELDS FIX */
 weight_kg: weightVal,
 trip_date: dateVal,
 status: statusVal,
 
-agent_id: agentId,
-commission_amount: commissionAmount,
-  
-company_rate: parseFloat(document.getElementById("clientRate").value) || 0,
-transporter_rate: parseFloat(document.getElementById("transporterRate").value) || 0
+company_rate: companyRate,
+transporter_rate: transporterRate,
+
+/* NEW FIELDS */
+load_mt: weightMT,
+rate: companyRate,
+total_amount: totalAmount
+
 })
+.select()
+.single()
 
 if(error){
 console.error(error)
 alert("Error saving ❌")
 return
 }
+
+/* 🔥 PASTE HERE — EXACTLY HERE */
+
+const {data:maps} = await supabaseClient
+.from("truck_agents")
+.select("*")
+.eq("truck_id", truckId)
+
+if(!maps || maps.length === 0){
+  console.log("No agents mapped to this truck")
+}
+
+for(let m of maps){
+
+let commissionAmount = 0
+
+if(m.commission_type === "per_mt"){
+commissionAmount = weightMT * m.commission_value
+}
+
+if(m.commission_type === "percentage"){
+let profit = (companyRate - transporterRate) * weightMT
+commissionAmount = (profit * m.commission_value) / 100
+}
+
+const {error:agentError} = await supabaseClient.from("trip_agents").insert({
+trip_id: trip.id,
+agent_id: m.agent_id,
+commission_type: m.commission_type,
+commission_value: m.commission_value,
+commission_amount: commissionAmount
+})
+if(agentError){
+console.error("Agent insert error:", agentError)
+}
+
+}
+  
 
 alert("Trip Saved ✅")
 

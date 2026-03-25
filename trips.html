@@ -378,14 +378,16 @@ console.error("Agent insert error:", agentError)
 const {error:ledgerError} = await supabaseClient
 .from("agent_trip_ledger")
 .insert({
-agent_id: m.agent_id,
-trip_id: trip.id,
-commission_amount: commissionAmount,
-created_at: new Date().toISOString()
+  agent_id: m.agent_id,
+  trip_id: trip.id,
+  commission_type: m.commission_type,   // ✅ ADD THIS
+  commission_value: m.commission_value, // ✅ ADD THIS
+  commission_amount: commissionAmount,
+  created_at: new Date().toISOString()
 })
 
 if(ledgerError){
-console.error("Ledger insert error:", ledgerError)
+  console.error("Ledger insert error:", ledgerError)
 }
 
 }

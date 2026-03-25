@@ -111,7 +111,8 @@ document.getElementById("userName").innerText = agent.name
 <tr>
 <th>Date</th>
 <th>Type</th>
-<th>Reference</th>
+<th>Trip No</th>
+<th>Weight (MT)</th>
 <th>Earned</th>
 <th>Paid</th>
 <th>Balance</th>
@@ -171,10 +172,10 @@ const {data:ledger, error} = await supabaseClient
 .from("agent_trip_ledger")
 .select(`
   *,
-  trips (trip_no)
+  trips (trip_no, weight_kg, trip_date)
 `)
 .eq("agent_id", agentId)
-.order("created_at",{ascending:true})
+
 
 if(error){
 console.error(error)
@@ -187,14 +188,19 @@ let entries = []
 
 ledger?.forEach(l=>{
 entries.push({
-date: l.created_at,
+date: l.trips?.trip_date || l.created_at,
 type: "Trip Commission",
 ref: l.trips?.trip_no || "-",
+weight: (l.trips?.weight_kg || 0) / 1000,
 credit: Number(l.commission_amount || 0),
 debit: Number(l.paid_amount || 0)
 })
 })
 
+entries.sort((a,b)=>{
+  return (a.ref || "").localeCompare(b.ref || "", undefined, {numeric:true})
+})
+  
 /* KPIs + CHART */
 renderKPIs(entries)
 renderChart(entries)
@@ -213,8 +219,9 @@ html += `
 <td>${(e.date || "").split("T")[0]}</td>
 <td>${e.type}</td>
 <td>${e.ref}</td>
-<td style="color:green">₹ ${e.credit ? e.credit.toFixed(2) : ""}</td>
-<td style="color:red">₹ ${e.debit ? e.debit.toFixed(2) : ""}</td>
+<td>${e.weight ? e.weight.toFixed(2) : "-"}</td>
+<td style="color:green">${e.credit ? "₹ "+e.credit.toFixed(2) : "-"}</td>
+<td style="color:red">${e.debit ? "₹ "+e.debit.toFixed(2) : "-"}</td>
 <td><b>₹ ${balance.toFixed(2)}</b></td>
 </tr>
 `

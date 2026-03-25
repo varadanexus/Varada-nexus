@@ -155,6 +155,7 @@ window.location.href="login.html"
 <th>Name</th>
 <th>Phone</th>
 <th>Email</th>
+<th>Status</th>
 <th>Actions</th>
 </tr>
 </thead>
@@ -185,11 +186,15 @@ html+=`
 <td><input value="${a.phone||""}" id="phone-${a.id}"></td>
 <td><input value="${a.email||""}" id="email-${a.id}"></td>
 
+<td style="font-weight:bold; color:${a.is_active ? 'green' : 'red'}">
+${a.is_active ? "Active" : "Disabled"}
+</td>
+
 <td>
 <button class="edit-btn" onclick="updateAgent('${a.id}')">Save</button>
 <button onclick="resetPassword('${a.auth_id}')">Reset Password</button>
 <button onclick="toggleAgent('${a.id}', ${a.is_active})">
-${a.is_active ? "Disable" : "Enable"}
+${a.is_active ? "Disable Agent" : "Enable Agent"}
 </button>
 <button class="delete-btn" onclick="deleteAgent('${a.id}')">Delete</button>
 </td>
@@ -218,8 +223,22 @@ return
 const { data: { session } } = await supabaseClient.auth.getSession()
 
 if(!session){
-alert("Session expired ❌")
-return
+  window.location.href = "login.html"
+  return
+}
+
+/* 🔥 ADD THIS BLOCK EXACTLY HERE */
+const {data:agent} = await supabaseClient
+.from("agents")
+.select("is_active")
+.eq("auth_id", session.user.id)
+.single()
+
+if(agent && !agent.is_active){
+  alert("Account disabled. Contact admin ❌")
+  await supabaseClient.auth.signOut()
+  window.location = "login.html"
+  return
 }
 
 /* 🔥 CREATE AUTH USER VIA EDGE FUNCTION */
@@ -343,12 +362,23 @@ async function toggleAgent(agentId, currentStatus){
 
 let newStatus = !currentStatus
 
-await supabaseClient
+if(!confirm(`${newStatus ? "Enable" : "Disable"} this agent?`)){
+  return
+}
+
+const {error} = await supabaseClient
 .from("agents")
 .update({ is_active: newStatus })
 .eq("id", agentId)
 
-alert(newStatus ? "Enabled ✅" : "Disabled 🚫")
+if(error){
+  alert("Error updating status ❌")
+  console.error(error)
+  return
+}
+
+alert(newStatus ? "Agent Enabled ✅" : "Agent Disabled 🚫")
+
 loadAgents()
 }
 

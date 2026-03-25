@@ -1,45 +1,46 @@
-<!DOCTYPE html>  
-<html>  
+<!DOCTYPE html>    
+<html>    
+<head>    
+<title>Withdraw Request</title>    
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>    
 
-<head>  
-<title>Withdraw Request</title>  
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
+<style>    
+body{margin:0;font-family:Arial;background:#f4f6f9;}    
+.main{margin-left:220px;padding:30px;}    
+.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}    
+input{padding:10px;width:200px;margin-right:10px;}    
+button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}    
+.status-pending{color:orange;font-weight:bold;}
+.status-approved{color:green;font-weight:bold;}
+.status-rejected{color:red;font-weight:bold;}
+</style>    
+</head>    
 
-<style>  
-body{margin:0;font-family:Arial;background:#f4f6f9;}  
-.main{margin-left:220px;padding:30px;}  
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}  
-input{padding:10px;width:200px;margin-right:10px;}  
-button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}  
-</style>  
+<body>    
 
-</head>  
-
-<body>  
-
-<script>  
-window.supabaseClient = supabase.createClient(  
-"https://ticsgbtxfhhihamejiss.supabase.co",  
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)  
-</script>  
+<!-- ✅ UNCHANGED -->
+<script>    
+window.supabaseClient = supabase.createClient(    
+"https://ticsgbtxfhhihamejiss.supabase.co",    
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"  
+)    
+</script>    
 
 <script src="agent-global.js"></script>
 
-<div id="sidebar-container"></div>  
+<div id="sidebar-container"></div>    
 
-<script>  
-fetch("agent-sidebar.html")
-.then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+<script>    
+fetch("agent-sidebar.html")  
+.then(res=>res.text())  
+.then(async data=>{  
+document.getElementById("sidebar-container").innerHTML=data  
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
-/* ✅ FIX: use agents table */
 const {data:agent} = await supabaseClient
-.from("agents")
+.from("commission_agents")
 .select("name")
 .eq("auth_id", session.user.id)
 .single()
@@ -48,91 +49,102 @@ if(agent){
 document.getElementById("userName").innerText = agent.name
 }
 })
-</script>  
+</script>    
 
-<div class="main">  
+<div class="main">    
 
-<h2>Withdraw Request</h2>  
+<h2>Withdraw Request</h2>    
 
-<!-- BALANCE -->
-<div class="card">
-<div><b>Total Earned:</b> ₹ <span id="earned">0</span></div>
-<div><b>Total Paid:</b> ₹ <span id="paid">0</span></div>
-<div><b>Available Balance:</b> ₹ <span id="balance">0</span></div>
-<br>
-<button onclick="withdrawFull()">Withdraw Full Balance</button>
-</div>
-
-<!-- FORM -->
 <div class="card">  
-<input id="amount" placeholder="Enter amount">  
-<button onclick="requestWithdraw()">Request</button>  
+<div><b>Total Earned:</b> ₹ <span id="earned">0</span></div>  
+<div><b>Total Paid:</b> ₹ <span id="paid">0</span></div>  
+<div><b>Available Balance:</b> ₹ <span id="balance">0</span></div>  
+
+<br>  
+
+<button onclick="withdrawFull()">Withdraw Full Balance</button>  
 </div>  
 
-<!-- TABLE -->
-<div class="card">  
-<h3>My Requests</h3>  
-<table>  
-<thead>  
-<tr>  
-<th>Date</th>  
-<th>Amount</th>  
-<th>Status</th>  
-</tr>  
-</thead>  
-<tbody id="reqTable"></tbody>  
-</table>  
-</div>  
+<div class="card">    
+<input id="amount" placeholder="Enter amount">    
+<button onclick="requestWithdraw()">Request</button>    
+</div>    
 
-</div>  
+<div class="card">    
+<h3>My Requests</h3>    
+<table>    
+<thead>    
+<tr>    
+<th>Date</th>    
+<th>Amount</th>    
+<th>Status</th>    
+</tr>    
+</thead>    
+<tbody id="reqTable"></tbody>    
+</table>    
+</div>    
 
-<script>  
+</div>    
 
-let agentId=null  
-let currentBalance=0  
+<script>    
 
-init()  
+let agentId=null    
+let currentBalance=0    
+let pendingAmount=0    
 
-async function init(){  
+init()    
 
-const {data:{session}} = await supabaseClient.auth.getSession()  
+async function init(){    
+
+const {data:{session}} = await supabaseClient.auth.getSession()    
 
 if(!session){
 window.location="login.html"
 return
 }
 
-/* ✅ FIX: use agents table */
-const {data:agent} = await supabaseClient  
-.from("agents")  
-.select("*")  
-.eq("auth_id",session.user.id)  
-.single()  
+const {data:agent} = await supabaseClient    
+.from("commission_agents")    
+.select("*")    
+.eq("auth_id",session.user.id)    
+.single()    
 
 if(!agent){
 alert("Agent not found")
 return
 }
 
-agentId = agent.id  
+agentId = agent.id    
 
 await loadBalance()
-await loadRequests()  
-}  
+await loadRequests()    
+}    
 
-/* ✅ FIX: USE LEDGER ONLY */
+/* ✅ FIXED BALANCE (LEDGER BASED) */
 
 async function loadBalance(){
 
 const {data:ledger} = await supabaseClient
 .from("agent_trip_ledger")
-.select("commission_amount, paid_amount")
+.select("commission_amount")
 .eq("agent_id",agentId)
 
-let earned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0)||0
-let paid = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0)||0
+const {data:requests} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("amount,status")
+.eq("agent_id",agentId)
 
-currentBalance = earned - paid
+/* CALC */
+
+let earned = ledger?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
+
+let paid = 0 // ⚠️ you are not storing payments yet
+
+pendingAmount = requests
+?.filter(r=>r.status==="pending")
+.reduce((s,r)=>s+Number(r.amount||0),0) || 0
+
+currentBalance = earned - paid - pendingAmount
 
 document.getElementById("earned").innerText = earned.toFixed(2)
 document.getElementById("paid").innerText = paid.toFixed(2)
@@ -142,66 +154,71 @@ document.getElementById("balance").innerText = currentBalance.toFixed(2)
 
 /* REQUEST */
 
-async function requestWithdraw(){  
+async function requestWithdraw(){    
 
-let amt = Number(document.getElementById("amount").value)  
+let amt = Number(document.getElementById("amount").value)    
 
-if(!amt){  
-alert("Enter amount")  
-return  
-}  
+if(!amt){    
+alert("Enter amount")    
+return    
+}    
+
+if(pendingAmount > 0){
+alert("Pending request already exists ❌")
+return
+}
 
 if(amt > currentBalance){
 alert("Insufficient balance ❌")
 return
 }
 
-/* ✅ INSERT REQUEST */
+await supabaseClient.from("agent_withdraw_requests").insert({    
+agent_id:agentId,    
+amount:amt    
+})    
 
-await supabaseClient.from("agent_withdraw_requests").insert({  
-agent_id:agentId,  
-amount:amt  
-})  
-
-alert("Request sent ✅")  
+alert("Request sent ✅")    
 
 document.getElementById("amount").value=""
 
 await loadBalance()
-loadRequests()  
-}  
+loadRequests()    
+}    
 
 /* TABLE */
 
-async function loadRequests(){  
+async function loadRequests(){    
 
-const {data} = await supabaseClient  
-.from("agent_withdraw_requests")  
-.select("*")  
-.eq("agent_id",agentId)  
-.order("requested_at",{ascending:false})  
+const {data} = await supabaseClient    
+.from("agent_withdraw_requests")    
+.select("*")    
+.eq("agent_id",agentId)    
+.order("requested_at",{ascending:false})    
 
-let html=""  
+let html=""    
 
-data?.forEach(r=>{  
-html+=`  
-<tr>  
-<td>${(r.requested_at || "").split("T")[0]}</td>  
-<td>₹ ${Number(r.amount).toFixed(2)}</td>  
-<td>${r.status}</td>  
-</tr>`  
-})  
+data?.forEach(r=>{    
 
-document.getElementById("reqTable").innerHTML=html  
+let cls = r.status==="approved" ? "status-approved" :
+          r.status==="rejected" ? "status-rejected" : "status-pending"
+
+html+=`    
+<tr>    
+<td>${(r.requested_at || "").split("T")[0]}</td>    
+<td>₹ ${Number(r.amount).toFixed(2)}</td>    
+<td class="${cls}">${r.status}</td>    
+</tr>`    
+})    
+
+reqTable.innerHTML=html    
+}    
+
+function withdrawFull(){  
+document.getElementById("amount").value = currentBalance.toFixed(2)  
 }  
 
-/* FULL WITHDRAW */
+</script>    
 
-function withdrawFull(){
-document.getElementById("amount").value = currentBalance.toFixed(2)
-}
-
-</script>  
-
-</body>  
+</body>    
 </html>

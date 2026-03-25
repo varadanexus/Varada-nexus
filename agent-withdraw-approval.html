@@ -91,10 +91,17 @@ html+=`
 <tr>
 <td>${agent?.name || "-"}</td>
 <td>₹ ${r.amount}</td>
-<td>${r.status}</td>
+<td style="
+color:${r.status==='approved'?'green':r.status==='rejected'?'red':'orange'};
+font-weight:bold;
+">
+${r.status}
+</td>
 <td>
+${r.status === "pending" ? `
 <button onclick="approve('${r.id}','${r.agent_id}',${r.amount})">Approve</button>
 <button onclick="reject('${r.id}')">Reject</button>
+` : "—"}
 </td>
 </tr>
 `
@@ -105,13 +112,25 @@ table.innerHTML=html
 
 async function approve(id,agentId,amount){
 
+  /* prevent duplicate */
+const {data:existing} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("status")
+.eq("id", id)
+.single()
+
+if(existing?.status === "approved"){
+alert("Already approved ❌")
+return
+}
+  
 /* INSERT PAYMENT */
 
-await supabaseClient.from("agent_payments").insert({
-agent_id:agentId,
-amount:amount,
-payment_mode:"Auto",
-remarks:"Withdraw Approved"
+await supabaseClient.from("agent_trip_ledger").insert({
+agent_id: agentId,
+commission_amount: 0,
+paid_amount: amount,
+created_at: new Date().toISOString()
 })
 
 /* UPDATE STATUS */

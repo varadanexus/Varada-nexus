@@ -224,6 +224,38 @@ window.location.href="login.html"
 </thead>
 <tbody id="truckTable"></tbody>
 </table>
+
+<!-- 🔥 ADD BELOW THIS -->
+
+<h4>Assign Agents to Truck</h4>
+
+<select id="mapTruck"></select>
+<select id="mapAgent"></select>
+
+<select id="mapType">
+  <option value="percentage">Percentage</option>
+  <option value="per_mt">Per MT</option>
+</select>
+
+<input id="mapValue" placeholder="Commission Value">
+
+<button onclick="addTruckAgent()">Add Mapping</button>
+
+<table>
+<thead>
+<tr>
+<th>Truck</th>
+<th>Agent</th>
+<th>Type</th>
+<th>Value</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="truckAgentTable"></tbody>
+</table>
+
+  
 </div>
 
 <!-- COMMODITIES -->
@@ -391,25 +423,38 @@ loadRoutes()
 
 async function addTruck(){
 
-const {error} = await supabaseClient.from("trucks").insert({
-truck_number: truckNumber.value,
-transporter_id: truckTransporter.value,
+// ✅ 1. Truck number validation
+if(!truckNumber.value){
+  alert("Enter truck number")
+  return
+}
 
+// ✅ 2. Transporter validation (ADD HERE)
+if(!truckTransporter.value){
+  alert("Select transporter")
+  return
+}
+
+// ✅ 3. DB insert
+const {error} = await supabaseClient.from("trucks").insert({
+  truck_number: truckNumber.value,
+  transporter_id: truckTransporter.value,
 })
 
 if(error){
-console.error(error)
-alert("Error adding truck ❌")
-return
+  console.error(error)
+  alert("Error adding truck ❌")
+  return
 }
 
+// ✅ 4. Cleanup
 truckNumber.value=""
 truckId.value=""
-
 
 alert("Truck added ✅")
 
 loadTrucks()
+await loadTruckAgentDropdowns()
 }
 
 async function addCommodity(){
@@ -513,7 +558,140 @@ document.getElementById("truckTransporter").innerHTML=dd
 }
 
 /* 🔥 PASTE HERE */
+async function loadTruckAgentDropdowns(){
 
+const {data:trucks} = await supabaseClient.from("trucks").select("*")
+
+let tdd = '<option value="">Select Truck</option>'
+trucks?.forEach(t=>{
+  tdd += `<option value="${t.id}">${t.truck_number}</option>`
+})
+document.getElementById("mapTruck").innerHTML = tdd
+
+const {data:agents} = await supabaseClient
+.from("agents")
+.select("id,name")
+.eq("is_active", true)
+
+let add = '<option value="">Select Agent</option>'
+agents?.forEach(a=>{
+  add += `<option value="${a.id}">${a.name}</option>`
+})
+document.getElementById("mapAgent").innerHTML = add
+}
+
+
+async function addTruckAgent(){
+
+let truck = document.getElementById("mapTruck").value
+let agent = document.getElementById("mapAgent").value
+let type = document.getElementById("mapType").value
+let value = parseFloat(document.getElementById("mapValue").value)
+
+if(!truck || !agent){
+  alert("Select truck & agent")
+  return
+}
+
+if(isNaN(value)){
+  alert("Enter valid value")
+  return
+}
+
+const {data:exists} = await supabaseClient
+.from("truck_agents")
+.select("*")
+.eq("truck_id", truck)
+.eq("agent_id", agent)
+
+if(exists && exists.length){
+  alert("Mapping already exists")
+  return
+}
+
+const {error} = await supabaseClient
+.from("truck_agents")
+.insert({
+  truck_id: truck,
+  agent_id: agent,
+  commission_type: type,
+  commission_value: value
+})
+
+if(error){
+  console.error(error)
+  alert("Error saving ❌")
+  return
+}
+
+alert("Saved ✅")
+
+// 🔥 CLEAR FORM
+document.getElementById("mapTruck").value=""
+document.getElementById("mapAgent").value=""
+document.getElementById("mapType").value="percentage"
+document.getElementById("mapValue").value=""
+
+// 🔥 RELOAD
+await loadTruckAgentDropdowns()
+await loadTruckAgents()
+}
+
+
+async function loadTruckAgents(){
+
+const {data:maps, error} = await supabaseClient
+.from("truck_agents")
+.select(`
+id,
+commission_type,
+commission_value,
+trucks(truck_number),
+agents(name)
+`)
+
+if(error){
+console.error(error)
+return
+}
+
+let html=""
+
+maps?.forEach(m=>{
+
+let truck = m.trucks?.truck_number || "-"
+let agent = m.agents?.name || "-"
+
+html += `
+<tr>
+<td>${truck}</td>
+<td>${agent}</td>
+<td>${m.commission_type}</td>
+<td>${m.commission_value}</td>
+<td>
+<button onclick="deleteTruckAgent('${m.id}')">Delete</button>
+</td>
+</tr>
+`
+})
+
+document.getElementById("truckAgentTable").innerHTML = html
+}
+
+
+async function deleteTruckAgent(id){
+
+if(!confirm("Delete mapping?")) return
+
+await supabaseClient
+.from("truck_agents")
+.delete()
+.eq("id", id)
+
+alert("Deleted ✅")
+
+loadTruckAgents()
+}
 
   
 async function loadRoutes(){
@@ -736,6 +914,7 @@ editId = null
 
 window.onload=async ()=>{
 
+
 /* 🔥 FIX EVENT BINDING */
 document.getElementById("origin").addEventListener("input", generateRouteCode)
 document.getElementById("destination").addEventListener("input", generateRouteCode)
@@ -745,6 +924,8 @@ await loadTransporters()
 await loadRoutes()
 await loadTrucks()
 await loadCommodities()
+await loadTruckAgentDropdowns()
+await loadTruckAgents()
 }
 
 </script>

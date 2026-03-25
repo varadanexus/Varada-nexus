@@ -180,8 +180,12 @@ let ledgerQuery = supabaseClient
 .select("*")
 .eq("agent_id", agentId)
 
-if(from){tripQuery=tripQuery.gte("created_at",from); payQuery=payQuery.gte("created_at",from)}
-if(to){tripQuery=tripQuery.lte("created_at",to); payQuery=payQuery.lte("created_at",to)}
+if(from){
+ledgerQuery = ledgerQuery.gte("created_at", from)
+}
+if(to){
+ledgerQuery = ledgerQuery.lte("created_at", to + "T23:59:59")
+}
 
 const {data:ledgerData, error} = await ledgerQuery
 
@@ -196,8 +200,8 @@ let totalPaid   = ledgerData?.reduce((s,l)=>s+Number(l.paid_amount||0),0) || 0
 let balance=totalEarned-totalPaid
 currentBalance=balance
 
-document.getElementById("totalEarned").innerText=totalEarned.toFixed(2)
-document.getElementById("totalPaid").innerText=totalPaid.toFixed(2)
+document.getElementById("totalEarned").innerText = "₹ " + totalEarned.toFixed(2)
+document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(2)
 
 
 /* BALANCE COLOR */
@@ -256,13 +260,16 @@ let agentId=document.getElementById("agentSelect").value
 if(!agentId){alert("Select agent");return}
 if(currentBalance<=0){alert("No balance");return}
 
-await supabaseClient.from("agent_payments").insert({
-agent_id:agentId,
-amount:currentBalance,
-payment_mode:"Auto",
-remarks:"Full settlement"
-})
+if(!confirm(`Pay ₹${currentBalance.toFixed(2)} to this agent?`)){
+return
+}
 
+await supabaseClient.from("agent_trip_ledger").insert({
+agent_id: agentId,
+commission_amount: 0,
+paid_amount: currentBalance,
+created_at: new Date().toISOString()
+})
 alert("Full payment done ✅")
 loadSummary()
 }

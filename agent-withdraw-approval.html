@@ -122,10 +122,16 @@ loadRequests()
 
 async function loadRequests(){
 
-const {data}=await supabaseClient
+const {data} = await supabaseClient
 .from("agent_withdraw_requests")
 .select("*")
 .order("requested_at",{ascending:false})
+
+if(!data || data.length === 0){
+document.getElementById("table").innerHTML =
+`<tr><td colspan="4" style="text-align:center;">No requests found</td></tr>`
+return
+}
 
 let pendingMap = {}
 
@@ -135,9 +141,11 @@ pendingMap[r.agent_id] = (pendingMap[r.agent_id] || 0) + Number(r.amount)
 }
 })
 
-const {data:allLedger} = await supabaseClient
+const {data:allLedgerRaw} = await supabaseClient
 .from("agent_trip_ledger")
 .select("agent_id, commission_amount, paid_amount")
+
+const allLedger = allLedgerRaw || []
   
 let html=""
 
@@ -160,7 +168,7 @@ Pending: ₹ ${(pendingMap[r.agent_id] || 0).toFixed(2)}
 </small>
 </td>
 <td>
-₹ ${r.amount}<br>
+₹ ${Number(r.amount).toFixed(2)}<br>
 <small style="color:${available>=r.amount?'green':'red'}">
 Available: ₹ ${available.toFixed(2)}
 </small>
@@ -169,7 +177,7 @@ Available: ₹ ${available.toFixed(2)}
 color:${r.status==='approved'?'green':r.status==='rejected'?'red':'orange'};
 font-weight:bold;
 ">
-${r.status}
+${r.status.toUpperCase()}
 </td>
 <td>
 ${r.status === "pending" ? `

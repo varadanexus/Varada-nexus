@@ -356,6 +356,7 @@ let profit = (companyRate - transporterRate) * weightMT
 commissionAmount = (profit * m.commission_value) / 100
 }
 
+/* 1️⃣ SAVE MAPPING (UNCHANGED) */
 const {error:agentError} = await supabaseClient.from("trip_agents").insert({
 trip_id: trip.id,
 agent_id: m.agent_id,
@@ -363,8 +364,23 @@ commission_type: m.commission_type,
 commission_value: m.commission_value,
 commission_amount: commissionAmount
 })
+
 if(agentError){
 console.error("Agent insert error:", agentError)
+}
+
+/* 🔥 2️⃣ ADD THIS — LEDGER ENTRY (IMPORTANT) */
+const {error:ledgerError} = await supabaseClient
+.from("agent_trip_ledger")
+.insert({
+agent_id: m.agent_id,
+trip_id: trip.id,
+commission_amount: commissionAmount,
+created_at: new Date().toISOString()
+})
+
+if(ledgerError){
+console.error("Ledger insert error:", ledgerError)
 }
 
 }

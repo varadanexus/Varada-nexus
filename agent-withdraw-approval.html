@@ -153,10 +153,10 @@ for (let r of data || []) {
 
 let agent=agents.find(a=>a.id==r.agent_id)
 
-let agentLedger = allLedger.filter(l => l.agent_id == r.agent_id)
+let agentLedger = allLedger.filter(l => String(l.agent_id) === String(r.agent_id))
 
 let earned = agentLedger.reduce((s,e)=>s+Number(e.commission_amount||0),0)
-let paid = agentLedger.reduce((s,e)=>s+Number(e.paid_amount||0),0)
+let paid = agentLedger.reduce((s,e)=>s+Number(e.amount||0),0)
 let available = earned - paid
   
 html+=`

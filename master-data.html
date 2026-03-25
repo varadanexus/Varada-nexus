@@ -640,27 +640,19 @@ await loadTruckAgents()
 
 async function loadTruckAgents(){
 
-const {data:maps, error} = await supabaseClient
+const {data:maps} = await supabaseClient
 .from("truck_agents")
-.select(`
-id,
-commission_type,
-commission_value,
-trucks(truck_number),
-agents(name)
-`)
+.select("*")
 
-if(error){
-console.error(error)
-return
-}
+const {data:trucks} = await supabaseClient.from("trucks").select("*")
+const {data:agents} = await supabaseClient.from("agents").select("*")
 
 let html=""
 
 maps?.forEach(m=>{
 
-let truck = m.trucks?.truck_number || "-"
-let agent = m.agents?.name || "-"
+let truck = trucks.find(t=>t.id==m.truck_id)?.truck_number || "-"
+let agent = agents.find(a=>a.id==m.agent_id)?.name || "-"
 
 html += `
 <tr>

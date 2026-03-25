@@ -127,16 +127,44 @@ const {data}=await supabaseClient
 .select("*")
 .order("requested_at",{ascending:false})
 
-let html=""
+let pendingMap = {}
 
 data?.forEach(r=>{
+if(r.status === "pending"){
+pendingMap[r.agent_id] = (pendingMap[r.agent_id] || 0) + Number(r.amount)
+}
+})
+
+const {data:allLedger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("agent_id, commission_amount, paid_amount")
+  
+let html=""
+
+for (let r of data || []) {
 
 let agent=agents.find(a=>a.id==r.agent_id)
 
+let agentLedger = allLedger.filter(l => l.agent_id == r.agent_id)
+
+let earned = agentLedger.reduce((s,e)=>s+Number(e.commission_amount||0),0)
+let paid = agentLedger.reduce((s,e)=>s+Number(e.paid_amount||0),0)
+let available = earned - paid
+  
 html+=`
 <tr>
-<td>${agent?.name || "-"}</td>
-<td>₹ ${r.amount}</td>
+<td>
+${agent?.name || "-"}<br>
+<small style="color:#666">
+Pending: ₹ ${(pendingMap[r.agent_id] || 0).toFixed(2)}
+</small>
+</td>
+<td>
+₹ ${r.amount}<br>
+<small style="color:${available>=r.amount?'green':'red'}">
+Available: ₹ ${available.toFixed(2)}
+</small>
+</td>
 <td style="
 color:${r.status==='approved'?'green':r.status==='rejected'?'red':'orange'};
 font-weight:bold;
@@ -151,13 +179,30 @@ ${r.status === "pending" ? `
 </td>
 </tr>
 `
-})
+}
 
-table.innerHTML=html
+document.getElementById("table").innerHTML = html
 }
 
 async function approve(id,agentId,amount){
 
+/* 🔍 GET LEDGER BALANCE */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount, paid_amount")
+.eq("agent_id", agentId)
+
+let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
+let totalPaid = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0) || 0
+
+let availableBalance = totalEarned - totalPaid
+
+/* 🚫 BLOCK IF INSUFFICIENT BALANCE */
+if(amount > availableBalance){
+alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
+return
+}
+  
   /* prevent duplicate */
 const {data:existing} = await supabaseClient
 .from("agent_withdraw_requests")
@@ -186,6 +231,15 @@ await supabaseClient
 .update({status:"approved",processed_at:new Date()})
 .eq("id",id)
 
+/* 🧾 AUDIT LOG */
+await supabaseClient.from("audit_logs").insert({
+action: "withdraw_approved",
+agent_id: agentId,
+amount: amount,
+reference_id: id,
+created_at: new Date().toISOString()
+})
+  
 loadRequests()
 }
 

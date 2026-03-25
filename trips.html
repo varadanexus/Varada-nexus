@@ -552,9 +552,18 @@ return
 
 if(!confirm("Delete this trip?")) return
 
+/* 1️⃣ DELETE CHILD TABLES FIRST */
+await supabaseClient.from("trip_agents").delete().eq("trip_id", id)
+
+await supabaseClient.from("agent_trip_ledger").delete().eq("trip_id", id)
+
+/* 2️⃣ DELETE MAIN TRIP */
 await supabaseClient.from("trips").delete().eq("id",id)
 
+alert("Trip deleted ✅")
+
 loadTrips()
+
 }
 
 /* ================= UPDATE ================= */

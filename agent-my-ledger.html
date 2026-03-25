@@ -166,43 +166,7 @@ loadLedger()
 
 async function loadLedger(){
 
-const {data:trips,error:tripError} = await supabaseClient
-.from("trips")
-.select("*")
-.eq("agent_id", agentId)
-
-const {data:payments,error:payError} = await supabaseClient
-.from("agent_payments")
-.select("*")
-.eq("agent_id", agentId)
-
-if(tripError) console.error(tripError)
-if(payError) console.error(payError)
-
-let entries=[]
-
-/* EARNINGS */
-trips?.forEach(t=>{
-entries.push({
-date:t.trip_date || t.created_at,
-type:"Trip",
-ref:t.trip_no,
-credit:Number(t.commission_amount || 0),
-debit:0
-})
-})
-
-/* PAYMENTS */
-payments?.forEach(p=>{
-entries.push({
-date:p.created_at,
-type:"Payment",
-ref:"Payment",
-credit:0,
-debit:Number(p.amount || 0)
-})
-})
-
+async function loadLedger()
 /* SORT */
 entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
 renderKPIs(entries)

@@ -2,9 +2,7 @@
 <html>  
 
 <head>  
-
 <title>Withdraw Request</title>  
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
 
 <style>  
@@ -19,32 +17,29 @@ button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radiu
 
 <body>  
 
-<!-- ✅ GLOBAL SUPABASE (FIX) -->
 <script>  
 window.supabaseClient = supabase.createClient(  
 "https://ticsgbtxfhhihamejiss.supabase.co",  
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )  
 </script>  
 
-<!-- ✅ GLOBAL LOGOUT -->
 <script src="agent-global.js"></script>
 
 <div id="sidebar-container"></div>  
 
-<!-- ✅ SIDEBAR AFTER GLOBAL -->
 <script>  
 fetch("agent-sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
 
-/* LOAD AGENT NAME */
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
+/* ✅ FIX: use agents table */
 const {data:agent} = await supabaseClient
-.from("commission_agents")
+.from("agents")
 .select("name")
 .eq("auth_id", session.user.id)
 .single()
@@ -61,28 +56,21 @@ document.getElementById("userName").innerText = agent.name
 
 <!-- BALANCE -->
 <div class="card">
-
 <div><b>Total Earned:</b> ₹ <span id="earned">0</span></div>
 <div><b>Total Paid:</b> ₹ <span id="paid">0</span></div>
 <div><b>Available Balance:</b> ₹ <span id="balance">0</span></div>
-
 <br>
-
 <button onclick="withdrawFull()">Withdraw Full Balance</button>
-
 </div>
 
 <!-- FORM -->
 <div class="card">  
-
 <input id="amount" placeholder="Enter amount">  
 <button onclick="requestWithdraw()">Request</button>  
-
 </div>  
 
 <!-- TABLE -->
 <div class="card">  
-
 <h3>My Requests</h3>  
 <table>  
 <thead>  
@@ -94,7 +82,6 @@ document.getElementById("userName").innerText = agent.name
 </thead>  
 <tbody id="reqTable"></tbody>  
 </table>  
-
 </div>  
 
 </div>  
@@ -115,8 +102,9 @@ window.location="login.html"
 return
 }
 
+/* ✅ FIX: use agents table */
 const {data:agent} = await supabaseClient  
-.from("commission_agents")  
+.from("agents")  
 .select("*")  
 .eq("auth_id",session.user.id)  
 .single()  
@@ -132,22 +120,17 @@ await loadBalance()
 await loadRequests()  
 }  
 
-/* BALANCE */
+/* ✅ FIX: USE LEDGER ONLY */
 
 async function loadBalance(){
 
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("commission_amount")
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount, paid_amount")
 .eq("agent_id",agentId)
 
-const {data:payments} = await supabaseClient
-.from("agent_payments")
-.select("amount")
-.eq("agent_id",agentId)
-
-let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
-let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
+let earned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0)||0
+let paid = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0)||0
 
 currentBalance = earned - paid
 
@@ -172,6 +155,8 @@ if(amt > currentBalance){
 alert("Insufficient balance ❌")
 return
 }
+
+/* ✅ INSERT REQUEST */
 
 await supabaseClient.from("agent_withdraw_requests").insert({  
 agent_id:agentId,  
@@ -207,7 +192,7 @@ html+=`
 </tr>`  
 })  
 
-reqTable.innerHTML=html  
+document.getElementById("reqTable").innerHTML=html  
 }  
 
 /* FULL WITHDRAW */

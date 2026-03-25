@@ -169,10 +169,10 @@ window.location.href="login.html"
 <input id="searchInput" placeholder="Search Trip No..." oninput="applySearch()">
 
 <select id="rowsPerPage" onchange="changeRowsPerPage()">
-  <option value="5">5</option>
-  <option value="10">10</option>
-  <option value="25">25</option>
-  <option value="50">50</option>
+  <option value="50" selected>50</option>
+  <option value="75">75</option>
+  <option value="100">100</option>
+  <option value="200">200</option>
 </select>
 
 <input type="date" id="fromDate">
@@ -232,7 +232,7 @@ window.location.href="login.html"
 let agents=[]
 let allEntries=[]
 let currentPage = 1
-let rowsPerPage = 5
+let rowsPerPage = parseInt(localStorage.getItem("rowsPerPage")) || 50
 
   
 window.onload = async ()=>{
@@ -363,6 +363,8 @@ if(document.getElementById("searchInput").value){
 function changeRowsPerPage(){
   rowsPerPage = parseInt(document.getElementById("rowsPerPage").value)
   currentPage = 1
+
+  localStorage.setItem("rowsPerPage", rowsPerPage)
 
   if(document.getElementById("searchInput").value){
     applySearch()

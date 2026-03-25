@@ -141,8 +141,8 @@ if(el) el.innerText = agent.name
 
 <script>
 
-let trips=[]
-
+let ledger=[]
+  
 init()
 
 async function init(){
@@ -170,31 +170,15 @@ alert("Agent not found")
 return
 }
 
-/* GET TRIPS */
-/* ✅ GET TRIPS VIA trip_agents */
-const {data:tripLinks} = await supabaseClient
-.from("trip_agents")
-.select("trip_id")
-.eq("agent_id", agent.id)
 
-let tripIds = (tripLinks || []).map(t => t.trip_id)
-
-if(tripIds.length > 0){
-  const {data:tripData} = await supabaseClient
-  .from("trips")
-  .select("*")
-  .in("id", tripIds)
-  .order("created_at",{ascending:false})
-
-  trips = tripData || []
-}else{
-  trips = []
-}
 
 /* GET LEDGER */
 const {data:ledgerData} = await supabaseClient
 .from("agent_trip_ledger")
-.select("*")
+.select(`
+  *,
+  trips (trip_no, route, truck, weight_kg, trip_date)
+`)
 .eq("agent_id", agent.id)
 
 ledger = ledgerData || []
@@ -209,32 +193,28 @@ let totalPaid = 0
 
 let html=""
 
-let commissionMap = {}
-
 ledger?.forEach(l=>{
-  if(l.trip_id){
-    commissionMap[l.trip_id] = (commissionMap[l.trip_id] || 0) + Number(l.commission_amount || 0)
-  }
-})
-  
-trips.forEach(t=>{
 
-let weight = (t.weight_kg||0)/1000
-let commission = commissionMap[t.id] || 0
+/* 🔥 ADD THIS LINE HERE */
+if(!l.trip_id && l.paid_amount){
+  return   // skip payment rows
+}
 
+let t = l.trips || {}
 
+let weight = (t.weight_kg || 0) / 1000
+let commission = Number(l.commission_amount || 0)
 
-html+=`
+html += `
 <tr>
-<td>${t.trip_no}</td>
-<td>${t.route}</td>
-<td>${t.truck}</td>
+<td>${t.trip_no || "-"}</td>
+<td>${t.route || "-"}</td>
+<td>${t.truck || "-"}</td>
 <td>${formatDate(t.trip_date)}</td>
-<td>${weight.toFixed(2)}</td>
-<td class="profit">₹ ${commission.toFixed(2)}</td>
+<td>${weight ? weight.toFixed(2) : "-"}</td>
+<td class="profit">${commission ? "₹ "+commission.toFixed(2) : "-"}</td>
 </tr>`
 })
-
 /* LEDGER CALCULATION */
 ledger?.forEach(l=>{
 totalCommission += Number(l.commission_amount || 0)
@@ -245,7 +225,7 @@ let balance = totalCommission - totalPaid
 
 tripTable.innerHTML = html
 
-document.getElementById("totalTrips").innerText = trips.length
+document.getElementById("totalTrips").innerText = ledger.length
 document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(2)
 document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(2)
 

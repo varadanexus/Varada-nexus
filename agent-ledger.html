@@ -10,14 +10,102 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
-</style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial;
+  background: #f1f5f9;
+}
 
+/* Layout */
+.main {
+  margin-left: 220px;
+  padding: 30px;
+}
+
+/* Card */
+.card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* Heading */
+h2 {
+  margin-bottom: 20px;
+  color: #1e293b;
+}
+
+/* Inputs */
+select, input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Buttons */
+button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+  color: #334155;
+}
+
+td, th {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+
+/* Balance colors */
+td:last-child {
+  font-weight: bold;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Section titles */
+h3 {
+  margin-bottom: 10px;
+  color: #334155;
+}
+</style>
 </head>
 
 <body>
@@ -68,34 +156,46 @@ window.location.href="login.html"
 <h2>Agent Ledger</h2>
 
 <div class="card">
+
+<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+
 <select id="agentSelect"></select>
-<button onclick="loadLedger()">Load Ledger</button>
-<br><br>
+
+<button onclick="loadLedger()">Load</button>
+
 <input id="searchInput" placeholder="Search Trip No..." oninput="applySearch()">
-<br><br>
+
 <select id="rowsPerPage" onchange="changeRowsPerPage()">
-  <option value="5">5 rows</option>
-  <option value="10">10 rows</option>
-  <option value="25">25 rows</option>
-  <option value="50">50 rows</option>
+  <option value="5">5</option>
+  <option value="10">10</option>
+  <option value="25">25</option>
+  <option value="50">50</option>
 </select>
 
-<br><br>
 <input type="date" id="fromDate">
 <input type="date" id="toDate">
+
 <button onclick="applyDateFilter()">Filter</button>
 
-<br><br>
-<button onclick="downloadPDF()">Download PDF</button>
-  
+<button onclick="downloadPDF()">PDF</button>
+
+</div>
+
 </div>
 
 <div class="card">
-<h3>Record Payment</h3>
 
+<h3>💰 Record Payment</h3>
 
-<input type="number" id="payAmount" placeholder="Amount">
-<button onclick="savePayment()">Save Payment</button>
+<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+<select id="payAgent"></select>
+
+<input type="number" id="payAmount" placeholder="Enter Amount">
+
+<button onclick="savePayment()">Save</button>
+
+</div>
 
 </div>
 
@@ -159,6 +259,7 @@ ${a.name || "No Name"}
 })
 
 document.getElementById("agentSelect").innerHTML = html
+  document.getElementById("payAgent").innerHTML = html
 }
 
 /* LOAD LEDGER */
@@ -389,7 +490,7 @@ win.print()
 }
 async function savePayment(){
 
-let agentId = document.getElementById("agentSelect").value
+let agentId = document.getElementById("payAgent").value
 let amount = document.getElementById("payAmount").value
 
 if(!agentId || !amount){

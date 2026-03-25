@@ -21,7 +21,10 @@ button{padding:6px 10px;margin:2px;}
 <body>
 
 <script>
-const supabaseClient = supabase.createClient("URL","KEY")
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
 </script>
 
 <div id="sidebar-container"></div>
@@ -65,7 +68,7 @@ init()
 
 async function init(){
 
-const {data:a}=await supabaseClient.from("commission_agents").select("*")
+const {data:a}=await supabaseClient.from("agents").select("id,name")
 agents=a||[]
 
 loadRequests()

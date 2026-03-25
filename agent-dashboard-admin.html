@@ -270,16 +270,29 @@ loadSummary()
 /* 🏆 LEADERBOARD */
 async function loadLeaderboard(){
 if(!agents.length) await loadAgents()
-const {data}=await supabaseClient.from("trips").select("agent_id,commission_amount")
+const {data, error} = await supabaseClient
+.from("agent_trip_ledger")
+.select("agent_id, commission_amount")
 
-let map={}
-data?.forEach(t=>{
-map[t.agent_id]=(map[t.agent_id]||0)+Number(t.commission_amount||0)
+if(error){
+console.error(error)
+return
+}
+
+let map = {}
+
+data?.forEach(l=>{
+map[l.agent_id] = (map[l.agent_id] || 0) + Number(l.commission_amount || 0)
 })
 
 let sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5)
 
 let html=""
+
+if(!data || data.length === 0){
+document.getElementById("leaderboard").innerHTML = "<li>No data available</li>"
+return
+}
 sorted.forEach(([id,val])=>{
 let agent = agents.find(a=>a.id==id)
 let name = agent?.name || "Unknown"

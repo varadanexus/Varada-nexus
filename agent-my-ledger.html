@@ -169,7 +169,10 @@ async function loadLedger(){
 /* ✅ GET LEDGER DATA (SOURCE OF TRUTH) */
 const {data:ledger, error} = await supabaseClient
 .from("agent_trip_ledger")
-.select("*")
+.select(`
+  *,
+  trips (trip_no)
+`)
 .eq("agent_id", agentId)
 .order("created_at",{ascending:true})
 
@@ -186,7 +189,7 @@ ledger?.forEach(l=>{
 entries.push({
 date: l.created_at,
 type: "Trip Commission",
-ref: l.trip_id || "-",
+ref: l.trips?.trip_no || "-",
 credit: Number(l.commission_amount || 0),
 debit: Number(l.paid_amount || 0)
 })

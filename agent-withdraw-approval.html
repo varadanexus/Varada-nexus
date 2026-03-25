@@ -156,7 +156,7 @@ let agent=agents.find(a=>a.id==r.agent_id)
 let agentLedger = allLedger.filter(l => String(l.agent_id) === String(r.agent_id))
 
 let earned = agentLedger.reduce((s,e)=>s+Number(e.commission_amount||0),0)
-let paid = agentLedger.reduce((s,e)=>s+Number(e.amount||0),0)
+let paid = agentLedger.reduce((s,e)=>s+Number(e.paid_amount||0),0)
 let available = earned - paid
   
 html+=`
@@ -181,7 +181,9 @@ ${r.status.toUpperCase()}
 </td>
 <td>
 ${r.status === "pending" ? `
-<button onclick="approve('${r.id}','${r.agent_id}',${r.amount})">Approve</button>
+<button id="approve_${r.id}" onclick="openApproveModal('${r.id}','${r.agent_id}',${r.amount})">
+Approve
+</button>
 <button onclick="reject('${r.id}')">Reject</button>
 ` : "—"}
 </td>
@@ -192,29 +194,40 @@ ${r.status === "pending" ? `
 document.getElementById("table").innerHTML = html
 }
 
-async function approve(id,agentId,amount){
-
+let approveData = {}
+  
+  
 /* 1️⃣ CHECK IF ALREADY APPROVED */
 const {data:existing} = await supabaseClient
 .from("agent_withdraw_requests")
-.select("status")
+.select("status, processed_at")
 .eq("id", id)
 .single()
 
-if(existing?.status === "approved"){
-alert("Already approved ❌")
+if(existing?.status === "approved" || existing?.processed_at){
+alert("Already processed ❌")
+
+if(btn){
+  btn.disabled = false
+  btn.innerText = "Approve"
+}
+
 return
 }
 
-/* 2️⃣ GET LEDGER BALANCE */
+
+
+/* GET FULL LEDGER */
 const {data:ledger} = await supabaseClient
 .from("agent_trip_ledger")
-.select("commission_amount")
+.select("commission_amount, paid_amount")
 .eq("agent_id", agentId)
 
+/* CALCULATE */
 let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
+let totalPaid   = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0) || 0
 
-/* 3️⃣ GET PENDING REQUESTS */
+/* PENDING REQUESTS */
 const {data:requests} = await supabaseClient
 .from("agent_withdraw_requests")
 .select("amount,status")
@@ -224,11 +237,17 @@ let pending = requests
 ?.filter(r=>r.status==="pending")
 .reduce((s,r)=>s+Number(r.amount||0),0) || 0
 
-let availablebalance = SUM(commission_amount)
+let availableBalance = totalEarned - totalPaid - pending + amount
 
 /* 4️⃣ BLOCK IF INSUFFICIENT */
 if(amount > availableBalance){
 alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
+
+if(btn){
+  btn.disabled = false
+  btn.innerText = "Approve"
+}
+
 return
 }
 
@@ -237,13 +256,22 @@ const {error:insertError} = await supabaseClient
 .from("agent_trip_ledger")
 .insert({
 agent_id: agentId,
-commission_amount: -amount,   // 🔥 THIS IS THE MAGIC
+commission_amount: 0,
+paid_amount: amount,
 created_at: new Date().toISOString()
 })
 
+
+  
 if(insertError){
 console.error(insertError)
 alert("Error inserting ledger ❌")
+
+if(btn){
+  btn.disabled = false
+  btn.innerText = "Approve"
+}
+
 return
 }
 
@@ -255,6 +283,7 @@ status:"approved",
 processed_at:new Date().toISOString()
 })
 .eq("id",id)
+.eq("status","pending")
 
 /* 7️⃣ OPTIONAL AUDIT */
 await supabaseClient.from("audit_logs").insert({
@@ -276,13 +305,194 @@ await supabaseClient
 .from("agent_withdraw_requests")
 .update({status:"rejected"})
 .eq("id",id)
+.eq("status","pending")
 
 loadRequests()
 }
 
+async function confirmApprove(){
+
+let {id, agentId, amount} = approveData
+
+let mode = document.getElementById("payMode").value
+let remarks = document.getElementById("remarks").value
+
+if(!mode){
+alert("Select payment mode ❌")
+return
+}
+
+/* 🔒 DISABLE BUTTON */
+let btn = document.getElementById("approve_" + id)
+if(btn){
+btn.disabled = true
+btn.innerText = "Processing..."
+}
+
+/* CHECK STATUS */
+const {data:existing} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("status, processed_at")
+.eq("id", id)
+.single()
+
+if(existing?.status === "approved" || existing?.processed_at){
+alert("Already processed ❌")
+
+if(btn){
+btn.disabled = false
+btn.innerText = "Approve"
+}
+
+return
+}
+
+/* GET LEDGER */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount, paid_amount")
+.eq("agent_id", agentId)
+
+let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
+let totalPaid   = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0) || 0
+
+/* GET PENDING */
+const {data:requests} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("amount,status")
+.eq("agent_id", agentId)
+
+let pending = requests
+?.filter(r=>r.status==="pending")
+.reduce((s,r)=>s+Number(r.amount||0),0) || 0
+
+let availableBalance = totalEarned - totalPaid - pending + amount
+
+if(amount > availableBalance){
+alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
+
+if(btn){
+btn.disabled = false
+btn.innerText = "Approve"
+}
+
+return
+}
+
+/* INSERT LEDGER */
+const {error:insertError} = await supabaseClient
+.from("agent_trip_ledger")
+.insert({
+agent_id: agentId,
+commission_amount: 0,
+paid_amount: amount,
+payment_mode: mode,
+remarks: remarks,
+created_at: new Date().toISOString()
+})
+
+if(insertError){
+console.error(insertError)
+alert("Error ❌")
+
+if(btn){
+btn.disabled = false
+btn.innerText = "Approve"
+}
+
+return
+}
+
+/* UPDATE REQUEST */
+await supabaseClient
+.from("agent_withdraw_requests")
+.update({
+status:"approved",
+payment_mode: mode,
+remarks: remarks,
+processed_at:new Date().toISOString()
+})
+.eq("id",id)
+.eq("status","pending")
+
+/* AUDIT */
+await supabaseClient.from("audit_logs").insert({
+action: "withdraw_approved",
+agent_id: agentId,
+amount: amount,
+payment_mode: mode,
+remarks: remarks,
+reference_id: id,
+created_at: new Date().toISOString()
+})
+
+closeModal()
+
+alert("Approved ✅")
+if(btn){
+  btn.innerText = "Approved"
+}
+
+loadRequests()
+}
+  
+function openApproveModal(id, agentId, amount){
+
+approveData = { id, agentId, amount }
+
+document.getElementById("payMode").value = ""
+document.getElementById("remarks").value = ""
+
+document.getElementById("approveModal").style.display = "flex"
+}
+
+function closeModal(){
+document.getElementById("approveModal").style.display = "none"
+}
+  
 </script>
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
+
+<!-- 🔥 APPROVE POPUP -->
+<div id="approveModal" style="
+position:fixed;
+top:0; left:0;
+width:100%; height:100%;
+background:rgba(0,0,0,0.5);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:999;
+">
+
+<div style="
+background:white;
+padding:20px;
+border-radius:10px;
+width:320px;
+">
+
+<h3>Approve Payment</h3>
+
+<select id="payMode" style="width:100%; padding:8px; margin-bottom:10px;">
+<option value="">Select Mode</option>
+<option value="cash">Cash</option>
+<option value="bank">Bank Transfer</option>
+<option value="upi">UPI</option>
+</select>
+
+<input id="remarks" placeholder="Remarks (optional)"
+style="width:100%; padding:8px; margin-bottom:10px;">
+
+<div style="text-align:right;">
+<button onclick="closeModal()">Cancel</button>
+<button onclick="confirmApprove()">Confirm</button>
+</div>
+
+</div>
+</div>
+  
 </body>
 </html>

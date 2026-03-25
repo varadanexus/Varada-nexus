@@ -70,6 +70,8 @@ window.location.href="login.html"
 <div class="card">
 <select id="agentSelect"></select>
 <button onclick="loadLedger()">Load Ledger</button>
+<br><br>
+<input id="searchInput" placeholder="Search Trip No..." oninput="applySearch()">
 </div>
 
 <div class="card">
@@ -86,6 +88,13 @@ window.location.href="login.html"
 </thead>
 <tbody id="ledgerTable"></tbody>
 </table>
+
+<div style="margin-top:10px;">
+<button onclick="prevPage()">Prev</button>
+<button onclick="nextPage()">Next</button>
+<span id="pageInfo"></span>
+</div>
+
 </div>
 
 </div>
@@ -93,7 +102,11 @@ window.location.href="login.html"
 <script>
 
 let agents=[]
+let allEntries=[]
+let currentPage = 1
+let rowsPerPage = 5
 
+  
 window.onload = async ()=>{
 await loadAgents()
 }
@@ -127,7 +140,8 @@ document.getElementById("agentSelect").innerHTML = html
 async function loadLedger(){
 
 let agentId = document.getElementById("agentSelect").value
-
+currentPage = 1
+  
 if(!agentId){
 alert("Select agent")
 return
@@ -145,11 +159,12 @@ trips (
 .eq("agent_id",agentId)
 
 
-let entries=[]
 
 /* EARNINGS */
+allEntries = []
+
 ledgerData?.forEach(l=>{
-entries.push({
+allEntries.push({
 date: l.created_at || new Date().toISOString(),
 type:"Trip Commission",
 ref: l.trips?.trip_no || "Trip",
@@ -157,7 +172,9 @@ debit:Number(l.commission_amount || 0),
 credit:Number(l.paid_amount || 0)
 })
 })
+let entries = [...allEntries]
 
+  
 if(entries.length === 0){
 document.getElementById("ledgerTable").innerHTML =
 `<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
@@ -165,15 +182,85 @@ return
 }
 
 /* SORT */
-entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
+entries.sort((a,b)=>{
+let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
+let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
+return aNum - bNum
+})
 
 /* BALANCE */
-let balance=0
+let start = (currentPage - 1) * rowsPerPage
+let end = start + rowsPerPage
+
+let balance = entries
+.slice(0, start)
+.reduce((acc,e)=> acc + e.debit - e.credit, 0)
+
 let html=""
 
-entries.forEach(e=>{
+
+let pageEntries = entries.slice(start, end)
+
+pageEntries.forEach(e=>{
 balance = balance + Number(e.debit || 0)
 balance = balance - Number(e.credit || 0)
+
+html += `
+<tr style="font-weight:bold;background:#f1f1f1;">
+<td colspan="3">Total</td>
+<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
+</tr>`
+`
+})
+
+html += `
+<tr style="font-weight:bold;background:#f1f1f1;">
+<td colspan="3">Total</td>
+<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
+</tr>`
+  
+document.getElementById("ledgerTable").innerHTML = html
+let totalPages = Math.ceil(entries.length / rowsPerPage)
+document.getElementById("pageInfo").innerText =
+`Page ${currentPage} of ${totalPages}`
+}
+
+function applySearch(){
+
+let search = document.getElementById("searchInput").value.toLowerCase()
+
+let entries = allEntries.filter(e =>
+(e.ref || "").toLowerCase().includes(search)
+)
+currentPage = 1
+
+  /* SORT */
+entries.sort((a,b)=>{
+let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
+let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
+return aNum - bNum
+})
+
+/* BALANCE */
+let start = (currentPage - 1) * rowsPerPage
+let end = start + rowsPerPage
+
+let balance = entries
+.slice(0, start)
+.reduce((acc,e)=> acc + e.debit - e.credit, 0)
+
+let html=""
+
+
+let pageEntries = entries.slice(start, end)
+
+pageEntries.forEach(e=>{
+balance += e.debit
+balance -= e.credit
 
 html += `
 <tr>
@@ -185,8 +272,7 @@ html += `
 <td style="font-weight:bold;color:${balance>=0?'green':'red'}">
 ${balance.toFixed(2)}
 </td>
-</tr>
-`
+</tr>`
 })
 
 html += `
@@ -194,13 +280,47 @@ html += `
 <td colspan="3">Total</td>
 <td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
 <td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
-<td>${balance.toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
 </tr>`
-  
-document.getElementById("ledgerTable").innerHTML = html
 
+ledgerTable.innerHTML = html
+let totalPages = Math.ceil(entries.length / rowsPerPage)
+document.getElementById("pageInfo").innerText =
+`Page ${currentPage} of ${totalPages}`
 }
 
+function nextPage(){
+
+let search = document.getElementById("searchInput").value.toLowerCase()
+
+let filtered = allEntries.filter(e =>
+(e.ref || "").toLowerCase().includes(search)
+)
+
+let totalPages = Math.ceil(filtered.length / rowsPerPage)
+
+if(currentPage < totalPages){
+currentPage++
+if(document.getElementById("searchInput").value){
+  applySearch()
+}else{
+  loadLedger()
+}
+}
+}
+
+function prevPage(){
+
+if(currentPage > 1){
+currentPage--
+if(document.getElementById("searchInput").value){
+  applySearch()
+}else{
+  loadLedger()
+}
+}
+}
+  
 </script>
 
 <script src="rbac.js"></script>

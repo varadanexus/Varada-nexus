@@ -175,17 +175,23 @@ let to=document.getElementById("toDate").value
 if(!agentId){alert("Select agent");return}
 
 /* FILTER QUERY */
-let tripQuery = supabaseClient.from("trips").select("*").eq("agent_id",agentId)
-let payQuery = supabaseClient.from("agent_payments").select("*").eq("agent_id",agentId)
+let ledgerQuery = supabaseClient
+.from("agent_trip_ledger")
+.select("*")
+.eq("agent_id", agentId)
 
 if(from){tripQuery=tripQuery.gte("created_at",from); payQuery=payQuery.gte("created_at",from)}
 if(to){tripQuery=tripQuery.lte("created_at",to); payQuery=payQuery.lte("created_at",to)}
 
-const {data:trips}=await tripQuery
-const {data:payments}=await payQuery
+const {data:ledgerData, error} = await ledgerQuery
 
-let totalEarned=trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
-let totalPaid=payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
+if(error){
+console.error(error)
+return
+}
+
+let totalEarned = ledgerData?.reduce((s,l)=>s+Number(l.commission_amount||0),0) || 0
+let totalPaid   = ledgerData?.reduce((s,l)=>s+Number(l.paid_amount||0),0) || 0
 
 let balance=totalEarned-totalPaid
 currentBalance=balance
@@ -213,17 +219,15 @@ alertBox.style.display = "none"
 
 /* CHART */
 let monthly={}
-trips?.forEach(t=>{
-let d=new Date(t.created_at)
+
+ledgerData?.forEach(l=>{
+let d=new Date(l.created_at)
 let k=d.getFullYear()+"-"+(d.getMonth()+1)
+
 monthly[k]=monthly[k]||{e:0,p:0}
-monthly[k].e+=Number(t.commission_amount||0)
-})
-payments?.forEach(p=>{
-let d=new Date(p.created_at)
-let k=d.getFullYear()+"-"+(d.getMonth()+1)
-monthly[k]=monthly[k]||{e:0,p:0}
-monthly[k].p+=Number(p.amount||0)
+
+monthly[k].e += Number(l.commission_amount || 0)
+monthly[k].p += Number(l.paid_amount || 0)
 })
 
 let labels=Object.keys(monthly)

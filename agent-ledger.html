@@ -93,7 +93,7 @@ window.location.href="login.html"
 <div class="card">
 <h3>Record Payment</h3>
 
-<select id="payAgent"></select>
+
 <input type="number" id="payAmount" placeholder="Amount">
 <button onclick="savePayment()">Save Payment</button>
 
@@ -159,7 +159,6 @@ ${a.name || "No Name"}
 })
 
 document.getElementById("agentSelect").innerHTML = html
-document.getElementById("payAgent").innerHTML = html
 }
 
 /* LOAD LEDGER */
@@ -353,8 +352,12 @@ function downloadPDF(){
 
 let rows = document.querySelectorAll("#ledgerTable tr")
 
+let agentName = document.getElementById("agentSelect").selectedOptions[0].text
+
 let content = `
 <h2>Agent Ledger Report</h2>
+<h3>Agent: ${agentName}</h3>
+<p>Date: ${new Date().toLocaleDateString()}</p>
 <table border="1" cellspacing="0" cellpadding="5">
 <tr>
 <th>Date</th>
@@ -392,7 +395,8 @@ const {error} = await supabaseClient
 .insert({
 agent_id: agentId,
 commission_amount: 0,
-paid_amount: amount
+paid_amount: amount,
+created_at: new Date().toISOString()
 })
 
 if(error){

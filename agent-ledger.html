@@ -358,6 +358,13 @@ let content = `
 <h2>Agent Ledger Report</h2>
 <h3>Agent: ${agentName}</h3>
 <p>Date: ${new Date().toLocaleDateString()}</p>
+
+<p><b>Total Earned:</b> ₹${allEntries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</p>
+<p><b>Total Paid:</b> ₹${allEntries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</p>
+<p><b>Balance:</b> ₹${allEntries.reduce((s,e)=>s+e.debit-e.credit,0).toFixed(2)}</p>
+
+<br>
+
 <table border="1" cellspacing="0" cellpadding="5">
 <tr>
 <th>Date</th>

@@ -133,41 +133,36 @@ alert("Select agent")
 return
 }
 
-/* GET TRIPS (COMMISSION) */
-const {data:tripData} = await supabaseClient
-.from("trips")
-.select("*")
+/* GET LEDGER (EARNINGS) */
+const {data:ledgerData} = await supabaseClient
+.from("agent_trip_ledger")
+.select(`
+*,
+trips (
+  trip_no
+)
+`)
 .eq("agent_id",agentId)
 
-/* GET PAYMENTS */
-const {data:paymentData} = await supabaseClient
-.from("agent_payments")
-.select("*")
-.eq("agent_id",agentId)
 
 let entries=[]
 
 /* EARNINGS */
-tripData?.forEach(t=>{
+ledgerData?.forEach(l=>{
 entries.push({
-date: t.trip_date || t.created_at || new Date().toISOString(),
-type:"Trip",
-ref: t.trip_no || t.id || "Trip",
-debit:Number(t.commission_amount || 0),
-credit:0
+date: l.created_at || new Date().toISOString(),
+type:"Trip Commission",
+ref: l.trips?.trip_no || "Trip",
+debit:Number(l.commission_amount || 0),
+credit:Number(l.paid_amount || 0)
 })
 })
 
-/* PAYMENTS */
-paymentData?.forEach(p=>{
-entries.push({
-date:p.created_at,
-type:"Payment",
-ref:"Agent Payment",
-debit:0,
-credit:Number(p.amount || 0)
-})
-})
+if(entries.length === 0){
+document.getElementById("ledgerTable").innerHTML =
+`<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
+return
+}
 
 /* SORT */
 entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
@@ -182,7 +177,7 @@ balance = balance - Number(e.credit || 0)
 
 html += `
 <tr>
-<td>${(e.date || "").split("T")[0]}</td>
+<td>${new Date(e.date).toLocaleDateString()}</td>
 <td>${e.type}</td>
 <td>${e.ref}</td>
 <td>${e.debit ? e.debit.toFixed(2) : ""}</td>
@@ -194,6 +189,14 @@ ${balance.toFixed(2)}
 `
 })
 
+html += `
+<tr style="font-weight:bold;background:#f1f1f1;">
+<td colspan="3">Total</td>
+<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
+<td>${balance.toFixed(2)}</td>
+</tr>`
+  
 document.getElementById("ledgerTable").innerHTML = html
 
 }

@@ -127,21 +127,16 @@ console.log("Agent not found")
 return
 }
 
-/* TOTAL EARNED */
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("commission_amount")
-.eq("agent_id",agent.id)
+/* ✅ USE LEDGER (SOURCE OF TRUTH) */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount, paid_amount")
+.eq("agent_id", agent.id)
 
-/* TOTAL PAID */
-const {data:payments} = await supabaseClient
-.from("agent_payments")
-.select("amount")
-.eq("agent_id",agent.id)
+let earned = ledger?.reduce((s,l)=>s+Number(l.commission_amount||0),0) || 0
+let paid   = ledger?.reduce((s,l)=>s+Number(l.paid_amount||0),0) || 0
 
-let earned = trips?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
-let paid = payments?.reduce((s,p)=>s+Number(p.amount||0),0)||0
-let balance = earned - paid
+let balance = Math.max(0, earned - paid)
 
 document.getElementById("earned").innerText = earned.toFixed(2)
 document.getElementById("paid").innerText = paid.toFixed(2)

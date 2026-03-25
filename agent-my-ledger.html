@@ -6,36 +6,50 @@
 <title>My Earnings - Agent Portal</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-
-.main{
-margin-left:220px;
-padding:30px;
+body {
+  margin:0;
+  font-family:'Segoe UI', Arial;
+  background:#f1f5f9;
 }
 
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
+.main {
+  margin-left:220px;
+  padding:30px;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
+.card {
+  background:white;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.06);
 }
 
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-text-align:center;
+h2 {
+  color:#1e293b;
 }
 
-th{
-background:#eee;
+/* Table */
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+th {
+  background:#f8fafc;
+  color:#334155;
+}
+
+td,th {
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+tr:hover {
+  background:#f9fafb;
 }
 </style>
 
@@ -84,6 +98,10 @@ document.getElementById("userName").innerText = agent.name
 <div class="main">
 
 <h2>My Earnings Ledger</h2>
+
+<div id="kpiCards" style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;"></div>
+
+<canvas id="ledgerChart" height="100" style="margin-bottom:20px;"></canvas>
 
 <div class="card">
 
@@ -187,6 +205,8 @@ debit:Number(p.amount || 0)
 
 /* SORT */
 entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
+renderKPIs(entries)
+renderChart(entries)
 
 /* BALANCE */
 let balance=0
@@ -213,6 +233,71 @@ document.getElementById("ledgerTable").innerHTML = html
 
 }
 
+let chartInstance = null
+
+function renderKPIs(entries){
+
+let totalEarned = entries.reduce((s,e)=>s+e.credit,0)
+let totalPaid = entries.reduce((s,e)=>s+e.debit,0)
+let balance = totalEarned - totalPaid
+
+document.getElementById("kpiCards").innerHTML = `
+<div class="card" style="flex:1; min-width:200px;">
+  <h3>💰 Earned</h3>
+  <h2 style="color:#16a34a;">₹${totalEarned.toFixed(2)}</h2>
+</div>
+
+<div class="card" style="flex:1; min-width:200px;">
+  <h3>💸 Paid</h3>
+  <h2 style="color:#dc2626;">₹${totalPaid.toFixed(2)}</h2>
+</div>
+
+<div class="card" style="flex:1; min-width:200px;">
+  <h3>📊 Balance</h3>
+  <h2 style="color:${balance>=0 ? '#16a34a' : '#dc2626'};">
+    ₹${balance.toFixed(2)}
+  </h2>
+</div>
+`
+}
+
+function renderChart(entries){
+
+let grouped = {}
+
+entries.forEach(e=>{
+let d = new Date(e.date).toLocaleDateString()
+
+if(!grouped[d]){
+grouped[d] = 0
+}
+
+grouped[d] += e.credit - e.debit
+})
+
+let labels = Object.keys(grouped)
+let data = Object.values(grouped)
+
+if(chartInstance){
+chartInstance.destroy()
+}
+
+let ctx = document.getElementById("ledgerChart")
+
+chartInstance = new Chart(ctx, {
+type: 'line',
+data: {
+labels: labels,
+datasets: [{
+label: 'Balance Trend',
+data: data,
+borderWidth: 2,
+tension: 0.3
+}]
+}
+})
+}
+  
 </script>
 
 </body>

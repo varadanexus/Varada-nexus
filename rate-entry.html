@@ -393,32 +393,35 @@ loadRates()
 }
 
 /* ================= AGENT COMMISSION ================= */
-
 async function loadAgentRates(){
 
-const { data, error } = await supabaseClient
+const { data: agents, error: aError } = await supabaseClient
 .from("agents")
-.select(`
-id,
-name,
-agent_commissions!left (
-commission_type,
-commission_value
-)
-`)
+.select("id, name")
 .eq("is_active", true)
 
-if(error){
-console.error(error)
+if(aError){
+console.error(aError)
+return
+}
+
+const { data: commissions, error: cError } = await supabaseClient
+.from("agent_commissions")
+.select("*")
+
+if(cError){
+console.error(cError)
 return
 }
 
 let html=""
 
-data.forEach(a=>{
+agents.forEach(a=>{
 
-let type = a.agent_commissions?.[0]?.commission_type || "percentage"
-let value = a.agent_commissions?.[0]?.commission_value || ""
+let existing = commissions.find(c=>c.agent_id === a.id)
+
+let type = existing?.commission_type || "percentage"
+let value = existing?.commission_value || ""
 
 html += `
 <tr>
@@ -444,6 +447,7 @@ html += `
 
 document.getElementById("agentRatesTable").innerHTML = html
 }
+
 
 
 async function saveAgentRate(agentId){

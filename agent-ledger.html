@@ -72,6 +72,31 @@ window.location.href="login.html"
 <button onclick="loadLedger()">Load Ledger</button>
 <br><br>
 <input id="searchInput" placeholder="Search Trip No..." oninput="applySearch()">
+<br><br>
+<select id="rowsPerPage" onchange="changeRowsPerPage()">
+  <option value="5">5 rows</option>
+  <option value="10">10 rows</option>
+  <option value="25">25 rows</option>
+  <option value="50">50 rows</option>
+</select>
+
+<br><br>
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+<button onclick="applyDateFilter()">Filter</button>
+
+<br><br>
+<button onclick="downloadPDF()">Download PDF</button>
+  
+</div>
+
+<div class="card">
+<h3>Record Payment</h3>
+
+<select id="payAgent"></select>
+<input type="number" id="payAmount" placeholder="Amount">
+<button onclick="savePayment()">Save Payment</button>
+
 </div>
 
 <div class="card">
@@ -134,6 +159,7 @@ ${a.name || "No Name"}
 })
 
 document.getElementById("agentSelect").innerHTML = html
+document.getElementById("payAgent").innerHTML = html
 }
 
 /* LOAD LEDGER */
@@ -166,8 +192,10 @@ allEntries = []
 ledgerData?.forEach(l=>{
 allEntries.push({
 date: l.created_at || new Date().toISOString(),
-type:"Trip Commission",
-ref: l.trips?.trip_no || "Trip",
+type: l.paid_amount > 0 ? "Payment" : "Trip Commission",
+ref: l.paid_amount > 0 
+      ? "Payment"
+      : (l.trips?.trip_no || "Trip"),
 debit:Number(l.commission_amount || 0),
 credit:Number(l.paid_amount || 0)
 })
@@ -181,52 +209,8 @@ document.getElementById("ledgerTable").innerHTML =
 return
 }
 
-/* SORT */
-entries.sort((a,b)=>{
-let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
-let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
-return aNum - bNum
-})
+renderFiltered(entries)
 
-/* BALANCE */
-let start = (currentPage - 1) * rowsPerPage
-let end = start + rowsPerPage
-
-let balance = entries
-.slice(0, start)
-.reduce((acc,e)=> acc + e.debit - e.credit, 0)
-
-let html=""
-
-
-let pageEntries = entries.slice(start, end)
-
-pageEntries.forEach(e=>{
-balance = balance + Number(e.debit || 0)
-balance = balance - Number(e.credit || 0)
-
-html += `
-<tr style="font-weight:bold;background:#f1f1f1;">
-<td colspan="3">Total</td>
-<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
-</tr>`
-`
-})
-
-html += `
-<tr style="font-weight:bold;background:#f1f1f1;">
-<td colspan="3">Total</td>
-<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
-</tr>`
-  
-document.getElementById("ledgerTable").innerHTML = html
-let totalPages = Math.ceil(entries.length / rowsPerPage)
-document.getElementById("pageInfo").innerText =
-`Page ${currentPage} of ${totalPages}`
 }
 
 function applySearch(){
@@ -238,55 +222,7 @@ let entries = allEntries.filter(e =>
 )
 currentPage = 1
 
-  /* SORT */
-entries.sort((a,b)=>{
-let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
-let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
-return aNum - bNum
-})
-
-/* BALANCE */
-let start = (currentPage - 1) * rowsPerPage
-let end = start + rowsPerPage
-
-let balance = entries
-.slice(0, start)
-.reduce((acc,e)=> acc + e.debit - e.credit, 0)
-
-let html=""
-
-
-let pageEntries = entries.slice(start, end)
-
-pageEntries.forEach(e=>{
-balance += e.debit
-balance -= e.credit
-
-html += `
-<tr>
-<td>${new Date(e.date).toLocaleDateString()}</td>
-<td>${e.type}</td>
-<td>${e.ref}</td>
-<td>${e.debit ? e.debit.toFixed(2) : ""}</td>
-<td>${e.credit ? e.credit.toFixed(2) : ""}</td>
-<td style="font-weight:bold;color:${balance>=0?'green':'red'}">
-${balance.toFixed(2)}
-</td>
-</tr>`
-})
-
-html += `
-<tr style="font-weight:bold;background:#f1f1f1;">
-<td colspan="3">Total</td>
-<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
-<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
-</tr>`
-
-ledgerTable.innerHTML = html
-let totalPages = Math.ceil(entries.length / rowsPerPage)
-document.getElementById("pageInfo").innerText =
-`Page ${currentPage} of ${totalPages}`
+renderFiltered(entries)
 }
 
 function nextPage(){
@@ -319,6 +255,158 @@ if(document.getElementById("searchInput").value){
   loadLedger()
 }
 }
+}
+
+function changeRowsPerPage(){
+  rowsPerPage = parseInt(document.getElementById("rowsPerPage").value)
+  currentPage = 1
+
+  if(document.getElementById("searchInput").value){
+    applySearch()
+  }else{
+    loadLedger()
+  }
+}
+
+function applyDateFilter(){
+
+let from = document.getElementById("fromDate").value
+let to = document.getElementById("toDate").value
+
+let entries = allEntries.filter(e => {
+
+let d = new Date(e.date)
+
+if(from && d < new Date(from)) return false
+if(to && d > new Date(to)) return false
+
+return true
+})
+
+currentPage = 1
+
+renderFiltered(entries)
+}
+
+function renderFiltered(entries){
+
+if(entries.length === 0){
+ledgerTable.innerHTML =
+`<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
+return
+}
+
+/* SORT */
+entries.sort((a,b)=>{
+let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
+let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
+return aNum - bNum
+})
+
+let start = (currentPage - 1) * rowsPerPage
+let end = start + rowsPerPage
+
+let balance = entries
+.slice(0, start)
+.reduce((acc,e)=> acc + e.debit - e.credit, 0)
+
+let html=""
+
+let pageEntries = entries.slice(start, end)
+
+pageEntries.forEach(e=>{
+balance += e.debit
+balance -= e.credit
+
+html += `
+<tr>
+<td>${new Date(e.date).toLocaleDateString()}</td>
+<td>${e.type}</td>
+<td>${e.ref}</td>
+<td>${e.debit ? e.debit.toFixed(2) : ""}</td>
+<td>${e.credit ? e.credit.toFixed(2) : ""}</td>
+<td style="font-weight:bold;color:${balance>=0?'green':'red'}">
+${balance.toFixed(2)}
+</td>
+</tr>`
+})
+
+html += `
+<tr style="font-weight:bold;background:#f1f1f1;">
+<td colspan="3">Total</td>
+<td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
+<td>${entries.reduce((s,e)=>s + e.debit - e.credit,0).toFixed(2)}</td>
+</tr>`
+
+document.getElementById("ledgerTable").innerHTML = html
+
+let totalPages = Math.ceil(entries.length / rowsPerPage)
+  
+document.getElementById("pageInfo").innerText =
+`Page ${currentPage} of ${totalPages}`
+}
+
+
+/* ✅ ADD PDF FUNCTION HERE — EXACTLY HERE */
+function downloadPDF(){
+
+let rows = document.querySelectorAll("#ledgerTable tr")
+
+let content = `
+<h2>Agent Ledger Report</h2>
+<table border="1" cellspacing="0" cellpadding="5">
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Reference</th>
+<th>Debit</th>
+<th>Credit</th>
+<th>Balance</th>
+</tr>
+`
+
+rows.forEach(r=>{
+content += r.outerHTML
+})
+
+content += "</table>"
+
+let win = window.open("", "", "width=900,height=700")
+win.document.write(content)
+win.document.close()
+win.print()
+}
+async function savePayment(){
+
+let agentId = document.getElementById("agentSelect").value
+let amount = document.getElementById("payAmount").value
+
+if(!agentId || !amount){
+alert("Enter agent and amount")
+return
+}
+
+const {error} = await supabaseClient
+.from("agent_trip_ledger")
+.insert({
+agent_id: agentId,
+commission_amount: 0,
+paid_amount: amount
+})
+
+if(error){
+console.error(error)
+alert("Error saving payment ❌")
+return
+}
+
+alert("Payment saved ✅")
+
+document.getElementById("payAmount").value=""
+
+/* reload ledger */
+loadLedger()
 }
   
 </script>

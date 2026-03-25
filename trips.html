@@ -345,6 +345,11 @@ if(!maps || maps.length === 0){
 
 for(let m of maps){
 
+if(!m.commission_type || !m.commission_value){
+  console.error("❌ Invalid agent config:", m)
+  continue
+}
+
 let commissionAmount = 0
 
 if(m.commission_type === "per_mt"){

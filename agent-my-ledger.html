@@ -166,13 +166,37 @@ loadLedger()
 
 async function loadLedger(){
 
-async function loadLedger()
-/* SORT */
-entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
+/* ✅ GET LEDGER DATA (SOURCE OF TRUTH) */
+const {data:ledger, error} = await supabaseClient
+.from("agent_trip_ledger")
+.select("*")
+.eq("agent_id", agentId)
+.order("created_at",{ascending:true})
+
+if(error){
+console.error(error)
+alert("Error loading ledger ❌")
+return
+}
+
+/* BUILD ENTRIES */
+let entries = []
+
+ledger?.forEach(l=>{
+entries.push({
+date: l.created_at,
+type: "Trip Commission",
+ref: l.trip_id || "-",
+credit: Number(l.commission_amount || 0),
+debit: Number(l.paid_amount || 0)
+})
+})
+
+/* KPIs + CHART */
 renderKPIs(entries)
 renderChart(entries)
 
-/* BALANCE */
+/* RUNNING BALANCE */
 let balance=0
 let html=""
 

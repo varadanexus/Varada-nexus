@@ -97,12 +97,31 @@ document.getElementById("sidebar-container").innerHTML=data
 </tr>
 </thead><tbody id="rateTable"></tbody></table><br><button onclick="downloadPDF()">Download PDF</button>
 
+<div class="card">
+<h3>Agent Commission</h3>
+
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Type</th>
+<th>Value</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="agentRatesTable"></tbody>
+</table>
+
+</div>
+  
 </div></div><script>
 
 let rates=[]
 let allRates=[]
 
 loadRates()
+loadAgentRates()
 
 async function loadRates(){
 
@@ -227,6 +246,7 @@ renderRates()
 
 }
 
+
 function downloadPDF(){
 
 const { jsPDF } = window.jspdf
@@ -256,4 +276,87 @@ doc.save("rate-sheet.pdf")
 
 }
 
+
+/* ================= AGENT COMMISSION ================= */
+
+async function loadAgentRates(){
+
+const { data, error } = await supabaseClient
+.from("agents")
+.select(`
+id,
+name,
+agent_commissions!left (
+commission_type,
+commission_value
+)
+`)
+.eq("is_active", true)
+
+if(error){
+console.error(error)
+return
+}
+
+let html=""
+
+data.forEach(a=>{
+
+let type = a.agent_commissions?.[0]?.commission_type || "percentage"
+let value = a.agent_commissions?.[0]?.commission_value || ""
+
+html += `
+<tr>
+<td>${a.name}</td>
+
+<td>
+<select id="type-${a.id}">
+<option value="percentage" ${type==="percentage"?"selected":""}>Percentage</option>
+<option value="per_mt" ${type==="per_mt"?"selected":""}>Per MT</option>
+</select>
+</td>
+
+<td>
+<input type="number" id="value-${a.id}" value="${value}">
+</td>
+
+<td>
+<button onclick="saveAgentRate('${a.id}')">Save</button>
+</td>
+</tr>
+`
+})
+
+document.getElementById("agentRatesTable").innerHTML = html
+}
+
+
+async function saveAgentRate(agentId){
+
+let type = document.getElementById("type-"+agentId).value
+let value = parseFloat(document.getElementById("value-"+agentId).value)
+
+if(isNaN(value) || value < 0){
+alert("Enter valid value")
+return
+}
+
+const { error } = await supabaseClient
+.from("agent_commissions")
+.upsert({
+agent_id: agentId,
+commission_type: type,
+commission_value: value
+}, { onConflict: "agent_id" })
+
+if(error){
+console.error(error)
+alert("Error saving ❌")
+return
+}
+
+alert("Saved ✅")
+loadAgentRates()
+}
+  
 </script></body></html>

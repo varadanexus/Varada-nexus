@@ -40,7 +40,7 @@ const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
 
 const {data:agent} = await supabaseClient
-.from("commission_agents")
+.from("agents")
 .select("name")
 .eq("auth_id", session.user.id)
 .single()
@@ -104,10 +104,10 @@ return
 }
 
 const {data:agent} = await supabaseClient    
-.from("commission_agents")    
+.from("agents")    
 .select("*")    
 .eq("auth_id",session.user.id)    
-.single()    
+.single() 
 
 if(!agent){
 alert("Agent not found")
@@ -126,7 +126,7 @@ async function loadBalance(){
 
 const {data:ledger} = await supabaseClient
 .from("agent_trip_ledger")
-.select("commission_amount")
+.select("commission_amount, paid_amount")
 .eq("agent_id",agentId)
 
 const {data:requests} = await supabaseClient
@@ -138,25 +138,29 @@ const {data:requests} = await supabaseClient
 
 let earned = ledger?.reduce((s,t)=>s+Number(t.commission_amount||0),0)||0
 
-let paid = 0 // ⚠️ you are not storing payments yet
+let paid = ledger?.reduce((s,t)=>s+Number(t.paid_amount||0),0)||0
 
 pendingAmount = requests
 ?.filter(r=>r.status==="pending")
 .reduce((s,r)=>s+Number(r.amount||0),0) || 0
 
-currentBalance = earned - paid - pendingAmount
+currentBalance = Math.max(0, earned - paid - pendingAmount)
 
 document.getElementById("earned").innerText = earned.toFixed(2)
 document.getElementById("paid").innerText = paid.toFixed(2)
 document.getElementById("balance").innerText = currentBalance.toFixed(2)
-
+let btn = document.querySelector("button[onclick='withdrawFull()']")
+if(btn){
+btn.disabled = currentBalance <= 0
+}
 }
 
 /* REQUEST */
 
 async function requestWithdraw(){    
 
-let amt = Number(document.getElementById("amount").value)    
+let amt = Number(document.getElementById("amount").value)
+amt = Math.round(amt * 100) / 100    
 
 if(!amt){    
 alert("Enter amount")    
@@ -173,10 +177,13 @@ alert("Insufficient balance ❌")
 return
 }
 
-await supabaseClient.from("agent_withdraw_requests").insert({    
+await supabaseClient.from("agent_withdraw_requests")
+.insert({    
 agent_id:agentId,    
-amount:amt    
-})    
+amount:amt,
+status:"pending",
+requested_at:new Date().toISOString()
+})
 
 alert("Request sent ✅")    
 
@@ -186,6 +193,8 @@ await loadBalance()
 loadRequests()    
 }    
 
+
+          
 /* TABLE */
 
 async function loadRequests(){    

@@ -171,13 +171,25 @@ return
 }
 
 /* GET TRIPS */
-const {data:tripData} = await supabaseClient
-.from("trips")
-.select("*")
+/* ✅ GET TRIPS VIA trip_agents */
+const {data:tripLinks} = await supabaseClient
+.from("trip_agents")
+.select("trip_id")
 .eq("agent_id", agent.id)
-.order("created_at",{ascending:false})
 
-trips = Array.isArray(tripData) ? tripData : []
+let tripIds = (tripLinks || []).map(t => t.trip_id)
+
+if(tripIds.length > 0){
+  const {data:tripData} = await supabaseClient
+  .from("trips")
+  .select("*")
+  .in("id", tripIds)
+  .order("created_at",{ascending:false})
+
+  trips = tripData || []
+}else{
+  trips = []
+}
 
 /* GET LEDGER */
 const {data:ledgerData} = await supabaseClient
@@ -197,10 +209,18 @@ let totalPaid = 0
 
 let html=""
 
+let commissionMap = {}
+
+ledger?.forEach(l=>{
+  if(l.trip_id){
+    commissionMap[l.trip_id] = (commissionMap[l.trip_id] || 0) + Number(l.commission_amount || 0)
+  }
+})
+  
 trips.forEach(t=>{
 
 let weight = (t.weight_kg||0)/1000
-let commission = t.commission_amount || 0
+let commission = commissionMap[t.id] || 0
 
 
 
@@ -236,6 +256,8 @@ if(balance > 0){
   balEl.innerText += " (Pending)"
 }
 
+} 
+  
 function formatDate(d){
 if(!d) return "-"
 return new Date(d).toLocaleDateString("en-GB")

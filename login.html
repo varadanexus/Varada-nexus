@@ -147,38 +147,22 @@ return
 
 let authId=data.user.id
 
-/* 🔥 AUTO LINK AGENT */
-const {data:agentAuto} = await supabaseClient
-.from("agents")
-.select("id")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agentAuto){
-  const {data:existing} = await supabaseClient
-  .from("commission_agents")
-  .select("id, auth_id")
-  .eq("agent_id", agentAuto.id)
-  .maybeSingle()
-
-  if(existing && !existing.auth_id){
-    await supabaseClient
-    .from("commission_agents")
-    .update({ auth_id: authId })
-    .eq("agent_id", agentAuto.id)
-  }
-}
-
-/* 🔥 AGENT LOGIN */
+/* 🔥 AGENT LOGIN (FINAL FIX) */
 const {data:agentCheck} = await supabaseClient
-.from("commission_agents")
-.select("id")
+.from("agents")
+.select("id, is_active")
 .eq("auth_id", authId)
 .maybeSingle()
 
 if(agentCheck){
-window.location.href="agent-dashboard.html"
-return
+
+  if(agentCheck.is_active === false){
+    document.getElementById("error").innerText = "Agent account is inactive"
+    return
+  }
+
+  window.location.href="agent-dashboard.html"
+  return
 }
 
 /* 🔥 TRANSPORTER LOGIN */

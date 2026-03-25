@@ -110,14 +110,17 @@ window.location.href="login.html"
 
 let agents=[]
 
-init()
+window.onload = async () => {
+  await init()
+  setupRealtime()
+}
 
 async function init(){
 
 const {data:a}=await supabaseClient.from("agents").select("id,name")
 agents=a||[]
 
-loadRequests()
+await loadRequests()
 }
 
 async function loadRequests(){
@@ -195,109 +198,6 @@ document.getElementById("table").innerHTML = html
 }
 
 let approveData = {}
-  
-  
-/* 1️⃣ CHECK IF ALREADY APPROVED */
-const {data:existing} = await supabaseClient
-.from("agent_withdraw_requests")
-.select("status, processed_at")
-.eq("id", id)
-.single()
-
-if(existing?.status === "approved" || existing?.processed_at){
-alert("Already processed ❌")
-
-if(btn){
-  btn.disabled = false
-  btn.innerText = "Approve"
-}
-
-return
-}
-
-
-
-/* GET FULL LEDGER */
-const {data:ledger} = await supabaseClient
-.from("agent_trip_ledger")
-.select("commission_amount, paid_amount")
-.eq("agent_id", agentId)
-
-/* CALCULATE */
-let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
-let totalPaid   = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0) || 0
-
-/* PENDING REQUESTS */
-const {data:requests} = await supabaseClient
-.from("agent_withdraw_requests")
-.select("amount,status")
-.eq("agent_id", agentId)
-
-let pending = requests
-?.filter(r=>r.status==="pending")
-.reduce((s,r)=>s+Number(r.amount||0),0) || 0
-
-let availableBalance = totalEarned - totalPaid - pending + amount
-
-/* 4️⃣ BLOCK IF INSUFFICIENT */
-if(amount > availableBalance){
-alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
-
-if(btn){
-  btn.disabled = false
-  btn.innerText = "Approve"
-}
-
-return
-}
-
-/* 5️⃣ INSERT PAYMENT INTO LEDGER (🔥 KEY STEP) */
-const {error:insertError} = await supabaseClient
-.from("agent_trip_ledger")
-.insert({
-agent_id: agentId,
-commission_amount: 0,
-paid_amount: amount,
-created_at: new Date().toISOString()
-})
-
-
-  
-if(insertError){
-console.error(insertError)
-alert("Error inserting ledger ❌")
-
-if(btn){
-  btn.disabled = false
-  btn.innerText = "Approve"
-}
-
-return
-}
-
-/* 6️⃣ UPDATE STATUS */
-await supabaseClient
-.from("agent_withdraw_requests")
-.update({
-status:"approved",
-processed_at:new Date().toISOString()
-})
-.eq("id",id)
-.eq("status","pending")
-
-/* 7️⃣ OPTIONAL AUDIT */
-await supabaseClient.from("audit_logs").insert({
-action: "withdraw_approved",
-agent_id: agentId,
-amount: amount,
-reference_id: id,
-created_at: new Date().toISOString()
-})
-
-alert("Approved & deducted ✅")
-
-loadRequests()
-}
 
 async function reject(id){
 
@@ -307,18 +207,34 @@ await supabaseClient
 .eq("id",id)
 .eq("status","pending")
 
-loadRequests()
+await loadRequests()
 }
 
 async function confirmApprove(){
 
+if(!approveData.id){
+alert("Invalid request ❌")
+return
+}
 let {id, agentId, amount} = approveData
 
+let confirmBtn = document.getElementById("confirmBtn")
+if(confirmBtn){
+  confirmBtn.disabled = true
+  confirmBtn.innerText = "Processing..."
+}
+  
 let mode = document.getElementById("payMode").value
 let remarks = document.getElementById("remarks").value
 
+  
 if(!mode){
 alert("Select payment mode ❌")
+
+if(confirmBtn){
+  confirmBtn.disabled = false
+  confirmBtn.innerText = "Confirm"
+}
 return
 }
 
@@ -342,6 +258,11 @@ alert("Already processed ❌")
 if(btn){
 btn.disabled = false
 btn.innerText = "Approve"
+}
+
+if(confirmBtn){
+confirmBtn.disabled = false
+confirmBtn.innerText = "Confirm"
 }
 
 return
@@ -376,6 +297,11 @@ btn.disabled = false
 btn.innerText = "Approve"
 }
 
+if(confirmBtn){
+confirmBtn.disabled = false
+confirmBtn.innerText = "Confirm"
+}
+
 return
 }
 
@@ -398,6 +324,11 @@ alert("Error ❌")
 if(btn){
 btn.disabled = false
 btn.innerText = "Approve"
+}
+
+if(confirmBtn){
+confirmBtn.disabled = false
+confirmBtn.innerText = "Confirm"
 }
 
 return
@@ -429,15 +360,20 @@ created_at: new Date().toISOString()
 closeModal()
 
 alert("Approved ✅")
+if(confirmBtn){
+  confirmBtn.innerText = "Done"
+}
 if(btn){
   btn.innerText = "Approved"
+  btn.disabled = true
 }
 
-loadRequests()
+await loadRequests()
 }
   
 function openApproveModal(id, agentId, amount){
 
+approveData = null
 approveData = { id, agentId, amount }
 
 document.getElementById("payMode").value = ""
@@ -448,6 +384,35 @@ document.getElementById("approveModal").style.display = "flex"
 
 function closeModal(){
 document.getElementById("approveModal").style.display = "none"
+
+let confirmBtn = document.getElementById("confirmBtn")
+if(confirmBtn){
+  confirmBtn.disabled = false
+  confirmBtn.innerText = "Confirm"
+}
+}
+
+function setupRealtime(){
+
+supabaseClient
+.channel('withdraw-changes')
+
+.on(
+  'postgres_changes',
+  {
+    event: '*',
+    schema: 'public',
+    table: 'agent_withdraw_requests'
+  },
+  async (payload) => {
+    console.log("Realtime update:", payload)
+
+    await loadRequests()
+  }
+)
+
+.subscribe()
+
 }
   
 </script>
@@ -488,7 +453,7 @@ style="width:100%; padding:8px; margin-bottom:10px;">
 
 <div style="text-align:right;">
 <button onclick="closeModal()">Cancel</button>
-<button onclick="confirmApprove()">Confirm</button>
+<button id="confirmBtn" onclick="confirmApprove()">Confirm</button>
 </div>
 
 </div>

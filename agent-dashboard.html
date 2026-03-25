@@ -94,6 +94,16 @@ if(el) el.innerText = agent.name
 <h2 id="totalCommission">₹0</h2>
 </div>
 
+<div class="card">
+<h4>Total Paid</h4>
+<h2 id="totalPaid">₹0</h2>
+</div>
+
+<div class="card">
+<h4>Balance</h4>
+<h2 id="balance">₹0</h2>
+</div>
+  
 <!-- NAVIGATION -->
 
 <div class="card" onclick="goLedger()" style="cursor:pointer;">
@@ -161,13 +171,21 @@ return
 }
 
 /* GET TRIPS */
-const {data} = await supabaseClient
+const {data:tripData} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("agent_id", agent.id)
 .order("created_at",{ascending:false})
 
-trips = Array.isArray(data) ? data : []
+trips = Array.isArray(tripData) ? tripData : []
+
+/* GET LEDGER */
+const {data:ledgerData} = await supabaseClient
+.from("agent_trip_ledger")
+.select("*")
+.eq("agent_id", agent.id)
+
+ledger = ledgerData || []
 
 render()
 }
@@ -175,6 +193,8 @@ render()
 function render(){
 
 let totalCommission = 0
+let totalPaid = 0
+
 let html=""
 
 trips.forEach(t=>{
@@ -182,7 +202,7 @@ trips.forEach(t=>{
 let weight = (t.weight_kg||0)/1000
 let commission = t.commission_amount || 0
 
-totalCommission += commission
+
 
 html+=`
 <tr>
@@ -195,11 +215,25 @@ html+=`
 </tr>`
 })
 
+/* LEDGER CALCULATION */
+ledger?.forEach(l=>{
+totalCommission += Number(l.commission_amount || 0)
+totalPaid += Number(l.paid_amount || 0)
+})
+
+let balance = totalCommission - totalPaid
+
 tripTable.innerHTML = html
 
 document.getElementById("totalTrips").innerText = trips.length
-document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(0)
+document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(2)
+document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(2)
 
+let balEl = document.getElementById("balance")
+balEl.innerText = "₹ " + balance.toFixed(2)
+balEl.style.color = balance >= 0 ? "green" : "red"
+if(balance > 0){
+  balEl.innerText += " (Pending)"
 }
 
 function formatDate(d){

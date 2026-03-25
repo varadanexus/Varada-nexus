@@ -93,23 +93,29 @@ window.location.href="login.html"
 
 </div>
 
-<div id="alertBox" style="color:red;font-weight:bold;"></div>
+<div id="alertBox" style="
+margin:10px 0;
+padding:10px;
+border-radius:8px;
+font-weight:600;
+display:none;
+"></div>
 
-<div class="summary">
+<div class="summary" style="display:flex; gap:15px; flex-wrap:wrap;">
 
-<div class="box earn">
-Total Earned<br>
-₹ <span id="totalEarned">0</span>
+<div class="card" style="flex:1; min-width:200px;">
+<h3>💰 Earned</h3>
+<h2 id="totalEarned" style="color:#16a34a;">₹ 0</h2>
 </div>
 
-<div class="box paid">
-Total Paid<br>
-₹ <span id="totalPaid">0</span>
+<div class="card" style="flex:1; min-width:200px;">
+<h3>💸 Paid</h3>
+<h2 id="totalPaid" style="color:#dc2626;">₹ 0</h2>
 </div>
 
-<div class="box balance">
-Balance<br>
-₹ <span id="balance">0</span>
+<div class="card" style="flex:1; min-width:200px;">
+<h3>📊 Balance</h3>
+<h2 id="balance">₹ 0</h2>
 </div>
 
 </div>
@@ -186,10 +192,24 @@ currentBalance=balance
 
 document.getElementById("totalEarned").innerText=totalEarned.toFixed(2)
 document.getElementById("totalPaid").innerText=totalPaid.toFixed(2)
-document.getElementById("balance").innerText=balance.toFixed(2)
+
+
+/* BALANCE COLOR */
+let balEl = document.getElementById("balance")
+balEl.innerText = "₹ " + balance.toFixed(2)
+balEl.style.color = balance >= 0 ? "#16a34a" : "#dc2626"
 
 /* ALERT */
-document.getElementById("alertBox").innerText = balance > 50000 ? `⚠ Agent pending ₹ ${balance.toFixed(2)}` : ""
+let alertBox = document.getElementById("alertBox")
+
+if(balance > 50000){
+alertBox.style.display = "block"
+alertBox.style.background = "#fee2e2"
+alertBox.style.color = "#991b1b"
+alertBox.innerText = `⚠ High pending: ₹ ${balance.toFixed(2)}`
+}else{
+alertBox.style.display = "none"
+}
 
 /* CHART */
 let monthly={}

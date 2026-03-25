@@ -211,7 +211,6 @@ window.location.href="login.html"
 <input id="truckId" placeholder="Auto ID" readonly>
 
 <select id="truckTransporter"></select>
-<select id="agentDropdown"></select>
 
 <button onclick="addTruck()">Add Truck</button>
 
@@ -220,7 +219,6 @@ window.location.href="login.html"
 <tr>
 <th>Truck</th>
 <th>Transporter</th>
-<th>Agent</th>
 <th>Action</th>
 </tr>
 </thead>
@@ -243,36 +241,6 @@ window.location.href="login.html"
 <tbody id="commodityTable"></tbody>
 </table>
 </div>
-
-<!-- 🔥 COMMISSION AGENTS UI -->
-<div class="card">
-<h3>Commission Agents</h3>
-
-<select id="agentSelect">
-<option value="">Select Agent</option>
-</select>
-
-<select id="agentType">
-<option value="per_mt">Per MT</option>
-<option value="percentage">Percentage</option>
-</select>
-
-<input id="agentValue" placeholder="Commission Value">
-
-<button onclick="addAgent()">Add Agent</button>
-
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Value</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="agentTable"></tbody>
-</table>
-</div>
   
 </div>
 
@@ -280,7 +248,7 @@ window.location.href="login.html"
 
 /* PAGINATION */
 let clientPage=0
-let agents = []
+
 const pageSize=10
 
 /* ROUTE AUTO */
@@ -426,7 +394,7 @@ async function addTruck(){
 const {error} = await supabaseClient.from("trucks").insert({
 truck_number: truckNumber.value,
 transporter_id: truckTransporter.value,
-agent_id: document.getElementById("agentDropdown").value || null
+
 })
 
 if(error){
@@ -437,7 +405,7 @@ return
 
 truckNumber.value=""
 truckId.value=""
-document.getElementById("agentDropdown").value=""
+
 
 alert("Truck added ✅")
 
@@ -452,42 +420,7 @@ commodityName.value=""
 loadCommodities()
 }
   
-async function addAgent(){
 
-let agentId = document.getElementById("agentSelect").value
-let value = parseFloat(document.getElementById("agentValue").value)
-
-if(!agentId){
-alert("Select agent ❌")
-return
-}
-
-if(isNaN(value)){
-alert("Enter valid commission ❌")
-return
-}
-
-const {error} = await supabaseClient
-.from("commission_agents")
-.insert({
-agent_id: agentId,
-commission_type: document.getElementById("agentType").value,
-commission_value: value
-})
-
-if(error){
-console.error(error)
-alert("Error adding agent ❌")
-return
-}
-
-alert("Agent added ✅")
-
-document.getElementById("agentSelect").value=""
-document.getElementById("agentValue").value=""
-
-loadAgents()
-}
   
 /* LOAD */
 
@@ -518,29 +451,41 @@ function prevClient(){if(clientPage>0){clientPage--;loadClients()}}
 
 async function loadTransporters(){
 
-const {data,error} = await supabaseClient
+// 1️⃣ GET ALL TRANSPORTERS
+const {data:transporters,error} = await supabaseClient
 .from("transporters")
 .select("*")
 .order("created_at",{ascending:false})
 
-/* 🔥 ERROR CHECK */
 if(error){
-console.error("Transporter load error:", error)
-alert("Error loading transporters: " + error.message)
+console.error(error)
 return
 }
 
-transporterData = data || []
-
-let html="",dd='<option>Select</option>'
-
-for(let t of transporterData){
-
-/* TRUCK COUNT */
-const {count} = await supabaseClient
+// 2️⃣ GET TRUCK COUNTS GROUPED
+const {data:truckCounts,error:countError} = await supabaseClient
 .from("trucks")
-.select("*",{count:"exact",head:true})
-.eq("transporter_id",t.id)
+.select("transporter_id", { head: false })
+
+if(countError){
+console.error(countError)
+return
+}
+
+// 3️⃣ BUILD COUNT MAP
+let countMap = {}
+
+truckCounts.forEach(t=>{
+countMap[t.transporter_id] = (countMap[t.transporter_id] || 0) + 1
+})
+
+// 4️⃣ RENDER
+let html=""
+let dd='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+
+let count = countMap[t.id] || 0
 
 html+=`
 <tr>
@@ -549,8 +494,7 @@ html+=`
 <td>${t.gst_number||"-"}</td>
 <td>${t.status||"Active"}</td>
 <td>${t.created_at?.split("T")[0]}</td>
-<td>${count||0}</td>
-
+<td>${count}</td>
 <td>
 <button onclick="editTransporter('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTransporter('${t.id}')">Delete</button>
@@ -561,7 +505,7 @@ html+=`
 dd+=`<option value="${t.id}">
 ${t.transporter_name} (${t.phone||"-"} | ${t.gst_number||"No GST"})
 </option>`
-}
+})
 
 document.getElementById("transporterTable").innerHTML=html
 document.getElementById("truckTransporter").innerHTML=dd
@@ -569,83 +513,8 @@ document.getElementById("truckTransporter").innerHTML=dd
 }
 
 /* 🔥 PASTE HERE */
-async function loadAgents(){
 
-const {data,error} = await supabaseClient
-.from("commission_agents")
-.select(`
-id,
-commission_type,
-commission_value,
-agents(id,name)
-`)
 
-if(error){
-console.error("Agent load error:", error)
-return
-}
-
-agents = data || []
-
-let html=""
-
-agents.forEach(a=>{
-html += `
-<tr>
-<td>${a.agents?.name || "-"}</td>
-<td>${a.commission_type}</td>
-<td>${a.commission_value}</td>
-<td>
-<button onclick="editAgent('${a.id}')">Edit</button>
-<button class="deleteBtn" onclick="deleteAgent('${a.id}')">Delete</button>
-</td>
-</tr>`
-})
-
-document.getElementById("agentTable").innerHTML = html
-}
-
-/* 🔥 LOAD AGENTS FROM agents TABLE (FOR DROPDOWN) */
-async function loadAgentDropdown(){
-
-const {data,error} = await supabaseClient
-.from("agents")
-.select("id, name")
-.eq("is_active", true)
-
-if(error){
-console.error("Dropdown error:", error)
-return
-}
-
-let dd = '<option value="">Select Agent</option>'
-
-data.forEach(a=>{
-dd += `<option value="${a.id}">${a.name}</option>`
-})
-
-document.getElementById("agentSelect").innerHTML = dd
-}
-
-async function loadTruckAgentDropdown(){
-
-const {data,error} = await supabaseClient
-.from("agents")
-.select("id,name")
-
-if(error){
-console.error("Truck agent dropdown error:", error)
-return
-}
-
-let dd = '<option value="">Select Agent</option>'
-
-data.forEach(a=>{
-dd += `<option value="${a.id}">${a.name}</option>`
-})
-
-document.getElementById("agentDropdown").innerHTML = dd
-}
   
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
@@ -662,113 +531,25 @@ html+=`
 routeTable.innerHTML=html
 }
 
-async function deleteAgent(id){
 
-if(!confirm("Delete this agent?")) return
-
-const {error} = await supabaseClient
-.from("commission_agents")
-.delete()
-.eq("id", id)
-
-if(error){
-console.error(error)
-alert("Error deleting ❌")
-return
-}
-
-alert("Deleted ✅")
-loadAgents()
-}
-
-let editAgentId = null
-
-async function editAgent(id){
-
-editAgentId = id
-
-const {data} = await supabaseClient
-.from("commission_agents")
-.select("*")
-.eq("id", id)
-.single()
-
-if(!data) return
-
-/* LOAD AGENTS */
-const {data:ags} = await supabaseClient
-.from("agents")
-.select("id,name")
-
-let dd = ags.map(a=>`<option value="${a.id}">${a.name}</option>`).join("")
-
-document.getElementById("eAgentSelect").innerHTML = dd
-document.getElementById("eAgentSelect").value = data.agent_id
-
-document.getElementById("eAgentType").value = data.commission_type
-document.getElementById("eAgentValue").value = data.commission_value
-
-document.getElementById("editAgentPopup").style.display = "block"
-}
-
-async function updateAgent(){
-
-if(!editAgentId) return
-
-let value = parseFloat(document.getElementById("eAgentValue").value)
-
-if(isNaN(value)){
-alert("Enter valid commission ❌")
-return
-}
-
-const {error} = await supabaseClient
-.from("commission_agents")
-.update({
-agent_id: document.getElementById("eAgentSelect").value,
-commission_type: document.getElementById("eAgentType").value,
-commission_value: value
-})
-.eq("id", editAgentId)
-
-if(error){
-console.error(error)
-alert("Error updating ❌")
-return
-}
-
-alert("Updated ✅")
-
-closeAgentPopup()
-loadAgents()
-}
-
-function closeAgentPopup(){
-document.getElementById("editAgentPopup").style.display="none"
-editAgentId = null
-}
   
 async function loadTrucks(){
 
 const {data:trucks} = await supabaseClient.from("trucks").select("*")
 const {data:trs} = await supabaseClient.from("transporters").select("*")
 
-const {data:ags} = await supabaseClient
-.from("agents")
-.select("id,name") || []
 
 let html=""
 
 trucks?.forEach(t=>{
 
 let transporterName = trs.find(x=>x.id==t.transporter_id)?.transporter_name || "-"
-let agentName = (ags || []).find(a=>a.id==t.agent_id)?.name || "-"
 
 html+=`
 <tr>
 <td>${t.truck_number}</td>
 <td>${transporterName}</td>
-<td>${agentName}</td>
+
 <td>
 <button onclick="editTruck('${t.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteTruck('${t.id}')">Delete</button>
@@ -842,20 +623,12 @@ document.getElementById("eTruckNumber").value = t.truck_number || ""
 
 /* LOAD DROPDOWNS */
 const {data:trs} = await supabaseClient.from("transporters").select("*")
-const {data:ags} = await supabaseClient
-.from("agents")
-.select("id,name")
 
 /* TRANSPORTER DROPDOWN */
 let tdd = trs.map(x=>`<option value="${x.id}">${x.transporter_name}</option>`).join("")
 document.getElementById("eTruckTransporter").innerHTML = tdd
 document.getElementById("eTruckTransporter").value = t.transporter_id
 
-/* AGENT DROPDOWN */
-let add = '<option value="">No Agent</option>' +
-ags.map(a=>`<option value="${a.id}">${a.name || "-"}</option>`).join("")
-document.getElementById("eTruckAgent").innerHTML = add
-document.getElementById("eTruckAgent").value = t.agent_id || ""
 
 /* SHOW POPUP */
 document.getElementById("editTruckPopup").style.display="block"
@@ -869,8 +642,7 @@ const {error} = await supabaseClient
 .from("trucks")
 .update({
 truck_number: document.getElementById("eTruckNumber").value,
-transporter_id: document.getElementById("eTruckTransporter").value,
-agent_id: document.getElementById("eTruckAgent").value || null
+transporter_id: document.getElementById("eTruckTransporter").value
 })
 .eq("id",editTruckId)
 
@@ -973,9 +745,6 @@ await loadTransporters()
 await loadRoutes()
 await loadTrucks()
 await loadCommodities()
-await loadAgents()
-await loadAgentDropdown()
-await loadTruckAgentDropdown()
 }
 
 </script>
@@ -985,27 +754,6 @@ await loadTruckAgentDropdown()
 <script src="global-logout.js"></script>
 <!-- 🔥 EDIT TRANSPORTER POPUP -->
 
-<div id="editAgentPopup" class="popup">
-  <div class="popup-content">
-
-    <h3>Edit Commission Agent</h3>
-
-    <select id="eAgentSelect"></select>
-
-    <select id="eAgentType">
-      <option value="per_mt">Per MT</option>
-      <option value="percentage">Percentage</option>
-    </select>
-
-    <input id="eAgentValue" placeholder="Commission Value">
-
-    <br><br>
-
-    <button onclick="updateAgent()">Update</button>
-    <button class="deleteBtn" onclick="closeAgentPopup()">Cancel</button>
-
-  </div>
-</div>
   
 <div id="editPopup" class="popup">
   <div class="popup-content">
@@ -1048,7 +796,7 @@ await loadTruckAgentDropdown()
     <input id="eTruckNumber" placeholder="Truck Number">
 
     <select id="eTruckTransporter"></select>
-    <select id="eTruckAgent"></select>
+    
 
     <br><br>
 

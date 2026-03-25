@@ -183,6 +183,15 @@ const {data:ledgerData} = await supabaseClient
 
 ledger = ledgerData || []
 
+/* ✅ SORT BY TRIP NUMBER ASC (OLD → NEW) */
+ledger.sort((a, b) => {
+
+  let aNum = parseInt((a.trips?.trip_no || "").replace(/\D/g,'')) || 0
+  let bNum = parseInt((b.trips?.trip_no || "").replace(/\D/g,'')) || 0
+
+  return aNum - bNum
+})
+
 render()
 }
 
@@ -225,7 +234,8 @@ let balance = totalCommission - totalPaid
 
 tripTable.innerHTML = html
 
-document.getElementById("totalTrips").innerText = ledger.length
+let tripCount = ledger.filter(l => l.trip_id).length
+document.getElementById("totalTrips").innerText = tripCount
 document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(2)
 document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(2)
 

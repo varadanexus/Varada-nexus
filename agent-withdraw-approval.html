@@ -194,24 +194,7 @@ document.getElementById("table").innerHTML = html
 
 async function approve(id,agentId,amount){
 
-/* 🔍 GET LEDGER BALANCE */
-const {data:ledger} = await supabaseClient
-.from("agent_trip_ledger")
-.select("commission_amount, paid_amount")
-.eq("agent_id", agentId)
-
-let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
-let totalPaid = ledger?.reduce((s,e)=>s+Number(e.paid_amount||0),0) || 0
-
-let availableBalance = totalEarned - totalPaid
-
-/* 🚫 BLOCK IF INSUFFICIENT BALANCE */
-if(amount > availableBalance){
-alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
-return
-}
-  
-  /* prevent duplicate */
+/* 1️⃣ CHECK IF ALREADY APPROVED */
 const {data:existing} = await supabaseClient
 .from("agent_withdraw_requests")
 .select("status")
@@ -222,24 +205,58 @@ if(existing?.status === "approved"){
 alert("Already approved ❌")
 return
 }
-  
-/* INSERT PAYMENT */
 
-await supabaseClient.from("agent_trip_ledger").insert({
+/* 2️⃣ GET LEDGER BALANCE */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount")
+.eq("agent_id", agentId)
+
+let totalEarned = ledger?.reduce((s,e)=>s+Number(e.commission_amount||0),0) || 0
+
+/* 3️⃣ GET PENDING REQUESTS */
+const {data:requests} = await supabaseClient
+.from("agent_withdraw_requests")
+.select("amount,status")
+.eq("agent_id", agentId)
+
+let pending = requests
+?.filter(r=>r.status==="pending")
+.reduce((s,r)=>s+Number(r.amount||0),0) || 0
+
+let availablebalance = SUM(commission_amount)
+
+/* 4️⃣ BLOCK IF INSUFFICIENT */
+if(amount > availableBalance){
+alert(`❌ Insufficient balance!\nAvailable: ₹${availableBalance.toFixed(2)}`)
+return
+}
+
+/* 5️⃣ INSERT PAYMENT INTO LEDGER (🔥 KEY STEP) */
+const {error:insertError} = await supabaseClient
+.from("agent_trip_ledger")
+.insert({
 agent_id: agentId,
-commission_amount: 0,
-paid_amount: amount,
+commission_amount: -amount,   // 🔥 THIS IS THE MAGIC
 created_at: new Date().toISOString()
 })
 
-/* UPDATE STATUS */
+if(insertError){
+console.error(insertError)
+alert("Error inserting ledger ❌")
+return
+}
 
+/* 6️⃣ UPDATE STATUS */
 await supabaseClient
 .from("agent_withdraw_requests")
-.update({status:"approved",processed_at:new Date()})
+.update({
+status:"approved",
+processed_at:new Date().toISOString()
+})
 .eq("id",id)
 
-/* 🧾 AUDIT LOG */
+/* 7️⃣ OPTIONAL AUDIT */
 await supabaseClient.from("audit_logs").insert({
 action: "withdraw_approved",
 agent_id: agentId,
@@ -247,7 +264,9 @@ amount: amount,
 reference_id: id,
 created_at: new Date().toISOString()
 })
-  
+
+alert("Approved & deducted ✅")
+
 loadRequests()
 }
 

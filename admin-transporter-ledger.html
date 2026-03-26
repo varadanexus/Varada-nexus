@@ -7,6 +7,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <script src="menu-rbac.js"></script>
 
@@ -154,6 +156,24 @@ window.location.href="login.html"
 
 <div class="card">
 
+<!-- 🔍 SEARCH -->
+<input id="searchBox" placeholder="Search..." oninput="renderLedger()" style="padding:8px;margin-bottom:10px;width:200px;">
+<!-- 📅 DATE FILTER -->
+<input type="date" id="fromDate" onchange="renderLedger()" style="margin-left:10px;">
+<input type="date" id="toDate" onchange="renderLedger()" style="margin-left:5px;">
+
+  
+<!-- 📄 PAGE SIZE -->
+<select id="pageSize" onchange="renderLedger()" style="padding:8px;margin-left:10px;">
+<option value="50">50</option>
+<option value="100">100</option>
+<option value="150">150</option>
+<option value="200">200</option>
+</select>
+
+<!-- 📥 PDF -->
+<button onclick="downloadLedgerPDF()" style="margin-left:10px;">Download PDF</button>
+
 <table>
 
 <thead>
@@ -171,6 +191,11 @@ window.location.href="login.html"
 
 </table>
 
+<div style="margin-top:10px;">
+<button onclick="prevPage()">Prev</button>
+<button onclick="nextPage()">Next</button>
+</div>
+   
 </div>
 
 </div>
@@ -181,6 +206,8 @@ let transporters=[]
 let trips=[]
 let expenses=[]
 let payments=[]
+let allEntries = []
+let currentPage = 1
 
 init()
 
@@ -220,37 +247,46 @@ return
 }
 
 /* TRIPS */
-
 const {data:tripData}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporterId)
 
 /* EXPENSES */
-
 const {data:expenseData}=await supabaseClient
 .from("expenses")
 .select("*")
 
 /* PAYMENTS */
 
-let transporterName=transporters.find(x=>x.id==transporterId)?.transporter_name
+// get invoices
+const {data:invoiceData} = await supabaseClient
+.from("transporter_invoices")
+.select("id")
+.eq("transporter_id", transporterId)
 
-const {data:paymentData}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-.eq("transporter_name",transporterName)
+let invoiceIds = invoiceData?.map(i => i.id) || []
+
+// get payments
+let paymentData = []
+
+if(invoiceIds.length){
+  const res = await supabaseClient
+  .from("transporter_payments")
+  .select("*")
+  .in("invoice_id", invoiceIds)
+
+  paymentData = res.data || []
+}
 
 /* SAFE ASSIGN */
-
 trips=tripData || []
 expenses=expenseData || []
 payments=paymentData || []
 
 let entries=[]
 
-/* TRIP DEBIT */
-
+/* TRIPS */
 trips.forEach(t=>{
 
 let weightMT=(t.weight_kg || 0)/1000
@@ -272,8 +308,7 @@ credit:0
 
 })
 
-/* PAYMENT CREDIT */
-
+/* PAYMENTS */
 payments.forEach(p=>{
 
 entries.push({
@@ -287,35 +322,189 @@ credit:Number(p.amount || 0)
 })
 
 /* SORT */
+entries.sort((a,b)=>{
+let da = new Date(a.date)
+let db = new Date(b.date)
 
-entries.sort((a,b)=> new Date(a.date)-new Date(b.date))
+if(isNaN(da)) return 1
+if(isNaN(db)) return -1
 
-/* BALANCE */
-
-let balance=0
-let html=""
-
-entries.forEach(e=>{
-
-balance+=e.debit
-balance-=e.credit
-
-html+=`
-<tr>
-<td>${e.date || ""}</td>
-<td>${e.type}</td>
-<td>${e.ref}</td>
-<td>${e.debit || ""}</td>
-<td>${e.credit || ""}</td>
-<td>${balance}</td>
-</tr>
-`
-
+return da - db
 })
 
-document.getElementById("ledgerTable").innerHTML=html
+/* FINAL */
+allEntries = entries
+currentPage = 1
+
+renderLedger()
 
 }
+
+function renderLedger(){
+
+currentPage = 1
+
+let search = document.getElementById("searchBox").value.toLowerCase()
+let pageSize = Number(document.getElementById("pageSize").value)
+
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+let filtered = allEntries.filter(e => {
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let entryDate = e.date ? new Date(e.date) : null
+
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let start = (currentPage - 1) * pageSize
+let paginated = filtered.slice(start, start + pageSize)
+
+// 🔥 correct running balance
+let balance = 0
+filtered.slice(0, start).forEach(e=>{
+balance += e.debit
+balance -= e.credit
+})
+
+let html = ""
+
+paginated.forEach(e=>{
+balance += e.debit
+balance -= e.credit
+
+html += `
+<tr>
+<td>${e.date ? new Date(e.date).toLocaleDateString("en-IN") : ""}</td>
+<td>${e.type}</td>
+<td>${e.ref}</td>
+<td>${e.debit ? "₹"+e.debit.toFixed(0) : ""}</td>
+<td>${e.credit ? "₹"+e.credit.toFixed(0) : ""}</td>
+<td>₹${balance.toFixed(0)}</td>
+</tr>
+`
+})
+
+let totalDebit = filtered.reduce((s,e)=>s+e.debit,0)
+let totalCredit = filtered.reduce((s,e)=>s+e.credit,0)
+
+html += `
+<tr style="font-weight:bold;background:#f1f1f1">
+<td colspan="3">Total</td>
+<td>₹${totalDebit.toFixed(0)}</td>
+<td>₹${totalCredit.toFixed(0)}</td>
+<td></td>
+</tr>
+`
+  
+document.getElementById("ledgerTable").innerHTML = html
+}
+
+function downloadLedgerPDF(){
+
+const { jsPDF } = window.jspdf
+let doc = new jsPDF()
+
+doc.setFontSize(14)
+doc.text("Transporter Ledger", 14, 15)
+
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+doc.text(`From: ${fromDate || "-"}  To: ${toDate || "-"}`, 14, 22)
+  
+let search = document.getElementById("searchBox").value.toLowerCase()
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+let filtered = allEntries.filter(e => {
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let entryDate = e.date ? new Date(e.date) : null
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let rows = filtered.map(e=>[
+e.date || "",
+e.type,
+e.ref,
+e.debit || "",
+e.credit || ""
+])
+
+doc.autoTable({
+startY: 28,
+head: [["Date","Type","Ref","Debit","Credit"]],
+body: rows
+})
+
+doc.save("ledger.pdf")
+}
+
+function nextPage(){
+
+let pageSize = Number(document.getElementById("pageSize").value)
+
+let search = document.getElementById("searchBox").value.toLowerCase()
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+let filtered = allEntries.filter(e=>{
+let entryDate = e.date ? new Date(e.date) : null
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let maxPage = Math.ceil(filtered.length / pageSize)
+
+if(currentPage < maxPage){
+currentPage++
+renderLedger()
+}
+
+}
+
+function prevPage(){
+if(currentPage>1) currentPage--
+renderLedger()
+}
+  
 
 </script>
 

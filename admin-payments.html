@@ -347,7 +347,7 @@ Total Weight: ${weight} KG<br>
 
 async function saveInvoice(){
 
- {data}=await supabaseClient.from("transporter_invoices").insert({
+const { data } = await supabaseClient.from("transporter_invoices").insert({
 invoice_no:"TINV-"+Math.floor(Math.random()*100000),
 transporter_id:transporterSelect.value,
 trip_ids:selectedTrips.map(t=>t.id).join(","),

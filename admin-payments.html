@@ -502,12 +502,6 @@ if(!val) return
 
 let inv=invoices.find(i=>i.id==id)
 
-const {data:transporter} = await supabaseClient
-.from("transporters")
-.select("transporter_name")
-.eq("id", inv.transporter_id)
-.single()
-
 let paid=Number(val)
 let balance=inv.total_amount-paid
 
@@ -561,6 +555,12 @@ e.stopPropagation()
 
 const { jsPDF } = window.jspdf
 let inv=invoices.find(i=>i.id==id)
+
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("transporter_name,gst_no,phone,address")
+.eq("id", inv.transporter_id)
+.single()
 
 /* 🔥 GET TRIP DETAILS */
 let tripIds = inv.trip_ids.split(",")
@@ -627,16 +627,38 @@ doc.setFontSize(11)
 doc.text("Transporter Invoice",40,25)
 
 /* INVOICE INFO */
-doc.text("Invoice No : "+inv.invoice_no,15,40)
+doc.setFont("helvetica","bold")
+doc.text("Invoice No : ",15,40)
+doc.setFont("helvetica","normal")
+doc.text(inv.invoice_no,45,40)
+
 doc.setFont("helvetica","bold")
 doc.text("Transporter : ",15,47)
-
 doc.setFont("helvetica","normal")
-doc.text((transporter?.transporter_name || "-"),50,47)
-doc.text("Status     : "+inv.status,15,54)
+doc.text(transporter?.transporter_name || "-",50,47)
 
+doc.setFont("helvetica","bold")
+doc.text("GST : ",15,54)
+doc.setFont("helvetica","normal")
+doc.text(transporter?.gst_no || "-",30,54)
+
+doc.setFont("helvetica","bold")
+doc.text("Phone : ",15,61)
+doc.setFont("helvetica","normal")
+doc.text(transporter?.phone || "-",40,61)
+
+doc.setFont("helvetica","bold")
+doc.text("Address : ",15,68)
+doc.setFont("helvetica","normal")
+doc.text(transporter?.address || "-",45,68, { maxWidth: 140 })
+
+doc.setFont("helvetica","bold")
+doc.text("Status : ",15,80)
+doc.text(inv.status,40,80)
+doc.setFont("helvetica","normal")
+doc.text(inv.status,40,75)
 /* TABLE HEADER */
-let startY = 70
+let startY = 90
 
 doc.autoTable({
 startY: startY,

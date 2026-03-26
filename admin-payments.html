@@ -825,19 +825,21 @@ doc.setTextColor(0,150,0)
 doc.setGState(new doc.GState({opacity: 0.25}))
 
 // box
-doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
-
-// text
+// 🔥 FIXED CENTER ROTATION
 doc.setFontSize(28)
 doc.setFont("helvetica","bold")
 
-// 🔥 optical correction for rotation
-let textOffsetY = -2   // adjust visually (important)
+let text = "PAID"
 
-// 🔤 centered + visually corrected
-doc.text("PAID", centerX, centerY + textOffsetY, {
-  align: "center",
-  baseline: "middle",
+// measure width
+let textWidth = doc.getTextWidth(text)
+
+// 🔥 adjust BEFORE rotation
+let adjustedX = centerX - (textWidth / 2)
+let adjustedY = centerY + 6   // tweak if needed (5–8 range)
+
+// draw rotated text
+doc.text(text, adjustedX, adjustedY, {
   angle: 20
 })
 

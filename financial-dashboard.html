@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<title>Varada Nexus ERP - V9 Control System</title>
+<title>Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,11 +10,8 @@
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 
-/* GLOBAL */
 body{
 margin:0;
 font-family:'Inter',sans-serif;
@@ -22,15 +19,9 @@ background:#0a0f1c;
 color:#e5e7eb;
 }
 
-/* MAIN */
 .main{
 margin-left:220px;
-padding:20px;
-}
-
-/* MOBILE FIX */
-@media(max-width:768px){
-.main{margin-left:0}
+padding:25px;
 }
 
 /* HEADER */
@@ -38,77 +29,103 @@ padding:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-bottom:15px;
+margin-bottom:20px;
 }
 
-.title{font-size:20px;font-weight:600;}
+.title{
+font-size:22px;
+font-weight:600;
+}
 
-.health{
-padding:5px 10px;
+.badge{
+background:#22c55e;
+padding:6px 12px;
 border-radius:20px;
 font-size:12px;
 }
 
-.good{background:#16a34a;}
-.warn{background:#ca8a04;}
-.bad{background:#dc2626;}
-
-/* KPI */
+/* KPI GRID */
 .cards{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:10px;
-margin-bottom:15px;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+margin-bottom:20px;
 }
 
 .card{
 background:#111827;
-padding:12px;
-border-radius:8px;
+padding:15px;
+border-radius:10px;
 cursor:pointer;
+transition:0.2s;
 }
 
-.kpi-title{font-size:11px;color:#9ca3af;}
-.kpi-value{font-size:18px;font-weight:600;}
-
-/* GRID */
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
+.card:hover{
+transform:translateY(-3px);
 }
 
-@media(max-width:768px){
-.grid{grid-template-columns:1fr;}
+.kpi-title{
+font-size:12px;
+color:#9ca3af;
 }
 
-/* BOX */
-.box{
-background:#111827;
-padding:12px;
-border-radius:8px;
+.kpi-value{
+font-size:20px;
+font-weight:600;
+margin-top:5px;
 }
 
-/* ACTION PANEL */
-.action{
-background:#1f2937;
+/* ALERTS */
+.alerts{
+margin-bottom:15px;
+}
+
+.alert{
 padding:10px;
 border-radius:6px;
-margin-bottom:8px;
+margin-bottom:6px;
 font-size:13px;
-cursor:pointer;
+}
+
+.red{background:#7f1d1d;}
+.yellow{background:#78350f;}
+.green{background:#14532d;}
+
+/* CHARTS */
+.charts{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.chart-box{
+background:#111827;
+padding:15px;
+border-radius:10px;
 }
 
 /* TABLE */
-table{
-width:100%;
-font-size:12px;
-border-collapse:collapse;
+.section{
+background:#111827;
+padding:15px;
+border-radius:10px;
+margin-bottom:20px;
 }
 
-td{
-padding:6px;
+table{
+width:100%;
+border-collapse:collapse;
+font-size:13px;
+}
+
+th,td{
+padding:8px;
 border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
 }
 
 </style>
@@ -139,6 +156,7 @@ document.getElementById("sidebar").style.display="block"
 async function initSidebar(){
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
+
 document.getElementById("userName").innerText=session.user.email.split("@")[0]
 
 window.logout=async()=>{
@@ -151,39 +169,51 @@ window.location="login.html"
 <div class="main">
 
 <div class="header">
-<div class="title">V9 Control System</div>
-<div id="health" class="health">SYSTEM</div>
+<div class="title">Executive Control System</div>
+<div class="badge">LIVE</div>
 </div>
+
+<div id="alerts" class="alerts"></div>
 
 <div class="cards">
-<div class="card"><div class="kpi-title">Revenue</div><div id="revenue" class="kpi-value"></div></div>
+
+<div class="card" onclick="go('client-ledger.html')"><div class="kpi-title">Client Invoiced</div><div id="invoiced" class="kpi-value"></div></div>
+<div class="card" onclick="go('client-payments.html')"><div class="kpi-title">Client Paid</div><div id="paid" class="kpi-value"></div></div>
 <div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding" class="kpi-value"></div></div>
-<div class="card"><div class="kpi-title">Payable</div><div id="payable" class="kpi-value"></div></div>
-<div class="card"><div class="kpi-title">Profit</div><div id="profit" class="kpi-value"></div></div>
+
+<div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Transporter Payable</div><div id="transporterPayable" class="kpi-value"></div></div>
+
+<div class="card"><div class="kpi-title">Net Profit</div><div id="profit" class="kpi-value"></div></div>
+
 </div>
 
-<div class="grid">
+<div class="charts">
 
-<div class="box">
-<h4>📊 Profit Trend</h4>
-<canvas id="chart" height="120"></canvas>
+<div class="chart-box">
+<canvas id="monthlyChart"></canvas>
 </div>
 
-<div class="box">
-<h4>⚙ Action Panel</h4>
-<div id="actions"></div>
+<div class="chart-box">
+<canvas id="profitChart"></canvas>
 </div>
 
-<div class="box">
-<h4>🔮 Forecast</h4>
-<div id="forecast"></div>
 </div>
 
-<div class="box">
-<h4>📅 Payout Priority</h4>
-<table><tbody id="payoutTable"></tbody></table>
+<div class="section">
+<h3>Top Profitable Trips</h3>
+<table>
+<thead><tr><th>Trip</th><th>Profit</th></tr></thead>
+<tbody id="tripTable"></tbody>
+</table>
 </div>
 
+<div class="section">
+<h3>Transporter Pending</h3>
+<table>
+<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
+<tbody id="transporterTable"></tbody>
+</table>
 </div>
 
 </div>
@@ -216,20 +246,21 @@ process(trips||[],expenses||[],invoices||[],clientPayments||[],transporterPaymen
 
 function process(trips,expenses,invoices,clientPayments,transporterPayments,transporters){
 
-let revenue=0, paid=0, transporterCost=0, transporterPaid=0
+let invoiced=0, paid=0, transporterCost=0, transporterPaid=0
 
 let expenseMap={}
 expenses.forEach(e=>{
 expenseMap[e.trip_id]=(expenseMap[e.trip_id]||0)+(+e.amount||0)
 })
 
-invoices.forEach(i=>revenue+=+i.invoice_amount||0)
+invoices.forEach(i=>invoiced+=+i.invoice_amount||0)
 clientPayments.forEach(p=>paid+=+p.amount||0)
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 
-let profits=[]
-let labels=[]
+let tripHTML=""
 let transporterMap={}
+let profitData=[]
+let labels=[]
 
 trips.forEach(t=>{
 let mt=(t.weight_kg||0)/1000
@@ -239,68 +270,70 @@ let net=cost-exp
 
 transporterCost+=net
 
-let rev=(t.company_rate||0)*mt
-let profit=rev-net
+let revenue=(t.company_rate||0)*mt
+let profit=revenue-net
 
-profits.push(profit)
+profitData.push(profit)
 labels.push(t.trip_no)
+
+tripHTML+=`<tr><td>${t.trip_no}</td><td>₹ ${Math.round(profit)}</td></tr>`
 
 if(!transporterMap[t.transporter_id]) transporterMap[t.transporter_id]=0
 transporterMap[t.transporter_id]+=net
 })
 
+document.getElementById("tripTable").innerHTML=tripHTML
+
 transporterPayments.forEach(p=>{
-transporterMap[p.transporter_id]-=(+p.amount||0)
+transporterMap[p.transporter_id]=(transporterMap[p.transporter_id]||0)-(+p.amount||0)
 })
 
-let outstanding=revenue-paid
-let payable=transporterCost-transporterPaid
-let profit=revenue-transporterCost
+let transporterHTML=""
+transporters.forEach(t=>{
+transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
+})
 
-set("revenue",revenue)
+document.getElementById("transporterTable").innerHTML=transporterHTML
+
+let outstanding=invoiced-paid
+let payable=transporterCost-transporterPaid
+let profit=invoiced-transporterCost
+
+set("invoiced",invoiced)
+set("paid",paid)
 set("outstanding",outstanding)
-set("payable",payable)
+set("transporterCost",transporterCost)
+set("transporterPayable",payable)
 set("profit",profit)
 
-/* HEALTH */
-let health=document.getElementById("health")
-if(profit<0){health.className="health bad";health.innerText="CRITICAL"}
-else if(outstanding>50000){health.className="health warn";health.innerText="RISK"}
-else{health.className="health good";health.innerText="HEALTHY"}
+/* ALERTS */
+let alertHTML=""
+if(outstanding>50000) alertHTML+=`<div class="alert red">High Client Outstanding</div>`
+if(payable>50000) alertHTML+=`<div class="alert yellow">High Transporter Payable</div>`
+if(profit<0) alertHTML+=`<div class="alert red">Company in Loss</div>`
 
-/* FORECAST */
-let avg=profits.reduce((a,b)=>a+b,0)/profits.length||0
-document.getElementById("forecast").innerHTML=
-`7 Days: ₹ ${Math.round(avg*7)}<br>30 Days: ₹ ${Math.round(avg*30)}`
+document.getElementById("alerts").innerHTML=alertHTML
 
-/* ACTIONS */
-let actions=""
-if(outstanding>20000) actions+=`<div class="action" onclick="remindClients()">Send Payment Reminders</div>`
-if(payable>20000) actions+=`<div class="action">Schedule Transporter Payments</div>`
-document.getElementById("actions").innerHTML=actions
+/* CHARTS */
 
-/* PAYOUT TABLE */
-let payoutHTML=""
-transporters.forEach(t=>{
-payoutHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
-})
-document.getElementById("payoutTable").innerHTML=payoutHTML
-
-/* CHART */
-new Chart(document.getElementById("chart"),{
+new Chart(document.getElementById("monthlyChart"),{
 type:"line",
-data:{labels:labels,datasets:[{label:"Profit",data:profits}]}
+data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
-}
+new Chart(document.getElementById("profitChart"),{
+type:"bar",
+data:{labels:labels,datasets:[{label:"Profit/Trip",data:profitData}]}
+})
 
-/* REMINDER */
-function remindClients(){
-alert("Reminder: Please clear outstanding payments.")
 }
 
 function set(id,val){
 document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
+}
+
+function go(page){
+window.location.href=page
 }
 
 </script>

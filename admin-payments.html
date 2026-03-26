@@ -261,7 +261,7 @@ inv?.forEach(i=>{
 i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
 })
 
-trips = tripData
+trips = (tripData || [])
 .filter(t=>!usedTrips.includes(String(t.id)))
 .sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
 
@@ -601,7 +601,7 @@ let startY = 60
 
 doc.autoTable({
 startY: startY,
-head: [["Trip","Route","Truck","Date","Weight (MT)","Amount"]],
+head: [["Trip","Route","Truck","Date","Weight (MT)","Net Amount"]],
 body: tableRows,
 theme: "grid",
 styles: {fontSize:10}

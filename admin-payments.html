@@ -621,8 +621,9 @@ doc.setGState(new doc.GState({opacity: 0.05}))
 }
 doc.addImage("images/logo.png","PNG",40,80,120,120)
 if(doc.setGState){
-doc.setTextColor(0,150,0)
-doc.setGState(new doc.GState({opacity: 0.25}))
+// RESET AFTER WATERMARK
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity: 1}))
 }
 
 /* 🔥 LOGO (PUT logo.png in same folder) */
@@ -670,8 +671,8 @@ if((inv.paid_amount || 0) >= inv.total_amount){
 
 doc.setDrawColor(0,150,0)
 doc.setTextColor(0,150,0)
-doc.setGState(new doc.GState({opacity: 0.25}))
-doc.setLineWidth(1.5)
+
+doc.setGState(new doc.GState({opacity: 0.25})) // ONLY HERE
 
 doc.setFontSize(32)
 doc.setFont("helvetica","bold")
@@ -681,18 +682,16 @@ angle: 30,
 align: "center"
 })
 
-// Rounded box
 doc.roundedRect(70, 120, 70, 30, 5, 5)
 
+// 🔥 RESET OPACITY AFTER STAMP
+doc.setGState(new doc.GState({opacity: 1}))
 doc.setTextColor(0,0,0)
 }
 
 /* 🔷 LEFT SIDE (Transporter Block) */
 let startX = 15
 let startY = 55
-
-doc.setFont("helvetica","bold")
-doc.text("Transporter Details", startX, startY)
 
 doc.setFontSize(10)
 doc.setFont("helvetica","bold")
@@ -802,7 +801,7 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 /* 🔷 SIGNATURE */
-let signY = summaryEndY + 35
+let signY = summaryEndY + 25
 
 doc.text("Authorized Signatory",140,signY)
 doc.line(140, signY + 2, 195, signY + 2)
@@ -832,7 +831,7 @@ let qrCanvas = qrDiv.querySelector("canvas")
 
 if(qrCanvas){
 let qrImg = qrCanvas.toDataURL()
-doc.addImage(qrImg, "PNG", 15, bankY + 5, 30, 30)
+doc.addImage(qrImg, "PNG", 18, bankY + 8, 28, 28)
 }
 
 // ✅ SAVE ONLY AFTER QR IS READY

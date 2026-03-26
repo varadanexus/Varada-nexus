@@ -802,21 +802,24 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 /* 🔷 SIGNATURE */
-let signY = summaryEndY + 10
+// 🔷 SIGNATURE AT BOTTOM RIGHT (FIXED POSITION)
+let signY = 270   // 🔥 bottom area (A4 height ~297)
 
-// Line first
+doc.setDrawColor(0)
+
+// Line
 doc.line(130, signY, 195, signY)
 
-// Text centered above line
+// Text above line
 doc.setFontSize(9)
-doc.text("Authorized Signatory", 162, signY - 2, { align: "center" })
+doc.text("Authorized Signatory", 162, signY - 3, { align: "center" })
   
 /* FOOTER */
 doc.setFont("helvetica","normal")
 doc.setFontSize(10)
 doc.setFontSize(9)
-doc.text("This is a system generated document. No signature required.",15,signY+15)
-doc.text("Payment has been processed successfully.",15,signY+22)
+doc.text("This is a system generated document. No signature required.",15,285)
+doc.text("Payment has been processed successfully.",15,292)
 
 // 🔷 QR CODE (Payment Proof)
 let qrData = `INV:${inv.invoice_no} | AMT:${inv.total_amount} | PAID:${inv.paid_amount || 0} | STATUS:${inv.status}`

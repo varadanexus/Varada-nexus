@@ -716,7 +716,17 @@ startY += 6
 doc.text("Address:", startX, startY)
 
 startY += 5
-doc.text(transporter?.address || "-", startX + 30, startY, { maxWidth: 70 })
+
+let address = transporter?.address || "-"
+
+// 🔥 split into proper lines
+let addressLines = doc.splitTextToSize(address, 70)
+
+// 🔥 print clean aligned block
+doc.text(addressLines, startX + 30, startY)
+
+// 🔥 move Y properly after full block
+startY += addressLines.length * 5
 
 doc.setDrawColor(200)
 doc.line(15, startY + 15, 195, startY + 15)

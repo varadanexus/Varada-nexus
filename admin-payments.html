@@ -831,7 +831,11 @@ doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
 doc.setFontSize(28)
 doc.setFont("helvetica","bold")
 
-doc.text("PAID", centerX, centerY, {
+// 🔥 optical correction for rotation
+let textOffsetY = -2   // adjust visually (important)
+
+// 🔤 centered + visually corrected
+doc.text("PAID", centerX, centerY + textOffsetY, {
   align: "center",
   baseline: "middle",
   angle: 20

@@ -42,10 +42,12 @@ font-weight:bold;
 <body>
 
 <script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    "https://ticsgbtxfhhihamejiss.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+  )
+}
 </script>
 
 <!-- SIDEBAR -->
@@ -63,13 +65,12 @@ if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
 document.getElementById("sidebar").style.display="block"
-
 })
+
 async function initSidebar(){
 
-const {data:{session}} = await supabaseClient.auth.getSession()
+const {data:{session}} = await window.supabaseClient.auth.getSession()
 if(!session) return
 
 const authId=session.user.id
@@ -77,29 +78,25 @@ const email=session.user.email
 
 document.getElementById("userName").innerText=email.split("@")[0]
 
-const {data:user}=await supabaseClient
+const {data:user}=await window.supabaseClient
 .from("users").select("id").eq("auth_id",authId).single()
 
 if(!user) return
 
-const {data:userRole}=await supabaseClient
+const {data:userRole}=await window.supabaseClient
 .from("user_roles").select("role_id").eq("user_id",user.id).single()
 
 if(!userRole) return
 
-const {data:role}=await supabaseClient
+const {data:role}=await window.supabaseClient
 .from("roles").select("role_name").eq("id",userRole.role_id).single()
 
 if(role){
 document.getElementById("userRole").innerText=role.role_name
 }
 
-if(typeof applyMenuRBAC==="function"){
-applyMenuRBAC()
-}
-
 window.logout=async()=>{
-await supabaseClient.auth.signOut()
+await window.supabaseClient.auth.signOut()
 window.location="login.html"
 }
 }
@@ -112,7 +109,7 @@ window.location="login.html"
 <div class="cards">
 
 <div class="card">
-<h3>Total Client Revenue</h3>
+<h3>Total Revenue</h3>
 <p id="revenue">₹0</p>
 </div>
 
@@ -132,13 +129,13 @@ window.location="login.html"
 </div>
 
 <div class="card">
-<h3>Client Outstanding</h3>
-<p id="clientOutstanding">₹0</p>
+<h3>Transporter Paid</h3>
+<p id="paid">₹0</p>
 </div>
 
 <div class="card">
 <h3>Transporter Payable</h3>
-<p id="transporterPayable">₹0</p>
+<p id="payable">₹0</p>
 </div>
 
 </div>
@@ -154,20 +151,25 @@ async function init(){
 try{
 
 const [
-{data:invoices},
+{data:clientPayments},
 {data:trips},
 {data:expenses},
-{data:payments}
+{data:transporterPayments}
 ] = await Promise.all([
 
-supabaseClient.from("client_invoices").select("*"),
-supabaseClient.from("trips").select("*"),
-supabaseClient.from("expenses").select("*"),
-supabaseClient.from("transporter_payments").select("*")
+window.supabaseClient.from("client_payments").select("*"),
+window.supabaseClient.from("trips").select("*"),
+window.supabaseClient.from("expenses").select("*"),
+window.supabaseClient.from("transporter_payments").select("*")
 
 ])
 
-calculate(invoices||[], trips||[], expenses||[], payments||[])
+calculate(
+clientPayments||[],
+trips||[],
+expenses||[],
+transporterPayments||[]
+)
 
 }catch(err){
 console.error("Load Error:",err)
@@ -175,68 +177,57 @@ console.error("Load Error:",err)
 
 }
 
-function calculate(invoices,trips,expenses,payments){
+function calculate(clientPayments,trips,expenses,transporterPayments){
 
 let revenue=0
-let clientOutstanding=0
 let transporterCost=0
 let totalExpenses=0
-let paid=0
+let transporterPaid=0
 
 /* EXPENSE MAP */
-
 let expenseMap={}
 
 expenses.forEach(e=>{
-totalExpenses+=Number(e.amount||0)
+totalExpenses += Number(e.amount||0)
+
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount||0)
 })
 
-/* REVENUE */
-
-invoices.forEach(i=>{
-revenue+=Number(i.invoice_amount||0)
-clientOutstanding+=Number(i.balance_amount||0)
+/* ✅ REAL REVENUE (CLIENT PAYMENTS) */
+clientPayments.forEach(p=>{
+revenue += Number(p.amount||0)
 })
 
-/* TRANSPORTER COST */
-
+/* ✅ TRANSPORTER COST */
 trips.forEach(t=>{
 let mt=(Number(t.weight_kg)||0)/1000
 let gross=(Number(t.transporter_rate)||0)*mt
 let tripExpense=expenseMap[t.id]||0
-transporterCost+=(gross-tripExpense)
+
+transporterCost += (gross - tripExpense)
 })
 
-/* PAYMENTS */
-
-payments.forEach(p=>{
-paid+=Number(p.amount||0)
+/* ✅ TRANSPORTER PAID */
+transporterPayments.forEach(p=>{
+transporterPaid += Number(p.amount||0)
 })
 
-let transporterPayable=transporterCost-paid
-let profit=revenue-transporterCost
+/* ✅ PAYABLE */
+let transporterPayable = transporterCost - transporterPaid
+
+/* ✅ PROFIT */
+let profit = revenue - transporterPaid - totalExpenses
 
 /* UI */
-
-revenueEl.innerText="₹ "+Math.round(revenue).toLocaleString()
-transporterCostEl.innerText="₹ "+Math.round(transporterCost).toLocaleString()
-expensesEl.innerText="₹ "+Math.round(totalExpenses).toLocaleString()
-profitEl.innerText="₹ "+Math.round(profit).toLocaleString()
-clientOutstandingEl.innerText="₹ "+Math.round(clientOutstanding).toLocaleString()
-transporterPayableEl.innerText="₹ "+Math.round(transporterPayable).toLocaleString()
+document.getElementById("revenue").innerText="₹ "+Math.round(revenue).toLocaleString()
+document.getElementById("transporterCost").innerText="₹ "+Math.round(transporterCost).toLocaleString()
+document.getElementById("expenses").innerText="₹ "+Math.round(totalExpenses).toLocaleString()
+document.getElementById("profit").innerText="₹ "+Math.round(profit).toLocaleString()
+document.getElementById("paid").innerText="₹ "+Math.round(transporterPaid).toLocaleString()
+document.getElementById("payable").innerText="₹ "+Math.round(transporterPayable).toLocaleString()
 
 }
-
-/* SHORTCUT ELEMENTS */
-
-const revenueEl=document.getElementById("revenue")
-const transporterCostEl=document.getElementById("transporterCost")
-const expensesEl=document.getElementById("expenses")
-const profitEl=document.getElementById("profit")
-const clientOutstandingEl=document.getElementById("clientOutstanding")
-const transporterPayableEl=document.getElementById("transporterPayable")
 
 </script>
 

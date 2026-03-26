@@ -801,14 +801,20 @@ doc.text("Branch: Rajahmundry, AP",20,bankY+32)
   
 if((inv.paid_amount || 0) >= inv.total_amount){
 
-// 📍 place stamp BETWEEN bank box and footer
 let rectX = 20
-
 let rectW = 90
 let rectH = 35
 
-// 🔥 KEY FIX → dynamic Y
-let rectY = bankY + 45   // just below bank box (bank height = 40)
+// 🔥 PERFECT GAP CONTROL
+let gapBelowBank = 8
+let rectY = bankY + 40 + gapBelowBank   // bank height = 40
+
+// 🔥 SAFETY: don’t touch footer
+let maxY = 270 - rectH - 5   // above signature/footer
+
+if(rectY > maxY){
+  rectY = maxY
+}
 
 let centerX = rectX + rectW / 2
 let centerY = rectY + rectH / 2
@@ -821,14 +827,14 @@ doc.setGState(new doc.GState({opacity: 0.25}))
 // box
 doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
 
-// text centered
+// text
 doc.setFontSize(28)
 doc.setFont("helvetica","bold")
 
 doc.text("PAID", centerX, centerY, {
-align: "center",
-baseline: "middle",
-angle: 20
+  align: "center",
+  baseline: "middle",
+  angle: 20
 })
 
 // reset

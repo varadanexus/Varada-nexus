@@ -157,7 +157,7 @@ window.location.href="login.html"
 
 </div>   <!-- ✅ CLOSE FIRST CARD -->
 
-<div class="card">   <!-- ✅ SECOND CARD STARTS PROPERLY -re
+<div class="card">   <!-- ✅ SECOND CARD STARTS PROPERLY -->
   
 <!-- 🔍 SEARCH -->
 <input id="searchBox" placeholder="Search..." oninput="renderLedger()" style="padding:8px;margin-bottom:10px;width:200px;">
@@ -199,7 +199,6 @@ window.location.href="login.html"
 <button onclick="nextPage()">Next</button>
 </div>
    
-</div>
 
 </div>
 
@@ -212,19 +211,23 @@ let payments=[]
 let allEntries = []
 let currentPage = 1
 
-init()
-
 async function init(){
-await loadTransporters()
+  await loadTransporters()
 }
 
 /* LOAD TRANSPORTERS */
 
 async function loadTransporters(){
 
-const {data}=await supabaseClient
+const {data, error} = await supabaseClient
 .from("transporters")
 .select("*")
+
+if(error){
+  console.error("Transporter load error:", error)
+  alert("Error loading transporters")
+  return
+}
 
 transporters=data || []
 
@@ -235,7 +238,6 @@ html+=`<option value="${t.id}">${t.transporter_name}</option>`
 })
 
 document.getElementById("transporterSelect").innerHTML=html
-
 }
 
 /* LOAD LEDGER */
@@ -509,7 +511,10 @@ function prevPage(){
 if(currentPage>1) currentPage--
 renderLedger()
 }
-  
+
+window.onload = function(){
+  init()
+}
 
 </script>
 

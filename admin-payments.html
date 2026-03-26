@@ -616,12 +616,13 @@ formatCurrency(netAmount)
 let doc=new jsPDF()
 
 // 🔷 WATERMARK LOGO
+// 🔷 WATERMARK LOGO
 if(doc.setGState){
 doc.setGState(new doc.GState({opacity: 0.05}))
 }
 doc.addImage("images/logo.png","PNG",40,80,120,120)
-if(doc.setGState){
-// RESET AFTER WATERMARK
+
+// ✅ RESET IMMEDIATELY AFTER
 if(doc.setGState){
 doc.setGState(new doc.GState({opacity: 1}))
 }

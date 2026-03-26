@@ -100,7 +100,7 @@ document.getElementById("sidebar").style.display="block"
 
 async function initSidebar(){
 
-const {data:{session}} = await window.window.supabaseClient.auth.getSession()
+const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
 
@@ -109,7 +109,7 @@ const email = session.user.email
 
 document.getElementById("userName").innerText = email.split("@")[0]
 
-const {data:user} = await 
+const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
@@ -117,7 +117,7 @@ const {data:user} = await
 
 if(!user) return
 
-const {data:userRole} = await 
+const {data:userRole} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
@@ -125,7 +125,7 @@ const {data:userRole} = await
 
 if(!userRole) return
 
-const {data:role} = await window.supabaseClient
+const {data:role} = await supabaseClient
 .from("roles")
 .select("role_name")
 .eq("id",userRole.role_id)
@@ -135,10 +135,10 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
-/* GLOBAL LOGOUT */
+/* LOGOUT */
 
 window.logout = async function(){
-await window.supabaseClient.auth.signOut()
+await supabaseClient.auth.signOut()
 window.location.href="login.html"
 }
 

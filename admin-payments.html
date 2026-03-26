@@ -134,7 +134,9 @@ window.location.href="login.html"
 <th>Select</th>
 <th>Trip</th>
 <th>Weight (KG)</th>
-<th>Amount</th>
+<th>Gross</th>
+<th>Expenses</th>
+<th>Net</th>
 </tr>
 </thead>
 
@@ -237,10 +239,18 @@ async function loadTrips(){
 let id=transporterSelect.value
 if(!id) return
 
-const {data:tripData}=await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",id)
+const { data: tripData } = await supabaseClient
+  .from('trips')
+  .select(`
+    id,
+    trip_no,
+    transporter_rate,
+    weight_kg,
+    truck_id,
+    created_at,
+    expenses ( amount )
+  `)
+  .eq("transporter_id", id)
 
 const {data:inv}=await supabaseClient
 .from("transporter_invoices")
@@ -252,7 +262,7 @@ i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
 })
 
 trips = tripData
-.filter(t=>!usedTrips.includes(t.id))
+.filter(t=>!usedTrips.includes(String(t.id)))
 .sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
 
 renderTrips()
@@ -261,14 +271,28 @@ renderTrips()
 function renderTrips(){
 
 tripTable.innerHTML = trips.map(t=>{
-let amt=(t.weight_kg/1000)*(t.transporter_rate||0)
+
+const mt = (t.weight_kg || 0) / 1000
+
+const tripAmount = mt * (t.transporter_rate || 0)
+
+// ✅ calculate expenses
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+// ✅ FINAL amount after deduction
+const netAmount = tripAmount - totalExpenses
 
 return `
 <tr>
 <td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
-<td>${t.trip_no} | ${t.route||"-"} | ${t.truck||"-"} | ${t.trip_date||"-"}</td>
-<td>${t.weight_kg||0}</td>
-<td>₹${amt.toFixed(0)}</td>
+<td>${t.trip_no}</td>
+<td>${t.weight_kg}</td>
+<td>₹${tripAmount.toFixed(0)}</td>
+<td>₹${totalExpenses.toFixed(0)}</td>
+<td>₹${netAmount.toFixed(0)}</td>
 </tr>
 `
 }).join("")
@@ -294,7 +318,20 @@ checked.forEach(c=>{
 let t=trips.find(x=>x.id==c.value)
 selectedTrips.push(t)
 
-total += (t.weight_kg/1000)*(t.transporter_rate||0)
+const mt = (t.weight_kg || 0) / 1000
+
+const tripAmount = mt * (t.transporter_rate || 0)
+
+// ✅ expenses
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+// ✅ net payable
+const netAmount = tripAmount - totalExpenses
+
+total += netAmount
 weight += Number(t.weight_kg||0)
 })
 
@@ -310,7 +347,7 @@ Total Weight: ${weight} KG<br>
 
 async function saveInvoice(){
 
-const {data}=await supabaseClient.from("transporter_invoices").insert({
+ {data}=await supabaseClient.from("transporter_invoices").insert({
 invoice_no:"TINV-"+Math.floor(Math.random()*100000),
 transporter_id:transporterSelect.value,
 trip_ids:selectedTrips.map(t=>t.id).join(","),
@@ -500,7 +537,15 @@ let tripIds = inv.trip_ids.split(",")
 
 const {data:tripData}=await supabaseClient
 .from("trips")
-.select("trip_no,route,truck,trip_date,weight_kg,transporter_rate")
+.select(`
+trip_no,
+route,
+truck,
+trip_date,
+weight_kg,
+transporter_rate,
+expenses ( amount )
+`)
 .in("id",tripIds)
 
 /* CALCULATIONS */
@@ -508,8 +553,17 @@ let totalWeight = 0
 let tableRows = []
 
 tripData.forEach(t=>{
+
 let mt = (t.weight_kg||0)/1000
-let amount = mt * (t.transporter_rate||0)
+
+let tripAmount = mt * (t.transporter_rate||0)
+
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+let netAmount = tripAmount - totalExpenses
 
 totalWeight += mt
 
@@ -519,7 +573,7 @@ t.route || "-",
 t.truck || "-",
 t.trip_date || "-",
 (mt.toFixed(2)),
-formatCurrency(amount)
+formatCurrency(netAmount)
 ])
 })
 

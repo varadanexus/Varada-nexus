@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<title>Executive Intelligence Dashboard - Varada Nexus</title>
+<title>Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,7 +15,7 @@
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-background:#0b1220;
+background:#0a0f1c;
 color:#e5e7eb;
 }
 
@@ -32,10 +32,19 @@ align-items:center;
 margin-bottom:20px;
 }
 
-.title{font-size:22px;font-weight:600;}
-.status{background:#16a34a;padding:5px 12px;border-radius:20px;font-size:12px;}
+.title{
+font-size:22px;
+font-weight:600;
+}
 
-/* CARDS */
+.badge{
+background:#22c55e;
+padding:6px 12px;
+border-radius:20px;
+font-size:12px;
+}
+
+/* KPI GRID */
 .cards{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -55,26 +64,34 @@ transition:0.2s;
 transform:translateY(-3px);
 }
 
-.kpi-title{font-size:12px;color:#9ca3af;}
-.kpi-value{font-size:20px;font-weight:600;margin-top:5px;}
+.kpi-title{
+font-size:12px;
+color:#9ca3af;
+}
+
+.kpi-value{
+font-size:20px;
+font-weight:600;
+margin-top:5px;
+}
 
 /* ALERTS */
 .alerts{
-margin-bottom:20px;
+margin-bottom:15px;
 }
 
 .alert{
 padding:10px;
 border-radius:6px;
-margin-bottom:8px;
+margin-bottom:6px;
 font-size:13px;
 }
 
-.alert.red{background:#7f1d1d;}
-.alert.yellow{background:#78350f;}
-.alert.green{background:#14532d;}
+.red{background:#7f1d1d;}
+.yellow{background:#78350f;}
+.green{background:#14532d;}
 
-/* CHART GRID */
+/* CHARTS */
 .charts{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -107,6 +124,10 @@ padding:8px;
 border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
+th{
+color:#9ca3af;
+}
+
 </style>
 
 </head>
@@ -116,7 +137,7 @@ border-bottom:1px solid rgba(255,255,255,0.05);
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_FULL_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -148,48 +169,50 @@ window.location="login.html"
 <div class="main">
 
 <div class="header">
-<div class="title">Executive Intelligence Dashboard</div>
-<div class="status">LIVE</div>
+<div class="title">Executive Control System</div>
+<div class="badge">LIVE</div>
 </div>
 
-<!-- ALERTS -->
-<div class="alerts" id="alerts"></div>
+<div id="alerts" class="alerts"></div>
 
-<!-- KPI -->
 <div class="cards">
 
 <div class="card" onclick="go('client-ledger.html')"><div class="kpi-title">Client Invoiced</div><div id="invoiced" class="kpi-value"></div></div>
 <div class="card" onclick="go('client-payments.html')"><div class="kpi-title">Client Paid</div><div id="paid" class="kpi-value"></div></div>
-<div class="card" onclick="go('billing.html')"><div class="kpi-title">To Be Billed</div><div id="tobebilled" class="kpi-value"></div></div>
-<div class="card" onclick="go('client-ledger.html')"><div class="kpi-title">Outstanding</div><div id="outstanding" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding" class="kpi-value"></div></div>
 
-<div class="card" onclick="go('transporter-ledger.html')"><div class="kpi-title">Transporter Cost</div><div id="transporterCost" class="kpi-value"></div></div>
-<div class="card" onclick="go('transporter-payments.html')"><div class="kpi-title">Transporter Paid</div><div id="transporterPaid" class="kpi-value"></div></div>
-<div class="card" onclick="go('transporter-ledger.html')"><div class="kpi-title">Transporter Payable</div><div id="transporterPayable" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Transporter Payable</div><div id="transporterPayable" class="kpi-value"></div></div>
 
 <div class="card"><div class="kpi-title">Net Profit</div><div id="profit" class="kpi-value"></div></div>
 
 </div>
 
-<!-- CHARTS -->
 <div class="charts">
 
 <div class="chart-box">
-<canvas id="revenueChart" height="120"></canvas>
+<canvas id="monthlyChart"></canvas>
 </div>
 
 <div class="chart-box">
-<canvas id="profitChart" height="120"></canvas>
+<canvas id="profitChart"></canvas>
 </div>
 
 </div>
 
-<!-- TABLE -->
 <div class="section">
 <h3>Top Profitable Trips</h3>
 <table>
 <thead><tr><th>Trip</th><th>Profit</th></tr></thead>
 <tbody id="tripTable"></tbody>
+</table>
+</div>
+
+<div class="section">
+<h3>Transporter Pending</h3>
+<table>
+<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
+<tbody id="transporterTable"></tbody>
 </table>
 </div>
 
@@ -206,20 +229,22 @@ const [
 {data:expenses},
 {data:invoices},
 {data:clientPayments},
-{data:transporterPayments}
+{data:transporterPayments},
+{data:transporters}
 ] = await Promise.all([
 supabaseClient.from("trips").select("*"),
 supabaseClient.from("expenses").select("*"),
 supabaseClient.from("client_invoices").select("*"),
 supabaseClient.from("client_payments").select("*"),
-supabaseClient.from("transporter_payments").select("*")
+supabaseClient.from("transporter_payments").select("*"),
+supabaseClient.from("transporters").select("*")
 ])
 
-calculate(trips||[],expenses||[],invoices||[],clientPayments||[],transporterPayments||[])
+process(trips||[],expenses||[],invoices||[],clientPayments||[],transporterPayments||[],transporters||[])
 
 }
 
-function calculate(trips,expenses,invoices,clientPayments,transporterPayments){
+function process(trips,expenses,invoices,clientPayments,transporterPayments,transporters){
 
 let invoiced=0, paid=0, transporterCost=0, transporterPaid=0
 
@@ -233,7 +258,8 @@ clientPayments.forEach(p=>paid+=+p.amount||0)
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 
 let tripHTML=""
-let profits=[]
+let transporterMap={}
+let profitData=[]
 let labels=[]
 
 trips.forEach(t=>{
@@ -247,13 +273,27 @@ transporterCost+=net
 let revenue=(t.company_rate||0)*mt
 let profit=revenue-net
 
-profits.push(profit)
+profitData.push(profit)
 labels.push(t.trip_no)
 
 tripHTML+=`<tr><td>${t.trip_no}</td><td>₹ ${Math.round(profit)}</td></tr>`
+
+if(!transporterMap[t.transporter_id]) transporterMap[t.transporter_id]=0
+transporterMap[t.transporter_id]+=net
 })
 
 document.getElementById("tripTable").innerHTML=tripHTML
+
+transporterPayments.forEach(p=>{
+transporterMap[p.transporter_id]=(transporterMap[p.transporter_id]||0)-(+p.amount||0)
+})
+
+let transporterHTML=""
+transporters.forEach(t=>{
+transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
+})
+
+document.getElementById("transporterTable").innerHTML=transporterHTML
 
 let outstanding=invoiced-paid
 let payable=transporterCost-transporterPaid
@@ -261,41 +301,29 @@ let profit=invoiced-transporterCost
 
 set("invoiced",invoiced)
 set("paid",paid)
-set("tobebilled",0)
 set("outstanding",outstanding)
 set("transporterCost",transporterCost)
-set("transporterPaid",transporterPaid)
 set("transporterPayable",payable)
 set("profit",profit)
 
 /* ALERTS */
 let alertHTML=""
-if(outstanding>50000) alertHTML+=`<div class="alert red">⚠ High Client Outstanding</div>`
-if(profit<0) alertHTML+=`<div class="alert red">⚠ Company Running in Loss</div>`
-if(payable>50000) alertHTML+=`<div class="alert yellow">⚠ High Transporter Payable</div>`
+if(outstanding>50000) alertHTML+=`<div class="alert red">High Client Outstanding</div>`
+if(payable>50000) alertHTML+=`<div class="alert yellow">High Transporter Payable</div>`
+if(profit<0) alertHTML+=`<div class="alert red">Company in Loss</div>`
 
 document.getElementById("alerts").innerHTML=alertHTML
 
 /* CHARTS */
 
-new Chart(document.getElementById("revenueChart"),{
+new Chart(document.getElementById("monthlyChart"),{
 type:"line",
-data:{
-labels:labels,
-datasets:[
-{label:"Profit",data:profits}
-]
-}
+data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
 new Chart(document.getElementById("profitChart"),{
 type:"bar",
-data:{
-labels:labels,
-datasets:[
-{label:"Profit per Trip",data:profits}
-]
-}
+data:{labels:labels,datasets:[{label:"Profit/Trip",data:profitData}]}
 })
 
 }

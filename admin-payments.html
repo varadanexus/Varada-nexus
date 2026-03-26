@@ -742,14 +742,20 @@ let tableStartX = 15
 let tableEndX = 195
 let centerX = (tableStartX + tableEndX) / 2
 let stampY = doc.lastAutoTable.finalY - 35
+  
 
 // ✅ PAID STAMP - FIXED CLEAN POSITION (LEFT BOTTOM AREA)
+  
 if((inv.paid_amount || 0) >= inv.total_amount){
 
+// 📍 place stamp BETWEEN bank box and footer
 let rectX = 20
-let rectY = 215
+
 let rectW = 90
-let rectH = 40
+let rectH = 35
+
+// 🔥 KEY FIX → dynamic Y
+let rectY = bankY + 45   // just below bank box (bank height = 40)
 
 let centerX = rectX + rectW / 2
 let centerY = rectY + rectH / 2
@@ -759,16 +765,16 @@ doc.setTextColor(0,150,0)
 
 doc.setGState(new doc.GState({opacity: 0.25}))
 
-// 🔲 rectangle
+// box
 doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
 
-// 🔤 PERFECT CENTER TEXT
+// text centered
 doc.setFontSize(28)
 doc.setFont("helvetica","bold")
 
 doc.text("PAID", centerX, centerY, {
 align: "center",
-baseline: "middle",   // 🔥 THIS FIXES VERTICAL ALIGNMENT
+baseline: "middle",
 angle: 20
 })
 

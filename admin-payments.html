@@ -802,10 +802,14 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 /* 🔷 SIGNATURE */
-let signY = summaryEndY + 25
+let signY = summaryEndY + 10
 
-doc.text("Authorized Signatory",140,signY)
-doc.line(140, signY + 2, 195, signY + 2)
+// Line first
+doc.line(130, signY, 195, signY)
+
+// Text centered above line
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signY - 2, { align: "center" })
   
 /* FOOTER */
 doc.setFont("helvetica","normal")
@@ -832,7 +836,7 @@ let qrCanvas = qrDiv.querySelector("canvas")
 
 if(qrCanvas){
 let qrImg = qrCanvas.toDataURL()
-doc.addImage(qrImg, "PNG", 18, bankY + 8, 28, 28)
+doc.addImage(qrImg, "PNG", 155, 65, 35, 35)
 }
 
 // ✅ SAVE ONLY AFTER QR IS READY

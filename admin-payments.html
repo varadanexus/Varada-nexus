@@ -502,6 +502,12 @@ if(!val) return
 
 let inv=invoices.find(i=>i.id==id)
 
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("transporter_name")
+.eq("id", inv.transporter_id)
+.single()
+
 let paid=Number(val)
 let balance=inv.total_amount-paid
 
@@ -622,10 +628,15 @@ doc.text("Transporter Invoice",40,25)
 
 /* INVOICE INFO */
 doc.text("Invoice No : "+inv.invoice_no,15,40)
-doc.text("Status     : "+inv.status,15,47)
+doc.setFont("helvetica","bold")
+doc.text("Transporter : ",15,47)
+
+doc.setFont("helvetica","normal")
+doc.text((transporter?.transporter_name || "-"),50,47)
+doc.text("Status     : "+inv.status,15,54)
 
 /* TABLE HEADER */
-let startY = 60
+let startY = 70
 
 doc.autoTable({
 startY: startY,

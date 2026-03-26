@@ -666,29 +666,7 @@ doc.text("Date:",140,54)
 doc.setFont("helvetica","normal")
 doc.text(new Date().toLocaleDateString("en-IN"),170,54)
 
-// ✅ PAID STAMP
-// ✅ AUTO PAID STAMP (based on payment)
-if((inv.paid_amount || 0) >= inv.total_amount){
 
-doc.setDrawColor(0,150,0)
-doc.setTextColor(0,150,0)
-
-doc.setGState(new doc.GState({opacity: 0.25})) // ONLY HERE
-
-doc.setFontSize(32)
-doc.setFont("helvetica","bold")
-
-doc.text("PAID", 105, 135, {
-angle: 30,
-align: "center"
-})
-
-doc.roundedRect(70, 120, 70, 30, 5, 5)
-
-// 🔥 RESET OPACITY AFTER STAMP
-doc.setGState(new doc.GState({opacity: 1}))
-doc.setTextColor(0,0,0)
-}
 
 /* 🔷 LEFT SIDE (Transporter Block) */
 let startX = 15
@@ -758,7 +736,31 @@ fillColor: [245, 245, 245]
 
 /* TOTALS */
 let summaryY = doc.lastAutoTable.finalY + 10
-let summaryEndY = doc.lastAutoTable.finalY
+let summaryEndY = doc.lastAutoTable.finalY 
+
+// ✅ PAID STAMP
+// ✅ AUTO PAID STAMP (based on payment)
+if((inv.paid_amount || 0) >= inv.total_amount){
+
+doc.setDrawColor(0,150,0)
+doc.setTextColor(0,150,0)
+
+doc.setGState(new doc.GState({opacity: 0.25})) // ONLY HERE
+
+doc.setFontSize(32)
+doc.setFont("helvetica","bold")
+
+doc.text("PAID", 105, 135, {
+angle: 30,
+align: "center"
+})
+
+doc.roundedRect(70, 120, 70, 30, 5, 5)
+
+// 🔥 RESET OPACITY AFTER STAMP
+doc.setGState(new doc.GState({opacity: 1}))
+doc.setTextColor(0,0,0)
+}
 
 doc.autoTable({
 startY: summaryY,

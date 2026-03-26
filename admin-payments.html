@@ -742,18 +742,13 @@ let tableStartX = 15
 let tableEndX = 195
 let centerX = (tableStartX + tableEndX) / 2
 let stampY = doc.lastAutoTable.finalY - 35
-// ✅ PAID STAMP
-// ✅ AUTO PAID STAMP (based on payment)
-// ✅ PAID STAMP (PERFECT CENTER)
+
+// ✅ PAID STAMP - FIXED CLEAN POSITION (LEFT BOTTOM AREA)
 if((inv.paid_amount || 0) >= inv.total_amount){
 
-let pageWidth = doc.internal.pageSize.getWidth()
-
-// center of page
-let centerX = pageWidth / 2  
-
-// dynamic vertical position (middle of table)
-let stampY = doc.lastAutoTable.finalY - 35  
+// position near your marked X
+let stampX = 55   // adjust slightly if needed
+let stampY = 235  // perfect bottom-left area
 
 doc.setDrawColor(0,150,0)
 doc.setTextColor(0,150,0)
@@ -763,14 +758,12 @@ doc.setGState(new doc.GState({opacity: 0.25}))
 doc.setFontSize(32)
 doc.setFont("helvetica","bold")
 
-// 🔥 TEXT perfectly centered
-doc.text("PAID", centerX, stampY, {
-angle: 30,
+doc.text("PAID", stampX, stampY, {
+angle: 20,
 align: "center"
 })
 
-// 🔥 BOX centered around text
-doc.roundedRect(centerX - 35, stampY - 15, 70, 30, 5, 5)
+doc.roundedRect(stampX - 35, stampY - 15, 70, 30, 5, 5)
 
 // reset
 doc.setGState(new doc.GState({opacity: 1}))

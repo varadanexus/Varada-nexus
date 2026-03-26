@@ -558,7 +558,7 @@ let inv=invoices.find(i=>i.id==id)
 
 const {data:transporter} = await supabaseClient
 .from("transporters")
-.select("transporter_name,gst_no,phone,address")
+.select("transporter_name,gst_number,phone,address")
 .eq("id", inv.transporter_id)
 .single()
 
@@ -640,7 +640,7 @@ doc.text(transporter?.transporter_name || "-",50,47)
 doc.setFont("helvetica","bold")
 doc.text("GST : ",15,54)
 doc.setFont("helvetica","normal")
-doc.text(transporter?.gst_no || "-",30,54)
+doc.text(transporter?.gst_number || "-",30,54)
 
 doc.setFont("helvetica","bold")
 doc.text("Phone : ",15,61)
@@ -656,7 +656,7 @@ doc.setFont("helvetica","bold")
 doc.text("Status : ",15,80)
 doc.text(inv.status,40,80)
 doc.setFont("helvetica","normal")
-doc.text(inv.status,40,75)
+
 /* TABLE HEADER */
 let startY = 90
 

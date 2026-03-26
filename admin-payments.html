@@ -157,7 +157,9 @@ window.location.href="login.html"
 <h3>Payment</h3>
 
 Invoice Amount:
-<input id="totalAmount" readonly>
+<select id="invoiceSelect" onchange="selectInvoiceFromDropdown()">
+<option value="">Select Invoice</option>
+</select>
 
 Enter Payment:
 <input id="paidAmount">
@@ -171,6 +173,10 @@ Enter Payment:
 <option>UPI</option>
 </select>
 
+<input id="totalAmount" readonly placeholder="Invoice Amount">
+
+<p id="invoiceInfo"></p>
+  
 <button onclick="savePayment()">Save Payment</button>
 </div>
 
@@ -209,6 +215,21 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+function selectInvoiceFromDropdown(){
+let id = invoiceSelect.value
+currentInvoice = invoices.find(i=>i.id==id)
+
+if(currentInvoice){
+totalAmount.value = currentInvoice.total_amount
+
+invoiceInfo.innerHTML = `
+Total: ₹${currentInvoice.total_amount} <br>
+Paid: ₹${currentInvoice.paid_amount || 0} <br>
+Balance: ₹${currentInvoice.balance_amount}
+`
+}
+}
+  
 function formatCurrency(val){
 return Number(val || 0).toLocaleString("en-IN", {
 minimumFractionDigits: 2,
@@ -410,6 +431,9 @@ const {data}=await supabaseClient
 
 invoices=data||[]
 
+invoiceSelect.innerHTML = '<option value="">Select Invoice</option>' +
+invoices.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
+
 await renderInvoices(invoices)
 }
 
@@ -438,7 +462,7 @@ i.status==="Paid"?"status-paid":
 i.status==="Partial"?"status-partial":"status-pending"
 
 html+=`
-<tr onclick="selectInvoice('${i.id}')">
+<tr>
 <td>${i.invoice_no}</td>
 <td>${tripDetails}</td>
 <td>${totalWeight} KG</td>
@@ -551,6 +575,7 @@ expenses ( amount )
 /* CALCULATIONS */
 let totalWeight = 0
 let tableRows = []
+let totalExpensesAll = 0
 
 tripData.forEach(t=>{
 
@@ -566,6 +591,7 @@ const totalExpenses = (t.expenses || []).reduce(
 let netAmount = tripAmount - totalExpenses
 
 totalWeight += mt
+totalExpensesAll += totalExpenses
 
 tableRows.push([
 t.trip_no,
@@ -573,6 +599,8 @@ t.route || "-",
 t.truck || "-",
 t.trip_date || "-",
 (mt.toFixed(2)),
+formatCurrency(tripAmount),
+formatCurrency(totalExpenses),
 formatCurrency(netAmount)
 ])
 })
@@ -601,7 +629,7 @@ let startY = 60
 
 doc.autoTable({
 startY: startY,
-head: [["Trip","Route","Truck","Date","Weight (MT)","Net Amount"]],
+head: [["Trip","Route","Truck","Date","Weight (MT)","Gross","Expenses","Net"]],
 body: tableRows,
 theme: "grid",
 styles: {fontSize:10}
@@ -615,10 +643,9 @@ doc.setCharSpace(0)
 
 doc.text("Total Weight (MT) : "+ totalWeight.toFixed(2),15,finalY)
 doc.text("Total Amount (INR) : " + formatCurrency(inv.total_amount),15,finalY+7)
-
-doc.text("Paid (INR) : " + formatCurrency(inv.paid_amount||0),15,finalY+14)
-
-doc.text("Balance (INR) : " + formatCurrency(inv.balance_amount),15,finalY+21)
+doc.text("Total Expenses (INR) : " + formatCurrency(totalExpensesAll),15,finalY+14)
+doc.text("Paid (INR) : " + formatCurrency(inv.paid_amount||0),15,finalY+21)
+doc.text("Balance (INR) : " + formatCurrency(inv.balance_amount),15,finalY+28)
 
 /* FOOTER */
 doc.setFont("helvetica","normal")

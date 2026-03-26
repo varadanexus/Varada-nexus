@@ -744,44 +744,6 @@ let centerX = (tableStartX + tableEndX) / 2
 let stampY = doc.lastAutoTable.finalY - 35
   
 
-// ✅ PAID STAMP - FIXED CLEAN POSITION (LEFT BOTTOM AREA)
-  
-if((inv.paid_amount || 0) >= inv.total_amount){
-
-// 📍 place stamp BETWEEN bank box and footer
-let rectX = 20
-
-let rectW = 90
-let rectH = 35
-
-// 🔥 KEY FIX → dynamic Y
-let rectY = bankY + 45   // just below bank box (bank height = 40)
-
-let centerX = rectX + rectW / 2
-let centerY = rectY + rectH / 2
-
-doc.setDrawColor(0,150,0)
-doc.setTextColor(0,150,0)
-
-doc.setGState(new doc.GState({opacity: 0.25}))
-
-// box
-doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
-
-// text centered
-doc.setFontSize(28)
-doc.setFont("helvetica","bold")
-
-doc.text("PAID", centerX, centerY, {
-align: "center",
-baseline: "middle",
-angle: 20
-})
-
-// reset
-doc.setGState(new doc.GState({opacity: 1}))
-doc.setTextColor(0,0,0)
-}
 
 doc.autoTable({
 startY: summaryY,
@@ -834,6 +796,47 @@ doc.text("Bank: Axis Bank",20,bankY+14)
 doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+
+/* STAMP */
+  
+if((inv.paid_amount || 0) >= inv.total_amount){
+
+// 📍 place stamp BETWEEN bank box and footer
+let rectX = 20
+
+let rectW = 90
+let rectH = 35
+
+// 🔥 KEY FIX → dynamic Y
+let rectY = bankY + 45   // just below bank box (bank height = 40)
+
+let centerX = rectX + rectW / 2
+let centerY = rectY + rectH / 2
+
+doc.setDrawColor(0,150,0)
+doc.setTextColor(0,150,0)
+
+doc.setGState(new doc.GState({opacity: 0.25}))
+
+// box
+doc.roundedRect(rectX, rectY, rectW, rectH, 8, 8)
+
+// text centered
+doc.setFontSize(28)
+doc.setFont("helvetica","bold")
+
+doc.text("PAID", centerX, centerY, {
+align: "center",
+baseline: "middle",
+angle: 20
+})
+
+// reset
+doc.setGState(new doc.GState({opacity: 1}))
+doc.setTextColor(0,0,0)
+}
+
+  
 /* 🔷 SIGNATURE */
 // 🔷 SIGNATURE AT BOTTOM RIGHT (FIXED POSITION)
 let signY = 270   // 🔥 bottom area (A4 height ~297)

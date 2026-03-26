@@ -10,31 +10,83 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
 
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+/* GRID */
 .cards{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
 gap:20px;
 margin-bottom:30px;
 }
 
+/* CARD STYLE */
 .card{
-background:white;
+background:linear-gradient(135deg,#ffffff,#f1f4ff);
 padding:20px;
-border-radius:8px;
+border-radius:12px;
+cursor:pointer;
+transition:0.25s;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+border-left:6px solid #1f3c88;
+}
+
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 8px 20px rgba(0,0,0,0.15);
 }
 
 .card h3{
-margin:0 0 10px 0;
-color:#1f3c88;
+margin:0;
+font-size:13px;
+color:#666;
 }
 
 .card p{
-font-size:22px;
+margin-top:10px;
+font-size:24px;
 font-weight:bold;
+color:#111;
 }
+
+/* TABLES */
+.section{
+background:white;
+padding:20px;
+border-radius:12px;
+margin-bottom:25px;
+box-shadow:0 3px 10px rgba(0,0,0,0.08);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+th{
+background:#f7f7f7;
+}
+
 </style>
 
 </head>
@@ -58,18 +110,12 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
 await initSidebar()
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
+if(typeof applyMenuRBAC==="function") await applyMenuRBAC()
 document.getElementById("sidebar").style.display="block"
 })
 
 async function initSidebar(){
-
 const {data:{session}} = await window.supabaseClient.auth.getSession()
 if(!session) return
 
@@ -81,19 +127,13 @@ document.getElementById("userName").innerText=email.split("@")[0]
 const {data:user}=await window.supabaseClient
 .from("users").select("id").eq("auth_id",authId).single()
 
-if(!user) return
-
 const {data:userRole}=await window.supabaseClient
 .from("user_roles").select("role_id").eq("user_id",user.id).single()
-
-if(!userRole) return
 
 const {data:role}=await window.supabaseClient
 .from("roles").select("role_name").eq("id",userRole.role_id).single()
 
-if(role){
 document.getElementById("userRole").innerText=role.role_name
-}
 
 window.logout=async()=>{
 await window.supabaseClient.auth.signOut()
@@ -108,36 +148,38 @@ window.location="login.html"
 
 <div class="cards">
 
-<div class="card">
-<h3>Total Revenue</h3>
-<p id="revenue">₹0</p>
+<div class="card"><h3>Client Invoiced</h3><p id="invoiced"></p></div>
+<div class="card"><h3>Client Paid</h3><p id="clientPaid"></p></div>
+<div class="card"><h3>Client Outstanding</h3><p id="clientOutstanding"></p></div>
+
+<div class="card"><h3>Total Revenue</h3><p id="revenue"></p></div>
+
+<div class="card"><h3>Transporter Cost</h3><p id="transporterCost"></p></div>
+<div class="card"><h3>Transporter Paid</h3><p id="transporterPaid"></p></div>
+<div class="card"><h3>Transporter Payable</h3><p id="transporterPayable"></p></div>
+
+<div class="card"><h3>Total Expenses</h3><p id="expenses"></p></div>
+
+<div class="card"><h3>Net Profit</h3><p id="profit"></p></div>
+
 </div>
 
-<div class="card">
-<h3>Transporter Cost</h3>
-<p id="transporterCost">₹0</p>
+<!-- PROFIT PER TRIP -->
+<div class="section">
+<h3>Profit Per Trip</h3>
+<table>
+<thead><tr><th>Trip</th><th>Profit</th></tr></thead>
+<tbody id="tripProfitTable"></tbody>
+</table>
 </div>
 
-<div class="card">
-<h3>Total Expenses</h3>
-<p id="expenses">₹0</p>
-</div>
-
-<div class="card">
-<h3>Net Profit</h3>
-<p id="profit">₹0</p>
-</div>
-
-<div class="card">
-<h3>Transporter Paid</h3>
-<p id="paid">₹0</p>
-</div>
-
-<div class="card">
-<h3>Transporter Payable</h3>
-<p id="payable">₹0</p>
-</div>
-
+<!-- TRANSPORTER PENDING -->
+<div class="section">
+<h3>Transporter Pending</h3>
+<table>
+<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
+<tbody id="transporterTable"></tbody>
+</table>
 </div>
 
 </div>
@@ -148,85 +190,112 @@ window.onload = init
 
 async function init(){
 
-try{
-
 const [
+{data:invoices},
 {data:clientPayments},
 {data:trips},
 {data:expenses},
-{data:transporterPayments}
+{data:transporterPayments},
+{data:transporters}
 ] = await Promise.all([
 
-window.supabaseClient.from("client_payments").select("*"),
-window.supabaseClient.from("trips").select("*"),
-window.supabaseClient.from("expenses").select("*"),
-window.supabaseClient.from("transporter_payments").select("*")
+supabaseClient.from("client_invoices").select("*"),
+supabaseClient.from("client_payments").select("*"),
+supabaseClient.from("trips").select("*"),
+supabaseClient.from("expenses").select("*"),
+supabaseClient.from("transporter_payments").select("*"),
+supabaseClient.from("transporters").select("*")
 
 ])
 
-calculate(
-clientPayments||[],
-trips||[],
-expenses||[],
-transporterPayments||[]
-)
-
-}catch(err){
-console.error("Load Error:",err)
+calculate(invoices,trips,expenses,clientPayments,transporterPayments,transporters)
 }
 
-}
+function calculate(invoices,trips,expenses,clientPayments,transporterPayments,transporters){
 
-function calculate(clientPayments,trips,expenses,transporterPayments){
+let invoiced=0, clientPaid=0, revenue=0
+let transporterCost=0, totalExpenses=0, transporterPaid=0
 
-let revenue=0
-let transporterCost=0
-let totalExpenses=0
-let transporterPaid=0
-
-/* EXPENSE MAP */
 let expenseMap={}
+let transporterMap={}
+let tripProfitHTML=""
 
+/* INVOICES */
+invoices.forEach(i=>invoiced+=Number(i.invoice_amount||0))
+
+/* CLIENT PAID */
+clientPayments.forEach(p=>clientPaid+=Number(p.amount||0))
+
+/* EXPENSE */
 expenses.forEach(e=>{
-totalExpenses += Number(e.amount||0)
-
+totalExpenses+=Number(e.amount||0)
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount||0)
 })
 
-/* ✅ REAL REVENUE (CLIENT PAYMENTS) */
-clientPayments.forEach(p=>{
-revenue += Number(p.amount||0)
-})
-
-/* ✅ TRANSPORTER COST */
-trips.forEach(t=>{
-let mt=(Number(t.weight_kg)||0)/1000
-let gross=(Number(t.transporter_rate)||0)*mt
-let tripExpense=expenseMap[t.id]||0
-
-transporterCost += (gross - tripExpense)
-})
-
-/* ✅ TRANSPORTER PAID */
+/* TRANSPORTER PAID */
 transporterPayments.forEach(p=>{
-transporterPaid += Number(p.amount||0)
+transporterPaid+=Number(p.amount||0)
 })
 
-/* ✅ PAYABLE */
+/* TRIPS */
+trips.forEach(t=>{
+
+let mt=(Number(t.weight_kg)||0)/1000
+
+let company = mt * Number(t.company_rate||0)
+let transporter = mt * Number(t.transporter_rate||0)
+
+let exp = expenseMap[t.id]||0
+
+revenue += company
+transporterCost += (transporter - exp)
+
+let profit = company - transporter - exp
+
+tripProfitHTML += `<tr><td>${t.trip_no}</td><td>₹ ${profit.toFixed(0)}</td></tr>`
+
+/* transporter wise */
+if(!transporterMap[t.transporter_id]) transporterMap[t.transporter_id]=0
+transporterMap[t.transporter_id] += (transporter - exp)
+
+})
+
+/* transporter pending */
+let transporterHTML=""
+transporters.forEach(tr=>{
+let total = transporterMap[tr.id] || 0
+let paid = transporterPayments
+.filter(p=>p.transporter_id==tr.id)
+.reduce((s,p)=>s+Number(p.amount||0),0)
+
+let pending = total - paid
+
+transporterHTML += `<tr><td>${tr.transporter_name}</td><td>₹ ${pending.toFixed(0)}</td></tr>`
+})
+
+/* FINAL */
 let transporterPayable = transporterCost - transporterPaid
-
-/* ✅ PROFIT */
 let profit = revenue - transporterPaid - totalExpenses
+let clientOutstanding = invoiced - clientPaid
 
-/* UI */
-document.getElementById("revenue").innerText="₹ "+Math.round(revenue).toLocaleString()
-document.getElementById("transporterCost").innerText="₹ "+Math.round(transporterCost).toLocaleString()
-document.getElementById("expenses").innerText="₹ "+Math.round(totalExpenses).toLocaleString()
-document.getElementById("profit").innerText="₹ "+Math.round(profit).toLocaleString()
-document.getElementById("paid").innerText="₹ "+Math.round(transporterPaid).toLocaleString()
-document.getElementById("payable").innerText="₹ "+Math.round(transporterPayable).toLocaleString()
+set("invoiced",invoiced)
+set("clientPaid",clientPaid)
+set("clientOutstanding",clientOutstanding)
+set("revenue",revenue)
+set("transporterCost",transporterCost)
+set("expenses",totalExpenses)
+set("transporterPaid",transporterPaid)
+set("transporterPayable",transporterPayable)
+set("profit",profit)
 
+document.getElementById("tripProfitTable").innerHTML = tripProfitHTML
+document.getElementById("transporterTable").innerHTML = transporterHTML
+
+}
+
+function set(id,val){
+document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
 }
 
 </script>

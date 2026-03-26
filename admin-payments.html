@@ -621,16 +621,14 @@ doc.addImage("images/logo.png","PNG",15,10,20,20)
 doc.setFont("helvetica","bold")
 doc.setFontSize(16)
 doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
-doc.setFontSize(9)
-doc.text("CIN: U43121AP2025PTC117741",40,24)
-doc.text("GST: 37AAKCV7495B1ZV",40,29)
-
-doc.setFontSize(10)
-doc.text("Professional Transport Billing System",40,24)
 
 doc.setFont("helvetica","normal")
-doc.setFontSize(11)
+doc.setFontSize(10)
 doc.text("Transporter Invoice",40,25)
+
+doc.setFontSize(9)
+doc.text("CIN: U43121AP2025PTC117741",40,31)
+doc.text("GST: 37AAKCV7495B1ZV",40,36)
 
 /* INVOICE INFO */
 /* 🔷 RIGHT SIDE (Invoice Info) */
@@ -646,7 +644,7 @@ doc.text(inv.status,170,47)
 
 /* 🔷 LEFT SIDE (Transporter Block) */
 let startX = 15
-let startY = 50
+let startY = 55
 
 doc.setFont("helvetica","bold")
 doc.text("Transporter Details", startX, startY)
@@ -669,10 +667,10 @@ startY += 5
 doc.text(transporter?.address || "-", startX, startY, { maxWidth: 90 })
 
 doc.setDrawColor(200)
-doc.line(15, startY - 5, 195, startY - 5)
+doc.line(15, startY + 5, 195, startY + 5)
   
 /* TABLE HEADER */
-startY = startY + 15
+startY = startY + 25
 
 doc.autoTable({
 startY: startY,
@@ -697,30 +695,53 @@ fillColor: [245, 245, 245]
 })
 
 /* TOTALS */
-let finalY = doc.lastAutoTable.finalY + 10
+let finalY = doc.lastAutoTable.finalY + 15
 
+let boxX = 120
+let boxY = finalY
+let boxWidth = 75
+let boxHeight = 45
+
+// 🔷 Draw box
+doc.setDrawColor(0)
+doc.rect(boxX, boxY, boxWidth, boxHeight)
+
+// 🔷 Title
 doc.setFont("helvetica","bold")
-doc.setCharSpace(0)
+doc.setFontSize(11)
+doc.text("Summary", boxX + 5, boxY + 7)
 
-let rightX = 140
+// 🔷 Content
+doc.setFont("helvetica","normal")
+doc.setFontSize(10)
 
-doc.text("Total Weight:", rightX, finalY)
-doc.text(totalWeight.toFixed(2) + " MT", 190, finalY, { align: "right" })
+let lineY = boxY + 15
 
-doc.text("Total Amount:", rightX, finalY+7)
-doc.text("₹ " + formatCurrency(inv.total_amount), 190, finalY+7, { align: "right" })
+doc.text("Total Weight", boxX + 5, lineY)
+doc.text(totalWeight.toFixed(2) + " MT", boxX + boxWidth - 5, lineY, { align: "right" })
 
-doc.text("Total Expenses:", rightX, finalY+14)
-doc.text("₹ " + formatCurrency(totalExpensesAll), 190, finalY+14, { align: "right" })
+lineY += 7
+doc.text("Total Amount", boxX + 5, lineY)
+doc.text("₹ " + formatCurrency(inv.total_amount), boxX + boxWidth - 5, lineY, { align: "right" })
 
-doc.text("Paid:", rightX, finalY+21)
-doc.text("₹ " + formatCurrency(inv.paid_amount||0), 190, finalY+21, { align: "right" })
+lineY += 7
+doc.text("Expenses", boxX + 5, lineY)
+doc.text("₹ " + formatCurrency(totalExpensesAll), boxX + boxWidth - 5, lineY, { align: "right" })
 
-doc.text("Balance:", rightX, finalY+28)
-doc.text("₹ " + formatCurrency(inv.balance_amount), 190, finalY+28, { align: "right" })
+lineY += 7
+doc.text("Paid", boxX + 5, lineY)
+doc.text("₹ " + formatCurrency(inv.paid_amount||0), boxX + boxWidth - 5, lineY, { align: "right" })
 
+lineY += 7
+
+// 🔥 Balance highlighted
+doc.setFont("helvetica","bold")
+doc.text("Balance", boxX + 5, lineY)
+doc.text("₹ " + formatCurrency(inv.balance_amount), boxX + boxWidth - 5, lineY, { align: "right" })
+
+  
 /* 🔷 BANK DETAILS */
-let bankY = finalY + 40
+let bankY = finalY + 30
 
 doc.setFont("helvetica","bold")
 doc.text("Bank Details",15,bankY)
@@ -730,15 +751,15 @@ doc.text("Account No: 924020062188598",15,bankY+7)
 doc.text("IFSC: UTIB0000107",15,bankY+14)
 
 /* 🔷 SIGNATURE */
-doc.text("Authorized Signatory",140,bankY+20)
-doc.line(140, bankY+22, 195, bankY+22)
+doc.text("Authorized Signatory",140,bankY+25)
+doc.line(140, bankY+27, 195, bankY+27)
   
 /* FOOTER */
 doc.setFont("helvetica","normal")
 doc.setFontSize(10)
 doc.setFontSize(9)
-doc.text("This is a system generated invoice. No signature required.",15,finalY+60)
-doc.text("Thank you for doing business with Varada Nexus.",15,finalY+66)
+doc.text("This is a system generated invoice.",15,bankY+40)
+doc.text("Thank you for doing business with Varada Nexus.",15,bankY+46)
 
 doc.save(inv.invoice_no+".pdf")
 }

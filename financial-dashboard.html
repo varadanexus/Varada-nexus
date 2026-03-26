@@ -2,22 +2,39 @@
 <html>
 
 <head>
-<title>Varada Nexus V5 AI System</title>
+<title>Executive Dashboard - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script src="session-check.js"></script>
+<script src="menu-rbac.js"></script>
+
 <style>
 body{
 margin:0;
-font-family:Inter;
-background:#0b1220;
-color:#e2e8f0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:#fff;
 }
 
 .main{
 margin-left:220px;
 padding:30px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.status{
+background:#22c55e;
+padding:6px 14px;
+border-radius:20px;
+font-size:12px;
 }
 
 /* CARDS */
@@ -29,9 +46,11 @@ margin-bottom:25px;
 }
 
 .card{
-background:#111827;
-padding:20px;
+padding:18px;
 border-radius:16px;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.1);
 transition:.3s;
 }
 
@@ -46,50 +65,43 @@ margin:0;
 }
 
 .card p{
-font-size:26px;
 margin-top:10px;
+font-size:24px;
 font-weight:700;
 }
 
+.green{border-left:4px solid #22c55e;}
+.red{border-left:4px solid #ef4444;}
+.blue{border-left:4px solid #3b82f6;}
+.orange{border-left:4px solid #f59e0b;}
+
 /* SECTION */
 .section{
-background:#111827;
+background:rgba(255,255,255,0.05);
 padding:20px;
 border-radius:16px;
 margin-bottom:25px;
 }
 
-/* AI BOX */
-.ai-box{
-display:flex;
-gap:10px;
-margin-top:10px;
+table{
+width:100%;
+border-collapse:collapse;
 }
 
-.ai-box input{
-flex:1;
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+th{color:#94a3b8;}
+
+.alert{
 padding:12px;
 border-radius:10px;
-border:none;
-outline:none;
+margin-bottom:10px;
+background:#ef444420;
+border-left:4px solid #ef4444;
 }
-
-.ai-box button{
-padding:12px;
-border:none;
-border-radius:10px;
-background:#3b82f6;
-color:white;
-cursor:pointer;
-}
-
-.ai-response{
-margin-top:15px;
-background:#1f2937;
-padding:15px;
-border-radius:10px;
-}
-
 </style>
 </head>
 
@@ -110,206 +122,179 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+await initSidebar()
+if(typeof applyMenuRBAC==="function") await applyMenuRBAC()
 document.getElementById("sidebar").style.display="block"
 })
+
+async function initSidebar(){
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+document.getElementById("userName").innerText=session.user.email.split("@")[0]
+}
 </script>
 
 <div class="main">
 
-<h2>🧠 V5 AI Business System</h2>
+<div class="header">
+<h2>Executive Dashboard</h2>
+<span class="status">● LIVE</span>
+</div>
 
 <!-- KPI -->
 <div class="cards">
-<div class="card"><h3>Revenue</h3><p id="rev"></p></div>
-<div class="card"><h3>Profit</h3><p id="profit"></p></div>
-<div class="card"><h3>Transport Cost</h3><p id="cost"></p></div>
-<div class="card"><h3>Outstanding</h3><p id="outstanding"></p></div>
+<div class="card blue"><h3>Revenue</h3><p id="revenue"></p></div>
+<div class="card green"><h3>Client Paid</h3><p id="paid"></p></div>
+<div class="card orange"><h3>Outstanding</h3><p id="outstanding"></p></div>
+<div class="card orange"><h3>To Be Billed</h3><p id="tobebilled"></p></div>
+
+<div class="card orange"><h3>Transporter Cost</h3><p id="cost"></p></div>
+<div class="card green"><h3>Transporter Paid</h3><p id="tpaid"></p></div>
+<div class="card red"><h3>Transporter Payable</h3><p id="tpay"></p></div>
+
+<div class="card green"><h3>Net Profit</h3><p id="profit"></p></div>
 </div>
 
-<!-- AI ASSISTANT -->
+<!-- ALERTS -->
 <div class="section">
-<h3>🤖 AI Assistant</h3>
-
-<div class="ai-box">
-<input id="aiInput" placeholder="Ask about your business...">
-<button onclick="runAI()">Ask</button>
-</div>
-
-<div id="aiResponse" class="ai-response">Ask something like: "Why is profit low?"</div>
-
-</div>
-
-<!-- CLIENT TABLE -->
-<div class="section">
-<h3>📊 Client Profitability</h3>
-<table id="clientTable"></table>
-</div>
-
-<!-- TRANSPORTER -->
-<div class="section">
-<h3>🚚 Transporter Analysis</h3>
-<table id="transporterTable"></table>
+<h3>⚠️ Alerts</h3>
+<div id="alerts"></div>
 </div>
 
 <!-- CHART -->
 <div class="section">
 <h3>📈 Revenue vs Cost</h3>
-<canvas id="chart"></canvas>
+<canvas id="chart1"></canvas>
+</div>
+
+<!-- MONTHLY -->
+<div class="section">
+<h3>📊 Monthly Trend</h3>
+<canvas id="chart2"></canvas>
 </div>
 
 </div>
 
 <script>
 
-let GLOBAL_DATA={}
-
 window.onload=init
+setInterval(init,30000)
 
 async function init(){
 
 const [
 {data:trips},
 {data:expenses},
+{data:payments},
 {data:invoices},
-{data:payments}
-]=await Promise.all([
+{data:clientPayments}
+] = await Promise.all([
 supabaseClient.from("trips").select("*"),
 supabaseClient.from("expenses").select("*"),
+supabaseClient.from("transporter_payments").select("*"),
 supabaseClient.from("client_invoices").select("*"),
-supabaseClient.from("transporter_payments").select("*")
+supabaseClient.from("client_payments").select("*")
 ])
 
-process(trips,expenses,invoices,payments)
-
-GLOBAL_DATA={trips,expenses,invoices,payments}
+calculate(trips,expenses,payments,invoices,clientPayments)
 }
 
-function process(trips,expenses,invoices,payments){
+function calculate(trips,expenses,payments,invoices,clientPayments){
 
-let expMap={}
+let expMap={},totalExp=0
 expenses.forEach(e=>{
+totalExp+=Number(e.amount||0)
 expMap[e.trip_id]=(expMap[e.trip_id]||0)+Number(e.amount||0)
 })
 
-let revenue=0,cost=0,outstanding=0
-
-let clientMap={}
-let transporterMap={}
-
+let cost=0,alertsHTML=""
 trips.forEach(t=>{
 let mt=(t.weight_kg||0)/1000
+let gross=(t.transporter_rate||0)*mt
+let net=gross-(expMap[t.id]||0)
+cost+=net
 
-let company=(t.company_rate||0)*mt
-let transport=(t.transporter_rate||0)*mt
-let exp=expMap[t.id]||0
-
-let profit=company-(transport+exp)
-
-cost+=transport+exp
-
-let client=t.client_name||"Unknown"
-clientMap[client]=(clientMap[client]||0)+profit
-
-let tr=t.transporter_name||"Unknown"
-transporterMap[tr]=(transporterMap[tr]||0)+(transport+exp)
+if(net<0){
+alertsHTML+=`<div class="alert">Loss Trip: ${t.trip_no} (₹ ${Math.round(net)})</div>`
+}
 })
 
+let revenue=0,outstanding=0
 invoices.forEach(i=>{
 revenue+=Number(i.invoice_amount||0)
 outstanding+=Number(i.balance_amount||0)
 })
 
+let paid=0
+clientPayments.forEach(p=>paid+=Number(p.amount||0))
+
+let tpaid=0
+payments.forEach(p=>tpaid+=Number(p.amount||0))
+
+let tpay=cost-tpaid
 let profit=revenue-cost
 
-set("rev",revenue)
-set("profit",profit)
-set("cost",cost)
+/* TO BE BILLED */
+let billedIds=invoices.map(i=>i.trip_id)
+let tobebilled=0
+
+trips.forEach(t=>{
+if(!billedIds.includes(t.id)){
+let mt=(t.weight_kg||0)/1000
+tobebilled+=(t.company_rate||0)*mt
+}
+})
+
+/* UI */
+set("revenue",revenue)
+set("paid",paid)
 set("outstanding",outstanding)
+set("tobebilled",tobebilled)
+set("cost",cost)
+set("tpaid",tpaid)
+set("tpay",tpay)
+set("profit",profit)
 
-/* TABLES */
-renderTable("clientTable",clientMap,"Profit")
-renderTable("transporterTable",transporterMap,"Cost")
+document.getElementById("profit").style.color=profit>=0?"#22c55e":"#ef4444"
+document.getElementById("alerts").innerHTML=alertsHTML||"No issues"
 
-/* CHART */
-new Chart(document.getElementById("chart"),{
-type:"bar",
+/* CHART 1 */
+new Chart(document.getElementById("chart1"),{
+type:'bar',
 data:{
 labels:["Revenue","Cost"],
 datasets:[{data:[revenue,cost]}]
 }
 })
 
-}
-
-/* AI LOGIC */
-function runAI(){
-
-let q=document.getElementById("aiInput").value.toLowerCase()
-let {trips,expenses,invoices,payments}=GLOBAL_DATA
-
-let response=""
-
-/* PROFIT */
-let revenue=invoices.reduce((s,i)=>s+Number(i.invoice_amount||0),0)
-let cost=0
-
-let expMap={}
-expenses.forEach(e=>{
-expMap[e.trip_id]=(expMap[e.trip_id]||0)+Number(e.amount||0)
-})
-
+/* MONTHLY */
+let monthMap={}
 trips.forEach(t=>{
+let m=(t.trip_date||"").slice(0,7)
 let mt=(t.weight_kg||0)/1000
-cost+=(t.transporter_rate||0)*mt+(expMap[t.id]||0)
+let gross=(t.transporter_rate||0)*mt
+monthMap[m]=(monthMap[m]||0)+gross
 })
 
-let profit=revenue-cost
+new Chart(document.getElementById("chart2"),{
+type:'line',
+data:{
+labels:Object.keys(monthMap),
+datasets:[{data:Object.values(monthMap)}]
+}
+})
 
-if(q.includes("profit")){
-response=`Profit is ₹${Math.round(profit)}`
 }
 
-else if(q.includes("loss")){
-response = profit<0 ? "Business is in loss" : "Business is profitable"
-}
-
-else if(q.includes("transporter")){
-response="Top transporter cost analysis shown above"
-}
-
-else if(q.includes("client")){
-response="Client profitability table is shown above"
-}
-
-else if(q.includes("why")){
-if(profit<0){
-response="Profit is low due to high transporter cost or expenses"
-}else{
-response="Profit is stable"
-}
-}
-
-else{
-response="Try asking: profit, loss, transporter, client"
-}
-
-document.getElementById("aiResponse").innerText=response
-}
-
-/* HELPERS */
 function set(id,val){
-document.getElementById(id).innerText="₹ "+Math.round(val)
-}
-
-function renderTable(id,data,label){
-let html=`<tr><th>Name</th><th>${label}</th></tr>`
-Object.entries(data).forEach(([k,v])=>{
-html+=`<tr><td>${k}</td><td>₹${Math.round(v)}</td></tr>`
-})
-document.getElementById(id).innerHTML=html
+document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
 }
 
 </script>
+
+<script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
+<script src="global-logout.js"></script>
 
 </body>
 </html>

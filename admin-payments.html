@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -614,6 +615,15 @@ formatCurrency(netAmount)
 /* PDF START */
 let doc=new jsPDF()
 
+// 🔷 WATERMARK LOGO
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity: 0.05}))
+}
+doc.addImage("images/logo.png","PNG",40,80,120,120)
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity: 1}))
+}
+
 /* 🔥 LOGO (PUT logo.png in same folder) */
 doc.addImage("images/logo.png","PNG",15,10,20,20)
 
@@ -630,6 +640,12 @@ doc.setFontSize(9)
 doc.text("CIN: U43121AP2025PTC117741",40,31)
 doc.text("GST: 37AAKCV7495B1ZV",40,36)
 
+// 🔷 VERIFIED BADGE
+doc.setTextColor(0,120,0)
+doc.setFontSize(10)
+doc.text("✔ Digitally Verified", 150, 18)
+doc.setTextColor(0,0,0)
+
 /* INVOICE INFO */
 /* 🔷 RIGHT SIDE (Invoice Info) */
 doc.setFont("helvetica","bold")
@@ -641,6 +657,33 @@ doc.setFont("helvetica","bold")
 doc.text("Status:",140,47)
 doc.setFont("helvetica","normal")
 doc.text(inv.status,170,47)
+doc.setFont("helvetica","bold")
+doc.text("Date:",140,54)
+
+doc.setFont("helvetica","normal")
+doc.text(new Date().toLocaleDateString("en-IN"),170,54)
+
+// ✅ PAID STAMP
+// ✅ AUTO PAID STAMP (based on payment)
+if((inv.paid_amount || 0) >= inv.total_amount){
+
+doc.setDrawColor(0,150,0)
+doc.setTextColor(0,150,0)
+doc.setLineWidth(1.5)
+
+doc.setFontSize(32)
+doc.setFont("helvetica","bold")
+
+doc.text("PAID", 105, 135, {
+angle: 30,
+align: "center"
+})
+
+// Rounded box
+doc.roundedRect(70, 120, 70, 30, 5, 5)
+
+doc.setTextColor(0,0,0)
+}
 
 /* 🔷 LEFT SIDE (Transporter Block) */
 let startX = 15
@@ -667,7 +710,7 @@ startY += 5
 doc.text(transporter?.address || "-", startX, startY, { maxWidth: 90 })
 
 doc.setDrawColor(200)
-doc.line(15, startY + 12, 195, startY + 12)
+doc.line(15, startY + 25, 195, startY + 25)
   
 /* TABLE HEADER */
 startY = startY + 25
@@ -696,6 +739,7 @@ fillColor: [245, 245, 245]
 
 /* TOTALS */
 let summaryY = doc.lastAutoTable.finalY + 10
+let summaryEndY = doc.lastAutoTable.finalY
 
 doc.autoTable({
 startY: summaryY,
@@ -716,7 +760,7 @@ theme: "grid",
 headStyles: {
 fillColor: [0, 102, 204],
 textColor: 255,
-fontStyle: "bold"doc.text("Authorized Signatory",140,bankY+25)
+fontStyle: "bold"
 },
 
 styles: {
@@ -749,10 +793,10 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 /* 🔷 SIGNATURE */
-let signY = bankY + 55
+let signY = summaryEndY + 35
 
 doc.text("Authorized Signatory",140,signY)
-doc.line(140, signY + 2, 195, signY + 2)27)
+doc.line(140, signY + 2, 195, signY + 2)
   
 /* FOOTER */
 doc.setFont("helvetica","normal")
@@ -761,7 +805,34 @@ doc.setFontSize(9)
 doc.text("This is a system generated document. No signature required.",15,signY+15)
 doc.text("Payment has been processed successfully.",15,signY+22)
 
-doc.save(inv.invoice_no+".pdf")
+// 🔷 QR CODE (Payment Proof)
+let qrData = `INV:${inv.invoice_no} | AMT:${inv.total_amount} | PAID:${inv.paid_amount || 0} | STATUS:${inv.status}`
+
+let qrDiv = document.createElement("div")
+
+new QRCode(qrDiv, {
+text: qrData,
+width: 80,
+height: 80
+})
+
+// ⏳ Wait for QR to render
+setTimeout(() => {
+
+let qrCanvas = qrDiv.querySelector("canvas")
+
+if(qrCanvas){
+let qrImg = qrCanvas.toDataURL()
+doc.addImage(qrImg, "PNG", 15, signY - 20, 30, 30)
+}
+
+// ✅ SAVE ONLY AFTER QR IS READY
+doc.save(inv.invoice_no + ".pdf")
+
+}, 300)
+
+// 🚫 STOP function here
+return
 }
 </script>
 

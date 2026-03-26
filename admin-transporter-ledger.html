@@ -37,6 +37,8 @@ select{
 padding:10px;
 border:1px solid #ccc;
 border-radius:4px;
+position: relative;
+z-index: 10;
 }
 
 table{
@@ -148,14 +150,15 @@ window.location.href="login.html"
 
 <div class="card">
 
+<div style="display:flex;align-items:center;gap:10px;">
 <select id="transporterSelect"></select>
-
 <button onclick="loadLedger()">Load Ledger</button>
-
 </div>
 
-<div class="card">
+</div>   <!-- ✅ CLOSE FIRST CARD -->
 
+<div class="card">   <!-- ✅ SECOND CARD STARTS PROPERLY -re
+  
 <!-- 🔍 SEARCH -->
 <input id="searchBox" placeholder="Search..." oninput="renderLedger()" style="padding:8px;margin-bottom:10px;width:200px;">
 <!-- 📅 DATE FILTER -->
@@ -164,7 +167,7 @@ window.location.href="login.html"
 
   
 <!-- 📄 PAGE SIZE -->
-<select id="pageSize" onchange="renderLedger()" style="padding:8px;margin-left:10px;">
+<select id="pageSize" onchange="renderLedger()">
 <option value="50">50</option>
 <option value="100">100</option>
 <option value="150">150</option>
@@ -239,6 +242,8 @@ document.getElementById("transporterSelect").innerHTML=html
 
 async function loadLedger(){
 
+ currentPage = 1
+  
 let transporterId=document.getElementById("transporterSelect").value
 
 if(!transporterId){
@@ -342,7 +347,7 @@ renderLedger()
 
 function renderLedger(){
 
-currentPage = 1
+
 
 let search = document.getElementById("searchBox").value.toLowerCase()
 let pageSize = Number(document.getElementById("pageSize").value)

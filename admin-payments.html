@@ -621,51 +621,79 @@ doc.addImage("images/logo.png","PNG",15,10,20,20)
 doc.setFont("helvetica","bold")
 doc.setFontSize(16)
 doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
+doc.setFontSize(9)
+doc.text("CIN: U43121AP2025PTC117741",40,24)
+doc.text("GST: 37AAKCV7495B1ZV",40,29)
+
+doc.setFontSize(10)
+doc.text("Professional Transport Billing System",40,24)
 
 doc.setFont("helvetica","normal")
 doc.setFontSize(11)
 doc.text("Transporter Invoice",40,25)
 
 /* INVOICE INFO */
+/* 🔷 RIGHT SIDE (Invoice Info) */
 doc.setFont("helvetica","bold")
-doc.text("Invoice No : ",15,40)
+doc.text("Invoice No:",140,40)
 doc.setFont("helvetica","normal")
-doc.text(inv.invoice_no,45,40)
+doc.text(inv.invoice_no,170,40)
 
 doc.setFont("helvetica","bold")
-doc.text("Transporter : ",15,47)
+doc.text("Status:",140,47)
 doc.setFont("helvetica","normal")
-doc.text(transporter?.transporter_name || "-",50,47)
+doc.text(inv.status,170,47)
+
+/* 🔷 LEFT SIDE (Transporter Block) */
+let startX = 15
+let startY = 50
 
 doc.setFont("helvetica","bold")
-doc.text("GST : ",15,54)
-doc.setFont("helvetica","normal")
-doc.text(transporter?.gst_number || "-",30,54)
+doc.text("Transporter Details", startX, startY)
 
-doc.setFont("helvetica","bold")
-doc.text("Phone : ",15,61)
-doc.setFont("helvetica","normal")
-doc.text(transporter?.phone || "-",40,61)
-
-doc.setFont("helvetica","bold")
-doc.text("Address : ",15,68)
-doc.setFont("helvetica","normal")
-doc.text(transporter?.address || "-",45,68, { maxWidth: 140 })
-
-doc.setFont("helvetica","bold")
-doc.text("Status : ",15,80)
-doc.text(inv.status,40,80)
 doc.setFont("helvetica","normal")
 
+startY += 7
+doc.text(`Name: ${transporter?.transporter_name || "-"}`, startX, startY)
+
+startY += 6
+doc.text(`GST: ${transporter?.gst_number || "-"}`, startX, startY)
+
+startY += 6
+doc.text(`Phone: ${transporter?.phone || "-"}`, startX, startY)
+
+startY += 6
+doc.text("Address:", startX, startY)
+
+startY += 5
+doc.text(transporter?.address || "-", startX, startY, { maxWidth: 90 })
+
+doc.setDrawColor(200)
+doc.line(15, startY - 5, 195, startY - 5)
+  
 /* TABLE HEADER */
-let startY = 90
+startY = startY + 15
 
 doc.autoTable({
 startY: startY,
 head: [["Trip","Route","Truck","Date","Weight (MT)","Gross","Expenses","Net"]],
 body: tableRows,
 theme: "grid",
-styles: {fontSize:10}
+
+headStyles: {
+fillColor: [22, 160, 133],   // teal green
+textColor: 255,
+fontStyle: "bold"
+},
+
+styles: {
+fontSize: 9,
+cellPadding: 3
+},
+
+alternateRowStyles: {
+fillColor: [245, 245, 245]
+}
 })
 
 /* TOTALS */
@@ -674,16 +702,43 @@ let finalY = doc.lastAutoTable.finalY + 10
 doc.setFont("helvetica","bold")
 doc.setCharSpace(0)
 
-doc.text("Total Weight (MT) : "+ totalWeight.toFixed(2),15,finalY)
-doc.text("Total Amount (INR) : " + formatCurrency(inv.total_amount),15,finalY+7)
-doc.text("Total Expenses (INR) : " + formatCurrency(totalExpensesAll),15,finalY+14)
-doc.text("Paid (INR) : " + formatCurrency(inv.paid_amount||0),15,finalY+21)
-doc.text("Balance (INR) : " + formatCurrency(inv.balance_amount),15,finalY+28)
+let rightX = 140
 
+doc.text("Total Weight:", rightX, finalY)
+doc.text(totalWeight.toFixed(2) + " MT", 190, finalY, { align: "right" })
+
+doc.text("Total Amount:", rightX, finalY+7)
+doc.text("₹ " + formatCurrency(inv.total_amount), 190, finalY+7, { align: "right" })
+
+doc.text("Total Expenses:", rightX, finalY+14)
+doc.text("₹ " + formatCurrency(totalExpensesAll), 190, finalY+14, { align: "right" })
+
+doc.text("Paid:", rightX, finalY+21)
+doc.text("₹ " + formatCurrency(inv.paid_amount||0), 190, finalY+21, { align: "right" })
+
+doc.text("Balance:", rightX, finalY+28)
+doc.text("₹ " + formatCurrency(inv.balance_amount), 190, finalY+28, { align: "right" })
+
+/* 🔷 BANK DETAILS */
+let bankY = finalY + 40
+
+doc.setFont("helvetica","bold")
+doc.text("Bank Details",15,bankY)
+
+doc.setFont("helvetica","normal")
+doc.text("Account No: 924020062188598",15,bankY+7)
+doc.text("IFSC: UTIB0000107",15,bankY+14)
+
+/* 🔷 SIGNATURE */
+doc.text("Authorized Signatory",140,bankY+20)
+doc.line(140, bankY+22, 195, bankY+22)
+  
 /* FOOTER */
 doc.setFont("helvetica","normal")
 doc.setFontSize(10)
-doc.text("This is a system generated invoice.",15,finalY+35)
+doc.setFontSize(9)
+doc.text("This is a system generated invoice. No signature required.",15,finalY+60)
+doc.text("Thank you for doing business with Varada Nexus.",15,finalY+66)
 
 doc.save(inv.invoice_no+".pdf")
 }

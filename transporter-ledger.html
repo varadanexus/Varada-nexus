@@ -30,17 +30,6 @@ min-width:180px;
 .card h4{margin:0;color:#777;}
 .card h2{margin:5px 0;color:#1f3c88;}
 
-.filters{margin-bottom:20px;}
-
-button{
-padding:8px 14px;
-background:#1f3c88;
-color:white;
-border:none;
-border-radius:4px;
-margin-right:6px;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -53,7 +42,6 @@ border-bottom:1px solid #ddd;
 }
 
 th{background:#eee;}
-
 .credit{color:green;font-weight:bold;}
 .debit{color:red;font-weight:bold;}
 .balance{font-weight:bold;}
@@ -72,43 +60,15 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
-<script>
 
-async function loadUserInfo(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-
-if(!session) return
-
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-/* SHOW SIDEBAR AFTER LOAD */
-document.getElementById("sidebar").style.display = "block"
-
-}
-
-setTimeout(loadUserInfo, 300)
-
-</script>
 <div class="main">
 
 <h2>Transporter Ledger</h2>
 
-<!-- ✅ SUMMARY -->
 <div class="cards">
-<div class="card"><h4>Total Credit</h4><h2 id="totalCredit">₹0</h2></div>
 <div class="card"><h4>Total Debit</h4><h2 id="totalDebit">₹0</h2></div>
+<div class="card"><h4>Total Credit</h4><h2 id="totalCredit">₹0</h2></div>
 <div class="card"><h4>Closing Balance</h4><h2 id="closingBalance">₹0</h2></div>
-</div>
-
-<div class="filters">
-<input type="date" id="fromDate">
-<input type="date" id="toDate">
-<button onclick="applyFilter()">Search</button>
-<button onclick="clearFilter()">Clear</button>
-<button onclick="downloadPDF()">Download PDF</button>
 </div>
 
 <table>
@@ -116,8 +76,8 @@ setTimeout(loadUserInfo, 300)
 <tr>
 <th>Date</th>
 <th>Description</th>
-<th>Credit</th>
 <th>Debit</th>
+<th>Credit</th>
 <th>Balance</th>
 </tr>
 </thead>
@@ -130,11 +90,10 @@ setTimeout(loadUserInfo, 300)
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
-let fullLedger=[]
-let filteredLedger=[]
+let ledger = []
 
 init()
 
@@ -147,184 +106,137 @@ window.location.href="login.html"
 return
 }
 
-const authId=session.user.id
+const authId = session.user.id
 
 /* GET TRANSPORTER */
-const {data:transporter}=await supabaseClient
+const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("id, transporter_name")
-.eq("auth_id",authId)
+.eq("auth_id", authId)
 .single()
 
-/* GET DATA */
-const {data:trips}=await supabaseClient
+if(!transporter) return
+
+/* GET TRIPS */
+const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporter.id)
+.eq("transporter_id", transporter.id)
 
-const {data:payments}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-.eq("transporter_id",transporter.id)
-
-const {data:expenses}=await supabaseClient
+/* GET EXPENSES */
+const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
-.in("trip_id", trips.map(t=>t.id))
 
-/* EXPENSE MAP */
-let expenseMap={}
-expenses?.forEach(e=>{
-if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
-expenseMap[e.trip_id]+=Number(e.amount||0)
-})
+/* GET INVOICES */
+const {data:invoiceData} = await supabaseClient
+.from("transporter_invoices")
+.select("id")
+.eq("transporter_id", transporter.id)
 
-/* BUILD LEDGER */
-let ledger=[]
+let invoiceIds = invoiceData?.map(i=>i.id) || []
 
-trips.forEach(t=>{
+/* GET PAYMENTS */
+let payments = []
 
-let mt = (t.weight_kg||0)/1000
-let exp = expenseMap[t.id]||0
+if(invoiceIds.length){
+const res = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("invoice_id", invoiceIds)
 
-let net = (t.transporter_rate * mt) - exp
-
-if(net >= 0){
-    ledger.push({
-        date:t.trip_date,
-        description:"Trip "+(t.trip_no||""),
-        credit:net,
-        debit:0
-    })
-}else{
-    ledger.push({
-        date:t.trip_date,
-        description:"Loss "+(t.trip_no||""),
-        credit:0,
-        debit:Math.abs(net)
-    })
+payments = res.data || []
 }
 
+/* EXPENSE MAP */
+let expenseMap = {}
+
+expenses?.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount || 0)
 })
 
-/* PAYMENTS */
-payments?.forEach(p=>{
-ledger.push({
-date:p.payment_date,
-description:"Payment "+(p.transaction_id||""),
-credit:0,
-debit:Number(p.amount||0)
+let entries = []
+
+/* TRIPS → DEBIT */
+trips.forEach(t=>{
+
+let mt = (t.weight_kg || 0)/1000
+let gross = (t.transporter_rate || 0) * mt
+let exp = expenseMap[t.id] || 0
+
+let net = gross - exp   // 🔥 NO Math.max → loss allowed
+
+entries.push({
+date: t.trip_date || t.created_at,
+description: "Trip " + (t.trip_no || ""),
+debit: net,
+credit: 0
 })
+
+})
+
+/* PAYMENTS → CREDIT */
+payments.forEach(p=>{
+
+entries.push({
+date: p.payment_date || p.created_at,
+description: "Payment " + (p.transaction_id || ""),
+debit: 0,
+credit: Number(p.amount || 0)
+})
+
 })
 
 /* SORT */
-ledger.sort((a,b)=> new Date(a.date||0)-new Date(b.date||0))
+entries.sort((a,b)=>{
+let da = new Date(a.date)
+let db = new Date(b.date)
+return da - db
+})
 
-fullLedger=ledger
-filteredLedger=ledger
+ledger = entries
 
 renderLedger()
 
 }
-
-/* RENDER */
 
 function renderLedger(){
 
-let balance=0
-let totalCredit=0
-let totalDebit=0
+let balance = 0
+let totalDebit = 0
+let totalCredit = 0
 
-let html=""
+let html = ""
 
-filteredLedger.forEach(l=>{
+ledger.forEach(l=>{
 
-balance += l.credit
-balance -= l.debit
+balance += l.debit
+balance -= l.credit
 
-totalCredit += l.credit
 totalDebit += l.debit
+totalCredit += l.credit
 
-html+=`
+html += `
 <tr>
-<td>${l.date||""}</td>
+<td>${l.date ? new Date(l.date).toLocaleDateString("en-IN") : ""}</td>
 <td>${l.description}</td>
-<td class="credit">${l.credit? "₹ "+l.credit.toFixed(2):""}</td>
-<td class="debit">${l.debit? "₹ "+l.debit.toFixed(2):""}</td>
-<td class="balance">₹ ${balance.toFixed(2)}</td>
+<td class="debit">${l.debit ? "₹ "+l.debit.toFixed(0) : ""}</td>
+<td class="credit">${l.credit ? "₹ "+l.credit.toFixed(0) : ""}</td>
+<td class="balance">₹ ${balance.toFixed(0)}</td>
 </tr>
 `
-
 })
 
-document.getElementById("ledgerTable").innerHTML=html
+document.getElementById("ledgerTable").innerHTML = html
 
-/* SUMMARY */
-document.getElementById("totalCredit").innerText="₹ "+totalCredit.toFixed(0)
-document.getElementById("totalDebit").innerText="₹ "+totalDebit.toFixed(0)
-document.getElementById("closingBalance").innerText="₹ "+balance.toFixed(0)
+document.getElementById("totalDebit").innerText = "₹ " + totalDebit.toFixed(0)
+document.getElementById("totalCredit").innerText = "₹ " + totalCredit.toFixed(0)
+document.getElementById("closingBalance").innerText = "₹ " + balance.toFixed(0)
 
 }
 
-/* FILTER */
-
-function applyFilter(){
-
-let from=document.getElementById("fromDate").value
-let to=document.getElementById("toDate").value
-
-filteredLedger=fullLedger.filter(l=>{
-let d=new Date(l.date || 0)
-return (!from || d>=new Date(from)) &&
-(!to || d<=new Date(to))
-})
-
-renderLedger()
-}
-
-function clearFilter(){
-
-filteredLedger=fullLedger
-
-document.getElementById("fromDate").value=""
-document.getElementById("toDate").value=""
-
-renderLedger()
-}
-
-/* PDF */
-
-function downloadPDF(){
-
-const { jsPDF } = window.jspdf
-let doc=new jsPDF()
-
-let rows=[]
-
-filteredLedger.forEach(l=>{
-rows.push([
-l.date,
-l.description,
-l.credit?l.credit.toFixed(2):"",
-l.debit?l.debit.toFixed(2):""
-])
-})
-
-doc.text("Transporter Ledger",14,15)
-
-doc.autoTable({
-head:[["Date","Description","Credit","Debit"]],
-body:rows,
-startY:20
-})
-
-doc.save("ledger.pdf")
-}
-
-</script>
-<script>
-
-/* LOAD USER INTO SIDEBAR */
+/* LOAD USER */
 async function loadUserInfo(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -337,26 +249,23 @@ return
 const email = session.user.email
 
 document.getElementById("userName").innerText = email.split("@")[0]
-
 document.getElementById("sidebar").style.display = "block"
 
 }
 
-/* LOGOUT FUNCTION (PAGE LEVEL) */
+/* LOGOUT */
 async function logout(){
 
-let confirmLogout = confirm("Are you sure you want to logout?")
-if(!confirmLogout) return
+if(!confirm("Logout?")) return
 
 await supabaseClient.auth.signOut()
-
-window.location.href = "login.html"
+window.location.href="login.html"
 
 }
 
-/* INIT */
 document.addEventListener("DOMContentLoaded", loadUserInfo)
 
 </script>
+
 </body>
 </html>

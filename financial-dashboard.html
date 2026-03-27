@@ -314,17 +314,24 @@ if(netProfit<0) alertHTML+=`<div class="alert red">Loss</div>`
 
 document.getElementById("alerts").innerHTML=alertHTML
 
-if(window.monthlyChart) window.monthlyChart.destroy()
-if(window.profitChart) window.profitChart.destroy()
+// SAFE DESTROY (VERY IMPORTANT FIX)
+if(window.monthlyChart && typeof window.monthlyChart.destroy === "function"){
+    window.monthlyChart.destroy()
+}
 
+if(window.profitChart && typeof window.profitChart.destroy === "function"){
+    window.profitChart.destroy()
+}
+
+// CREATE CHARTS
 window.monthlyChart = new Chart(document.getElementById("monthlyChart"),{
-type:"line",
-data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
+    type:"line",
+    data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
 window.profitChart = new Chart(document.getElementById("profitChart"),{
-type:"bar",
-data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
+    type:"bar",
+    data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
 
@@ -348,7 +355,9 @@ let topClients = Object.entries(clientProfitMap || {})
 .sort((a,b)=>b[1]-a[1])
 .slice(0,5)
 
-if(window.clientChart) window.clientChart.destroy()
+if(window.clientChart && typeof window.clientChart.destroy === "function"){
+    window.clientChart.destroy()
+}
 
 window.clientChart=new Chart(document.getElementById("clientChart"),{
 type:"bar",
@@ -359,7 +368,9 @@ datasets:[{label:"Top Clients",data:topClients.map(x=>x[1])}]
 })
 
 /* 💰 CASHFLOW */
-if(window.cashflowChart) window.cashflowChart.destroy()
+if(window.cashflowChart && typeof window.cashflowChart.destroy === "function"){
+    window.cashflowChart.destroy()
+}
 
 window.cashflowChart=new Chart(document.getElementById("cashflowChart"),{
 type:"doughnut",

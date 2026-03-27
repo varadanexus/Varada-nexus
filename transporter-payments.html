@@ -9,66 +9,47 @@
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
-
 h2{color:#1f3c88;}
 
-.invoice-card{
+.card{
 background:white;
 margin-bottom:15px;
 border-radius:8px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 overflow:hidden;
 }
 
-.invoice-header{
+.header{
 padding:15px;
 background:#1f3c88;
 color:white;
 cursor:pointer;
 display:flex;
 justify-content:space-between;
-align-items:center;
 }
 
-.invoice-body{
+.content{
 display:none;
 padding:15px;
 }
 
-.trip-row{
+.row{
 display:flex;
 justify-content:space-between;
-padding:8px 0;
+padding:6px 0;
 border-bottom:1px solid #eee;
-font-size:14px;
-}
-
-.payment-row{
-font-size:13px;
-color:#555;
-margin-left:15px;
 }
 
 .green{color:green;font-weight:bold;}
 .red{color:red;font-weight:bold;}
-.orange{color:orange;font-weight:bold;}
-
-.balance-box{
-background:#fff;
-padding:10px;
-margin-bottom:15px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
-<script>
 <script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
@@ -76,16 +57,17 @@ fetch("transporter-sidebar.html")
 document.getElementById("sidebar-container").innerHTML=data
 })
 </script>
-</script>
 
 <div class="main">
 
 <h2>My Payments (Invoice View)</h2>
 
-<div class="balance-box">
+<div class="card">
+<div class="content" style="display:block">
 <b>Total Freight:</b> ₹ <span id="totalFreight">0</span> |
 <b>Total Paid:</b> ₹ <span id="totalPaid">0</span> |
-<b>Balance:</b> ₹ <span id="totalBalance">0</span>
+<b>Balance:</b> ₹ <span id="balance">0</span>
+</div>
 </div>
 
 <div id="invoiceContainer"></div>
@@ -96,161 +78,183 @@ document.getElementById("sidebar-container").innerHTML=data
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 
-init()
-
-async function init(){
-
+/* LOAD SIDEBAR USER */
+async function loadUserInfo(){
 const {data:{session}} = await supabaseClient.auth.getSession()
+
 if(!session){
 window.location.href="login.html"
 return
 }
 
-const authId=session.user.id
+document.getElementById("userName").innerText =
+session.user.email.split("@")[0]
+
+document.getElementById("sidebar").style.display="block"
+}
+document.addEventListener("DOMContentLoaded", loadUserInfo)
+
+/* MAIN INIT */
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
 
 /* TRANSPORTER */
-const {data:transporter}=await supabaseClient
+const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
+/* INVOICES */
+const {data:invoices} = await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.eq("transporter_id", transporter.id)
+
+/* PAYMENTS */
+let invoiceIds = invoices.map(i=>i.id)
+
+const {data:payments} = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("invoice_id", invoiceIds)
+
 /* TRIPS */
-const {data:trips}=await supabaseClient
+let allTripIds = []
+invoices.forEach(i=>{
+i.trip_ids.split(",").forEach(t=>allTripIds.push(t.trim()))
+})
+
+const {data:trips} = await supabaseClient
 .from("trips")
 .select("*")
-.eq("transporter_id",transporter.id)
+.in("id", allTripIds)
 
 /* EXPENSES */
-const {data:expenses}=await supabaseClient
+const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
 
 let expenseMap={}
 expenses.forEach(e=>{
-expenseMap[e.trip_id]=(expenseMap[e.trip_id]||0)+Number(e.amount||0)
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount||0)
 })
 
-/* INVOICES */
-const {data:invoices}=await supabaseClient
-.from("transporter_invoices")
-.select("*")
-.eq("transporter_id",transporter.id)
-.order("created_at",{ascending:false})
-
-/* PAYMENTS */
-let invoiceIds=invoices.map(i=>i.id)
-
-const {data:payments}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-.in("invoice_id",invoiceIds)
-
-/* GROUP PAYMENTS */
+/* PAYMENT MAP */
 let paymentMap={}
 payments.forEach(p=>{
-if(!paymentMap[p.invoice_id]) paymentMap[p.invoice_id]=[]
-paymentMap[p.invoice_id].push(p)
+if(!paymentMap[p.invoice_id]) paymentMap[p.invoice_id]=0
+paymentMap[p.invoice_id]+=Number(p.amount)
 })
 
 /* BUILD UI */
+
 let html=""
-let runningBalance=0
+let totalFreight=0
+let totalPaid=0
 
-let totalFreight=0,totalPaid=0
+invoices.forEach(inv=>{
 
-for(let inv of invoices){
+let tripIds = inv.trip_ids.split(",")
 
-let tripIds=(inv.trip_ids||"").split(",")
+let invTrips = trips.filter(t=>tripIds.includes(String(t.id)))
 
-/* GET TRIPS */
-let invTrips=trips.filter(t=>tripIds.includes(String(t.id)))
+let invFreight=0
 
-let invoiceTotal=Number(inv.total_amount||0)
-let invoicePaid=Number(inv.paid_amount||0)
+invTrips.forEach(t=>{
+let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
+let exp=expenseMap[t.id]||0
+invFreight += (freight-exp)
+})
 
-totalFreight+=invoiceTotal
-totalPaid+=invoicePaid
+let paid = paymentMap[inv.id] || 0
+let balance = invFreight - paid
 
-runningBalance += invoiceTotal
-runningBalance -= invoicePaid
+totalFreight += invFreight
+totalPaid += paid
 
 html+=`
-<div class="invoice-card">
+<div class="card">
 
-<div class="invoice-header" onclick="toggle('${inv.id}')">
+<div class="header" onclick="toggle(this)">
 <div>
 <b>${inv.invoice_no}</b><br>
-Amount: ₹${invoiceTotal.toFixed(0)} |
-Paid: ₹${invoicePaid.toFixed(0)} |
-Balance: ₹${inv.balance_amount.toFixed(0)}
+₹ ${invFreight.toFixed(0)}
 </div>
 
 <div>
-Running Balance: ₹${runningBalance.toFixed(0)}
+<span class="${balance<=0?'green':'red'}">
+${balance<=0?'Paid':'Pending'}
+</span><br>
+Bal: ₹ ${balance.toFixed(0)}
 </div>
 </div>
 
-<div class="invoice-body" id="body-${inv.id}">
+<div class="content">
+
+<b>Trips</b>
 `
 
-/* TRIPS */
 invTrips.forEach(t=>{
-
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-let expense=expenseMap[t.id]||0
-let net=freight-expense
-
-let ratio = invoiceTotal>0 ? net/invoiceTotal : 0
-let paidShare = invoicePaid * ratio
+let exp=expenseMap[t.id]||0
+let net=freight-exp
 
 html+=`
-<div class="trip-row">
-<div>
-${t.trip_no} <br>
-<span style="font-size:12px;color:#777;">
-Freight ₹${freight.toFixed(0)} | Expense ₹${expense.toFixed(0)}
-</span>
-</div>
-
-<div>
-Paid via ${inv.invoice_no}<br>
-₹ ${paidShare.toFixed(0)}
-</div>
-</div>
-`
-
-})
-
-/* PAYMENTS */
-html+=`<div style="margin-top:10px;"><b>Payments:</b></div>`
-
-;(paymentMap[inv.id]||[]).forEach(p=>{
-html+=`
-<div class="payment-row">
-${p.payment_date} → ₹${p.amount} (${p.payment_method})
+<div class="row">
+<span>${t.trip_no}</span>
+<span>₹ ${net.toFixed(0)}</span>
 </div>
 `
 })
 
-html+=`</div></div>`
-}
+html+=`<br><b>Payments</b>`
+
+payments
+.filter(p=>p.invoice_id==inv.id)
+.forEach(p=>{
+html+=`
+<div class="row">
+<span>${p.payment_date}</span>
+<span class="green">₹ ${p.amount}</span>
+</div>
+`
+})
+
+html+=`
+
+<div class="row"><b>Total</b><b>₹ ${invFreight.toFixed(0)}</b></div>
+<div class="row"><b>Paid</b><b class="green">₹ ${paid.toFixed(0)}</b></div>
+<div class="row"><b>Balance</b><b class="red">₹ ${balance.toFixed(0)}</b></div>
+
+</div>
+</div>
+`
+})
 
 document.getElementById("invoiceContainer").innerHTML=html
 
 document.getElementById("totalFreight").innerText=totalFreight.toFixed(0)
 document.getElementById("totalPaid").innerText=totalPaid.toFixed(0)
-document.getElementById("totalBalance").innerText=(totalFreight-totalPaid).toFixed(0)
+document.getElementById("balance").innerText=(totalFreight-totalPaid).toFixed(0)
 
 }
 
 /* TOGGLE */
-function toggle(id){
-let el=document.getElementById("body-"+id)
-el.style.display = el.style.display==="block"?"none":"block"
+function toggle(el){
+let content = el.nextElementSibling
+content.style.display =
+content.style.display==="block"?"none":"block"
 }
 
 </script>

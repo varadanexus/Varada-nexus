@@ -11,7 +11,6 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-/* NO UI CHANGES */
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{margin-left:220px;padding:25px;}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
@@ -40,7 +39,7 @@ th{color:#9ca3af;}
 if(!window.supabaseClient){
 window.supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 }
 </script>
@@ -78,9 +77,8 @@ window.location="login.html"
 <div id="alerts"></div>
 
 <div class="cards">
-
-<div class="card"><div class="kpi-title">Trips</div><div id="totalTrips" class="kpi-value"></div></div>
-<div class="card"><div class="kpi-title">Total MT</div><div id="totalMT" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Trips</div><div id="totalTrips"></div></div>
+<div class="card"><div class="kpi-title">Total MT</div><div id="totalMT"></div></div>
 
 <div class="card"><div class="kpi-title">Client Gross</div><div id="clientGross"></div></div>
 <div class="card"><div class="kpi-title">Client Invoiced</div><div id="invoiced"></div></div>
@@ -100,7 +98,6 @@ window.location="login.html"
 <div class="card"><div class="kpi-title">Agent Balance</div><div id="agentBalance"></div></div>
 
 <div class="card"><div class="kpi-title">Net Profit</div><div id="profit"></div></div>
-
 </div>
 
 <div class="charts">
@@ -171,10 +168,21 @@ expenses.forEach(e=>{
 expenseMap[e.trip_id]=(expenseMap[e.trip_id]||0)+(+e.amount||0)
 })
 
+/* ✅ FIXED INVOICE MAP (MULTI TRIP SUPPORT) */
 let invoiceMap={}
-invoices.forEach(i=>{
-invoiced+=+i.invoice_amount||0
-invoiceMap[i.trip_id]=(invoiceMap[i.trip_id]||0)+(+i.invoice_amount||0)
+
+invoices.forEach(inv=>{
+invoiced+=+inv.invoice_amount||0
+
+if(!inv.trips) return
+
+let tripList = inv.trips.split(",")
+let perTrip = (inv.invoice_amount||0)/tripList.length
+
+tripList.forEach(tripNo=>{
+let key = tripNo.trim()
+invoiceMap[key] = (invoiceMap[key]||0)+perTrip
+})
 })
 
 clientPayments.forEach(p=>paid+=+p.amount||0)
@@ -195,11 +203,11 @@ trips.forEach(t=>{
 let mt=(t.weight_kg||0)/1000
 totalMT+=mt
 
-let gross = (t.company_rate||0) * mt
-let tripExpense = expenseMap[t.id] || 0
-let finalBilling = gross - tripExpense
+let gross=(t.company_rate||0)*mt
+let tripExpense=expenseMap[t.id]||0
+let finalBilling=gross-tripExpense
 
-clientGross += finalBilling
+clientGross+=finalBilling
 
 let cost=(t.transporter_rate||0)*mt
 let netTransporter=cost-tripExpense
@@ -208,14 +216,18 @@ transporterCost+=netTransporter
 let profit=((t.company_rate||0)-(t.transporter_rate||0))*mt
 companyProfit+=profit
 
-let invoicedTrip = invoiceMap[t.id] || 0
-let mismatch = finalBilling - invoicedTrip
+/* ✅ FIXED */
+let invoicedTrip = invoiceMap[t.trip_no] || 0
 
-let status = ""
-if(Math.abs(mismatch) > 50){
-status = `<span style="color:red">⚠ Mismatch</span>`
-}else{
-status = `<span style="color:green">OK</span>`
+let status=""
+if(invoicedTrip===0){
+status=`<span style="color:orange">⏳ To Be Billed</span>`
+}
+else if(Math.abs(finalBilling-invoicedTrip)>50){
+status=`<span style="color:red">⚠ Mismatch</span>`
+}
+else{
+status=`<span style="color:green">OK</span>`
 }
 
 tripHTML+=`
@@ -252,29 +264,22 @@ let outstanding=invoiced-paid
 let transporterPayable=transporterCost-transporterPaid
 let agentBalance=agentTotal-agentPaid
 let netProfit=companyProfit-agentTotal
-
-let toBeBilled = clientGross - invoiced
+let toBeBilled=clientGross-invoiced
 
 set("totalTrips",totalTrips)
 set("totalMT",totalMT)
-
 set("clientGross",clientGross)
 set("invoiced",invoiced)
 set("toBeBilled",toBeBilled)
-
 set("paid",paid)
 set("outstanding",outstanding)
-
 set("transporterCost",transporterCost)
 set("transporterPaid",transporterPaid)
 set("transporterPayable",transporterPayable)
-
 set("companyProfit",companyProfit)
-
 set("agentTotal",agentTotal)
 set("agentPaid",agentPaid)
 set("agentBalance",agentBalance)
-
 set("profit",netProfit)
 
 /* ALERTS */
@@ -298,17 +303,14 @@ data:{labels:labels,datasets:[{label:"Profit/Trip",data:profitData}]}
 
 }
 
-/* DRILL DOWN */
 function showBreakdown(d){
-alert(
-`Trip: ${d.trip}
+alert(`Trip: ${d.trip}
 MT: ${d.mt}
 Gross: ₹${Math.round(d.gross)}
 Expenses: ₹${Math.round(d.tripExpense)}
 Final Billing: ₹${Math.round(d.finalBilling)}
 Invoiced: ₹${Math.round(d.invoicedTrip)}
-Profit: ₹${Math.round(d.profit)}`
-)
+Profit: ₹${Math.round(d.profit)}`)
 }
 
 function set(id,val){

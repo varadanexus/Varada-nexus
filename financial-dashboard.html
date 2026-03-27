@@ -219,6 +219,7 @@ trips.forEach(t=>{
 
 let mt=(t.weight_kg||0)/1000
 let exp=expenseMap[t.id]||0
+let gross = t.company_rate * mt
 
 let clientFinal=(t.company_rate*mt)-exp
 let transporterFinal=(t.transporter_rate*mt)-exp

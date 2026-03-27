@@ -111,6 +111,37 @@ window.location="login.html"
 </div>
 
 <div class="section">
+<h3>🚛 Fleet Expansion Model</h3>
+
+<div class="cards">
+<div class="card">
+<div class="kpi-title">Profit / Truck</div>
+<div id="profitPerTruck"></div>
+</div>
+
+<div class="card">
+<div class="kpi-title">1 Truck (Current)</div>
+<div id="fleet1"></div>
+</div>
+
+<div class="card">
+<div class="kpi-title">4 Trucks</div>
+<div id="fleet4"></div>
+</div>
+
+<div class="card">
+<div class="kpi-title">20 Trucks</div>
+<div id="fleet20"></div>
+</div>
+</div>
+
+<div class="chart-box">
+<canvas id="fleetChart"></canvas>
+</div>
+
+</div>
+    
+<div class="section">
 <h3>Trips</h3>
 <table>
 <thead><tr><th>Trip</th><th>Profit</th><th>Status</th></tr></thead>
@@ -426,7 +457,57 @@ data:[paid,outstanding]
 }]
 }
 })
-  
+
+/* 🚛 FLEET EXPANSION MODEL */
+
+// trips per day assumption (based on your input)
+let tripsPerDay = 3
+
+// calculate active days (simple assumption)
+let totalDays = 30
+
+// current trucks (you said 1)
+let currentTrucks = 1
+
+// profit per trip avg
+let avgProfitPerTrip = profitData.length
+    ? profitData.reduce((a,b)=>a+b,0)/profitData.length
+    : 0
+
+// profit per truck per day
+let profitPerTruckPerDay = avgProfitPerTrip * tripsPerDay
+
+// monthly profit per truck
+let profitPerTruck = profitPerTruckPerDay * totalDays
+
+// projections
+let fleet1 = profitPerTruck * 1
+let fleet4 = profitPerTruck * 4
+let fleet20 = profitPerTruck * 20
+
+// UI update
+set("profitPerTruck",profitPerTruck)
+set("fleet1",fleet1)
+set("fleet4",fleet4)
+set("fleet20",fleet20)
+
+/* 📊 FLEET CHART */
+
+if(window.fleetChart && typeof window.fleetChart.destroy === "function"){
+    window.fleetChart.destroy()
+}
+
+window.fleetChart = new Chart(document.getElementById("fleetChart"),{
+type:"bar",
+data:{
+labels:["1 Truck","4 Trucks","20 Trucks"],
+datasets:[{
+label:"Projected Monthly Profit",
+data:[fleet1,fleet4,fleet20]
+}]
+}
+})
+    
 }
 
 function set(id,val){

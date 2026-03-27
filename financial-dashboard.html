@@ -24,7 +24,6 @@ margin-left:220px;
 padding:25px;
 }
 
-/* HEADER */
 .header{
 display:flex;
 justify-content:space-between;
@@ -32,22 +31,12 @@ align-items:center;
 margin-bottom:20px;
 }
 
-.title{
-font-size:22px;
-font-weight:600;
-}
+.title{font-size:22px;font-weight:600;}
+.badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
 
-.badge{
-background:#22c55e;
-padding:6px 12px;
-border-radius:20px;
-font-size:12px;
-}
-
-/* KPI GRID */
 .cards{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
 gap:15px;
 margin-bottom:20px;
 }
@@ -56,42 +45,18 @@ margin-bottom:20px;
 background:#111827;
 padding:15px;
 border-radius:10px;
-cursor:pointer;
 transition:0.2s;
 }
 
-.card:hover{
-transform:translateY(-3px);
-}
+.card:hover{transform:translateY(-3px);}
 
-.kpi-title{
-font-size:12px;
-color:#9ca3af;
-}
+.kpi-title{font-size:12px;color:#9ca3af;}
+.kpi-value{font-size:18px;font-weight:600;margin-top:5px;}
 
-.kpi-value{
-font-size:20px;
-font-weight:600;
-margin-top:5px;
-}
-
-/* ALERTS */
-.alerts{
-margin-bottom:15px;
-}
-
-.alert{
-padding:10px;
-border-radius:6px;
-margin-bottom:6px;
-font-size:13px;
-}
-
+.alert{padding:10px;border-radius:6px;margin-bottom:6px;font-size:13px;}
 .red{background:#7f1d1d;}
 .yellow{background:#78350f;}
-.green{background:#14532d;}
 
-/* CHARTS */
 .charts{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -99,13 +64,8 @@ gap:20px;
 margin-bottom:20px;
 }
 
-.chart-box{
-background:#111827;
-padding:15px;
-border-radius:10px;
-}
+.chart-box{background:#111827;padding:15px;border-radius:10px;}
 
-/* TABLE */
 .section{
 background:#111827;
 padding:15px;
@@ -113,20 +73,9 @@ border-radius:10px;
 margin-bottom:20px;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-font-size:13px;
-}
-
-th,td{
-padding:8px;
-border-bottom:1px solid rgba(255,255,255,0.05);
-}
-
-th{
-color:#9ca3af;
-}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);}
+th{color:#9ca3af;}
 
 </style>
 
@@ -156,9 +105,7 @@ document.getElementById("sidebar").style.display="block"
 async function initSidebar(){
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
-
 document.getElementById("userName").innerText=session.user.email.split("@")[0]
-
 window.logout=async()=>{
 await supabaseClient.auth.signOut()
 window.location="login.html"
@@ -173,31 +120,35 @@ window.location="login.html"
 <div class="badge">LIVE</div>
 </div>
 
-<div id="alerts" class="alerts"></div>
+<div id="alerts"></div>
 
 <div class="cards">
 
-<div class="card" onclick="go('client-ledger.html')"><div class="kpi-title">Client Invoiced</div><div id="invoiced" class="kpi-value"></div></div>
-<div class="card" onclick="go('client-payments.html')"><div class="kpi-title">Client Paid</div><div id="paid" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Trips</div><div id="totalTrips" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Total MT</div><div id="totalMT" class="kpi-value"></div></div>
+
+<div class="card"><div class="kpi-title">Client Gross</div><div id="clientGross" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Client Invoiced</div><div id="invoiced" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Client Paid</div><div id="paid" class="kpi-value"></div></div>
 <div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding" class="kpi-value"></div></div>
 
 <div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost" class="kpi-value"></div></div>
-<div class="card"><div class="kpi-title">Transporter Payable</div><div id="transporterPayable" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Transporter Paid</div><div id="transporterPaid" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Transporter Pending</div><div id="transporterPayable" class="kpi-value"></div></div>
+
+<div class="card"><div class="kpi-title">Company Profit</div><div id="companyProfit" class="kpi-value"></div></div>
+
+<div class="card"><div class="kpi-title">Agent Total</div><div id="agentTotal" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Agent Paid</div><div id="agentPaid" class="kpi-value"></div></div>
+<div class="card"><div class="kpi-title">Agent Balance</div><div id="agentBalance" class="kpi-value"></div></div>
 
 <div class="card"><div class="kpi-title">Net Profit</div><div id="profit" class="kpi-value"></div></div>
 
 </div>
 
 <div class="charts">
-
-<div class="chart-box">
-<canvas id="monthlyChart"></canvas>
-</div>
-
-<div class="chart-box">
-<canvas id="profitChart"></canvas>
-</div>
-
+<div class="chart-box"><canvas id="monthlyChart"></canvas></div>
+<div class="chart-box"><canvas id="profitChart"></canvas></div>
 </div>
 
 <div class="section">
@@ -230,23 +181,33 @@ const [
 {data:invoices},
 {data:clientPayments},
 {data:transporterPayments},
-{data:transporters}
+{data:transporters},
+{data:agentLedger}
 ] = await Promise.all([
 supabaseClient.from("trips").select("*"),
 supabaseClient.from("expenses").select("*"),
 supabaseClient.from("client_invoices").select("*"),
 supabaseClient.from("client_payments").select("*"),
 supabaseClient.from("transporter_payments").select("*"),
-supabaseClient.from("transporters").select("*")
+supabaseClient.from("transporters").select("*"),
+supabaseClient.from("agent_trip_ledger").select("*")
 ])
 
-process(trips||[],expenses||[],invoices||[],clientPayments||[],transporterPayments||[],transporters||[])
+process(trips||[],expenses||[],invoices||[],clientPayments||[],transporterPayments||[],transporters||[],agentLedger||[])
 
 }
 
-function process(trips,expenses,invoices,clientPayments,transporterPayments,transporters){
+function process(trips,expenses,invoices,clientPayments,transporterPayments,transporters,agentLedger){
 
-let invoiced=0, paid=0, transporterCost=0, transporterPaid=0
+let totalTrips = trips.length
+let totalMT = 0
+
+let invoiced=0, paid=0
+let transporterCost=0, transporterPaid=0
+let clientGross=0
+let companyProfit=0
+
+let agentTotal=0, agentPaid=0
 
 let expenseMap={}
 expenses.forEach(e=>{
@@ -257,21 +218,32 @@ invoices.forEach(i=>invoiced+=+i.invoice_amount||0)
 clientPayments.forEach(p=>paid+=+p.amount||0)
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 
+agentLedger.forEach(a=>{
+agentTotal+=+a.commission_amount||0
+agentPaid+=+a.paid_amount||0
+})
+
 let tripHTML=""
 let transporterMap={}
 let profitData=[]
 let labels=[]
 
 trips.forEach(t=>{
+
 let mt=(t.weight_kg||0)/1000
+totalMT+=mt
+
+let gross=(t.company_rate||0)*mt
+clientGross+=gross
+
 let cost=(t.transporter_rate||0)*mt
 let exp=expenseMap[t.id]||0
-let net=cost-exp
 
-transporterCost+=net
+let netTransporter=cost-exp
+transporterCost+=netTransporter
 
-let revenue=(t.company_rate||0)*mt
-let profit=revenue-net
+let profit=((t.company_rate||0)-(t.transporter_rate||0))*mt
+companyProfit+=profit
 
 profitData.push(profit)
 labels.push(t.trip_no)
@@ -279,7 +251,8 @@ labels.push(t.trip_no)
 tripHTML+=`<tr><td>${t.trip_no}</td><td>₹ ${Math.round(profit)}</td></tr>`
 
 if(!transporterMap[t.transporter_id]) transporterMap[t.transporter_id]=0
-transporterMap[t.transporter_id]+=net
+transporterMap[t.transporter_id]+=netTransporter
+
 })
 
 document.getElementById("tripTable").innerHTML=tripHTML
@@ -296,25 +269,38 @@ transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transpo
 document.getElementById("transporterTable").innerHTML=transporterHTML
 
 let outstanding=invoiced-paid
-let payable=transporterCost-transporterPaid
-let profit=invoiced-transporterCost
+let transporterPayable=transporterCost-transporterPaid
+let agentBalance=agentTotal-agentPaid
 
+let netProfit=companyProfit-agentTotal
+
+set("totalTrips",totalTrips)
+set("totalMT",totalMT)
+
+set("clientGross",clientGross)
 set("invoiced",invoiced)
 set("paid",paid)
 set("outstanding",outstanding)
+
 set("transporterCost",transporterCost)
-set("transporterPayable",payable)
-set("profit",profit)
+set("transporterPaid",transporterPaid)
+set("transporterPayable",transporterPayable)
+
+set("companyProfit",companyProfit)
+
+set("agentTotal",agentTotal)
+set("agentPaid",agentPaid)
+set("agentBalance",agentBalance)
+
+set("profit",netProfit)
 
 /* ALERTS */
 let alertHTML=""
 if(outstanding>50000) alertHTML+=`<div class="alert red">High Client Outstanding</div>`
-if(payable>50000) alertHTML+=`<div class="alert yellow">High Transporter Payable</div>`
-if(profit<0) alertHTML+=`<div class="alert red">Company in Loss</div>`
+if(transporterPayable>50000) alertHTML+=`<div class="alert yellow">High Transporter Payable</div>`
+if(netProfit<0) alertHTML+=`<div class="alert red">Company in Loss</div>`
 
 document.getElementById("alerts").innerHTML=alertHTML
-
-/* CHARTS */
 
 new Chart(document.getElementById("monthlyChart"),{
 type:"line",
@@ -330,10 +316,6 @@ data:{labels:labels,datasets:[{label:"Profit/Trip",data:profitData}]}
 
 function set(id,val){
 document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
-}
-
-function go(page){
-window.location.href=page
 }
 
 </script>

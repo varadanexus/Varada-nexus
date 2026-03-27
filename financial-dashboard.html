@@ -149,13 +149,6 @@ window.location="login.html"
 </table>
 </div>
 
-<div class="section">
-<h3>Transporter Pending</h3>
-<table>
-<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
-<tbody id="transporterTable"></tbody>
-</table>
-</div>
 
 </div>
 
@@ -342,18 +335,7 @@ transporterMap[t.transporter_id]+=transporterFinal
 
 })
 
-document.getElementById("tripTable").innerHTML=tripHTML
 
-transporterPayments.forEach(p=>{
-transporterMap[p.transporter_id]-=+p.amount||0
-})
-
-let transporterHTML=""
-transporters.forEach(t=>{
-transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
-})
-
-document.getElementById("transporterTable").innerHTML=transporterHTML
 
 let outstanding=invoiced-paid
 let transporterPayable=transporterCost-transporterPaid

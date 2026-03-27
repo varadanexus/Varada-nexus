@@ -132,7 +132,48 @@ window.location="login.html"
 
 window.onload=init
 
+// REALTIME SUBSCRIPTIONS
+function setupRealtime(){
+
+if(window.realtimeInitialized) return
+window.realtimeInitialized = true
+
+const tables = [
+"trips",
+"expenses",
+"client_invoices",
+"invoice_trip_breakdown",
+"client_payments",
+"transporter_payments",
+"agent_trip_ledger"
+]
+
+tables.forEach(table=>{
+    supabaseClient
+    .channel(table)
+    .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: table },
+        payload => {
+            console.log(`⚡ Change detected in ${table}`)
+            clearTimeout(refreshTimer)
+refreshTimer = setTimeout(()=>init(),500)
+        }
+    )
+    .subscribe()
+})
+
+}
+
+// START REALTIME
+setupRealtime()
+
+let isLoading = false
+
 async function init(){
+
+if(isLoading) return
+isLoading = true
 
 const [
 {data:trips},
@@ -155,6 +196,8 @@ supabaseClient.from("agent_trip_ledger").select("*")
 ])
 
 process(trips||[],expenses||[],invoices||[],breakdown||[],clientPayments||[],transporterPayments||[],transporters||[],agentLedger||[])
+
+isLoading = false
 
 }
 
@@ -408,7 +451,14 @@ Profit: ₹${Math.round(d.profit)}
 function closePopup(){
 popup.style.display="none"
 }
-  
+
+// AUTO REFRESH EVERY 30 SECONDS
+setInterval(()=>{
+    console.log("🔄 Auto Refresh Triggered")
+    clearTimeout(refreshTimer)
+refreshTimer = setTimeout(()=>init(),500)
+},30000)
+
 </script>
 <div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
 <div style="background:#111827;padding:20px;border-radius:10px;width:300px;">

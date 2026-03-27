@@ -2,40 +2,43 @@
 <html>
 
 <head>
-<title>My Payments - Varada Nexus</title>
+<title>Transporter Payments - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
 .main{margin-left:220px;padding:30px;}
 
-h2{color:#1f3c88;}
-
-.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
 .card{
-background:white;padding:15px;border-radius:8px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);min-width:180px;
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-.card h4{margin:0;color:#777;font-size:13px;}
-.card h2{margin:5px 0;color:#1f3c88;}
+select,input{
+padding:10px;margin:5px;border:1px solid #ccc;border-radius:4px;
+}
 
-.filters{margin-bottom:15px;}
-.filters input,.filters select{padding:6px;margin-right:8px;}
+button{
+padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;
+margin-right:5px;
+}
+
+.deleteBtn{background:#d9534f;}
 
 table{width:100%;border-collapse:collapse;background:white;}
 th,td{padding:10px;border-bottom:1px solid #ddd;}
 th{background:#eee;}
 
-.paid{color:green;font-weight:bold;}
-.pending{color:red;font-weight:bold;}
-.partial{color:orange;font-weight:bold;}
-
-.progress-bar{height:6px;background:#ddd;border-radius:4px;}
-.progress-fill{height:100%;background:green;}
+.status-paid{color:green;font-weight:bold;}
+.status-pending{color:red;font-weight:bold;}
+.status-partial{color:orange;font-weight:bold;}
 </style>
 
 </head>
@@ -45,68 +48,163 @@ th{background:#eee;}
 <div id="sidebar-container"></div>
 
 <script>
-fetch("transporter-sidebar.html")
+
+/* ✅ STANDARD SIDEBAR (FIXED) */
+
+fetch("sidebar.html")
 .then(res=>res.text())
-.then(data=>{
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+await initSidebar()
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+document.getElementById("sidebar").style.display="block"
+
 })
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
+}
+
+/* LOGOUT */
+
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
 </script>
 
 <div class="main">
 
-<h2>My Payments Dashboard</h2>
+<h2>Transporter Payments</h2>
 
-<button onclick="downloadPDF()">Download PDF</button>
-
-<div class="cards">
-<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
-<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
-<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>
-<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>
+<div class="card">
+<h3>Select Transporter</h3>
+<select id="transporterSelect" onchange="loadTrips()"></select>
 </div>
 
-<div class="filters">
-From <input type="date" id="fromDate">
-To <input type="date" id="toDate">
+<div class="card">
+<h3>Select Trips</h3>
 
-<select id="statusFilter">
-<option value="">All</option>
-<option value="Paid">Paid</option>
-<option value="Partial">Partial</option>
-<option value="Pending">Pending</option>
-</select>
-
-<label><input type="checkbox" id="unpaidOnly"> Unpaid Only</label>
-
-<select id="pageSize" onchange="changePageSize()">
-<option value="12">12</option>
-<option value="25">25</option>
-<option value="50">50</option>
-<option value="100">100</option>
-</select>
-
-<button onclick="applyFilter()">Search</button>
-<button onclick="clearFilter()">Clear</button>
-</div>
+<label><input type="checkbox" onclick="toggleAll(this)"> Select All</label>
 
 <table>
 <thead>
 <tr>
+<th>Select</th>
 <th>Trip</th>
-<th>Freight</th>
+<th>Weight (KG)</th>
+<th>Gross</th>
 <th>Expenses</th>
+<th>Net</th>
+</tr>
+</thead>
+
+<tbody id="tripTable"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>Create Invoice</h3>
+
+<button onclick="generateInvoice()">Generate Invoice</button>
+<p id="invoicePreview"></p>
+
+<button onclick="saveInvoice()">Save Invoice</button>
+</div>
+
+<div class="card">
+<h3>Payment</h3>
+
+Invoice Amount:
+<select id="invoiceSelect" onchange="selectInvoiceFromDropdown()">
+<option value="">Select Invoice</option>
+</select>
+
+Enter Payment:
+<input id="paidAmount">
+
+<input type="date" id="paymentDate">
+
+<select id="paymentMethod">
+<option value="">Method</option>
+<option>Cash</option>
+<option>Bank Transfer</option>
+<option>UPI</option>
+</select>
+
+<input id="totalAmount" readonly placeholder="Invoice Amount">
+
+<p id="invoiceInfo"></p>
+  
+<button onclick="savePayment()">Save Payment</button>
+</div>
+
+<div class="card">
+
+<h3>Invoices</h3>
+
+<input id="searchInvoice" placeholder="Search Invoice" oninput="searchInvoices()">
+
+<table>
+<thead>
+<tr>
+<th>Invoice</th>
+<th>Trips</th>
+<th>Weight</th>
+<th>Amount</th>
 <th>Paid</th>
 <th>Balance</th>
 <th>Status</th>
-<th>Progress</th>
+<th>Actions</th>
 </tr>
 </thead>
-<tbody id="paymentTable"></tbody>
+
+<tbody id="invoiceTable"></tbody>
+
 </table>
 
-<div style="margin-top:15px;">
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
 </div>
 
 </div>
@@ -118,189 +216,688 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-let fullData=[]
-let filteredData=[]
-let invoices=[]
-let invoiceMap={}
-let expenseMap={}
+function selectInvoiceFromDropdown(){
+let id = invoiceSelect.value
+currentInvoice = invoices.find(i=>i.id==id)
 
-let page=1
-let pageSize=12
+if(currentInvoice){
+totalAmount.value = currentInvoice.total_amount
+
+invoiceInfo.innerHTML = `
+Total: ₹${currentInvoice.total_amount} <br>
+Paid: ₹${currentInvoice.paid_amount || 0} <br>
+Balance: ₹${currentInvoice.balance_amount}
+`
+}
+}
+  
+function formatCurrency(val){
+return Number(val || 0).toLocaleString("en-IN", {
+minimumFractionDigits: 2,
+maximumFractionDigits: 2
+})
+}
+  
+let transporters=[], trips=[], invoices=[]
+let selectedTrips=[]
+let invoiceAmount=0
+let currentInvoice=null
 
 init()
 
 async function init(){
-
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session){ window.location.href="login.html"; return }
-
-const authId = session.user.id
-
-/* GET TRANSPORTER */
-const {data:transporter} = await supabaseClient
-.from("transporters")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-/* GET TRIPS */
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id",transporter.id)
-
-/* GET INVOICES */
-const {data:inv} = await supabaseClient
-.from("transporter_invoices")
-.select("*")
-.eq("transporter_id",transporter.id)
-
-invoices = inv || []
-
-/* MAP TRIP → INVOICE */
-invoices.forEach(i=>{
-(i.trip_ids||"").split(",").forEach(tid=>{
-invoiceMap[tid.trim()] = i
-})
-})
-
-/* GET PAYMENTS */
-let invoiceIds=invoices.map(i=>i.id)
-let payments=[]
-
-if(invoiceIds.length){
-const {data:pay}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-.in("invoice_id",invoiceIds)
-payments=pay||[]
+await loadTransporters()
+await loadInvoices()
 }
 
-/* MAP INVOICE → PAID */
-let paymentMap={}
-payments.forEach(p=>{
-paymentMap[p.invoice_id]=(paymentMap[p.invoice_id]||0)+Number(p.amount||0)
+async function loadTransporters(){
+const {data}=await supabaseClient.from("transporters").select("*")
+transporterSelect.innerHTML='<option value="">Select</option>'+
+data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
+}
+
+async function loadTrips(){
+
+let id=transporterSelect.value
+if(!id) return
+
+const { data: tripData } = await supabaseClient
+  .from('trips')
+  .select(`
+    id,
+    trip_no,
+    transporter_rate,
+    weight_kg,
+    truck_id,
+    created_at,
+    expenses ( amount )
+  `)
+  .eq("transporter_id", id)
+
+const {data:inv}=await supabaseClient
+.from("transporter_invoices")
+.select("trip_ids")
+
+let usedTrips=[]
+inv?.forEach(i=>{
+i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
 })
 
-/* EXPENSES */
-const {data:expenses}=await supabaseClient.from("expenses").select("*")
-expenses.forEach(e=>{
-expenseMap[e.trip_id]=(expenseMap[e.trip_id]||0)+Number(e.amount||0)
+trips = (tripData || [])
+.filter(t=>!usedTrips.includes(String(t.id)))
+.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
+
+renderTrips()
+}
+
+function renderTrips(){
+
+tripTable.innerHTML = trips.map(t=>{
+
+const mt = (t.weight_kg || 0) / 1000
+
+const tripAmount = mt * (t.transporter_rate || 0)
+
+// ✅ calculate expenses
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+// ✅ FINAL amount after deduction
+const netAmount = tripAmount - totalExpenses
+
+return `
+<tr>
+<td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
+<td>${t.trip_no}</td>
+<td>${t.weight_kg}</td>
+<td>₹${tripAmount.toFixed(0)}</td>
+<td>₹${totalExpenses.toFixed(0)}</td>
+<td>₹${netAmount.toFixed(0)}</td>
+</tr>
+`
+}).join("")
+}
+
+function toggleAll(cb){
+document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
+}
+
+function generateInvoice(){
+
+let checked=document.querySelectorAll(".tripCheck:checked")
+
+if(!checked.length){
+alert("Select trips")
+return
+}
+
+selectedTrips=[]
+let total=0, weight=0
+
+checked.forEach(c=>{
+let t=trips.find(x=>x.id==c.value)
+selectedTrips.push(t)
+
+const mt = (t.weight_kg || 0) / 1000
+
+const tripAmount = mt * (t.transporter_rate || 0)
+
+// ✅ expenses
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+// ✅ net payable
+const netAmount = tripAmount - totalExpenses
+
+total += netAmount
+weight += Number(t.weight_kg||0)
 })
 
-trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
+invoiceAmount=total
+totalAmount.value=total.toFixed(0)
 
-let totalFreight=0,totalPaid=0,totalBalance=0
+invoicePreview.innerHTML=`
+Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
+Total Weight: ${weight} KG<br>
+<b>Amount: ₹${total}</b>
+`
+}
 
-fullData=trips.map(t=>{
+async function saveInvoice(){
 
-let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
-let expense=expenseMap[t.id]||0
-let net=freight-expense
+const { data } = await supabaseClient.from("transporter_invoices").insert({
+invoice_no:"TINV-"+Math.floor(Math.random()*100000),
+transporter_id:transporterSelect.value,
+trip_ids:selectedTrips.map(t=>t.id).join(","),
+total_amount:invoiceAmount,
+balance_amount:invoiceAmount,
+paid_amount:0,
+status:"Pending"
+}).select().single()
 
-let invoice=invoiceMap[t.id]
-let paid=invoice?paymentMap[invoice.id]||0:0
-let balance=net-paid
+currentInvoice=data
+
+alert("Invoice Created")
+
+loadTrips()
+loadInvoices()
+}
+
+async function savePayment(){
+
+let amount=Number(paidAmount.value)
+
+if(!currentInvoice){
+alert("Select invoice")
+return
+}
+
+await supabaseClient.from("transporter_payments").insert({
+invoice_id:currentInvoice.id,
+amount,
+payment_date:paymentDate.value,
+payment_method:paymentMethod.value
+})
+
+let paid=(currentInvoice.paid_amount||0)+amount
+let balance=currentInvoice.total_amount-paid
 
 let status="Pending"
 if(balance<=0) status="Paid"
 else if(paid>0) status="Partial"
 
-totalFreight+=net
-totalPaid+=paid
-totalBalance+=balance
-
-return {...t,freight,expense,paid,balance,status}
+await supabaseClient.from("transporter_invoices")
+.update({
+paid_amount:paid,
+balance_amount:balance,
+status
 })
+.eq("id",currentInvoice.id)
 
-filteredData=[...fullData]
+alert("Payment Saved")
 
-document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
-document.getElementById("totalPaid").innerText="₹ "+totalPaid.toFixed(0)
-document.getElementById("totalBalance").innerText="₹ "+totalBalance.toFixed(0)
-document.getElementById("collectionPercent").innerText=
-totalFreight?((totalPaid/totalFreight)*100).toFixed(1)+"%":"0%"
-
-renderTable()
+loadInvoices()
 }
 
-/* TABLE */
-function renderTable(){
+async function loadInvoices(){
 
-let start=(page-1)*pageSize
-let data=filteredData.slice(start,start+pageSize)
+const {data}=await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.order("created_at",{ascending:false})
+
+invoices=data||[]
+
+invoiceSelect.innerHTML = '<option value="">Select Invoice</option>' +
+invoices.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
+
+await renderInvoices(invoices)
+}
+
+/* 🔥 FIXED PART */
+async function renderInvoices(data){
 
 let html=""
 
-data.forEach(t=>{
-let percent=t.freight?(t.paid/t.freight)*100:0
+for(let i of data){
+
+let tripIds=i.trip_ids.split(",")
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select("trip_no,route,truck,trip_date,weight_kg")
+.in("id",tripIds)
+
+let tripDetails = tripData.map(t=>`
+${t.trip_no} | ${t.route||"-"} | ${t.truck||"-"} | ${t.trip_date||"-"} | ${t.weight_kg||0} KG
+`).join("<br>")
+
+let totalWeight = tripData.reduce((s,t)=>s+Number(t.weight_kg||0),0)
+
+let statusClass =
+i.status==="Paid"?"status-paid":
+i.status==="Partial"?"status-partial":"status-pending"
 
 html+=`
 <tr>
-<td>${t.trip_no}</td>
-<td>₹ ${t.freight.toFixed(0)}</td>
-<td>₹ ${t.expense.toFixed(0)}</td>
-<td>₹ ${t.paid.toFixed(0)}</td>
-<td>₹ ${t.balance.toFixed(0)}</td>
-<td class="${t.status==='Paid'?'paid':t.status==='Partial'?'partial':'pending'}">${t.status}</td>
+<td>${i.invoice_no}</td>
+<td>${tripDetails}</td>
+<td>${totalWeight} KG</td>
+<td>₹${i.total_amount}</td>
+<td>₹${i.paid_amount||0}</td>
+<td>₹${i.balance_amount}</td>
+<td class="${statusClass}">${i.status}</td>
 <td>
-<div class="progress-bar">
-<div class="progress-fill" style="width:${percent}%"></div>
-</div>
-${percent.toFixed(0)}%
+<button onclick="downloadInvoice('${i.id}',event)">PDF</button>
+<button onclick="editPayment('${i.id}',event)">Edit</button>
+<button class="deleteBtn" onclick="deletePayment('${i.id}',event)">Delete</button>
 </td>
-</tr>`
+</tr>
+`
+}
+
+invoiceTable.innerHTML=html
+}
+
+function searchInvoices(){
+let q=searchInvoice.value.toLowerCase()
+let filtered=invoices.filter(i=>i.invoice_no.toLowerCase().includes(q))
+renderInvoices(filtered)
+}
+
+function selectInvoice(id){
+currentInvoice=invoices.find(i=>i.id==id)
+totalAmount.value=currentInvoice.total_amount
+}
+
+async function editPayment(id,e){
+
+e.stopPropagation()
+
+let val=prompt("Enter new paid amount")
+if(!val) return
+
+let inv=invoices.find(i=>i.id==id)
+
+let paid=Number(val)
+let balance=inv.total_amount-paid
+
+let status="Pending"
+if(balance<=0) status="Paid"
+else if(paid>0) status="Partial"
+
+await supabaseClient
+.from("transporter_invoices")
+.update({
+paid_amount:paid,
+balance_amount:balance,
+status
+})
+.eq("id",id)
+
+alert("Updated")
+
+loadInvoices()
+}
+
+async function deletePayment(id,e){
+
+e.stopPropagation()
+
+if(!confirm("Delete full invoice? This cannot be undone")) return
+
+/* 1. DELETE PAYMENTS */
+await supabaseClient
+.from("transporter_payments")
+.delete()
+.eq("invoice_id",id)
+
+/* 2. DELETE INVOICE */
+await supabaseClient
+.from("transporter_invoices")
+.delete()
+.eq("id",id)
+
+alert("Invoice Deleted Completely")
+
+/* 3. REFRESH */
+loadTrips()
+loadInvoices()
+
+}
+
+async function downloadInvoice(id,e){
+
+e.stopPropagation()
+
+const { jsPDF } = window.jspdf
+let inv=invoices.find(i=>i.id==id)
+
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("transporter_name,gst_number,phone,address")
+.eq("id", inv.transporter_id)
+.single()
+
+/* 🔥 GET TRIP DETAILS */
+let tripIds = inv.trip_ids.split(",")
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select(`
+trip_no,
+route,
+truck,
+trip_date,
+weight_kg,
+transporter_rate,
+expenses ( amount )
+`)
+.in("id",tripIds)
+
+/* CALCULATIONS */
+let totalWeight = 0
+let tableRows = []
+let totalExpensesAll = 0
+
+tripData.forEach(t=>{
+
+let mt = (t.weight_kg||0)/1000
+
+let tripAmount = mt * (t.transporter_rate||0)
+
+const totalExpenses = (t.expenses || []).reduce(
+  (sum, e) => sum + (e.amount || 0),
+  0
+)
+
+let netAmount = tripAmount - totalExpenses
+
+totalWeight += mt
+totalExpensesAll += totalExpenses
+
+tableRows.push([
+t.trip_no,
+t.route || "-",
+t.truck || "-",
+t.trip_date || "-",
+(mt.toFixed(2)),
+formatCurrency(tripAmount),
+formatCurrency(totalExpenses),
+formatCurrency(netAmount)
+])
 })
 
-paymentTable.innerHTML=html
-}
-
-/* FILTER */
-function applyFilter(){
-let from=fromDate.value,to=toDate.value,status=statusFilter.value,unpaid=unpaidOnly.checked
-
-filteredData=fullData.filter(t=>{
-let d=new Date(t.trip_date)
-return (!from||d>=new Date(from)) &&
-(!to||d<=new Date(to)) &&
-(!status||t.status===status) &&
-(!unpaid||t.status!=="Paid")
-})
-
-page=1
-renderTable()
-}
-
-function clearFilter(){
-filteredData=[...fullData]
-page=1
-renderTable()
-}
-
-/* PAGINATION */
-function changePageSize(){pageSize=parseInt(pageSize.value);page=1;renderTable()}
-function nextPage(){if(page*pageSize<filteredData.length){page++;renderTable()}}
-function prevPage(){if(page>1){page--;renderTable()}}
-
-/* PDF */
-function downloadPDF(){
-const {jsPDF}=window.jspdf
+/* PDF START */
 let doc=new jsPDF()
 
-let rows=filteredData.map(r=>[
-r.trip_no,r.freight.toFixed(0),r.expense.toFixed(0),
-r.paid.toFixed(0),r.balance.toFixed(0),r.status
-])
+// 🔷 WATERMARK LOGO
+// 🔷 WATERMARK LOGO
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity: 0.05}))
+}
+doc.addImage("images/logo.png","PNG",40,80,120,120)
 
-doc.text("My Payments Report",14,15)
-doc.autoTable({
-head:[["Trip","Freight","Expenses","Paid","Balance","Status"]],
-body:rows,startY:20
-})
-
-doc.save("my-payments.pdf")
+// ✅ RESET IMMEDIATELY AFTER
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity: 1}))
 }
 
+/* 🔥 LOGO (PUT logo.png in same folder) */
+doc.addImage("images/logo.png","PNG",15,10,20,20)
+
+/* HEADER */
+doc.setFont("helvetica","bold")
+doc.setFontSize(14)
+doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(10)
+doc.text("Transporter Payment Statement",40,25)
+
+doc.setFontSize(9)
+doc.text("CIN: U43121AP2025PTC117741",40,31)
+doc.text("GST: 37AAKCV7495B1ZV",40,36)
+
+// 🔷 VERIFIED BADGE
+doc.setTextColor(0,120,0)
+doc.setFontSize(10)
+doc.text("✔ Digitally Verified", 150, 18)
+doc.setTextColor(0,0,0)
+
+/* INVOICE INFO */
+/* 🔷 RIGHT SIDE (Invoice Info) */
+doc.setFont("helvetica","bold")
+doc.text("Invoice No:",140,40)
+doc.setFont("helvetica","normal")
+doc.text(inv.invoice_no,170,40)
+
+doc.setFont("helvetica","bold")
+doc.text("Status:",140,47)
+doc.setFont("helvetica","normal")
+doc.text(inv.status,170,47)
+doc.setFont("helvetica","bold")
+doc.text("Date:",140,54)
+
+doc.setFont("helvetica","normal")
+doc.text(new Date().toLocaleDateString("en-IN"),170,54)
+
+
+
+/* 🔷 LEFT SIDE (Transporter Block) */
+let startX = 15
+let startY = 55
+
+doc.setFontSize(10)
+doc.setFont("helvetica","bold")
+doc.text("Transporter Details", startX, startY)
+
+doc.setFont("helvetica","normal")
+startY += 8
+
+doc.text("Name:", startX, startY)
+doc.text(transporter?.transporter_name || "-", startX + 30, startY)
+
+startY += 6
+doc.text("GST:", startX, startY)
+doc.text(transporter?.gst_number || "-", startX + 30, startY)
+
+startY += 6
+doc.text("Phone:", startX, startY)
+doc.text(transporter?.phone || "-", startX + 30, startY)
+
+startY += 6
+doc.text("Address:", startX, startY)
+
+startY += 5
+
+let address = transporter?.address || "-"
+
+// 🔥 split into proper lines
+let addressLines = doc.splitTextToSize(address, 70)
+
+// 🔥 print clean aligned block
+doc.text(addressLines, startX + 30, startY)
+
+// 🔥 move Y properly after full block
+startY += addressLines.length * 5
+
+doc.setDrawColor(200)
+doc.line(15, startY + 15, 195, startY + 15)
+  
+/* TABLE HEADER */
+startY = startY + 18
+
+doc.autoTable({
+startY: startY,
+head: [["Trip","Route","Truck","Date","Weight (MT)","Gross","Expenses","Net"]],
+body: tableRows,
+theme: "grid",
+
+headStyles: {
+fillColor: [22, 160, 133],   // teal green
+textColor: 255,
+fontStyle: "bold"
+},
+
+styles: {
+fontSize: 9,
+cellPadding: 3
+},
+
+alternateRowStyles: {
+fillColor: [245, 245, 245]
+}
+})
+
+/* TOTALS */
+let summaryY = doc.lastAutoTable.finalY + 10
+let summaryEndY = doc.lastAutoTable.finalY 
+
+let tableStartX = 15
+let tableEndX = 195
+let centerX = (tableStartX + tableEndX) / 2
+let stampY = doc.lastAutoTable.finalY - 35
+  
+
+
+doc.autoTable({
+startY: summaryY,
+margin: { left: 110 },
+tableWidth: 85,
+
+head: [["Summary", ""]],
+body: [
+["Total Weight", totalWeight.toFixed(2) + " MT"],
+["Total Amount", "Rs. " + formatCurrency(inv.total_amount)],
+["Expenses", "Rs. " + formatCurrency(totalExpensesAll)],
+["Paid", "Rs. " + formatCurrency(inv.paid_amount || 0)],
+["Balance", "Rs. " + formatCurrency(inv.balance_amount)]
+],
+
+theme: "grid",
+
+headStyles: {
+fillColor: [0, 102, 204],
+textColor: 255,
+fontStyle: "bold"
+},
+
+styles: {
+fontSize: 10,
+cellPadding: 4
+},
+
+columnStyles: {
+0: { fontStyle: "bold" },
+1: { halign: "right" }
+}
+})
+
+  
+/* 🔷 BANK DETAILS */
+let bankY = summaryY + 5
+
+doc.setDrawColor(180)
+doc.rect(15, bankY, 90, 40)
+
+doc.setFont("helvetica","bold")
+doc.setFontSize(10)
+doc.text("Bank Details",20,bankY+7)
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(9)
+
+doc.text("Bank: Axis Bank",20,bankY+14)
+doc.text("A/C No: 924020062188598",20,bankY+20)
+doc.text("IFSC: UTIB0000107",20,bankY+26)
+doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+
+/* STAMP */
+  
+if((inv.paid_amount || 0) >= inv.total_amount){
+
+let rectX = 20
+let rectW = 90
+let rectH = 35
+
+// 🔥 PERFECT GAP CONTROL
+let gapBelowBank = 8
+let rectY = bankY + 40 + gapBelowBank   // bank height = 40
+
+// 🔥 SAFETY: don’t touch footer
+let maxY = 270 - rectH - 5   // above signature/footer
+
+if(rectY > maxY){
+  rectY = maxY
+}
+
+let centerX = rectX + rectW / 2
+let centerY = rectY + rectH / 2
+
+doc.setDrawColor(0,150,0)
+doc.setTextColor(0,150,0)
+
+doc.setGState(new doc.GState({opacity: 0.25}))
+
+// box
+// 🔥 FIXED CENTER ROTATION
+doc.setFontSize(28)
+doc.setFont("helvetica","bold")
+
+let text = "PAID"
+
+// measure width
+let textWidth = doc.getTextWidth(text)
+
+// 🔥 adjust BEFORE rotation
+let adjustedX = centerX - (textWidth / 2)
+let adjustedY = centerY + 6   // tweak if needed (5–8 range)
+
+// draw rotated text
+doc.text(text, adjustedX, adjustedY, {
+  angle: 20
+})
+
+// reset
+doc.setGState(new doc.GState({opacity: 1}))
+doc.setTextColor(0,0,0)
+}
+
+  
+/* 🔷 SIGNATURE */
+// 🔷 SIGNATURE AT BOTTOM RIGHT (FIXED POSITION)
+let signY = 270   // 🔥 bottom area (A4 height ~297)
+
+doc.setDrawColor(0)
+
+// Line
+doc.line(130, signY, 195, signY)
+
+// Text above line
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signY - 3, { align: "center" })
+  
+/* FOOTER */
+doc.setFont("helvetica","normal")
+doc.setFontSize(10)
+doc.setFontSize(9)
+doc.text("This is a system generated document. No signature required.",15,285)
+doc.text("Payment has been processed successfully.",15,292)
+
+// 🔷 QR CODE (Payment Proof)
+let qrData = `INV:${inv.invoice_no} | AMT:${inv.total_amount} | PAID:${inv.paid_amount || 0} | STATUS:${inv.status}`
+
+let qrDiv = document.createElement("div")
+
+new QRCode(qrDiv, {
+text: qrData,
+width: 80,
+height: 80
+})
+
+// ⏳ Wait for QR to render
+setTimeout(() => {
+
+let qrCanvas = qrDiv.querySelector("canvas")
+
+if(qrCanvas){
+let qrImg = qrCanvas.toDataURL()
+doc.addImage(qrImg, "PNG", 155, 65, 35, 35)
+}
+
+// ✅ SAVE ONLY AFTER QR IS READY
+doc.save(inv.invoice_no + ".pdf")
+
+}, 300)
+
+// 🚫 STOP function here
+return
+}
 </script>
 
 </body>

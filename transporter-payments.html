@@ -5,8 +5,6 @@
 <title>My Payments - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9;}
@@ -14,30 +12,56 @@ body{margin:0;font-family:Arial;background:#f4f6f9;}
 
 h2{color:#1f3c88;}
 
-.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
-.card{
-background:white;padding:15px;border-radius:8px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);min-width:180px;
+.invoice-card{
+background:white;
+margin-bottom:15px;
+border-radius:8px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+overflow:hidden;
 }
 
-.card h4{margin:0;color:#777;font-size:13px;}
-.card h2{margin:5px 0;color:#1f3c88;}
+.invoice-header{
+padding:15px;
+background:#1f3c88;
+color:white;
+cursor:pointer;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
-.filters{margin-bottom:15px;}
-.filters input,.filters select{padding:6px;margin-right:8px;}
+.invoice-body{
+display:none;
+padding:15px;
+}
 
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
+.trip-row{
+display:flex;
+justify-content:space-between;
+padding:8px 0;
+border-bottom:1px solid #eee;
+font-size:14px;
+}
 
-.paid{color:green;font-weight:bold;}
-.pending{color:red;font-weight:bold;}
-.partial{color:orange;font-weight:bold;}
+.payment-row{
+font-size:13px;
+color:#555;
+margin-left:15px;
+}
 
-.progress-bar{height:6px;background:#ddd;border-radius:4px;}
-.progress-fill{height:100%;background:green;}
+.green{color:green;font-weight:bold;}
+.red{color:red;font-weight:bold;}
+.orange{color:orange;font-weight:bold;}
+
+.balance-box{
+background:#fff;
+padding:10px;
+margin-bottom:15px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
 </style>
-
 </head>
 
 <body>
@@ -54,60 +78,15 @@ document.getElementById("sidebar-container").innerHTML=data
 
 <div class="main">
 
-<h2>My Payments Dashboard</h2>
+<h2>My Payments (Invoice View)</h2>
 
-<button onclick="downloadPDF()">Download PDF</button>
-
-<div class="cards">
-<div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
-<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
-<div class="card"><h4>Outstanding</h4><h2 id="totalBalance">₹0</h2></div>
-<div class="card"><h4>Collection %</h4><h2 id="collectionPercent">0%</h2></div>
+<div class="balance-box">
+<b>Total Freight:</b> ₹ <span id="totalFreight">0</span> |
+<b>Total Paid:</b> ₹ <span id="totalPaid">0</span> |
+<b>Balance:</b> ₹ <span id="totalBalance">0</span>
 </div>
 
-<div class="filters">
-From <input type="date" id="fromDate">
-To <input type="date" id="toDate">
-
-<select id="statusFilter">
-<option value="">All</option>
-<option value="Paid">Paid</option>
-<option value="Partial">Partial</option>
-<option value="Pending">Pending</option>
-</select>
-
-<label><input type="checkbox" id="unpaidOnly"> Unpaid Only</label>
-
-<select id="pageSize" onchange="changePageSize()">
-<option value="12">12</option>
-<option value="25">25</option>
-<option value="50">50</option>
-<option value="100">100</option>
-</select>
-
-<button onclick="applyFilter()">Search</button>
-<button onclick="clearFilter()">Clear</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Trip</th>
-<th>Freight</th>
-<th>Expenses</th>
-<th>Paid</th>
-<th>Balance</th>
-<th>Status</th>
-<th>Progress</th>
-</tr>
-</thead>
-<tbody id="paymentTable"></tbody>
-</table>
-
-<div style="margin-top:15px;">
-<button onclick="prevPage()">Previous</button>
-<button onclick="nextPage()">Next</button>
-</div>
+<div id="invoiceContainer"></div>
 
 </div>
 
@@ -115,190 +94,161 @@ To <input type="date" id="toDate">
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_KEY"
 )
-
-let fullData=[]
-let filteredData=[]
-let invoices=[]
-let invoiceMap={}
-let expenseMap={}
-
-let page=1
-let pageSize=12
 
 init()
 
 async function init(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session){ window.location.href="login.html"; return }
+if(!session){
+window.location.href="login.html"
+return
+}
 
-const authId = session.user.id
+const authId=session.user.id
 
-/* GET TRANSPORTER */
-const {data:transporter} = await supabaseClient
+/* TRANSPORTER */
+const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
-/* GET TRIPS */
-const {data:trips} = await supabaseClient
+/* TRIPS */
+const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
 
-/* GET INVOICES */
-const {data:inv} = await supabaseClient
-.from("transporter_invoices")
-.select("*")
-.eq("transporter_id",transporter.id)
-
-invoices = inv || []
-
-/* MAP TRIP → INVOICE */
-invoices.forEach(i=>{
-(i.trip_ids||"").split(",").forEach(tid=>{
-invoiceMap[tid.trim()] = i
-})
-})
-
-/* GET PAYMENTS */
-let invoiceIds=invoices.map(i=>i.id)
-let payments=[]
-
-if(invoiceIds.length){
-const {data:pay}=await supabaseClient
-.from("transporter_payments")
-.select("*")
-.in("invoice_id",invoiceIds)
-payments=pay||[]
-}
-
-/* MAP INVOICE → PAID */
-let paymentMap={}
-payments.forEach(p=>{
-paymentMap[p.invoice_id]=(paymentMap[p.invoice_id]||0)+Number(p.amount||0)
-})
-
 /* EXPENSES */
-const {data:expenses}=await supabaseClient.from("expenses").select("*")
+const {data:expenses}=await supabaseClient
+.from("expenses")
+.select("*")
+
+let expenseMap={}
 expenses.forEach(e=>{
 expenseMap[e.trip_id]=(expenseMap[e.trip_id]||0)+Number(e.amount||0)
 })
 
-trips.sort((a,b)=> new Date(b.created_at||b.trip_date)-new Date(a.created_at||a.trip_date))
+/* INVOICES */
+const {data:invoices}=await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.eq("transporter_id",transporter.id)
+.order("created_at",{ascending:false})
 
-let totalFreight=0,totalPaid=0,totalBalance=0
+/* PAYMENTS */
+let invoiceIds=invoices.map(i=>i.id)
 
-fullData=trips.map(t=>{
+const {data:payments}=await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("invoice_id",invoiceIds)
+
+/* GROUP PAYMENTS */
+let paymentMap={}
+payments.forEach(p=>{
+if(!paymentMap[p.invoice_id]) paymentMap[p.invoice_id]=[]
+paymentMap[p.invoice_id].push(p)
+})
+
+/* BUILD UI */
+let html=""
+let runningBalance=0
+
+let totalFreight=0,totalPaid=0
+
+for(let inv of invoices){
+
+let tripIds=(inv.trip_ids||"").split(",")
+
+/* GET TRIPS */
+let invTrips=trips.filter(t=>tripIds.includes(String(t.id)))
+
+let invoiceTotal=Number(inv.total_amount||0)
+let invoicePaid=Number(inv.paid_amount||0)
+
+totalFreight+=invoiceTotal
+totalPaid+=invoicePaid
+
+runningBalance += invoiceTotal
+runningBalance -= invoicePaid
+
+html+=`
+<div class="invoice-card">
+
+<div class="invoice-header" onclick="toggle('${inv.id}')">
+<div>
+<b>${inv.invoice_no}</b><br>
+Amount: ₹${invoiceTotal.toFixed(0)} |
+Paid: ₹${invoicePaid.toFixed(0)} |
+Balance: ₹${inv.balance_amount.toFixed(0)}
+</div>
+
+<div>
+Running Balance: ₹${runningBalance.toFixed(0)}
+</div>
+</div>
+
+<div class="invoice-body" id="body-${inv.id}">
+`
+
+/* TRIPS */
+invTrips.forEach(t=>{
 
 let freight=(t.weight_kg/1000)*(t.transporter_rate||0)
 let expense=expenseMap[t.id]||0
 let net=freight-expense
 
-let invoice=invoiceMap[t.id]
-let paid=invoice?paymentMap[invoice.id]||0:0
-let balance=net-paid
-
-let status="Pending"
-if(balance<=0) status="Paid"
-else if(paid>0) status="Partial"
-
-totalFreight+=net
-totalPaid+=paid
-totalBalance+=balance
-
-return {...t,freight,expense,paid,balance,status}
-})
-
-filteredData=[...fullData]
-
-document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
-document.getElementById("totalPaid").innerText="₹ "+totalPaid.toFixed(0)
-document.getElementById("totalBalance").innerText="₹ "+totalBalance.toFixed(0)
-document.getElementById("collectionPercent").innerText=
-totalFreight?((totalPaid/totalFreight)*100).toFixed(1)+"%":"0%"
-
-renderTable()
-}
-
-/* TABLE */
-function renderTable(){
-
-let start=(page-1)*pageSize
-let data=filteredData.slice(start,start+pageSize)
-
-let html=""
-
-data.forEach(t=>{
-let percent=t.freight?(t.paid/t.freight)*100:0
+let ratio = invoiceTotal>0 ? net/invoiceTotal : 0
+let paidShare = invoicePaid * ratio
 
 html+=`
-<tr>
-<td>${t.trip_no}</td>
-<td>₹ ${t.freight.toFixed(0)}</td>
-<td>₹ ${t.expense.toFixed(0)}</td>
-<td>₹ ${t.paid.toFixed(0)}</td>
-<td>₹ ${t.balance.toFixed(0)}</td>
-<td class="${t.status==='Paid'?'paid':t.status==='Partial'?'partial':'pending'}">${t.status}</td>
-<td>
-<div class="progress-bar">
-<div class="progress-fill" style="width:${percent}%"></div>
+<div class="trip-row">
+<div>
+${t.trip_no} <br>
+<span style="font-size:12px;color:#777;">
+Freight ₹${freight.toFixed(0)} | Expense ₹${expense.toFixed(0)}
+</span>
 </div>
-${percent.toFixed(0)}%
-</td>
-</tr>`
+
+<div>
+Paid via ${inv.invoice_no}<br>
+₹ ${paidShare.toFixed(0)}
+</div>
+</div>
+`
+
 })
 
-paymentTable.innerHTML=html
-}
+/* PAYMENTS */
+html+=`<div style="margin-top:10px;"><b>Payments:</b></div>`
 
-/* FILTER */
-function applyFilter(){
-let from=fromDate.value,to=toDate.value,status=statusFilter.value,unpaid=unpaidOnly.checked
-
-filteredData=fullData.filter(t=>{
-let d=new Date(t.trip_date)
-return (!from||d>=new Date(from)) &&
-(!to||d<=new Date(to)) &&
-(!status||t.status===status) &&
-(!unpaid||t.status!=="Paid")
+;(paymentMap[inv.id]||[]).forEach(p=>{
+html+=`
+<div class="payment-row">
+${p.payment_date} → ₹${p.amount} (${p.payment_method})
+</div>
+`
 })
 
-page=1
-renderTable()
+html+=`</div></div>`
 }
 
-function clearFilter(){
-filteredData=[...fullData]
-page=1
-renderTable()
+document.getElementById("invoiceContainer").innerHTML=html
+
+document.getElementById("totalFreight").innerText=totalFreight.toFixed(0)
+document.getElementById("totalPaid").innerText=totalPaid.toFixed(0)
+document.getElementById("totalBalance").innerText=(totalFreight-totalPaid).toFixed(0)
+
 }
 
-/* PAGINATION */
-function changePageSize(){pageSize=parseInt(pageSize.value);page=1;renderTable()}
-function nextPage(){if(page*pageSize<filteredData.length){page++;renderTable()}}
-function prevPage(){if(page>1){page--;renderTable()}}
-
-/* PDF */
-function downloadPDF(){
-const {jsPDF}=window.jspdf
-let doc=new jsPDF()
-
-let rows=filteredData.map(r=>[
-r.trip_no,r.freight.toFixed(0),r.expense.toFixed(0),
-r.paid.toFixed(0),r.balance.toFixed(0),r.status
-])
-
-doc.text("My Payments Report",14,15)
-doc.autoTable({
-head:[["Trip","Freight","Expenses","Paid","Balance","Status"]],
-body:rows,startY:20
-})
-
-doc.save("my-payments.pdf")
+/* TOGGLE */
+function toggle(id){
+let el=document.getElementById("body-"+id)
+el.style.display = el.style.display==="block"?"none":"block"
 }
 
 </script>

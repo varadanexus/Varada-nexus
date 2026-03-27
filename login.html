@@ -229,10 +229,25 @@ await supabaseClient
 localStorage.setItem("erp_session_token",token)
 
 /* REDIRECT */
+// ROLE BASED DASHBOARD ROUTING
+
 if(roleName.includes("transporter") || roleName.includes("customer")){
-window.location.href="transporter-dashboard.html"
-}else{
-window.location.href="dashboard.html"
+    window.location.href="transporter-dashboard.html"
+}
+
+// 👉 ADMIN + MANAGER → NEW DASHBOARD
+else if(roleName.includes("admin") || roleName.includes("manager")){
+    window.location.href="financial-dashboard.html"
+}
+
+// 👉 OPERATOR → OLD DASHBOARD
+else if(roleName.includes("operator")){
+    window.location.href="dashboard.html"
+}
+
+// 👉 fallback
+else{
+    window.location.href="dashboard.html"
 }
 
 }

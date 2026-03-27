@@ -9,61 +9,25 @@
 
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
-<script src="rbac.js"></script>
-<script src="global-logout.js"></script>
 
 <style>
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{margin-left:220px;padding:25px;}
-
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .title{font-size:22px;font-weight:600;}
 .badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
-
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:15px;margin-bottom:20px;
-}
-
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px;}
 .card{background:#111827;padding:15px;border-radius:10px;}
-
 .kpi-title{font-size:12px;color:#9ca3af;}
 .kpi-value{font-size:18px;font-weight:600;margin-top:5px;}
-
-.charts{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-bottom:20px;
-}
-
-.chart-box{
-background:#111827;
-padding:15px;
-border-radius:10px;
-height:300px;
-}
-
-.chart-box canvas{
-height:100% !important;
-width:100% !important;
-}
-
+.alert{padding:10px;border-radius:6px;margin-bottom:6px;font-size:13px;}
+.red{background:#7f1d1d;} .yellow{background:#78350f;} .green{background:#14532d;}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.chart-box{background:#111827;padding:15px;border-radius:10px;}
 .section{background:#111827;padding:15px;border-radius:10px;margin-bottom:20px;}
-
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);}
 th{color:#9ca3af;}
-
-.heat-high{background:#7f1d1d;}
-.heat-mid{background:#78350f;}
-.heat-low{background:#14532d;}
-
-@media(max-width:768px){
-.main{margin-left:0;padding:10px;}
-.charts{grid-template-columns:1fr;}
-}
 </style>
 
 </head>
@@ -73,7 +37,7 @@ th{color:#9ca3af;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"YOUR_ANON_KEY"
 )
 </script>
 
@@ -107,18 +71,35 @@ window.location="login.html"
 <div class="badge">LIVE</div>
 </div>
 
+<div id="alerts"></div>
+
 <div class="cards">
 <div class="card"><div class="kpi-title">Trips</div><div id="totalTrips"></div></div>
+<div class="card"><div class="kpi-title">Total MT</div><div id="totalMT"></div></div>
+
 <div class="card"><div class="kpi-title">Client Gross</div><div id="clientGross"></div></div>
-<div class="card"><div class="kpi-title">Invoiced</div><div id="invoiced"></div></div>
+<div class="card"><div class="kpi-title">Client Invoiced</div><div id="invoiced"></div></div>
+<div class="card"><div class="kpi-title">To Be Billed</div><div id="toBeBilled"></div></div>
+
+<div class="card"><div class="kpi-title">Client Paid</div><div id="paid"></div></div>
 <div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding"></div></div>
-<div class="card"><div class="kpi-title">Profit</div><div id="profit"></div></div>
+
+<div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost"></div></div>
+<div class="card"><div class="kpi-title">Transporter Paid</div><div id="transporterPaid"></div></div>
+<div class="card"><div class="kpi-title">Transporter Pending</div><div id="transporterPayable"></div></div>
+
+<div class="card"><div class="kpi-title">Company Profit</div><div id="companyProfit"></div></div>
+
+<div class="card"><div class="kpi-title">Agent Total</div><div id="agentTotal"></div></div>
+<div class="card"><div class="kpi-title">Agent Paid</div><div id="agentPaid"></div></div>
+<div class="card"><div class="kpi-title">Agent Balance</div><div id="agentBalance"></div></div>
+
+<div class="card"><div class="kpi-title">Net Profit</div><div id="profit"></div></div>
 </div>
 
 <div class="charts">
+<div class="chart-box"><canvas id="monthlyChart"></canvas></div>
 <div class="chart-box"><canvas id="profitChart"></canvas></div>
-<div class="chart-box"><canvas id="clientChart"></canvas></div>
-<div class="chart-box"><canvas id="cashflowChart"></canvas></div>
 </div>
 
 <div class="section">
@@ -129,21 +110,17 @@ window.location="login.html"
 </table>
 </div>
 
+<div class="section">
+<h3>Transporter Pending</h3>
+<table>
+<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
+<tbody id="transporterTable"></tbody>
+</table>
 </div>
 
-<!-- POPUP -->
-<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
-<div style="background:#111827;padding:20px;border-radius:10px;width:300px;">
-<h3>Trip Breakdown</h3>
-<div id="popupContent"></div>
-<br>
-<button onclick="closePopup()">Close</button>
-</div>
 </div>
 
 <script>
-
-let profitChart, clientChart, cashflowChart
 
 window.onload=init
 
@@ -154,20 +131,28 @@ const [
 {data:expenses},
 {data:invoices},
 {data:breakdown},
-{data:clientPayments}
+{data:clientPayments},
+{data:transporterPayments},
+{data:transporters},
+{data:agentLedger}
 ] = await Promise.all([
 supabaseClient.from("trips").select("*"),
 supabaseClient.from("expenses").select("*"),
 supabaseClient.from("client_invoices").select("*"),
 supabaseClient.from("invoice_trip_breakdown").select("*"),
-supabaseClient.from("client_payments").select("*")
+supabaseClient.from("client_payments").select("*"),
+supabaseClient.from("transporter_payments").select("*"),
+supabaseClient.from("transporters").select("*"),
+supabaseClient.from("agent_trip_ledger").select("*")
 ])
 
-process(trips||[],expenses||[],invoices||[],breakdown||[],clientPayments||[])
+process(trips||[],expenses||[],invoices||[],breakdown||[],clientPayments||[],transporterPayments||[],transporters||[],agentLedger||[])
 
 }
 
-function process(trips,expenses,invoices,breakdown,clientPayments){
+function process(trips,expenses,invoices,breakdown,clientPayments,transporterPayments,transporters,agentLedger){
+
+trips.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
 
 let expenseMap={}
 expenses.forEach(e=>{
@@ -179,16 +164,50 @@ breakdown.forEach(b=>{
 invoiceMap[b.trip_no]=(invoiceMap[b.trip_no]||0)+(+b.amount||0)
 })
 
-let totalTrips=trips.length
-let clientGross=0, invoiced=0, paid=0
-let profitTotal=0
+let totalTrips=trips.length,totalMT=0
+let invoiced=0,paid=0,transporterPaid=0
+let transporterCost=0,clientGross=0,companyProfit=0
+let agentTotal=0,agentPaid=0
 
 invoices.forEach(i=>invoiced+=+i.invoice_amount||0)
 clientPayments.forEach(p=>paid+=+p.amount||0)
+transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
+agentLedger.forEach(a=>{
+agentTotal+=+a.commission_amount||0
+agentPaid+=+a.paid_amount||0
+})
 
-let tripHTML=""
-let clientProfitMap={}
-let profitArr=[],labels=[]
+let tripHTML="",profitData=[],labels=[]
+let transporterMap={},clientBillingMap={},clientInvoiceMap={}
+
+/* CLIENT INVOICE MAP */
+breakdown.forEach(b=>{
+let t=trips.find(x=>x.trip_no==b.trip_no)
+if(t?.client_name){
+clientInvoiceMap[t.client_name]=(clientInvoiceMap[t.client_name]||0)+(+b.amount||0)
+}
+})
+
+let values=[]
+
+trips.forEach(t=>{
+let mt=(t.weight_kg||0)/1000
+totalMT+=mt
+
+let gross=t.company_rate*mt
+let exp=expenseMap[t.id]||0
+let final=gross-exp
+
+clientGross+=final
+
+if(t.client_name){
+clientBillingMap[t.client_name]=(clientBillingMap[t.client_name]||0)+final
+}
+
+values.push(final)
+})
+
+let cutoff=[...values].sort((a,b)=>b-a)[Math.floor(values.length*0.2)]||0
 
 trips.forEach(t=>{
 
@@ -197,88 +216,105 @@ let exp=expenseMap[t.id]||0
 
 let clientFinal=(t.company_rate*mt)-exp
 let transporterFinal=(t.transporter_rate*mt)-exp
+
+transporterCost+=transporterFinal
+
 let profit=clientFinal-transporterFinal
+companyProfit+=profit
 
-clientGross+=clientFinal
-profitTotal+=profit
+let inv=invoiceMap[t.trip_no]||0
 
-clientProfitMap[t.client_name]=(clientProfitMap[t.client_name]||0)+profit
+let status=""
+if(inv===0){
+status=clientFinal>=cutoff?"<span style='color:red'>🔥 High</span>":"<span style='color:orange'>To Bill</span>"
+}
+else if(Math.abs(clientFinal-inv)>50){
+status="<span style='color:red'>Mismatch</span>"
+}
+else{
+status="<span style='color:green'>OK</span>"
+}
 
-let heat="heat-low"
-if(profit>2000) heat="heat-high"
-else if(profit>1000) heat="heat-mid"
-
-tripHTML+=`
-<tr class="${heat}" onclick='showBreakdown(${JSON.stringify({
-trip:t.trip_no,profit
-}).replace(/'/g,"")})'>
+tripHTML+=`<tr>
 <td>${t.trip_no}</td>
 <td>₹ ${Math.round(profit)}</td>
-<td>${profit>1500?"🔥 High":"OK"}</td>
+<td>${status}</td>
 </tr>`
 
-profitArr.push(profit)
+profitData.push(profit)
 labels.push(t.trip_no)
 
+if(!transporterMap[t.transporter_id]) transporterMap[t.transporter_id]=0
+transporterMap[t.transporter_id]+=transporterFinal
+
 })
 
-tripTable.innerHTML=tripHTML
+document.getElementById("tripTable").innerHTML=tripHTML
+
+transporterPayments.forEach(p=>{
+transporterMap[p.transporter_id]-=+p.amount||0
+})
+
+let transporterHTML=""
+transporters.forEach(t=>{
+transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
+})
+
+document.getElementById("transporterTable").innerHTML=transporterHTML
+
+let outstanding=invoiced-paid
+let transporterPayable=transporterCost-transporterPaid
+let agentBalance=agentTotal-agentPaid
+let netProfit=companyProfit-agentTotal
+let toBeBilled=clientGross-invoiced
 
 set("totalTrips",totalTrips)
+set("totalMT",totalMT)
 set("clientGross",clientGross)
 set("invoiced",invoiced)
-set("outstanding",invoiced-paid)
-set("profit",profitTotal)
+set("toBeBilled",toBeBilled)
+set("paid",paid)
+set("outstanding",outstanding)
+set("transporterCost",transporterCost)
+set("transporterPaid",transporterPaid)
+set("transporterPayable",transporterPayable)
+set("companyProfit",companyProfit)
+set("agentTotal",agentTotal)
+set("agentPaid",agentPaid)
+set("agentBalance",agentBalance)
+set("profit",netProfit)
 
-/* DESTROY OLD CHARTS */
-if(profitChart) profitChart.destroy()
-if(clientChart) clientChart.destroy()
-if(cashflowChart) cashflowChart.destroy()
+let alertHTML=""
 
-/* PROFIT CHART */
-profitChart=new Chart(document.getElementById("profitChart"),{
+Object.keys(clientBillingMap).forEach(c=>{
+let gap=clientBillingMap[c]-(clientInvoiceMap[c]||0)
+if(gap>10000){
+alertHTML+=`<div class="alert red">⚠ ${c} missing ₹${Math.round(gap)}</div>`
+}
+})
+
+if(outstanding>50000) alertHTML+=`<div class="alert red">High Outstanding</div>`
+if(transporterPayable>50000) alertHTML+=`<div class="alert yellow">Transporter Due</div>`
+if(netProfit<0) alertHTML+=`<div class="alert red">Loss</div>`
+
+document.getElementById("alerts").innerHTML=alertHTML
+
+new Chart(document.getElementById("monthlyChart"),{
 type:"line",
-data:{labels:labels,datasets:[{label:"Profit",data:profitArr}]}
+data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
-/* CLIENT CHART (TOP 5) */
-let sortedClients=Object.entries(clientProfitMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
-
-clientChart=new Chart(document.getElementById("clientChart"),{
+new Chart(document.getElementById("profitChart"),{
 type:"bar",
-data:{
-labels:sortedClients.map(x=>x[0]),
-datasets:[{label:"Top Clients",data:sortedClients.map(x=>x[1])}]
-}
-})
-
-/* CASHFLOW */
-cashflowChart=new Chart(document.getElementById("cashflowChart"),{
-type:"doughnut",
-data:{
-labels:["Received","Outstanding"],
-datasets:[{
-data:[paid,invoiced-paid]
-}]
-}
+data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
 }
 
 function set(id,val){
+if(id==="totalTrips"){document.getElementById(id).innerText=val;return}
+if(id==="totalMT"){document.getElementById(id).innerText=Math.round(val);return}
 document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
-}
-
-function showBreakdown(d){
-popup.style.display="flex"
-popupContent.innerHTML=`
-Trip: ${d.trip}<br>
-Profit: ₹${Math.round(d.profit)}
-`
-}
-
-function closePopup(){
-popup.style.display="none"
 }
 
 </script>

@@ -161,6 +161,8 @@ window.location="login.html"
 
 <script>
 
+let refreshTimer
+    
 window.onload=init
 
 // REALTIME SUBSCRIPTIONS
@@ -460,23 +462,20 @@ data:[paid,outstanding]
 
 /* 🚛 FLEET EXPANSION MODEL */
 
-// trips per day assumption (based on your input)
-let tripsPerDay = totalTrips / 30 || 3   // dynamic from data
+// dynamic trips per day
+let tripsPerDay = totalTrips / 30 || 3
 let totalDays = 30
 
-// include agent commission (30%)
-let agentCutPercent = 0.30
-
-// adjusted profit
-let adjustedProfitPerTrip = avgProfitPerTrip * (1 - agentCutPercent)
-
-// current trucks (you said 1)
-let currentTrucks = 1
-
-// profit per trip avg
+// avg profit per trip (DEFINE FIRST)
 let avgProfitPerTrip = profitData.length
     ? profitData.reduce((a,b)=>a+b,0)/profitData.length
     : 0
+
+// agent cut
+let agentCutPercent = 0.30
+
+// adjusted profit AFTER agent cut
+let adjustedProfitPerTrip = avgProfitPerTrip * (1 - agentCutPercent)
 
 // profit per truck per day
 let profitPerTruckPerDay = adjustedProfitPerTrip * tripsPerDay
@@ -485,15 +484,15 @@ let profitPerTruckPerDay = adjustedProfitPerTrip * tripsPerDay
 let profitPerTruck = profitPerTruckPerDay * totalDays
 
 // projections
-let fleet1 = profitPerTruck * 1
+let fleet1 = profitPerTruck
 let fleet4 = profitPerTruck * 4
 let fleet20 = profitPerTruck * 20
 
-// UI update
-set("profitPerTruck",profitPerTruck)
-set("fleet1",fleet1)
-set("fleet4",fleet4)
-set("fleet20",fleet20)
+// UI update (SAFE)
+set("profitPerTruck", profitPerTruck || 0)
+set("fleet1", fleet1 || 0)
+set("fleet4", fleet4 || 0)
+set("fleet20", fleet20 || 0)
 
 /* 📊 FLEET CHART */
 

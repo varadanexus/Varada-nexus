@@ -233,8 +233,12 @@ trips.forEach(t=>{
 let mt=(t.weight_kg||0)/1000
 totalMT+=mt
 
-let gross=(t.company_rate||0)*mt
-clientGross+=gross
+let gross = (t.company_rate||0) * mt
+let exp = expenseMap[t.id] || 0
+
+let finalBilling = gross - exp   // 🔥 KEY FIX
+
+clientGross += finalBilling
 
 let cost=(t.transporter_rate||0)*mt
 let exp=expenseMap[t.id]||0
@@ -315,7 +319,20 @@ data:{labels:labels,datasets:[{label:"Profit/Trip",data:profitData}]}
 }
 
 function set(id,val){
-document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
+
+if(id === "totalTrips"){
+document.getElementById(id).innerText = val
+return
+}
+
+if(id === "totalMT"){
+document.getElementById(id).innerText = Math.round(val)
+return
+}
+
+/* DEFAULT = MONEY */
+document.getElementById(id).innerText = "₹ " + Math.round(val).toLocaleString()
+
 }
 
 </script>

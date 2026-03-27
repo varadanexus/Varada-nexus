@@ -85,73 +85,30 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 </script>
 
-<!-- SIDEBAR -->
 <div id="sidebar-container"></div>
 
 <script>
-
-/* 🔥 EXACT SAME AS DASHBOARD */
 
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
-
 await initSidebar()
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
+if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
 document.getElementById("sidebar").style.display="block"
-
 })
-/* 🔥 COPY FROM DASHBOARD */
 
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
-const authId = session.user.id
-const email = session.user.email
-
-document.getElementById("userName").innerText = email.split("@")[0]
-
-const {data:user} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id",authId)
-.single()
-
-if(!user) return
-
-const {data:userRole} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id",user.id)
-.single()
-
-if(!userRole) return
-
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id",userRole.role_id)
-.single()
-
-if(role){
-document.getElementById("userRole").innerText = role.role_name
-}
-
-/* LOGOUT */
+document.getElementById("userName").innerText = session.user.email.split("@")[0]
 
 window.logout = async function(){
 await supabaseClient.auth.signOut()
@@ -226,8 +183,6 @@ window.location.href="login.html"
 
 <script>
 
-/* YOUR EXISTING LOGIC — UNCHANGED */
-
 let clients=[], trips=[], invoices=[], selectedTrips=[], invoiceAmount=0
 
 init()
@@ -258,16 +213,15 @@ const {data}=await supabaseClient
 .eq("client_name",client)
 .eq("status","Completed")
 
-const {data:inv}=await supabaseClient.from("client_invoices").select("trip_no")
+/* ✅ FIX: USE NEW TABLE */
+const {data:breakdown}=await supabaseClient
+.from("invoice_trip_breakdown")
+.select("trip_no")
 
 let invoicedTrips=[]
 
-inv?.forEach(i=>{
-if(i.trip_no){
-i.trip_no.split(",").forEach(t=>{
-invoicedTrips.push(t.trim())
-})
-}
+breakdown?.forEach(b=>{
+invoicedTrips.push(b.trip_no)
 })
 
 trips=data.filter(t=>!invoicedTrips.includes(t.trip_no))
@@ -342,6 +296,7 @@ let now=new Date()
 return "INV-"+now.getFullYear()+"-"+Math.floor(Math.random()*9000+1000)
 }
 
+/* ✅🔥 FULL FIXED FUNCTION */
 async function saveInvoice(){
 
 if(selectedTrips.length==0){
@@ -349,8 +304,12 @@ alert("Generate invoice first")
 return
 }
 
-await supabaseClient.from("client_invoices").insert({
-invoice_no:generateInvoiceNo(),
+let invoiceNo = generateInvoiceNo()
+
+const {data:newInvoice,error} = await supabaseClient
+.from("client_invoices")
+.insert({
+invoice_no:invoiceNo,
 trip_no:selectedTrips.map(t=>t.trip_no).join(", "),
 client_name:selectedTrips[0].client_name,
 invoice_amount:invoiceAmount,
@@ -358,6 +317,38 @@ amount_paid:0,
 balance_amount:invoiceAmount,
 payment_status:"Pending"
 })
+.select()
+.single()
+
+if(error){
+alert("Error saving invoice")
+return
+}
+
+/* 🔥 STORE PER TRIP */
+for(let trip of selectedTrips){
+
+let mt = (trip.weight_kg||0)/1000
+let freight = mt * (trip.company_rate||0)
+
+const {data:expenses} = await supabaseClient
+.from("expenses")
+.select("amount")
+.eq("trip_id",trip.id)
+.eq("expense_type","Fuel")
+
+let fuel = 0
+expenses?.forEach(e=> fuel += Number(e.amount||0))
+
+let finalAmount = freight - fuel
+
+await supabaseClient.from("invoice_trip_breakdown").insert({
+invoice_id:newInvoice.id,
+trip_no:trip.trip_no,
+amount:finalAmount
+})
+
+}
 
 alert("Invoice Saved")
 loadInvoices()
@@ -393,138 +384,15 @@ document.getElementById("invoiceTable").innerHTML=html
 }
 
 async function deleteInvoice(id){
+
 if(!confirm("Delete invoice?")) return
+
+/* 🔥 DELETE BREAKDOWN ALSO */
+await supabaseClient.from("invoice_trip_breakdown").delete().eq("invoice_id",id)
+
 await supabaseClient.from("client_invoices").delete().eq("id",id)
+
 loadInvoices()
-}
-
-async function downloadClientInvoice(id,e){
-
-e.stopPropagation()
-
-const { jsPDF } = window.jspdf
-
-let inv = invoices.find(i=>i.id==id)
-
-if(!inv){
-alert("Invoice not found")
-return
-}
-
-/* GET TRIPS */
-let tripNos = inv.trip_no.split(",").map(t=>t.trim())
-
-const {data:tripData,error} = await supabaseClient
-.from("trips")
-.select("*")
-.in("trip_no",tripNos)
-
-if(error){
-console.error(error)
-alert("Error loading trips")
-return
-}
-
-/* CREATE PDF */
-let doc = new jsPDF()
-
-/* LOGO */
-try{
-doc.addImage("images/logo.png","PNG",15,10,20,20)
-}catch(err){
-console.log("Logo issue:",err)
-}
-
-/* HEADER */
-doc.setFont("helvetica","bold")
-doc.setFontSize(16)
-doc.text("VARADA NEXUS PRIVATE LIMITED",40,20)
-
-doc.setFont("helvetica","normal")
-doc.setFontSize(11)
-doc.text("Client Invoice",40,27)
-
-/* DETAILS */
-doc.text(`Invoice No : ${inv.invoice_no}`,15,45)
-doc.text(`Client     : ${inv.client_name}`,15,52)
-doc.text(`Status     : ${inv.payment_status}`,15,59)
-
-/* 🔥 IMPORTANT: FETCH ALL FUEL DATA AT ONCE */
-const tripIds = tripData.map(t=>t.id)
-
-const {data:allExpenses} = await supabaseClient
-.from("expenses")
-.select("trip_id,amount")
-.in("trip_id",tripIds)
-.eq("expense_type","Fuel")
-
-/* MAP FUEL */
-let fuelMap = {}
-
-allExpenses?.forEach(e=>{
-if(!fuelMap[e.trip_id]) fuelMap[e.trip_id]=0
-fuelMap[e.trip_id]+=Number(e.amount||0)
-})
-
-/* TABLE */
-let rows=[]
-let totalWeight=0
-let totalFreight=0
-let totalFuel=0
-
-tripData.forEach(t=>{
-
-let weightMT = (t.weight_kg||0)/1000
-let freight = weightMT*(t.company_rate||0)
-let fuel = fuelMap[t.id] || 0
-
-totalWeight += weightMT
-totalFreight += freight
-totalFuel += fuel
-
-rows.push([
-t.trip_no,
-t.route||"-",
-t.truck||"-",
-t.trip_date||"-",
-weightMT.toFixed(2),
-freight.toFixed(2),
-fuel.toFixed(2)
-])
-
-})
-
-doc.autoTable({
-startY:70,
-head:[["Trip","Route","Truck","Date","Weight(MT)","Freight","Fuel"]],
-body:rows,
-theme:"grid",
-styles:{fontSize:9},
-headStyles:{fillColor:[31,60,136]}
-})
-
-/* TOTALS */
-let finalY = doc.lastAutoTable.finalY + 10
-
-let netAmount = totalFreight - totalFuel
-
-doc.setFont("helvetica","bold")
-
-doc.text(`Total Weight (MT): ${totalWeight.toFixed(2)}`,15,finalY)
-doc.text(`Total Freight: ${totalFreight.toFixed(2)}`,15,finalY+10)
-doc.text(`Fuel Deduction: ${totalFuel.toFixed(2)}`,15,finalY+20)
-doc.text(`Net Amount: ${netAmount.toFixed(2)}`,15,finalY+30)
-
-doc.text(`Paid: ${Number(inv.amount_paid||0).toFixed(2)}`,15,finalY+45)
-doc.text(`Balance: ${Number(inv.balance_amount).toFixed(2)}`,15,finalY+55)
-
-/* FOOTER */
-doc.setFont("helvetica","normal")
-doc.setFontSize(9)
-doc.text("This is a system generated invoice.",15,finalY+70)
-
-/* SAVE */
-doc.save(inv.invoice_no + ".pdf")
 
 }
 

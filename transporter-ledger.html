@@ -165,11 +165,12 @@ const {data:trips}=await supabaseClient
 const {data:payments}=await supabaseClient
 .from("transporter_payments")
 .select("*")
-.eq("transporter_name",transporter.transporter_name)
+.eq("transporter_id",transporter.id)
 
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
+.in("trip_id", trips.map(t=>t.id))
 
 /* EXPENSE MAP */
 let expenseMap={}
@@ -186,23 +187,14 @@ trips.forEach(t=>{
 let freight=((t.weight_kg||0)/1000)*(t.transporter_rate||0)
 let exp=expenseMap[t.id]||0
 
-/* CREDIT = earnings */
+let net = Math.max(freight - exp, 0)
+
 ledger.push({
 date:t.trip_date,
 description:"Trip "+(t.trip_no||""),
-credit:freight,
+credit:net,
 debit:0
 })
-
-/* DEBIT = expense */
-if(exp>0){
-ledger.push({
-date:t.trip_date,
-description:"Expense for "+(t.trip_no||""),
-credit:0,
-debit:exp
-})
-}
 
 })
 
@@ -217,7 +209,7 @@ debit:Number(p.amount||0)
 })
 
 /* SORT */
-ledger.sort((a,b)=> new Date(a.date)-new Date(b.date))
+ledger.sort((a,b)=> new Date(a.date||0)-new Date(b.date||0))
 
 fullLedger=ledger
 filteredLedger=ledger
@@ -273,7 +265,7 @@ let from=document.getElementById("fromDate").value
 let to=document.getElementById("toDate").value
 
 filteredLedger=fullLedger.filter(l=>{
-let d=new Date(l.date)
+let d=new Date(l.date || 0)
 return (!from || d>=new Date(from)) &&
 (!to || d<=new Date(to))
 })

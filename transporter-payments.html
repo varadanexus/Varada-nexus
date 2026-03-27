@@ -69,11 +69,42 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 <div id="sidebar-container"></div>
 
 <script>
+<script>
 fetch("transporter-sidebar.html")
 .then(res=>res.text())
-.then(data=>{
+.then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+/* 🔥 LOAD USER */
+await loadUserInfo()
+
+/* SHOW SIDEBAR */
+document.getElementById("sidebar").style.display="block"
 })
+
+/* USER LOAD */
+async function loadUserInfo(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="login.html"
+return
+}
+
+const email = session.user.email
+
+document.getElementById("userName").innerText =
+email.split("@")[0]
+
+}
+
+/* LOGOUT */
+async function logout(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+</script>
 </script>
 
 <div class="main">

@@ -135,10 +135,26 @@ const {data:expenses} = await supabaseClient
 .in("trip_id", trips.map(t=>t.id))
 
 /* GET PAYMENTS */
-const {data:payments} = await supabaseClient
-.from("transporter_payments")
-.select("*")
+/* ✅ GET INVOICES */
+const {data:invoices} = await supabaseClient
+.from("transporter_invoices")
+.select("id")
 .eq("transporter_id", transporter.id)
+
+/* EXTRACT IDS */
+let invoiceIds = invoices?.map(i=>i.id) || []
+
+/* ✅ GET PAYMENTS USING INVOICE IDS */
+let payments = []
+
+if(invoiceIds.length){
+  const {data} = await supabaseClient
+  .from("transporter_payments")
+  .select("*")
+  .in("invoice_id", invoiceIds)
+
+  payments = data || []
+}
 
 let expenseMap = {}
 

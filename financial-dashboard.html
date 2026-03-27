@@ -300,10 +300,7 @@ let exp=expenseMap[t.id]||0
 let gross = t.company_rate * mt
 
 let clientFinal=(t.company_rate*mt)-exp
-let transporterFinal = Math.max(
-    (t.transporter_rate * mt) - exp,
-    0
-)
+let transporterFinal=(t.transporter_rate*mt)-exp
 
 transporterCost+=transporterFinal
 
@@ -424,7 +421,7 @@ let mt=(t.weight_kg||0)/1000
 let exp=expenseMap[t.id]||0
 let gross = t.company_rate * mt
 let clientFinal=(t.company_rate*mt)-exp
-let transporterFinal = Math.max((t.transporter_rate * mt) - exp,0)
+let transporterFinal=(t.transporter_rate*mt)-exp
 let profit=clientFinal-transporterFinal
 
 if(t.client_name){

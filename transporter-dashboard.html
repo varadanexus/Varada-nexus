@@ -80,6 +80,8 @@ setTimeout(loadUserInfo, 300)
 <div class="card"><h4>Total Freight</h4><h2 id="totalFreight">₹0</h2></div>
 <div class="card"><h4>Total Expenses</h4><h2 id="totalExpenses">₹0</h2></div>
 <div class="card"><h4>Net Profit</h4><h2 id="totalProfit">₹0</h2></div>
+<div class="card"><h4>Total Paid</h4><h2 id="totalPaid">₹0</h2></div>
+<div class="card"><h4>Balance</h4><h2 id="balance">₹0</h2></div>
 </div>
 
 <div class="insights">
@@ -132,6 +134,12 @@ const {data:expenses} = await supabaseClient
 .select("*")
 .in("trip_id", trips.map(t=>t.id))
 
+/* GET PAYMENTS */
+const {data:payments} = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("transporter_id", transporter.id)
+
 let expenseMap = {}
 
 expenses?.forEach(e=>{
@@ -144,6 +152,12 @@ expenseMap[e.trip_id]+=Number(e.amount || 0)
 let totalTrips = trips.length
 let totalFreight = 0
 let totalExpenses = 0
+
+let totalPaid = 0
+
+payments?.forEach(p=>{
+    totalPaid += Number(p.amount || 0)
+})
 
 let routeCount={}
 let truckCount={}
@@ -191,6 +205,11 @@ document.getElementById("totalTrips").innerText = totalTrips
 document.getElementById("totalFreight").innerText = "₹ "+totalFreight.toFixed(0)
 document.getElementById("totalExpenses").innerText = "₹ "+totalExpenses.toFixed(0)
 document.getElementById("totalProfit").innerText = "₹ "+(totalFreight-totalExpenses).toFixed(0)
+
+let balance = (totalFreight - totalExpenses) - totalPaid
+
+document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(0)
+document.getElementById("balance").innerText = "₹ " + balance.toFixed(0)
 
 document.getElementById("topRoute").innerText = getTop(routeCount)
 document.getElementById("topTruck").innerText = getTop(truckCount)

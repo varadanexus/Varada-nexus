@@ -15,18 +15,43 @@
 <style>
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{margin-left:220px;padding:25px;}
+
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .title{font-size:22px;font-weight:600;}
 .badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px;}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;margin-bottom:20px;
+}
+
 .card{background:#111827;padding:15px;border-radius:10px;}
+
 .kpi-title{font-size:12px;color:#9ca3af;}
 .kpi-value{font-size:18px;font-weight:600;margin-top:5px;}
-.alert{padding:10px;border-radius:6px;margin-bottom:6px;font-size:13px;}
-.red{background:#7f1d1d;} .yellow{background:#78350f;} .green{background:#14532d;}
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
-.chart-box{background:#111827;padding:15px;border-radius:10px;}
+
+.charts{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.chart-box{
+background:#111827;
+padding:15px;
+border-radius:10px;
+height:300px;
+}
+
+.chart-box canvas{
+height:100% !important;
+width:100% !important;
+}
+
 .section{background:#111827;padding:15px;border-radius:10px;margin-bottom:20px;}
+
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);}
 th{color:#9ca3af;}
@@ -35,9 +60,8 @@ th{color:#9ca3af;}
 .heat-mid{background:#78350f;}
 .heat-low{background:#14532d;}
 
-@media (max-width:768px){
+@media(max-width:768px){
 .main{margin-left:0;padding:10px;}
-.cards{grid-template-columns:1fr 1fr;}
 .charts{grid-template-columns:1fr;}
 }
 </style>
@@ -83,59 +107,32 @@ window.location="login.html"
 <div class="badge">LIVE</div>
 </div>
 
-<div id="alerts"></div>
-
 <div class="cards">
 <div class="card"><div class="kpi-title">Trips</div><div id="totalTrips"></div></div>
-<div class="card"><div class="kpi-title">Total MT</div><div id="totalMT"></div></div>
-
 <div class="card"><div class="kpi-title">Client Gross</div><div id="clientGross"></div></div>
-<div class="card"><div class="kpi-title">Client Invoiced</div><div id="invoiced"></div></div>
-<div class="card"><div class="kpi-title">To Be Billed</div><div id="toBeBilled"></div></div>
-
-<div class="card"><div class="kpi-title">Client Paid</div><div id="paid"></div></div>
+<div class="card"><div class="kpi-title">Invoiced</div><div id="invoiced"></div></div>
 <div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding"></div></div>
-
-<div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost"></div></div>
-<div class="card"><div class="kpi-title">Transporter Paid</div><div id="transporterPaid"></div></div>
-<div class="card"><div class="kpi-title">Transporter Pending</div><div id="transporterPayable"></div></div>
-
-<div class="card"><div class="kpi-title">Company Profit</div><div id="companyProfit"></div></div>
-
-<div class="card"><div class="kpi-title">Agent Total</div><div id="agentTotal"></div></div>
-<div class="card"><div class="kpi-title">Agent Paid</div><div id="agentPaid"></div></div>
-<div class="card"><div class="kpi-title">Agent Balance</div><div id="agentBalance"></div></div>
-
-<div class="card"><div class="kpi-title">Net Profit</div><div id="profit"></div></div>
+<div class="card"><div class="kpi-title">Profit</div><div id="profit"></div></div>
 </div>
 
 <div class="charts">
-<div class="chart-box"><canvas id="monthlyChart"></canvas></div>
 <div class="chart-box"><canvas id="profitChart"></canvas></div>
 <div class="chart-box"><canvas id="clientChart"></canvas></div>
 <div class="chart-box"><canvas id="cashflowChart"></canvas></div>
 </div>
 
 <div class="section">
-<h3>Trips (Heatmap + Click)</h3>
+<h3>Trips</h3>
 <table>
 <thead><tr><th>Trip</th><th>Profit</th><th>Status</th></tr></thead>
 <tbody id="tripTable"></tbody>
 </table>
 </div>
 
-<div class="section">
-<h3>Transporter Pending</h3>
-<table>
-<thead><tr><th>Transporter</th><th>Pending</th></tr></thead>
-<tbody id="transporterTable"></tbody>
-</table>
-</div>
-
 </div>
 
 <!-- POPUP -->
-<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:999">
+<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
 <div style="background:#111827;padding:20px;border-radius:10px;width:300px;">
 <h3>Trip Breakdown</h3>
 <div id="popupContent"></div>
@@ -146,6 +143,8 @@ window.location="login.html"
 
 <script>
 
+let profitChart, clientChart, cashflowChart
+
 window.onload=init
 
 async function init(){
@@ -155,26 +154,20 @@ const [
 {data:expenses},
 {data:invoices},
 {data:breakdown},
-{data:clientPayments},
-{data:transporterPayments},
-{data:transporters},
-{data:agentLedger}
+{data:clientPayments}
 ] = await Promise.all([
 supabaseClient.from("trips").select("*"),
 supabaseClient.from("expenses").select("*"),
 supabaseClient.from("client_invoices").select("*"),
 supabaseClient.from("invoice_trip_breakdown").select("*"),
-supabaseClient.from("client_payments").select("*"),
-supabaseClient.from("transporter_payments").select("*"),
-supabaseClient.from("transporters").select("*"),
-supabaseClient.from("agent_trip_ledger").select("*")
+supabaseClient.from("client_payments").select("*")
 ])
 
-process(trips||[],expenses||[],invoices||[],breakdown||[],clientPayments||[],transporterPayments||[],transporters||[],agentLedger||[])
+process(trips||[],expenses||[],invoices||[],breakdown||[],clientPayments||[])
 
 }
 
-function process(trips,expenses,invoices,breakdown,clientPayments,transporterPayments,transporters,agentLedger){
+function process(trips,expenses,invoices,breakdown,clientPayments){
 
 let expenseMap={}
 expenses.forEach(e=>{
@@ -186,9 +179,16 @@ breakdown.forEach(b=>{
 invoiceMap[b.trip_no]=(invoiceMap[b.trip_no]||0)+(+b.amount||0)
 })
 
+let totalTrips=trips.length
+let clientGross=0, invoiced=0, paid=0
+let profitTotal=0
+
+invoices.forEach(i=>invoiced+=+i.invoice_amount||0)
+clientPayments.forEach(p=>paid+=+p.amount||0)
+
 let tripHTML=""
 let clientProfitMap={}
-let transporterMap={}
+let profitArr=[],labels=[]
 
 trips.forEach(t=>{
 
@@ -199,8 +199,10 @@ let clientFinal=(t.company_rate*mt)-exp
 let transporterFinal=(t.transporter_rate*mt)-exp
 let profit=clientFinal-transporterFinal
 
+clientGross+=clientFinal
+profitTotal+=profit
+
 clientProfitMap[t.client_name]=(clientProfitMap[t.client_name]||0)+profit
-transporterMap[t.transporter_id]=(transporterMap[t.transporter_id]||0)+transporterFinal
 
 let heat="heat-low"
 if(profit>2000) heat="heat-high"
@@ -208,36 +210,69 @@ else if(profit>1000) heat="heat-mid"
 
 tripHTML+=`
 <tr class="${heat}" onclick='showBreakdown(${JSON.stringify({
-trip:t.trip_no,mt,gross:t.company_rate*mt,exp,clientFinal,profit
+trip:t.trip_no,profit
 }).replace(/'/g,"")})'>
 <td>${t.trip_no}</td>
 <td>₹ ${Math.round(profit)}</td>
 <td>${profit>1500?"🔥 High":"OK"}</td>
 </tr>`
+
+profitArr.push(profit)
+labels.push(t.trip_no)
+
 })
 
 tripTable.innerHTML=tripHTML
 
-new Chart(clientChart,{
+set("totalTrips",totalTrips)
+set("clientGross",clientGross)
+set("invoiced",invoiced)
+set("outstanding",invoiced-paid)
+set("profit",profitTotal)
+
+/* DESTROY OLD CHARTS */
+if(profitChart) profitChart.destroy()
+if(clientChart) clientChart.destroy()
+if(cashflowChart) cashflowChart.destroy()
+
+/* PROFIT CHART */
+profitChart=new Chart(document.getElementById("profitChart"),{
+type:"line",
+data:{labels:labels,datasets:[{label:"Profit",data:profitArr}]}
+})
+
+/* CLIENT CHART (TOP 5) */
+let sortedClients=Object.entries(clientProfitMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
+
+clientChart=new Chart(document.getElementById("clientChart"),{
 type:"bar",
-data:{labels:Object.keys(clientProfitMap),datasets:[{label:"Client Profit",data:Object.values(clientProfitMap)}]}
+data:{
+labels:sortedClients.map(x=>x[0]),
+datasets:[{label:"Top Clients",data:sortedClients.map(x=>x[1])}]
+}
 })
 
-new Chart(cashflowChart,{
+/* CASHFLOW */
+cashflowChart=new Chart(document.getElementById("cashflowChart"),{
 type:"doughnut",
-data:{labels:["Incoming","Outgoing"],datasets:[{data:[50000,30000]}]}
+data:{
+labels:["Received","Outstanding"],
+datasets:[{
+data:[paid,invoiced-paid]
+}]
+}
 })
 
+}
+
+function set(id,val){
+document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
 }
 
 function showBreakdown(d){
 popup.style.display="flex"
 popupContent.innerHTML=`
 Trip: ${d.trip}<br>
-MT: ${d.mt}<br>
-Gross: ₹${Math.round(d.gross)}<br>
-Expenses: ₹${Math.round(d.exp)}<br>
-Client Billing: ₹${Math.round(d.clientFinal)}<br>
 Profit: ₹${Math.round(d.profit)}
 `
 }

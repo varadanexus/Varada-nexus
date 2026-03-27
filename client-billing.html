@@ -240,10 +240,9 @@ async function downloadClientInvoice(id,e){
 e.stopPropagation()
 
 const { jsPDF } = window.jspdf
-
 let inv=invoices.find(i=>i.id==id)
 
-/* GET BREAKDOWN */
+/* 🔥 GET BREAKDOWN */
 const {data:bd}=await supabaseClient
 .from("invoice_trip_breakdown")
 .select("*")
@@ -251,32 +250,48 @@ const {data:bd}=await supabaseClient
 
 let tripNos=bd.map(b=>b.trip_no)
 
+/* ✅ FIX 1: INCLUDE ID */
 const {data:tripData}=await supabaseClient
 .from("trips")
 .select(`
-trip_no,route,truck,trip_date,weight_kg,company_rate
+id,
+trip_no,
+route,
+truck,
+trip_date,
+weight_kg,
+company_rate
 `)
 .in("trip_no",tripNos)
 
-/* FUEL */
+/* ✅ FIX 2: FILTER ONLY THESE TRIPS */
+const tripIds = tripData.map(t=>t.id)
+
 const {data:exp}=await supabaseClient
 .from("expenses")
 .select("trip_id,amount")
+.in("trip_id",tripIds)
 .eq("expense_type","Fuel")
 
+/* MAP */
 let fuelMap={}
 exp?.forEach(e=>{
 if(!fuelMap[e.trip_id]) fuelMap[e.trip_id]=0
-fuelMap[e.trip_id]+=e.amount
+fuelMap[e.trip_id]+=Number(e.amount||0)
 })
 
-let rows=[],totalWeight=0,totalFreight=0,totalFuel=0
+/* CALCULATIONS */
+let rows=[]
+let totalWeight=0
+let totalFreight=0
+let totalFuel=0
 
 tripData.forEach(t=>{
 
-let mt=t.weight_kg/1000
-let freight=mt*t.company_rate
+let mt=(t.weight_kg||0)/1000
+let freight=mt*(t.company_rate||0)
 let fuel=fuelMap[t.id]||0
+let net=freight-fuel
 
 totalWeight+=mt
 totalFreight+=freight
@@ -288,38 +303,152 @@ t.route||"-",
 t.truck||"-",
 t.trip_date||"-",
 mt.toFixed(2),
-freight.toFixed(0),
-fuel.toFixed(0),
-(freight-fuel).toFixed(0)
+freight.toFixed(2),
+fuel.toFixed(2),
+net.toFixed(2)
 ])
+
 })
+
+/* ================= PDF (TRANSPORTER STYLE) ================= */
 
 let doc=new jsPDF()
 
+/* WATERMARK */
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity:0.05}))
+}
+doc.addImage("images/logo.png","PNG",40,80,120,120)
+if(doc.setGState){
+doc.setGState(new doc.GState({opacity:1}))
+}
+
+/* LOGO */
 doc.addImage("images/logo.png","PNG",15,10,20,20)
 
+/* HEADER */
+doc.setFont("helvetica","bold")
 doc.setFontSize(14)
 doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(10)
 doc.text("Client Invoice",40,25)
 
-doc.text(`Invoice: ${inv.invoice_no}`,140,40)
-doc.text(`Status: ${inv.payment_status}`,140,47)
+doc.setFontSize(9)
+doc.text("CIN: U43121AP2025PTC117741",40,31)
+doc.text("GST: 37AAKCV7495B1ZV",40,36)
 
-doc.text(`Client: ${inv.client_name}`,15,55)
+/* VERIFIED */
+doc.setTextColor(0,120,0)
+doc.text("✔ Digitally Verified",150,18)
+doc.setTextColor(0,0,0)
 
+/* RIGHT SIDE */
+doc.setFont("helvetica","bold")
+doc.text("Invoice No:",140,40)
+doc.setFont("helvetica","normal")
+doc.text(inv.invoice_no,170,40)
+
+doc.setFont("helvetica","bold")
+doc.text("Status:",140,47)
+doc.setFont("helvetica","normal")
+doc.text(inv.payment_status,170,47)
+
+doc.setFont("helvetica","bold")
+doc.text("Date:",140,54)
+doc.setFont("helvetica","normal")
+doc.text(new Date().toLocaleDateString("en-IN"),170,54)
+
+/* CLIENT */
+doc.setFont("helvetica","bold")
+doc.text("Client Details",15,55)
+
+doc.setFont("helvetica","normal")
+doc.text("Name:",15,63)
+doc.text(inv.client_name,40,63)
+
+doc.line(15,75,195,75)
+
+/* TABLE */
 doc.autoTable({
-startY:70,
-head:[["Trip","Route","Truck","Date","MT","Freight","Fuel","Net"]],
-body:rows
+startY:80,
+head:[["Trip","Route","Truck","Date","Weight (MT)","Freight","Fuel","Net"]],
+body:rows,
+theme:"grid",
+headStyles:{
+fillColor:[22,160,133],
+textColor:255
+},
+styles:{fontSize:9}
 })
 
-let y=doc.lastAutoTable.finalY+10
+/* SUMMARY */
+let summaryY=doc.lastAutoTable.finalY+10
 
-doc.text(`Total Freight: ₹${totalFreight}`,15,y)
-doc.text(`Fuel: ₹${totalFuel}`,15,y+10)
-doc.text(`Net: ₹${totalFreight-totalFuel}`,15,y+20)
+doc.autoTable({
+startY:summaryY,
+margin:{left:110},
+tableWidth:85,
+head:[["Summary",""]],
+body:[
+["Total Weight",totalWeight.toFixed(2)+" MT"],
+["Total Amount","₹ "+totalFreight.toFixed(2)],
+["Expenses","₹ "+totalFuel.toFixed(2)],
+["Paid","₹ "+(inv.amount_paid||0)],
+["Balance","₹ "+inv.balance_amount]
+],
+theme:"grid",
+headStyles:{fillColor:[0,102,204],textColor:255}
+})
 
+/* BANK */
+let bankY=summaryY+5
+
+doc.rect(15,bankY,90,40)
+
+doc.setFontSize(10)
+doc.text("Bank Details",20,bankY+7)
+
+doc.setFontSize(9)
+doc.text("Bank: Axis Bank",20,bankY+14)
+doc.text("A/C No: 924020062188598",20,bankY+20)
+doc.text("IFSC: UTIB0000107",20,bankY+26)
+doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+
+/* STAMP */
+if((inv.amount_paid||0)>=inv.invoice_amount){
+
+doc.setTextColor(0,150,0)
+doc.setFontSize(28)
+doc.text("PAID",60,bankY+70,{angle:20})
+doc.setTextColor(0,0,0)
+
+}
+
+/* SIGN */
+doc.line(130,270,195,270)
+doc.text("Authorized Signatory",162,267,{align:"center"})
+
+/* FOOTER */
+doc.setFontSize(9)
+doc.text("This is a system generated document.",15,285)
+
+/* QR */
+let qrDiv=document.createElement("div")
+
+new QRCode(qrDiv,{
+text:`INV:${inv.invoice_no}|AMT:${inv.invoice_amount}`,
+width:80,height:80
+})
+
+setTimeout(()=>{
+let qr=qrDiv.querySelector("canvas")
+if(qr){
+doc.addImage(qr.toDataURL(),"PNG",155,65,35,35)
+}
 doc.save(inv.invoice_no+".pdf")
+},300)
 
 }
 

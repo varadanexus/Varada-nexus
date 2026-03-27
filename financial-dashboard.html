@@ -9,25 +9,41 @@
 
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
+<script src="rbac.js"></script>
+<script src="global-logout.js"></script>
 
 <style>
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{margin-left:220px;padding:25px;}
+
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .title{font-size:22px;font-weight:600;}
 .badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
+
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px;}
 .card{background:#111827;padding:15px;border-radius:10px;}
+
 .kpi-title{font-size:12px;color:#9ca3af;}
 .kpi-value{font-size:18px;font-weight:600;margin-top:5px;}
-.alert{padding:10px;border-radius:6px;margin-bottom:6px;font-size:13px;}
-.red{background:#7f1d1d;} .yellow{background:#78350f;} .green{background:#14532d;}
+
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
-.chart-box{background:#111827;padding:15px;border-radius:10px;}
+.chart-box{background:#111827;padding:15px;border-radius:10px;height:280px;}
+.chart-box canvas{height:100% !important;width:100% !important;}
+
 .section{background:#111827;padding:15px;border-radius:10px;margin-bottom:20px;}
+
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);}
 th{color:#9ca3af;}
+
+.heat-high{background:#7f1d1d;}
+.heat-mid{background:#78350f;}
+.heat-low{background:#14532d;}
+
+@media(max-width:768px){
+.main{margin-left:0;padding:10px;}
+.charts{grid-template-columns:1fr;}
+}
 </style>
 
 </head>
@@ -37,7 +53,7 @@ th{color:#9ca3af;}
 <script>
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 </script>
 
@@ -100,6 +116,8 @@ window.location="login.html"
 <div class="charts">
 <div class="chart-box"><canvas id="monthlyChart"></canvas></div>
 <div class="chart-box"><canvas id="profitChart"></canvas></div>
+<div class="chart-box"><canvas id="clientChart"></canvas></div>
+<div class="chart-box"><canvas id="cashflowChart"></canvas></div>
 </div>
 
 <div class="section">
@@ -120,7 +138,19 @@ window.location="login.html"
 
 </div>
 
+<!-- POPUP -->
+<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">
+<div style="background:#111827;padding:20px;border-radius:10px;width:300px;">
+<h3>Trip Breakdown</h3>
+<div id="popupContent"></div>
+<br>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
 <script>
+
+let monthlyChart, profitChart, clientChart, cashflowChart
 
 window.onload=init
 
@@ -178,42 +208,14 @@ agentPaid+=+a.paid_amount||0
 })
 
 let tripHTML="",profitData=[],labels=[]
-let transporterMap={},clientBillingMap={},clientInvoiceMap={}
-
-/* CLIENT INVOICE MAP */
-breakdown.forEach(b=>{
-let t=trips.find(x=>x.trip_no==b.trip_no)
-if(t?.client_name){
-clientInvoiceMap[t.client_name]=(clientInvoiceMap[t.client_name]||0)+(+b.amount||0)
-}
-})
-
-let values=[]
+let transporterMap={},clientProfitMap={}
 
 trips.forEach(t=>{
+
 let mt=(t.weight_kg||0)/1000
 totalMT+=mt
 
-let gross=t.company_rate*mt
 let exp=expenseMap[t.id]||0
-let final=gross-exp
-
-clientGross+=final
-
-if(t.client_name){
-clientBillingMap[t.client_name]=(clientBillingMap[t.client_name]||0)+final
-}
-
-values.push(final)
-})
-
-let cutoff=[...values].sort((a,b)=>b-a)[Math.floor(values.length*0.2)]||0
-
-trips.forEach(t=>{
-
-let mt=(t.weight_kg||0)/1000
-let exp=expenseMap[t.id]||0
-
 let clientFinal=(t.company_rate*mt)-exp
 let transporterFinal=(t.transporter_rate*mt)-exp
 
@@ -222,23 +224,19 @@ transporterCost+=transporterFinal
 let profit=clientFinal-transporterFinal
 companyProfit+=profit
 
-let inv=invoiceMap[t.trip_no]||0
+clientGross+=clientFinal
 
-let status=""
-if(inv===0){
-status=clientFinal>=cutoff?"<span style='color:red'>🔥 High</span>":"<span style='color:orange'>To Bill</span>"
-}
-else if(Math.abs(clientFinal-inv)>50){
-status="<span style='color:red'>Mismatch</span>"
-}
-else{
-status="<span style='color:green'>OK</span>"
-}
+clientProfitMap[t.client_name]=(clientProfitMap[t.client_name]||0)+profit
 
-tripHTML+=`<tr>
+let heat="heat-low"
+if(profit>2000) heat="heat-high"
+else if(profit>1000) heat="heat-mid"
+
+tripHTML+=`
+<tr class="${heat}" onclick='showBreakdown(${JSON.stringify({trip:t.trip_no,profit}).replace(/'/g,"")})'>
 <td>${t.trip_no}</td>
 <td>₹ ${Math.round(profit)}</td>
-<td>${status}</td>
+<td>${profit>1500?"🔥 High":"OK"}</td>
 </tr>`
 
 profitData.push(profit)
@@ -249,18 +247,15 @@ transporterMap[t.transporter_id]+=transporterFinal
 
 })
 
-document.getElementById("tripTable").innerHTML=tripHTML
+tripTable.innerHTML=tripHTML
 
 transporterPayments.forEach(p=>{
 transporterMap[p.transporter_id]-=+p.amount||0
 })
 
-let transporterHTML=""
-transporters.forEach(t=>{
-transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
-})
-
-document.getElementById("transporterTable").innerHTML=transporterHTML
+transporterTable.innerHTML=transporters.map(t=>
+`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transporterMap[t.id]||0)}</td></tr>`
+).join("")
 
 let outstanding=invoiced-paid
 let transporterPayable=transporterCost-transporterPaid
@@ -284,29 +279,38 @@ set("agentPaid",agentPaid)
 set("agentBalance",agentBalance)
 set("profit",netProfit)
 
-let alertHTML=""
+/* charts fix */
+if(monthlyChart) monthlyChart.destroy()
+if(profitChart) profitChart.destroy()
+if(clientChart) clientChart.destroy()
+if(cashflowChart) cashflowChart.destroy()
 
-Object.keys(clientBillingMap).forEach(c=>{
-let gap=clientBillingMap[c]-(clientInvoiceMap[c]||0)
-if(gap>10000){
-alertHTML+=`<div class="alert red">⚠ ${c} missing ₹${Math.round(gap)}</div>`
-}
-})
-
-if(outstanding>50000) alertHTML+=`<div class="alert red">High Outstanding</div>`
-if(transporterPayable>50000) alertHTML+=`<div class="alert yellow">Transporter Due</div>`
-if(netProfit<0) alertHTML+=`<div class="alert red">Loss</div>`
-
-document.getElementById("alerts").innerHTML=alertHTML
-
-new Chart(document.getElementById("monthlyChart"),{
+monthlyChart=new Chart(monthlyChart=document.getElementById("monthlyChart"),{
 type:"line",
 data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
 })
 
-new Chart(document.getElementById("profitChart"),{
+profitChart=new Chart(document.getElementById("profitChart"),{
 type:"bar",
 data:{labels:labels,datasets:[{label:"Profit",data:profitData}]}
+})
+
+let topClients=Object.entries(clientProfitMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
+
+clientChart=new Chart(document.getElementById("clientChart"),{
+type:"bar",
+data:{
+labels:topClients.map(x=>x[0]),
+datasets:[{label:"Top Clients",data:topClients.map(x=>x[1])}]
+}
+})
+
+cashflowChart=new Chart(document.getElementById("cashflowChart"),{
+type:"doughnut",
+data:{
+labels:["Received","Outstanding"],
+datasets:[{data:[paid,outstanding]}]
+}
 })
 
 }
@@ -315,6 +319,15 @@ function set(id,val){
 if(id==="totalTrips"){document.getElementById(id).innerText=val;return}
 if(id==="totalMT"){document.getElementById(id).innerText=Math.round(val);return}
 document.getElementById(id).innerText="₹ "+Math.round(val).toLocaleString()
+}
+
+function showBreakdown(d){
+popup.style.display="flex"
+popupContent.innerHTML=`Trip: ${d.trip}<br>Profit: ₹${Math.round(d.profit)}`
+}
+
+function closePopup(){
+popup.style.display="none"
 }
 
 </script>

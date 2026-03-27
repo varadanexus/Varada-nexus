@@ -116,7 +116,7 @@ const {data:transporter} = await supabaseClient
 .from("transporters")
 .select("id")
 .eq("auth_id", authId)
-.single()
+.maybeSingle()
 
 if(!transporter) return
 
@@ -130,6 +130,7 @@ const {data:trips} = await supabaseClient
 const {data:expenses} = await supabaseClient
 .from("expenses")
 .select("*")
+.in("trip_id", trips.map(t=>t.id))
 
 let expenseMap = {}
 
@@ -156,14 +157,19 @@ let weight = (t.weight_kg || 0)/1000
 let rate = t.transporter_rate || 0
 let freight = weight * rate
 let expense = expenseMap[t.id] || 0
-let profit = freight - expense
+let profit = Math.max(freight - expense, 0)
 
 totalFreight += freight
 totalExpenses += expense
 
 /* route count */
-routeCount[t.route] = (routeCount[t.route] || 0) + 1
-truckCount[t.truck] = (truckCount[t.truck] || 0) + 1
+if(t.route){
+    routeCount[t.route] = (routeCount[t.route] || 0) + 1
+}
+
+if(t.truck){
+    truckCount[t.truck] = (truckCount[t.truck] || 0) + 1
+}
 
 /* monthly */
 if(t.trip_date){

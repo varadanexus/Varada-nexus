@@ -168,24 +168,30 @@ if(!session){ window.location="login.html"; return }
 
 const authId=session.user.id
 
+/* GET TRANSPORTER */
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
+/* GET TRIPS */
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
 
+/* GET ONLY RELEVANT EXPENSES */
+let tripIds = trips.map(t=>t.id)
+
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
+.in("trip_id", tripIds)
 
 expensesData=expenses||[]
 allTrips=trips||[]
-filteredTrips=allTrips
+filteredTrips=[...allTrips]
 
 buildFilters()
 render()
@@ -195,12 +201,18 @@ render()
 /* FILTERS */
 function buildFilters(){
 
-routeFilter.innerHTML='<option value="">All Routes</option>'+[...new Set(allTrips.map(t=>t.route))].map(r=>`<option>${r}</option>`)
-truckFilter.innerHTML='<option value="">All Trucks</option>'+[...new Set(allTrips.map(t=>t.truck))].map(t=>`<option>${t}</option>`)
-commodityFilter.innerHTML='<option value="">All Commodities</option>'+[...new Set(allTrips.map(t=>t.commodity))].map(c=>`<option>${c}</option>`)
+routeFilter.innerHTML='<option value="">All Routes</option>'+
+[...new Set(allTrips.map(t=>t.route))].map(r=>`<option>${r}</option>`)
+
+truckFilter.innerHTML='<option value="">All Trucks</option>'+
+[...new Set(allTrips.map(t=>t.truck))].map(t=>`<option>${t}</option>`)
+
+commodityFilter.innerHTML='<option value="">All Commodities</option>'+
+[...new Set(allTrips.map(t=>t.commodity))].map(c=>`<option>${c}</option>`)
 
 }
 
+/* APPLY FILTER */
 function applyFilters(){
 
 let from=fromDate.value
@@ -229,18 +241,37 @@ render()
 }
 
 function clearFilters(){
-filteredTrips=allTrips
+filteredTrips=[...allTrips]
 document.querySelectorAll("select,input").forEach(e=>e.value="")
 render()
 }
 
-/* RENDER */
+/* 🔥 RENDER */
 function render(){
 
 let start=(page-1)*pageSize
 let data=filteredTrips.slice(start,start+pageSize)
 
-let totalFreight=0, totalExpenses=0
+/* ✅ TOTALS FROM FULL FILTERED DATA */
+let totalFreight=0
+let totalExpenses=0
+
+filteredTrips.forEach(t=>{
+
+let weight=(t.weight_kg||0)/1000
+let rate=t.transporter_rate||0
+let freight=weight*rate
+
+let expense=expensesData
+.filter(e=>e.trip_id===t.id)
+.reduce((s,e)=>s+Number(e.amount||0),0)
+
+totalFreight+=freight
+totalExpenses+=expense
+
+})
+
+/* TABLE RENDER */
 let html=""
 
 data.forEach(t=>{
@@ -255,9 +286,6 @@ let expense=expensesData
 
 let profit=freight-expense
 
-totalFreight+=freight
-totalExpenses+=expense
-
 html+=`
 <tr>
 <td onclick="showExpenses('${t.id}','${t.trip_no}')" style="cursor:pointer;color:#1f3c88">
@@ -268,7 +296,7 @@ ${t.trip_no}
 <td>${t.commodity||"-"}</td>
 <td>${weight.toFixed(2)}</td>
 <td>${rate}</td>
-<td>₹ ${expense}</td>
+<td>₹ ${expense.toFixed(0)}</td>
 <td>${formatDate(t.trip_date)}</td>
 <td class="${getStatusClass(t.status)}">${t.status||"-"}</td>
 <td class="${profit>=0?'profit':'loss'}">₹ ${profit.toFixed(2)}</td>
@@ -277,6 +305,7 @@ ${t.trip_no}
 
 tripTable.innerHTML=html
 
+/* KPI FIXED */
 document.getElementById("totalTrips").innerText=filteredTrips.length
 document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
 document.getElementById("totalExpenses").innerText="₹ "+totalExpenses.toFixed(0)
@@ -311,7 +340,7 @@ popupTitle.innerText="Expenses - "+no
 let list=expensesData.filter(e=>e.trip_id===id)
 
 expenseTable.innerHTML=list.length
-? list.map(e=>`<tr><td>${e.expense_type}</td><td>₹ ${e.amount}</td></tr>`).join("")
+? list.map(e=>`<tr><td>${e.expense_type||"-"}</td><td>₹ ${e.amount}</td></tr>`).join("")
 : "<tr><td>No expenses</td></tr>"
 }
 

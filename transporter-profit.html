@@ -148,21 +148,28 @@ if(!session){ window.location="login.html"; return }
 
 const authId=session.user.id
 
+/* GET TRANSPORTER */
 const {data:transporter}=await supabaseClient
 .from("transporters")
 .select("id")
 .eq("auth_id",authId)
 .single()
 
+/* GET TRIPS */
 const {data:trips}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("transporter_id",transporter.id)
 
+/* ✅ GET ONLY RELATED EXPENSES */
+let tripIds = trips.map(t=>t.id)
+
 const {data:expenses}=await supabaseClient
 .from("expenses")
 .select("*")
+.in("trip_id", tripIds)
 
+/* BUILD MAPS */
 expenses?.forEach(e=>{
 if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
 expenseMap[e.trip_id]+=Number(e.amount||0)
@@ -172,7 +179,7 @@ expenseDetails[e.trip_id].push(e)
 })
 
 allTrips=trips||[]
-filteredTrips=allTrips
+filteredTrips=[...allTrips]
 
 buildFilters()
 render()
@@ -211,22 +218,39 @@ render()
 }
 
 function clearFilters(){
-filteredTrips=allTrips
+filteredTrips=[...allTrips]
 routeFilter.value=""
 truckFilter.value=""
 commodityFilter.value=""
 render()
 }
 
-/* RENDER */
+/* 🔥 RENDER */
 function render(){
 
 let start=(page-1)*pageSize
 let end=start+pageSize
 let data=filteredTrips.slice(start,end)
 
+/* ✅ TOTALS FROM FULL DATASET */
 let totalFreight=0,totalExpenses=0,totalProfit=0
 
+filteredTrips.forEach(t=>{
+
+let weightMT=(t.weight_kg||0)/1000
+let rate=t.transporter_rate||0
+
+let freight=weightMT*rate
+let expense=expenseMap[t.id]||0
+let profit=freight-expense
+
+totalFreight+=freight
+totalExpenses+=expense
+totalProfit+=profit
+
+})
+
+/* TABLE */
 let html=""
 
 data.forEach(t=>{
@@ -240,16 +264,12 @@ let profit=freight-expense
 
 let percent= freight>0 ? ((profit/freight)*100).toFixed(1) : 0
 
-totalFreight+=freight
-totalExpenses+=expense
-totalProfit+=profit
-
 html+=`
 <tr onclick="showExpenses('${t.id}','${t.trip_no}')" style="cursor:pointer">
 <td>${t.trip_no}</td>
-<td>${t.route}</td>
-<td>${t.truck}</td>
-<td>${t.commodity}</td>
+<td>${t.route||"-"}</td>
+<td>${t.truck||"-"}</td>
+<td>${t.commodity||"-"}</td>
 <td>${weightMT.toFixed(2)}</td>
 <td>₹ ${freight.toFixed(0)}</td>
 <td>₹ ${expense.toFixed(0)}</td>
@@ -260,6 +280,7 @@ html+=`
 
 profitTable.innerHTML=html
 
+/* KPI */
 document.getElementById("totalFreight").innerText="₹ "+totalFreight.toFixed(0)
 document.getElementById("totalExpenses").innerText="₹ "+totalExpenses.toFixed(0)
 document.getElementById("netProfit").innerText="₹ "+totalProfit.toFixed(0)
@@ -315,7 +336,7 @@ popupTitle.innerText="Expenses - "+no
 let data=expenseDetails[id]||[]
 
 popupBody.innerHTML=data.length
-? data.map(e=>`<tr><td>${e.expense_type}</td><td>₹ ${e.amount}</td></tr>`).join("")
+? data.map(e=>`<tr><td>${e.expense_type||"-"}</td><td>₹ ${e.amount}</td></tr>`).join("")
 : "<tr><td>No expenses</td></tr>"
 
 }
@@ -325,6 +346,7 @@ popup.style.display="none"
 }
 
 </script>
+  
 <script>
 
 /* LOAD USER */

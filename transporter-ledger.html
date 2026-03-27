@@ -184,17 +184,26 @@ let ledger=[]
 
 trips.forEach(t=>{
 
-let freight=((t.weight_kg||0)/1000)*(t.transporter_rate||0)
-let exp=expenseMap[t.id]||0
+let mt = (t.weight_kg||0)/1000
+let exp = expenseMap[t.id]||0
 
-let net = Math.max(freight - exp, 0)
+let net = (t.transporter_rate * mt) - exp
 
-ledger.push({
-date:t.trip_date,
-description:"Trip "+(t.trip_no||""),
-credit:net,
-debit:0
-})
+if(net >= 0){
+    ledger.push({
+        date:t.trip_date,
+        description:"Trip "+(t.trip_no||""),
+        credit:net,
+        debit:0
+    })
+}else{
+    ledger.push({
+        date:t.trip_date,
+        description:"Loss "+(t.trip_no||""),
+        credit:0,
+        debit:Math.abs(net)
+    })
+}
 
 })
 

@@ -241,7 +241,7 @@ let finalBilling = gross - exp   // 🔥 KEY FIX
 clientGross += finalBilling
 
 let cost=(t.transporter_rate||0)*mt
-let exp=expenseMap[t.id]||0
+
 
 let netTransporter=cost-exp
 transporterCost+=netTransporter

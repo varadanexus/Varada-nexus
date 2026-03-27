@@ -37,10 +37,11 @@ th{color:#9ca3af;}
 <body>
 
 <script>
-const supabaseClient = supabase.createClient(
+if(!window.supabaseClient){
+window.supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_ANON_KEY"
-)
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+))
 </script>
 
 <div id="sidebar-container"></div>
@@ -331,6 +332,7 @@ let clientProfitMap={}
 trips.forEach(t=>{
 let mt=(t.weight_kg||0)/1000
 let exp=expenseMap[t.id]||0
+let gross = t.company_rate * mt
 let clientFinal=(t.company_rate*mt)-exp
 let transporterFinal=(t.transporter_rate*mt)-exp
 let profit=clientFinal-transporterFinal

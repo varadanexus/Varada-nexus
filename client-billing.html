@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>Client Billing - Varada Nexus ERP</title>
@@ -126,51 +127,42 @@ html+=`<option value="${c.company}">${c.company}</option>`
 document.getElementById("clientSelect").innerHTML=html
 }
 
-/* 🔥 FIXED FUNCTION */
+/* ✅ FIXED */
 async function loadTripsByClient(){
 
 let client=document.getElementById("clientSelect").value
 if(!client) return
 
-/* GET TRIPS */
 const {data}=await supabaseClient
 .from("trips")
 .select("*")
 .eq("client_name",client)
 .eq("status","Completed")
 
-/* GET ONLY THIS CLIENT'S INVOICES */
 const {data:inv}=await supabaseClient
 .from("client_invoices")
 .select("id")
 .eq("client_name",client)
 
-/* GET BREAKDOWN FOR THOSE INVOICES */
 let invoicedTrips=[]
 
-if(inv && inv.length>0){
-
-let invoiceIds = inv.map(i=>i.id)
+if(inv && inv.length){
+let ids=inv.map(i=>i.id)
 
 const {data:breakdown}=await supabaseClient
 .from("invoice_trip_breakdown")
 .select("trip_no")
-.in("invoice_id",invoiceIds)
+.in("invoice_id",ids)
 
-breakdown?.forEach(b=>{
-invoicedTrips.push(b.trip_no)
-})
-
+breakdown?.forEach(b=>invoicedTrips.push(b.trip_no))
 }
 
-/* FILTER */
-trips=data.filter(t=>!invoicedTrips.includes(t.trip_no))
-
-/* SORT LATEST FIRST */
-trips.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
+/* FILTER + SORT */
+trips=data
+.filter(t=>!invoicedTrips.includes(t.trip_no))
+.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
 
 let html=""
-
 trips.forEach(t=>{
 html+=`
 <div>
@@ -180,14 +172,13 @@ ${t.trip_no} | ${t.route} | ${t.truck}
 })
 
 document.getElementById("tripList").innerHTML=html
-
 }
 
 async function generateInvoice(){
 
 let checked=document.querySelectorAll("#tripList input:checked")
 
-if(checked.length==0){
+if(!checked.length){
 alert("Select trips")
 return
 }
@@ -195,59 +186,51 @@ return
 selectedTrips=[]
 
 checked.forEach(c=>{
-let trip=trips.find(t=>t.id==c.value)
-selectedTrips.push(trip)
+selectedTrips.push(trips.find(t=>t.id==c.value))
 })
 
-let totalFreight=0
-let totalFuel=0
+let totalFreight=0,totalFuel=0
 
-for(let trip of selectedTrips){
+for(let t of selectedTrips){
 
-let mt=trip.weight_kg/1000
-let base=mt*trip.company_rate
-totalFreight+=base
+let mt=t.weight_kg/1000
+let freight=mt*t.company_rate
+totalFreight+=freight
 
-const {data:expenses}=await supabaseClient
+const {data:exp}=await supabaseClient
 .from("expenses")
 .select("amount")
-.eq("trip_id",trip.id)
+.eq("trip_id",t.id)
 .eq("expense_type","Fuel")
 
-let fuel=0
-expenses?.forEach(e=>fuel+=Number(e.amount))
-totalFuel+=fuel
-
+exp?.forEach(e=>totalFuel+=Number(e.amount))
 }
 
 invoiceAmount=totalFreight-totalFuel
 
-document.getElementById("invoicePreview").innerHTML=`
+invoicePreview.innerHTML=`
 Client : ${selectedTrips[0].client_name}<br>
 Trips : ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
 Total Freight : ₹${totalFreight}<br>
 Fuel Deduction : ₹${totalFuel}<br>
 <b>Invoice Amount : ₹${invoiceAmount}</b>
 `
-
 }
 
 function generateInvoiceNo(){
-let now=new Date()
-return "INV-"+now.getFullYear()+"-"+Math.floor(Math.random()*9000+1000)
+return "INV-"+new Date().getFullYear()+"-"+Math.floor(Math.random()*9000+1000)
 }
 
-/* 🔥 FINAL SAVE */
 async function saveInvoice(){
 
-if(selectedTrips.length==0){
+if(!selectedTrips.length){
 alert("Generate invoice first")
 return
 }
 
-let invoiceNo = generateInvoiceNo()
+let invoiceNo=generateInvoiceNo()
 
-const {data:newInvoice,error} = await supabaseClient
+const {data:newInvoice}=await supabaseClient
 .from("client_invoices")
 .insert({
 invoice_no:invoiceNo,
@@ -258,43 +241,32 @@ amount_paid:0,
 balance_amount:invoiceAmount,
 payment_status:"Pending"
 })
-.select()
-.single()
+.select().single()
 
-if(error){
-alert("Error saving invoice")
-return
-}
+for(let t of selectedTrips){
 
-/* INSERT BREAKDOWN */
-for(let trip of selectedTrips){
+let mt=t.weight_kg/1000
+let freight=mt*t.company_rate
 
-let mt=(trip.weight_kg||0)/1000
-let freight=mt*(trip.company_rate||0)
-
-const {data:expenses}=await supabaseClient
+const {data:exp}=await supabaseClient
 .from("expenses")
 .select("amount")
-.eq("trip_id",trip.id)
+.eq("trip_id",t.id)
 .eq("expense_type","Fuel")
 
 let fuel=0
-expenses?.forEach(e=>fuel+=Number(e.amount||0))
-
-let finalAmount=freight-fuel
+exp?.forEach(e=>fuel+=Number(e.amount))
 
 await supabaseClient.from("invoice_trip_breakdown").insert({
 invoice_id:newInvoice.id,
-trip_no:trip.trip_no,
-amount:finalAmount
+trip_no:t.trip_no,
+amount:freight-fuel
 })
-
 }
 
 alert("Invoice Saved")
 loadInvoices()
 loadTripsByClient()
-
 }
 
 async function loadInvoices(){
@@ -307,9 +279,7 @@ renderInvoices(invoices)
 }
 
 function renderInvoices(data){
-let html=""
-data.forEach(i=>{
-html+=`
+invoiceTable.innerHTML=data.map(i=>`
 <tr>
 <td>${i.invoice_no}</td>
 <td>${i.trip_no}</td>
@@ -317,11 +287,10 @@ html+=`
 <td>₹${i.invoice_amount}</td>
 <td>${i.payment_status}</td>
 <td>
+<button onclick="downloadClientInvoice('${i.id}',event)">PDF</button>
 <button onclick="deleteInvoice('${i.id}')">Delete</button>
 </td>
-</tr>`
-})
-document.getElementById("invoiceTable").innerHTML=html
+</tr>`).join("")
 }
 
 async function deleteInvoice(id){
@@ -332,6 +301,84 @@ loadInvoices()
 loadTripsByClient()
 }
 
+/* 🔥 PDF FUNCTION */
+async function downloadClientInvoice(id,e){
+
+e.stopPropagation()
+
+const { jsPDF } = window.jspdf
+let inv=invoices.find(i=>i.id==id)
+
+const {data:breakdown}=await supabaseClient
+.from("invoice_trip_breakdown")
+.select("*")
+.eq("invoice_id",id)
+
+let tripNos=breakdown.map(b=>b.trip_no)
+
+const {data:tripData}=await supabaseClient
+.from("trips")
+.select("*")
+.in("trip_no",tripNos)
+
+const tripIds=tripData.map(t=>t.id)
+
+const {data:exp}=await supabaseClient
+.from("expenses")
+.select("trip_id,amount")
+.in("trip_id",tripIds)
+.eq("expense_type","Fuel")
+
+let fuelMap={}
+exp?.forEach(e=>{
+fuelMap[e.trip_id]=(fuelMap[e.trip_id]||0)+Number(e.amount)
+})
+
+let rows=[],tw=0,tf=0,tfuel=0
+
+tripData.forEach(t=>{
+let mt=t.weight_kg/1000
+let fr=mt*t.company_rate
+let fuel=fuelMap[t.id]||0
+
+tw+=mt; tf+=fr; tfuel+=fuel
+
+rows.push([
+t.trip_no,t.route||"-",t.truck||"-",t.trip_date||"-",
+mt.toFixed(2),fr.toFixed(2),fuel.toFixed(2),(fr-fuel).toFixed(2)
+])
+})
+
+let doc=new jsPDF()
+
+doc.addImage("images/logo.png","PNG",15,10,20,20)
+
+doc.setFontSize(14)
+doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
+doc.setFontSize(10)
+doc.text("Client Invoice",40,25)
+
+doc.text("Invoice:",140,40)
+doc.text(inv.invoice_no,170,40)
+
+doc.text("Client:",15,55)
+doc.text(inv.client_name,40,55)
+
+doc.autoTable({
+startY:70,
+head:[["Trip","Route","Truck","Date","MT","Freight","Fuel","Net"]],
+body:rows
+})
+
+let y=doc.lastAutoTable.finalY+10
+
+doc.text(`Total Freight: ₹${Math.round(tf)}`,15,y)
+doc.text(`Fuel: ₹${Math.round(tfuel)}`,15,y+10)
+doc.text(`Net: ₹${Math.round(tf-tfuel)}`,15,y+20)
+
+doc.save(inv.invoice_no+".pdf")
+}
+
 function toggleAllTrips(){
 let checked=document.getElementById("selectAll").checked
 document.querySelectorAll("#tripList input").forEach(c=>c.checked=checked)
@@ -339,9 +386,7 @@ generateInvoice()
 }
 
 document.addEventListener("change",e=>{
-if(e.target.closest("#tripList")){
-generateInvoice()
-}
+if(e.target.closest("#tripList")) generateInvoice()
 })
 
 </script>

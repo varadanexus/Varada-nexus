@@ -461,10 +461,14 @@ data:[paid,outstanding]
 /* 🚛 FLEET EXPANSION MODEL */
 
 // trips per day assumption (based on your input)
-let tripsPerDay = 3
-
-// calculate active days (simple assumption)
+let tripsPerDay = totalTrips / 30 || 3   // dynamic from data
 let totalDays = 30
+
+// include agent commission (30%)
+let agentCutPercent = 0.30
+
+// adjusted profit
+let adjustedProfitPerTrip = avgProfitPerTrip * (1 - agentCutPercent)
 
 // current trucks (you said 1)
 let currentTrucks = 1
@@ -475,7 +479,7 @@ let avgProfitPerTrip = profitData.length
     : 0
 
 // profit per truck per day
-let profitPerTruckPerDay = avgProfitPerTrip * tripsPerDay
+let profitPerTruckPerDay = adjustedProfitPerTrip * tripsPerDay
 
 // monthly profit per truck
 let profitPerTruck = profitPerTruckPerDay * totalDays

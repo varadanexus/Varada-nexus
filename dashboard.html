@@ -199,7 +199,10 @@ const {data:role} = await supabaseClient
 .single()
 
 if(role){
-document.getElementById("userRole").innerText = role.role_name
+    const roleEl = document.getElementById("userRole")
+    if(roleEl){
+        roleEl.innerText = role.role_name
+    }
 }
 
 /* LOGOUT */
@@ -231,14 +234,13 @@ function forceActiveMenu(){
 
     document.querySelectorAll("#sidebar a").forEach(link=>{
 
-        let href = link.getAttribute("href")
+let page = link.getAttribute("data-page")
 
-        if(href === currentPage){
-            link.classList.add("active")
-            console.log("✅ Activated:", href)
-        }
+if(page === currentPage){
+link.classList.add("active")
+}
 
-    })
+})
 
 }
     

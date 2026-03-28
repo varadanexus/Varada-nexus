@@ -10,19 +10,141 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:25px;border-radius:8px;margin-bottom:20px;}
-.form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
-input,select{padding:10px;border:1px solid #ccc;border-radius:4px;}
-button{padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
-.deleteBtn{background:#d9534f;}
-.editBtn{background:#5bc0de;}
-.saveBtn{background:#5cb85c;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
-.pagination{margin-top:10px;}
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h2{
+margin-bottom:18px;
+font-weight:600;
+}
+
+h3{
+margin-bottom:12px;
+font-size:14px;
+color:#9ca3af;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* FORM GRID */
+.form-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:10px;
+}
+
+/* INPUTS */
+input,select{
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+font-size:13px;
+}
+
+/* BUTTON */
+button{
+padding:8px 12px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+font-size:12px;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* BUTTON TYPES */
+.deleteBtn{
+background:#ef4444;
+}
+.deleteBtn:hover{
+background:#dc2626;
+}
+
+.editBtn{
+background:#f59e0b;
+}
+.editBtn:hover{
+background:#d97706;
+}
+
+.saveBtn{
+background:#22c55e;
+}
+.saveBtn:hover{
+background:#16a34a;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+}
+
+th{
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+tr:hover{
+background:#0f172a;
+}
+
+/* PAGINATION */
+.pagination{
+margin-top:10px;
+display:flex;
+gap:10px;
+}
+
+/* SEARCH BAR FIX */
+.card input{
+margin-right:6px;
+margin-bottom:6px;
+}
+
+/* RESPONSIVE FIX */
+.card{
+overflow-x:auto;
+}
 </style>
 
 </head>
@@ -42,19 +164,43 @@ const supabaseClient = supabase.createClient(
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-await initSidebar()
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
+await initSidebar()
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
 
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
 
 async function initSidebar(){
 
@@ -136,11 +282,12 @@ window.location.href="login.html"
 
 <h3>Search Rates</h3>
 
+<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
 <input id="searchCommodity" placeholder="Commodity">
 <input id="searchRoute" placeholder="Route">
-
 <button onclick="searchRates()">Search</button>
 <button onclick="clearSearch()">Clear</button>
+</div>
 
 </div>
 
@@ -312,7 +459,7 @@ html+=`
 <td>${c}</td>
 <td>${rt}</td>
 <td>${t}</td>
-<td>${r.company_rate_per_mt}</td>
+<td>₹ ${r.company_rate_per_mt}</td>
 <td>${r.transporter_rate_per_mt}</td>
 <td>
 <button class="editBtn" onclick="editRate('${r.id}')">Edit</button>

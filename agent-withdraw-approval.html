@@ -9,11 +9,152 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-table{width:100%;background:white;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-button{padding:6px 10px;margin:2px;}
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h2{
+margin-bottom:18px;
+font-weight:600;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+}
+
+/* HEADER */
+th{
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* ROW */
+td{
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+/* HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* STATUS COLORS */
+.status-approved{
+color:#22c55e;
+font-weight:600;
+}
+
+.status-rejected{
+color:#ef4444;
+font-weight:600;
+}
+
+.status-pending{
+color:#f59e0b;
+font-weight:600;
+}
+
+/* BUTTONS */
+button{
+padding:7px 12px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:12px;
+transition:0.2s;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+button.reject{
+background:#ef4444;
+}
+
+button.reject:hover{
+background:#dc2626;
+}
+
+/* SMALL TEXT */
+small{
+color:#9ca3af;
+font-size:11px;
+}
+
+/* MODAL */
+#approveModal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+/* MODAL CARD */
+#approveModal > div{
+background:#111827;
+padding:20px;
+border-radius:12px;
+width:320px;
+border:1px solid rgba(255,255,255,0.05);
+}
+
+/* MODAL INPUTS */
+#approveModal select,
+#approveModal input{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+margin-bottom:10px;
+}
+
+/* MODAL BUTTON ALIGN */
+#approveModal div div{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+}
 </style>
 
 </head>
@@ -30,14 +171,46 @@ const supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>
 
 <script>
+
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
 await initSidebar()
-if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
-document.getElementById("sidebar").style.display="block"
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
+
 })
+  
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+ 
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -90,6 +263,7 @@ window.location.href="login.html"
 
 <h2>Withdraw Approvals</h2>
 
+<div class="card">
 <table>
 <thead>
 <tr>
@@ -103,6 +277,7 @@ window.location.href="login.html"
 <tbody id="table"></tbody>
 
 </table>
+</div>
 
 </div>
 
@@ -176,10 +351,7 @@ Pending: ₹ ${(pendingMap[r.agent_id] || 0).toFixed(2)}
 Available: ₹ ${available.toFixed(2)}
 </small>
 </td>
-<td style="
-color:${r.status==='approved'?'green':r.status==='rejected'?'red':'orange'};
-font-weight:bold;
-">
+<td class="status-${r.status}">
 ${r.status.toUpperCase()}
 </td>
 <td>
@@ -187,7 +359,7 @@ ${r.status === "pending" ? `
 <button id="approve_${r.id}" onclick="openApproveModal('${r.id}','${r.agent_id}',${r.amount})">
 Approve
 </button>
-<button onclick="reject('${r.id}')">Reject</button>
+<button class="reject" onclick="reject('${r.id}')">Reject</button>
 ` : "—"}
 </td>
 </tr>

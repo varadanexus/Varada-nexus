@@ -191,22 +191,28 @@ height:auto;
 .logo-box{
 display:flex;
 align-items:center;
-gap:12px;
-padding:18px;
-border-bottom:1px solid rgba(255,255,255,0.08);
-overflow:hidden; /* 🔥 prevents image overflow */
+gap:10px;
+padding:14px 16px;
+border-bottom:1px solid rgba(255,255,255,0.06);
+height:60px;              /* 🔥 fixed height */
+overflow:hidden;
 }
 
+/* 🔥 FORCE LOG INTO SMALL FRAME */
 .logo{
-height:34px;
-width:auto;
-object-fit:contain;
-display:block;
+height:28px;              /* smaller */
+width:28px;               /* force square */
+object-fit:cover;         /* crop excess */
+border-radius:6px;
 }
 
+/* BRAND */
 .brand{
-font-size:22px;
-font-weight:700;
+font-size:18px;
+font-weight:600;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
 }
 
 /* USER */

@@ -54,17 +54,17 @@
 <div class="menu-section">
   <div class="menu-title">Client</div>
 
-  <a href="client-billing.html">
+  <a href="client-billing.html" data-page="client-billing.html">
     <i data-lucide="file-text"></i>
     <span>Billing</span>
   </a>
 
-  <a href="client-payments.html">
+  <a href="client-payments.html" data-page="client-payments.html">
     <i data-lucide="wallet"></i>
     <span>Payments</span>
   </a>
 
-  <a href="client-ledger.html">
+  <a href="client-ledger.html" data-page="client-ledger.html">
     <i data-lucide="book"></i>
     <span>Ledger</span>
   </a>
@@ -74,12 +74,12 @@
 <div class="menu-section">
   <div class="menu-title">Transporter</div>
 
-  <a href="admin-payments.html">
+  <a href="admin-payments.html" data-page="admin-payments.html">
     <i data-lucide="banknote"></i>
     <span>Payments</span>
   </a>
 
-  <a href="admin-transporter-ledger.html">
+  <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">
     <i data-lucide="clipboard-list"></i>
     <span>Ledger</span>
   </a>
@@ -89,27 +89,27 @@
 <div class="menu-section">
   <div class="menu-title">Agent</div>
 
-  <a href="agent-dashboard-admin.html">
+  <a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">
     <i data-lucide="layout-dashboard"></i>
     <span>Dashboard</span>
   </a>
 
-  <a href="agent-payments.html">
+  <a href="agent-payments.html" data-page="agent-payments.html">
     <i data-lucide="hand-coins"></i>
     <span>Payments</span>
   </a>
 
-  <a href="agent-ledger.html">
+  <a href="agent-ledger.html" data-page="agent-ledger.html">
     <i data-lucide="book-open"></i>
     <span>Ledger</span>
   </a>
 
-  <a href="agent-withdraw-approval.html">
+  <a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">
     <i data-lucide="check-circle"></i>
     <span>Withdraw</span>
   </a>
 
-  <a href="agents.html">
+  <a href="agents.html" data-page="agents.html">
     <i data-lucide="users"></i>
     <span>Agents</span>
   </a>
@@ -119,32 +119,32 @@
 <div class="menu-section">
   <div class="menu-title">Settings</div>
 
-  <a href="master-data.html">
+  <a href="master-data.html" data-page="master-data.html">
     <i data-lucide="database"></i>
     <span>Master Data</span>
   </a>
 
-  <a href="rate-entry.html">
+  <a href="rate-entry.html" data-page="rate-entry.html">
     <i data-lucide="line-chart"></i>
     <span>Rates</span>
   </a>
 
-  <a href="admin-users.html">
+  <a href="admin-users.html" data-page="admin-users.html">
     <i data-lucide="user-cog"></i>
     <span>Users</span>
   </a>
 
-  <a href="role-permissions.html">
+  <a href="role-permissions.html" data-page="role-permissions.html">
     <i data-lucide="shield"></i>
     <span>Permissions</span>
   </a>
 
-  <a href="admin-maintenance.html">
+  <a href="admin-maintenance.html" data-page="admin-maintenance.html">
     <i data-lucide="settings"></i>
     <span>Maintenance</span>
   </a>
 
-  <a href="profit-analysis.html">
+  <a href="profit-analysis.html" data-page="profit-analysis.html">
     <i data-lucide="trending-up"></i>
     <span>Profit Analysis</span>
   </a>
@@ -181,6 +181,7 @@ color:white;
 overflow-y:auto;
 z-index:9999;
 box-sizing:border-box; /* ✅ prevents overflow */
+display:none;
 }
 
 /* LOGO */
@@ -206,6 +207,12 @@ font-weight:700;
 letter-spacing:0.3px;
 }
 
+.role{
+font-size:11px;
+color:#94a3b8;
+margin-top:2px;
+}
+  
 /* USER */
 .user-box{
 display:flex;
@@ -261,6 +268,11 @@ position:relative;
 transition:all 0.2s ease;
 }
 
+.sidebar a:hover{
+background:rgba(59,130,246,0.14);
+box-shadow:0 0 0 1px rgba(59,130,246,0.15);
+}
+  
 /* ICON */
 .sidebar a i{
 width:16px;
@@ -304,6 +316,10 @@ margin-top:6px;
 <script>
 
 /* INIT ICONS */
-lucide.createIcons()
+function initIcons(){
+    if(window.lucide){
+        lucide.createIcons()
+    }
+}
 
 </script>

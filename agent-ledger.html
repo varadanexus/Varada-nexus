@@ -190,20 +190,7 @@ link.classList.add("active")
 
   
 <script>
-function setActiveMenu(){
 
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-
-let page = link.getAttribute("data-page")
-
-if(page === currentPage){
-link.classList.add("active")
-}
-
-})
-}
 
 async function initSidebar(){
 
@@ -471,6 +458,8 @@ renderFiltered(entries)
 
 function renderFiltered(entries){
 
+currentView = entries
+  
 renderKPIs(entries)
 renderChart(entries)
   

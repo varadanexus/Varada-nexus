@@ -9,8 +9,8 @@
 <script src="session-check.js"></script>
 <script src="supabase-client.js"></script>
 <script src="menu-rbac.js"></script>
+
 <style>
-/* GLOBAL */
 body{
 margin:0;
 font-family:'Inter',sans-serif;
@@ -18,20 +18,16 @@ background:#0a0f1c;
 color:#e5e7eb;
 }
 
-/* MAIN */
 .main{
 margin-left:220px;
 padding:24px;
 }
 
-/* HEADINGS */
 h2{
 margin-bottom:18px;
 font-weight:600;
-color:#e5e7eb;
 }
 
-/* CARD */
 .card{
 background:#111827;
 padding:20px;
@@ -40,7 +36,6 @@ border:1px solid rgba(255,255,255,0.04);
 max-width:600px;
 }
 
-/* INPUT + TEXTAREA */
 input,textarea{
 width:100%;
 padding:10px;
@@ -49,19 +44,14 @@ border-radius:8px;
 border:1px solid rgba(255,255,255,0.08);
 background:#0f172a;
 color:#e5e7eb;
-outline:none;
-font-size:13px;
 }
 
-/* CHECKBOX LABEL */
 label{
 display:flex;
 align-items:center;
 gap:10px;
-font-size:14px;
 }
 
-/* BUTTON */
 button{
 margin-top:12px;
 padding:10px 14px;
@@ -70,24 +60,15 @@ color:white;
 border:none;
 border-radius:8px;
 cursor:pointer;
-transition:0.2s;
-font-size:13px;
 }
 
 button:hover{
 background:#2563eb;
 }
 
-/* STATUS TEXT */
 .status{
 margin-top:12px;
 font-weight:600;
-font-size:14px;
-}
-
-/* SPACING FIX */
-.card br{
-display:none;
 }
 </style>
 
@@ -99,12 +80,8 @@ display:none;
 <div id="sidebar-container"></div>
 
 <script>
-
-</script>
-
-<script>
+/* LOAD SIDEBAR (ONLY ONCE) */
 async function loadSidebar(){
-
 try{
 
 const res = await fetch("sidebar.html")
@@ -133,65 +110,20 @@ link.classList.add("active")
 }
 })
 
-}catch(err){
-console.error("Sidebar error:", err)
-}
-
-}
-
-/* RUN */
-loadSidebar()
-
-async function loadSidebar(){
-
-try{
-
-const res = await fetch("sidebar.html")
-const html = await res.text()
-
-document.getElementById("sidebar-container").innerHTML = html
-
-/* USER NAME */
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(session){
-document.getElementById("userName").innerText =
-session.user.email.split("@")[0]
-}
-
-/* RBAC */
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
-/* ACTIVE MENU */
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-if(link.getAttribute("data-page") === currentPage){
-link.classList.add("active")
-}
-})
-
-console.log("🔥 Sidebar loaded clean")
+console.log("✅ Sidebar loaded")
 
 }catch(err){
 console.error("Sidebar error:", err)
 }
-
 }
 
-/* RUN */
-loadSidebar()
-    
 /* RBAC FUNCTION */
 async function enforceAccess(){
 
 try{
 
 const page = window.location.pathname.split("/").pop()
-console.log("PAGE:", page)
 
-/* SESSION */
 const { data:{session} } = await supabaseClient.auth.getSession()
 
 if(!session){
@@ -201,7 +133,6 @@ return
 
 const authId = session.user.id
 
-/* USER */
 const {data:user} = await supabaseClient
 .from("users")
 .select("id")
@@ -213,7 +144,6 @@ window.location.href="login.html"
 return
 }
 
-/* ROLES */
 const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
@@ -226,45 +156,36 @@ return
 
 let roleIds = userRoles.map(r=>r.role_id)
 
-/* PERMISSIONS */
 const {data:permissions} = await supabaseClient
 .from("role_permissions")
 .select("page_name")
 .in("role_id",roleIds)
 .eq("can_access",true)
 
-/* SAFE */
 let allowedPages = (permissions || []).map(p=>p.page_name.trim())
 
-console.log("ALLOWED:", allowedPages)
-
-/* 🚨 BLOCK */
 if(!allowedPages.includes(page)){
 alert("Access Denied")
 window.location.href="dashboard.html"
 return
 }
 
-/* ✅ ALLOWED */
+/* LOAD PAGE DATA */
 await loadSettings()
 
 }catch(err){
-
 console.log("RBAC ERROR:", err)
 window.location.href="dashboard.html"
-
 }
 
 }
 
-/* RUN AFTER LOAD */
-window.addEventListener("DOMContentLoaded", enforceAccess)
-
-
-    
+/* RUN */
+window.addEventListener("DOMContentLoaded", async ()=>{
+await loadSidebar()
+await enforceAccess()
+})
 </script>
-
-
 
 <div class="main">
 
@@ -274,19 +195,15 @@ window.addEventListener("DOMContentLoaded", enforceAccess)
 
 <label>
 <input type="checkbox" id="maintenanceToggle">
- Enable Maintenance Mode
+Enable Maintenance Mode
 </label>
 
 <div class="status" id="statusText"></div>
-
-<br>
 
 <label>Maintenance Message</label>
 <textarea id="message" rows="4"></textarea>
 
 <button onclick="saveMaintenance()">Save Settings</button>
-
-<br><br>
 
 <button onclick="forceLogout()">Force Logout All Users</button>
 
@@ -295,12 +212,7 @@ window.addEventListener("DOMContentLoaded", enforceAccess)
 </div>
 
 <script>
-
-/* LOAD SETTINGS */
-
 async function loadSettings(){
-
-console.log("LOADING SETTINGS")
 
 const {data}=await supabaseClient
 .from("system_settings")
@@ -314,7 +226,6 @@ maintenanceToggle.checked = data.maintenance_mode
 message.value = data.message || ""
 
 updateStatus(data.maintenance_mode)
-
 }
 
 function updateStatus(mode){
@@ -338,7 +249,6 @@ message:message.value
 .eq("id",1)
 
 alert("Settings Updated")
-
 }
 
 async function forceLogout(){
@@ -361,11 +271,8 @@ maintenance_version:newVersion
 .eq("id",1)
 
 alert("All users logged out")
-
 }
-
 </script>
-
 
 <script src="global-logout.js"></script>
 

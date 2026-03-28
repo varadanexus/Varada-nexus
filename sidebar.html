@@ -232,21 +232,60 @@ border-top:1px solid rgba(255,255,255,0.1);
 
 <script>
 
-/* ACTIVE MENU */
+/* FORCE SCRIPT EXECUTION AFTER LOAD */
 (function(){
+
+function run(){
+
+const sidebar = document.getElementById("sidebar")
+if(!sidebar){
+    setTimeout(run, 50)
+    return
+}
+
+console.log("✅ Sidebar JS running")
+
+/* ACTIVE MENU */
 let currentPage = window.location.pathname.split("/").pop()
 
-setTimeout(()=>{
-document.querySelectorAll("#sidebar a").forEach(link=>{
-if(link.dataset.page === currentPage){
-link.classList.add("active")
-}
+sidebar.querySelectorAll("a").forEach(link=>{
+    if(link.dataset.page === currentPage){
+        link.classList.add("active")
+    }
 })
-},100)
+
+/* COLLAPSIBLE */
+sidebar.querySelectorAll("[data-toggle]").forEach(toggle=>{
+
+    toggle.onclick = function(e){
+
+        e.preventDefault()
+        e.stopPropagation()
+
+        let section = this.closest(".menu-section")
+
+        if(!section) return
+
+        // close others
+        sidebar.querySelectorAll(".menu-section").forEach(sec=>{
+            if(sec !== section) sec.classList.remove("open")
+        })
+
+        section.classList.toggle("open")
+
+        console.log("🔥 working click")
+
+    }
+
+})
+
+}
+
+/* 🔥 CRITICAL: run multiple times to ensure binding */
+run()
+setTimeout(run, 300)
+setTimeout(run, 800)
+
 })()
 
-
-
 </script>
-
-

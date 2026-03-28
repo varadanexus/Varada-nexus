@@ -2,7 +2,7 @@
 <html>
 
 <head>
-
+<script src="menu-rbac.js"></script>
 <title>System Maintenance Control - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -101,29 +101,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
     
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(data=>{
 
-document.getElementById("sidebar-container").innerHTML = data
-
-const sidebar = document.getElementById("sidebar")
-if(sidebar) sidebar.style.display="none"
-
-setTimeout(async()=>{
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
-await initSidebar()
-setActiveMenu()
-
-if(sidebar) sidebar.style.display="block"
-
-},200)
-
-})
 
 function setActiveMenu(){
 
@@ -359,7 +337,7 @@ alert("All users logged out")
 
 </script>
 
-<script src="menu-rbac.js"></script>
+
 <script src="global-logout.js"></script>
 
 </body>

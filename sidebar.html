@@ -18,23 +18,37 @@
 <!-- MENU -->
 <div class="menu">
 
+<!-- DASHBOARD -->
+<div class="menu-section">DASHBOARD</div>
 <a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
 <a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
+
+<!-- OPERATIONS -->
+<div class="menu-section">OPERATIONS</div>
 <a href="trips.html" data-page="trips.html">Trips</a>
 <a href="expenses.html" data-page="expenses.html">Expenses</a>
+
+<!-- CLIENT -->
+<div class="menu-section">CLIENT</div>
 <a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
 <a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
 <a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
 
+<!-- TRANSPORTER -->
+<div class="menu-section">TRANSPORTER</div>
 <a href="admin-payments.html" data-page="admin-payments.html">Transporter Payments</a>
 <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
 
+<!-- AGENT -->
+<div class="menu-section">AGENT</div>
 <a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">Agent Dashboard</a>
 <a href="agent-payments.html" data-page="agent-payments.html">Agent Payments</a>
 <a href="agent-ledger.html" data-page="agent-ledger.html">Agent Ledger</a>
 <a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">Withdraw Approvals</a>
-
 <a href="agents.html" data-page="agents.html">Agents</a>
+
+<!-- SYSTEM -->
+<div class="menu-section">SYSTEM</div>
 <a href="master-data.html" data-page="master-data.html">Master Data</a>
 <a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
 <a href="admin-users.html" data-page="admin-users.html">Users</a>
@@ -128,6 +142,29 @@ background:#2563eb;
 color:white;
 }
 
+.menu-section{
+font-size:11px;
+color:#64748b;
+padding:12px 18px 4px 18px;
+margin-top:10px;
+letter-spacing:1px;
+font-weight:600;
+}
+
+/* spacing between groups */
+.menu-section:first-child{
+margin-top:5px;
+}
+
+/* subtle divider effect */
+.menu-section::after{
+content:"";
+display:block;
+height:1px;
+background:rgba(255,255,255,0.05);
+margin-top:6px;
+}
+  
 /* LOGOUT */
 .bottom{
 padding:10px;

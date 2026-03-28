@@ -119,6 +119,25 @@ margin-top:6px;
 margin-right:6px;
 }
 
+.total-row{
+background:#0b1220 !important;
+font-weight:600;
+}
+
+.total-row td{
+color:#e5e7eb;f
+border-top:1px solid rgba(255,255,255,0.08);
+}
+
+.total-row{
+background:linear-gradient(90deg,#0b1220,#0f172a);
+font-weight:600;
+}
+
+.total-row td{
+color:#93c5fd; /* light blue */
+}
+  
 </style>
 
 </head>
@@ -513,7 +532,7 @@ let totalDebit = filtered.reduce((s,e)=>s+e.debit,0)
 let totalCredit = filtered.reduce((s,e)=>s+e.credit,0)
 
 html += `
-<tr style="font-weight:bold;background:#f1f1f1">
+<tr class="total-row">
 <td colspan="3">Total</td>
 <td>₹${totalDebit.toFixed(0)}</td>
 <td>₹${totalCredit.toFixed(0)}</td>
@@ -532,13 +551,12 @@ let doc = new jsPDF()
 doc.setFontSize(14)
 doc.text("Transporter Ledger", 14, 15)
 
-
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
 
 doc.text(`From: ${fromDate || "-"}  To: ${toDate || "-"}`, 14, 22)
   
 let search = document.getElementById("searchBox").value.toLowerCase()
-let fromDate = document.getElementById("fromDate").value
-let toDate = document.getElementById("toDate").value
 
 let filtered = allEntries.filter(e => {
 

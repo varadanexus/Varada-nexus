@@ -249,29 +249,4 @@ link.classList.add("active")
 
 </script>
 
-<script>
 
-function initSidebarInteractions(){
-
-console.log("🔥 Sidebar interactions working")
-
-document.querySelectorAll("[data-toggle]").forEach(toggle=>{
-
-toggle.onclick = function(){
-
-let parent = this.parentElement
-
-// close others (accordion)
-document.querySelectorAll(".menu-section").forEach(sec=>{
-if(sec !== parent) sec.classList.remove("open")
-})
-
-parent.classList.toggle("open")
-
-}
-
-})
-
-}
-
-</script>

@@ -16,7 +16,6 @@
 </div>
 
 <!-- MENU -->
-
 <div class="menu">
 
 <!-- DASHBOARD -->
@@ -51,34 +50,26 @@
 
 <!-- CLIENT -->
 <div class="menu-section collapsible">
-
   <div class="menu-title toggle" data-toggle>Client ⌄</div>
-
   <div class="submenu">
     <a href="client-billing.html" data-page="client-billing.html">Billing</a>
     <a href="client-payments.html" data-page="client-payments.html">Payments</a>
     <a href="client-ledger.html" data-page="client-ledger.html">Ledger</a>
   </div>
-
 </div>
 
 <!-- TRANSPORTER -->
 <div class="menu-section collapsible">
-
   <div class="menu-title toggle" data-toggle>Transporter ⌄</div>
-
   <div class="submenu">
     <a href="admin-payments.html" data-page="admin-payments.html">Payments</a>
     <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Ledger</a>
   </div>
-
 </div>
 
 <!-- AGENT -->
 <div class="menu-section collapsible">
-
   <div class="menu-title toggle" data-toggle>Agent ⌄</div>
-
   <div class="submenu">
     <a href="agent-dashboard-admin.html">Dashboard</a>
     <a href="agent-payments.html">Payments</a>
@@ -86,14 +77,11 @@
     <a href="agent-withdraw-approval.html">Withdraw</a>
     <a href="agents.html">Agents</a>
   </div>
-
 </div>
 
 <!-- SETTINGS -->
 <div class="menu-section collapsible">
-
   <div class="menu-title toggle" data-toggle>Settings ⌄</div>
-
   <div class="submenu">
     <a href="master-data.html">Master Data</a>
     <a href="rate-entry.html">Rates</a>
@@ -102,7 +90,6 @@
     <a href="admin-maintenance.html">Maintenance</a>
     <a href="profit-analysis.html">Profit Analysis</a>
   </div>
-
 </div>
 
 </div>
@@ -124,10 +111,7 @@ height:100vh;
 background:#0f172a;
 color:white;
 overflow-y:auto;
-
-/* 🔥 ADD THESE */
 z-index:99999;
-pointer-events:auto;
 }
 
 /* LOGO */
@@ -157,16 +141,11 @@ border-radius:10px;
 }
 
 /* SECTION */
-.menu-section{
-margin-top:10px;
-}
-
 .menu-title{
 font-size:11px;
 text-transform:uppercase;
 color:#64748b;
 padding:8px 18px;
-font-weight:600;
 }
 
 /* LINKS */
@@ -182,19 +161,12 @@ text-decoration:none;
 position:relative;
 }
 
-/* ICON */
-.icon{
-width:18px;
-text-align:center;
-}
-
-/* HOVER */
 .sidebar a:hover{
 background:#1e293b;
 color:white;
 }
 
-/* ACTIVE WITH LEFT BAR */
+/* ACTIVE */
 .sidebar a.active{
 background:#1e293b;
 color:white;
@@ -208,7 +180,6 @@ top:5px;
 bottom:5px;
 width:3px;
 background:#3b82f6;
-border-radius:4px;
 }
 
 /* COLLAPSIBLE */
@@ -227,82 +198,7 @@ cursor:pointer;
 
 /* LOGOUT */
 .bottom{
-margin-top:10px;
 padding:10px;
 border-top:1px solid rgba(255,255,255,0.1);
-} 
-
-
-
-.main{
-position:relative;
-z-index:1;
 }
-
-.sidebar{
-z-index:99999 !important;
-}
-
 </style>
-
-<script>
-
-(function(){
-
-function init(){
-
-const sidebar = document.getElementById("sidebar")
-if(!sidebar){
-    setTimeout(init, 50)
-    return
-}
-
-/* PREVENT MULTIPLE INIT */
-if(sidebar.dataset.loaded === "true") return
-sidebar.dataset.loaded = "true"
-
-console.log("✅ Sidebar initialized")
-
-/* ACTIVE MENU */
-let currentPage = window.location.pathname.split("/").pop()
-
-sidebar.querySelectorAll("a").forEach(link=>{
-    if(link.dataset.page === currentPage){
-        link.classList.add("active")
-    }
-})
-
-/* COLLAPSIBLE (CLEAN + SAFE) */
-sidebar.querySelectorAll("[data-toggle]").forEach(toggle=>{
-
-    toggle.addEventListener("click", function(e){
-
-        e.preventDefault()
-        e.stopPropagation()
-
-        const section = this.closest(".menu-section")
-
-        if(!section) return
-
-        /* CLOSE OTHERS */
-        sidebar.querySelectorAll(".menu-section").forEach(sec=>{
-            if(sec !== section) sec.classList.remove("open")
-        })
-
-        /* TOGGLE CURRENT */
-        section.classList.toggle("open")
-
-        console.log("🔥 toggle working")
-
-    })
-
-})
-
-}
-
-/* RUN */
-init()
-
-})()
-
-</script>

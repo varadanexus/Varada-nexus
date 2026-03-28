@@ -143,17 +143,15 @@ fetch("sidebar.html")
             await applyMenuRBAC()
         }
 
-        attachSidebarEvents()
+        /* ❌ REMOVED attachSidebarEvents() */
 
-        /* 🔥 FORCE ACTIVE AGAIN (CRITICAL FIX) */
         forceActiveMenu()
 
-        /* ICON FIX */
         if(window.lucide){
             lucide.createIcons()
         }
 
-    }, 200)   // 🔥 increased delay
+    }, 200)
 
 })
 /* SIDEBAR USER + ROLE */
@@ -229,13 +227,11 @@ function forceActiveMenu(){
 
     document.querySelectorAll("#sidebar a").forEach(link=>{
 
-        let page = link.getAttribute("data-page")
+        let href = link.getAttribute("href")
 
-        console.log("Checking:", page)
-
-        if(page === currentPage){
+        if(href === currentPage){
             link.classList.add("active")
-            console.log("✅ Activated:", page)
+            console.log("✅ Activated:", href)
         }
 
     })

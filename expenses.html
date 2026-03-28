@@ -17,62 +17,84 @@
 
 body{
 margin:0;
-font-family:Arial;
-background:#f4f6f9;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
 .main{
 margin-left:220px;
-padding:30px;
+padding:24px;
 }
 
+h1{
+font-size:20px;
+margin-bottom:12px;
+}
+
+/* CARD */
 .card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
+background:#111827;
+padding:18px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
 }
 
+/* GRID */
 .form-grid{
 display:grid;
-grid-template-columns: repeat(4,1fr);
-gap:10px;
+grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+gap:12px;
 }
 
+/* INPUTS */
 input,select{
+background:#0f172a;
+border:1px solid rgba(255,255,255,0.05);
+color:white;
 padding:8px;
-border:1px solid #ccc;
-border-radius:4px;
+border-radius:6px;
 }
 
+/* BUTTON */
 button{
 padding:8px 12px;
-background:#1f3c88;
+background:#3b82f6;
 color:white;
 border:none;
 cursor:pointer;
-border-radius:4px;
+border-radius:6px;
+transition:0.2s;
 }
 
-.editBtn{background:#5bc0de;}
-.deleteBtn{background:#d9534f;}
+button:hover{
+background:#2563eb;
+}
 
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
 }
 
 th,td{
 padding:10px;
-border-bottom:1px solid #ddd;
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
 th{
-background:#eee;
+color:#9ca3af;
+font-size:12px;
 text-align:left;
 }
 
+/* ACTION BUTTONS */
+.editBtn{background:#0ea5e9;}
+.deleteBtn{background:#ef4444;}
 </style>
 
 </head>
@@ -96,17 +118,27 @@ const supabaseClient = supabase.createClient(
 /* LOAD SIDEBAR + INIT */
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
+.then(data=>{
+
 document.getElementById("sidebar-container").innerHTML=data
 
-await initSidebar()
+setTimeout(async ()=>{
 
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
+    await initSidebar()
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
+    if(typeof applyMenuRBAC==="function"){
+        await applyMenuRBAC()
+    }
+
+    forceActiveMenu()   // ✅ ADD THIS
+
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    document.getElementById("sidebar").style.display="block"
+
+},200)
 
 })
 async function initSidebar(){
@@ -142,7 +174,10 @@ const {data:role} = await supabaseClient
 .single()
 
 if(role){
-document.getElementById("userRole").innerText = role.role_name
+const roleEl = document.getElementById("userRole")
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
 }
 
 /* LOGOUT */
@@ -389,6 +424,19 @@ await supabaseClient.from("expenses")
 .eq("id",id)
 
 loadExpenses()
+
+}
+
+function forceActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+        let page = link.getAttribute("data-page")
+        if(page === currentPage){
+            link.classList.add("active")
+        }
+    })
 
 }
 

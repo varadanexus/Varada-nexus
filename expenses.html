@@ -120,17 +120,26 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 
-document.getElementById("sidebar-container").innerHTML=data
+document.getElementById("sidebar-container").innerHTML = data
 
 setTimeout(async ()=>{
 
+    console.log("✅ Sidebar injected")
+
     await initSidebar()
 
-    if(typeof applyMenuRBAC==="function"){
+    console.log("✅ User initialized")
+
+    if(typeof applyMenuRBAC === "function"){
         await applyMenuRBAC()
+        console.log("✅ RBAC applied")
+    } else {
+        console.log("❌ RBAC function missing")
     }
 
-    forceActiveMenu()   // ✅ ADD THIS
+    forceActiveMenu()   // 🔥 MUST COME AFTER RBAC
+
+    console.log("✅ Active menu set")
 
     if(window.lucide){
         lucide.createIcons()
@@ -138,7 +147,7 @@ setTimeout(async ()=>{
 
     document.getElementById("sidebar").style.display="block"
 
-},200)
+},300) // 🔥 IMPORTANT (increase delay)
 
 })
 async function initSidebar(){

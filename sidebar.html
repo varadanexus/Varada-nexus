@@ -3,7 +3,7 @@
 <!-- TOP BAR -->
 <div class="top-bar">
 <button onclick="toggleSidebar()" class="toggle-btn">☰</button>
-<button onclick="toggleTheme()" class="theme-btn">🌗</button>
+
 </div>
 
 <!-- LOGO -->
@@ -229,68 +229,53 @@ border-radius:10px;
 font-size:10px;
 }
 
-/* LIGHT THEME */
-body.light .sidebar{
-background:#ffffff;
-color:#111;
-}
-
-body.light .sidebar a{
-color:#333;
-}
-
-body.light .sidebar a:hover{
-background:#e0e7ff;
+.sidebar{
+display:block !important;
 }
   
 </style>
 
 <script>
 
-// COLLAPSE
-function toggleSidebar(){
-document.getElementById("sidebar").classList.toggle("collapsed")
-}
+function initSidebarUI(){
 
-// THEME
-function toggleTheme(){
-let body=document.body
-
-if(body.classList.contains("light")){
-body.classList.remove("light")
-localStorage.setItem("theme","dark")
-}else{
-body.classList.add("light")
-localStorage.setItem("theme","light")
-}
-}
-
-// LOAD THEME
-window.addEventListener("DOMContentLoaded",()=>{
-let theme=localStorage.getItem("theme")
-if(theme==="light"){
-document.body.classList.add("light")
-}
-})
-
-// ACTIVE MENU
+/* ACTIVE MENU (FIXED) */
 let currentPage = window.location.pathname.split("/").pop()
 
-document.querySelectorAll(".sidebar a").forEach(link=>{
+document.querySelectorAll("#sidebar a").forEach(link=>{
 if(link.dataset.page === currentPage){
 link.classList.add("active")
 }
 })
 
-// NOTIFICATIONS
-function toggleNotifications(){
-document.getElementById("notifPanel").classList.toggle("show")
+/* LOAD NOTIFICATIONS */
+loadNotifications()
+
+/* REALTIME */
+subscribeNotifications()
+
 }
 
-// LOAD NOTIFICATIONS
+/* COLLAPSE */
+function toggleSidebar(){
+let sb = document.getElementById("sidebar")
+if(sb){
+sb.classList.toggle("collapsed")
+}
+}
+
+/* NOTIFICATION TOGGLE */
+function toggleNotifications(){
+let panel = document.getElementById("notifPanel")
+if(panel){
+panel.classList.toggle("show")
+}
+}
+
+/* LOAD NOTIFICATIONS */
 async function loadNotifications(){
 
-const supabaseClient = window.supabaseClient
+if(!window.supabaseClient) return
 
 const {data:{session}} = await supabaseClient.auth.getSession()
 if(!session) return
@@ -303,18 +288,18 @@ const {data} = await supabaseClient
 
 let html=""
 data?.forEach(n=>{
-html+=`<div>${n.message}</div>`
+html+=`<div style="padding:6px 0;border-bottom:1px solid #333">${n.message}</div>`
 })
 
-document.getElementById("notifPanel").innerHTML=html
-document.getElementById("notifCount").innerText=data?.length || 0
+document.getElementById("notifPanel").innerHTML = html || "No notifications"
+document.getElementById("notifCount").innerText = data?.length || 0
 
 }
 
-// REALTIME
+/* REALTIME */
 function subscribeNotifications(){
 
-const supabaseClient = window.supabaseClient
+if(!window.supabaseClient) return
 
 supabaseClient
 .channel("notifications")
@@ -322,19 +307,12 @@ supabaseClient
 event:"INSERT",
 schema:"public",
 table:"notifications"
-},payload=>{
+},()=>{
 loadNotifications()
 })
 .subscribe()
 
 }
 
-// INIT
-setTimeout(()=>{
-loadNotifications()
-subscribeNotifications()
-},500)
-
 </script>
-
 

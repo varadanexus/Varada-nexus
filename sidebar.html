@@ -194,15 +194,15 @@ border-bottom:1px solid rgba(255,255,255,0.06);
 
 /* ✅ FIXED LOGO */
 .logo{
-height:32px;   /* was 26px */
-width:32px;
+height:34px;   /* was 26px */
+width:34px;
 object-fit:contain;
 }
 
 /* BRAND */
 .brand{
-font-size:17px;   /* was 15px */
-font-weight:600;
+font-size:18px;   /* was 15px */
+font-weight:700;
 letter-spacing:0.3px;
 }
 
@@ -210,26 +210,39 @@ letter-spacing:0.3px;
 .user-box{
 display:flex;
 gap:10px;
-margin:8px 10px;     /* reduced */
-padding:8px;         /* reduced */
-background:rgba(255,255,255,0.035); /* lighter */
+margin:6px 10px;     /* reduced */
+padding:6px;         /* reduced */
+background:rgba(255,255,255,0.025); /* lighter */
 border-radius:10px;
 }
 
 .avatar{
-width:30px;   /* was 34px */
+width:30px;
 height:30px;
+background:linear-gradient(135deg,#3b82f6,#2563eb);
+border-radius:50%;
+
+display:flex;              /* 🔥 REQUIRED */
+align-items:center;        /* 🔥 REQUIRED */
+justify-content:center;    /* 🔥 REQUIRED */
+
+color:white;               /* 🔥 icon visible */
 }
 
+.avatar i{
+width:16px;
+height:16px;
+stroke-width:2;
+}
 /* MENU */
 .menu-section{
-margin-top:4px;   /* was 8px → tighter */
+margin-top:2px;   /* was 4px → tighter */
 }
 
 .menu-title{
 font-size:10px;
 color:#64748b;
-padding:4px 14px;   /* was 6px */
+padding:3px 14px;   /* was 6px */
 letter-spacing:0.6px;
 }
   
@@ -238,8 +251,8 @@ letter-spacing:0.6px;
 display:flex;
 align-items:center;
 gap:10px;
-padding:7px 12px;   /* was 9px */
-margin:1px 8px;     /* was 2px */
+padding:6px 12px;   /* was 9px */
+margin:1px 6px;     /* was 2px */
 border-radius:8px;
 color:#cbd5f5;
 text-decoration:none;

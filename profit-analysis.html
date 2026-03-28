@@ -10,14 +10,82 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:6px;margin-bottom:20px;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center;}
-th{background:#eee;}
-.profit{color:green;font-weight:bold;}
-.loss{color:red;font-weight:bold;}
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h2{
+font-size:20px;
+margin-bottom:12px;
+color:#e5e7eb;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:18px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
+}
+
+/* LAST ROW STYLE (TOTAL STYLE READY) */
+tr:last-child{
+background:#0b1220;
+font-weight:600;
+}
+    
+/* TABLE HEAD */
+th{
+color:#9ca3af;
+font-size:12px;
+text-align:left;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* TABLE BODY */
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+/* ROW HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* PROFIT / LOSS */
+.profit{
+color:#16a34a;
+font-weight:bold;
+}
+
+.loss{
+color:#dc2626;
+font-weight:bold;
+}
 </style>
 
 </head>

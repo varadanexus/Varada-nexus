@@ -8,55 +8,139 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-h2{color:#1f3c88;}
-
-.form-box{
-background:white;
-padding:20px;
-border-radius:6px;
-width:420px;
-margin-bottom:25px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h2{
+margin-bottom:18px;
+font-weight:600;
+}
+
+h3{
+margin-bottom:10px;
+font-size:14px;
+color:#9ca3af;
+}
+
+/* CARD (FORM BOX) */
+.form-box{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:20px;
+width:420px;
+}
+
+/* INPUTS */
 input{
 width:100%;
 padding:10px;
 margin-bottom:10px;
-border:1px solid #ccc;
-border-radius:4px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+font-size:13px;
 }
 
+/* BUTTON */
 button{
-padding:10px 14px;
-background:#1f3c88;
+padding:8px 12px;
+background:#3b82f6;
 color:white;
 border:none;
-border-radius:4px;
+border-radius:8px;
 cursor:pointer;
+font-size:12px;
+transition:0.2s;
 margin-right:5px;
 }
 
-button:hover{background:#162c66;}
+button:hover{
+background:#2563eb;
+}
 
-.delete-btn{ background:#d9534f; }
-.edit-btn{ background:#f0ad4e; }
+/* VARIANTS */
+.delete-btn{
+background:#ef4444;
+}
 
+.delete-btn:hover{
+background:#dc2626;
+}
+
+.edit-btn{
+background:#f59e0b;
+}
+
+.edit-btn:hover{
+background:#d97706;
+}
+
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
 }
 
-th,td{
-padding:12px;
-border-bottom:1px solid #ddd;
+/* HEADER */
+th{
 text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
-th{ background:#eee; }
+/* CELLS */
+td{
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+/* HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* STATUS */
+.status-active{
+color:#22c55e;
+font-weight:600;
+}
+
+.status-disabled{
+color:#ef4444;
+font-weight:600;
+}
+
+/* INLINE INPUTS IN TABLE */
+td input{
+width:100%;
+padding:6px;
+font-size:12px;
+background:#020617;
+border:1px solid rgba(255,255,255,0.08);
+}
+  
 </style>
 </head>
 
@@ -77,19 +161,43 @@ const supabaseClient = supabase.createClient(
 /* LOAD SIDEBAR + INIT */
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-await initSidebar()
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
+await initSidebar()
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
 
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
 
 async function initSidebar(){
 
@@ -149,6 +257,7 @@ window.location.href="login.html"
 <button onclick="createAgent()">Create Agent</button>
 </div>
 
+<div class="card">
 <table>
 <thead>
 <tr>
@@ -161,6 +270,7 @@ window.location.href="login.html"
 </thead>
 <tbody id="agentsTable"></tbody>
 </table>
+</div>
 
 </div>
 
@@ -186,7 +296,7 @@ html+=`
 <td><input value="${a.phone||""}" id="phone-${a.id}"></td>
 <td><input value="${a.email||""}" id="email-${a.id}"></td>
 
-<td style="font-weight:bold; color:${a.is_active ? 'green' : 'red'}">
+<td class="${a.is_active ? 'status-active' : 'status-disabled'}">
 ${a.is_active ? "Active" : "Disabled"}
 </td>
 

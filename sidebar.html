@@ -221,11 +221,15 @@ document.getElementById("notifBox").onclick = toggleNotifications
 
 /* COLLAPSE */
 function toggleSidebar(){
+
 let sb = document.getElementById("sidebar")
-if(!sb) return
+let main = document.querySelector(".main")
+
+if(!sb || !main) return
 
 sb.classList.toggle("collapsed")
-console.log("Sidebar toggled ✅")
+main.classList.toggle("collapsed")   // 🔥 THIS IS THE REAL FIX
+
 }
 
 /* NOTIFICATIONS */

@@ -54,8 +54,21 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data
+
+/* EXISTING */
 await initSidebar()
-if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
+
+/* 🔥 ADD THIS LINE (CRITICAL FIX) */
+if(typeof initSidebarUI === "function"){
+initSidebarUI()
+}
+
+/* RBAC */
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+/* SHOW SIDEBAR */
 document.getElementById("sidebar").style.display="block"
 })
 

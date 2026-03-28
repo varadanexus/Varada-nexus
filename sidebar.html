@@ -19,78 +19,42 @@
 <div class="menu">
 
 <!-- DASHBOARD -->
-<div class="menu-section">
-  <div class="menu-title">Dashboard</div>
-
-  <a href="financial-dashboard.html" data-page="financial-dashboard.html">
-    <span class="icon">📊</span>
-    <span>Financial Dashboard</span>
-  </a>
-
-  <a href="dashboard.html" data-page="dashboard.html">
-    <span class="icon">🏠</span>
-    <span>Main Dashboard</span>
-  </a>
-</div>
+<div class="menu-title">Dashboard</div>
+<a href="financial-dashboard.html" data-page="financial-dashboard.html">📊 Financial Dashboard</a>
+<a href="dashboard.html" data-page="dashboard.html">🏠 Main Dashboard</a>
 
 <!-- OPERATIONS -->
-<div class="menu-section">
-  <div class="menu-title">Operations</div>
-
-  <a href="trips.html" data-page="trips.html">
-    <span class="icon">🚛</span>
-    <span>Trips</span>
-  </a>
-
-  <a href="expenses.html" data-page="expenses.html">
-    <span class="icon">💳</span>
-    <span>Expenses</span>
-  </a>
-</div>
+<div class="menu-title">Operations</div>
+<a href="trips.html" data-page="trips.html">🚛 Trips</a>
+<a href="expenses.html" data-page="expenses.html">💳 Expenses</a>
 
 <!-- CLIENT -->
-<div class="menu-section collapsible">
-  <div class="menu-title toggle" data-toggle>Client ⌄</div>
-  <div class="submenu">
-    <a href="client-billing.html" data-page="client-billing.html">Billing</a>
-    <a href="client-payments.html" data-page="client-payments.html">Payments</a>
-    <a href="client-ledger.html" data-page="client-ledger.html">Ledger</a>
-  </div>
-</div>
+<div class="menu-title">Client</div>
+<a href="client-billing.html" data-page="client-billing.html">Billing</a>
+<a href="client-payments.html" data-page="client-payments.html">Payments</a>
+<a href="client-ledger.html" data-page="client-ledger.html">Ledger</a>
 
 <!-- TRANSPORTER -->
-<div class="menu-section collapsible">
-  <div class="menu-title toggle" data-toggle>Transporter ⌄</div>
-  <div class="submenu">
-    <a href="admin-payments.html" data-page="admin-payments.html">Payments</a>
-    <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Ledger</a>
-  </div>
-</div>
+<div class="menu-title">Transporter</div>
+<a href="admin-payments.html" data-page="admin-payments.html">Payments</a>
+<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Ledger</a>
 
 <!-- AGENT -->
-<div class="menu-section collapsible">
-  <div class="menu-title toggle" data-toggle>Agent ⌄</div>
-  <div class="submenu">
-    <a href="agent-dashboard-admin.html">Dashboard</a>
-    <a href="agent-payments.html">Payments</a>
-    <a href="agent-ledger.html">Ledger</a>
-    <a href="agent-withdraw-approval.html">Withdraw</a>
-    <a href="agents.html">Agents</a>
-  </div>
-</div>
+<div class="menu-title">Agent</div>
+<a href="agent-dashboard-admin.html">Dashboard</a>
+<a href="agent-payments.html">Payments</a>
+<a href="agent-ledger.html">Ledger</a>
+<a href="agent-withdraw-approval.html">Withdraw</a>
+<a href="agents.html">Agents</a>
 
 <!-- SETTINGS -->
-<div class="menu-section collapsible">
-  <div class="menu-title toggle" data-toggle>Settings ⌄</div>
-  <div class="submenu">
-    <a href="master-data.html">Master Data</a>
-    <a href="rate-entry.html">Rates</a>
-    <a href="admin-users.html">Users</a>
-    <a href="role-permissions.html">Permissions</a>
-    <a href="admin-maintenance.html">Maintenance</a>
-    <a href="profit-analysis.html">Profit Analysis</a>
-  </div>
-</div>
+<div class="menu-title">Settings</div>
+<a href="master-data.html">Master Data</a>
+<a href="rate-entry.html">Rates</a>
+<a href="admin-users.html">Users</a>
+<a href="role-permissions.html">Permissions</a>
+<a href="admin-maintenance.html">Maintenance</a>
+<a href="profit-analysis.html">Profit Analysis</a>
 
 </div>
 
@@ -102,6 +66,7 @@
 </div>
 
 <style>
+
 .sidebar{
 position:fixed;
 left:0;
@@ -123,10 +88,12 @@ padding:18px;
 border-bottom:1px solid rgba(255,255,255,0.08);
 }
 
-.logo{height:32px;}
+.logo{
+height:34px;
+}
 
 .brand{
-font-size:20px;
+font-size:22px;
 font-weight:700;
 }
 
@@ -140,12 +107,22 @@ background:rgba(255,255,255,0.05);
 border-radius:10px;
 }
 
-/* SECTION */
+.avatar{
+width:36px;
+height:36px;
+border-radius:50%;
+background:#2563eb;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+/* SECTION TITLE */
 .menu-title{
 font-size:11px;
 text-transform:uppercase;
 color:#64748b;
-padding:8px 18px;
+padding:12px 18px 6px;
 }
 
 /* LINKS */
@@ -159,8 +136,10 @@ border-radius:8px;
 color:#cbd5f5;
 text-decoration:none;
 position:relative;
+font-size:14px;
 }
 
+/* HOVER */
 .sidebar a:hover{
 background:#1e293b;
 color:white;
@@ -176,29 +155,18 @@ color:white;
 content:"";
 position:absolute;
 left:0;
-top:5px;
-bottom:5px;
+top:6px;
+bottom:6px;
 width:3px;
 background:#3b82f6;
-}
-
-/* COLLAPSIBLE */
-.submenu{
-display:none;
-padding-left:15px;
-}
-
-.menu-section.open .submenu{
-display:block;
-}
-
-.toggle{
-cursor:pointer;
+border-radius:3px;
 }
 
 /* LOGOUT */
 .bottom{
-padding:10px;
+padding:12px;
 border-top:1px solid rgba(255,255,255,0.1);
+margin-top:10px;
 }
+
 </style>

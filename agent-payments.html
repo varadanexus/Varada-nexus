@@ -249,140 +249,128 @@ window.location.href="login.html"
 let agents=[]
 let payments=[]
 
-
-
-/* LOAD AGENTS */
-
-async function loadAgents(){
-
-const {data,error} = await supabaseClient
-.from("agents")
-.select("id,name,phone")
-
-if(error){
-console.error(error)
-return
-}
-
-agents = data || []
-
-let html='<option value="">Select Agent</option>'
-
-agents.forEach(a=>{
-html += `<option value="${a.id}">
-${a.name || "No Name"} (${a.phone || "-"})
-</option>`
-})
-
-document.getElementById("agentSelect").innerHTML = html
-
-}
-
 window.onload = async () => {
   await loadAgents()
   await loadPayments()
 
- document.getElementById("agentSelect").addEventListener("change", (e)=>{
-  document.getElementById("settleBtn").disabled = !e.target.value
-})
-  
-/* SAVE PAYMENT */
-
-async function savePayment(){
-
-let agentId = document.getElementById("agentSelect").value
-let amount = Number(document.getElementById("amount").value)
-
-if(!agentId || !amount){
-alert("Enter details")
-return
+  document.getElementById("agentSelect").addEventListener("change", (e)=>{
+    document.getElementById("settleBtn").disabled = !e.target.value
+  })
 }
 
-await supabaseClient.from("agent_trip_ledger").insert({
-agent_id: agentId,
-commission_amount: 0,
-paid_amount: amount,
-created_at: new Date().toISOString()
-})
+/* LOAD AGENTS */
+async function loadAgents(){
+  const {data,error} = await supabaseClient
+  .from("agents")
+  .select("id,name,phone")
 
-alert("Payment saved ✅")
+  if(error){
+    console.error(error)
+    return
+  }
 
-document.getElementById("amount").value=""
-document.getElementById("remarks").value=""
+  agents = data || []
 
-await loadPayments()
+  let html='<option value="">Select Agent</option>'
+
+  agents.forEach(a=>{
+    html += `<option value="${a.id}">
+    ${a.name || "No Name"} (${a.phone || "-"})
+    </option>`
+  })
+
+  document.getElementById("agentSelect").innerHTML = html
+}
+
+/* SAVE PAYMENT */
+async function savePayment(){
+  let agentId = document.getElementById("agentSelect").value
+  let amount = Number(document.getElementById("amount").value)
+
+  if(!agentId || !amount){
+    alert("Enter details")
+    return
+  }
+
+  await supabaseClient.from("agent_trip_ledger").insert({
+    agent_id: agentId,
+    commission_amount: 0,
+    paid_amount: amount,
+    created_at: new Date().toISOString()
+  })
+
+  alert("Payment saved ✅")
+
+  document.getElementById("amount").value=""
+  document.getElementById("remarks").value=""
+
+  await loadPayments()
 }
 
 /* LOAD PAYMENTS */
-
 async function loadPayments(){
+  const {data} = await supabaseClient
+  .from("agent_trip_ledger")
+  .select("*")
+  .gt("paid_amount",0)
+  .order("created_at",{ascending:false})
 
-const {data} = await supabaseClient
-.from("agent_trip_ledger")
-.select("*")
-.gt("paid_amount",0)
-.order("created_at",{ascending:false})
+  payments = data || []
 
-payments = data || []
+  let html=""
 
-let html=""
+  payments.forEach(p=>{
+    let agent = agents.find(a=>a.id==p.agent_id)
+    let name = agent?.name || "-"
 
-payments.forEach(p=>{
+    html += `
+    <tr>
+    <td>${(p.created_at || "").split("T")[0]}</td>
+    <td>${name}</td>
+    <td>₹ ${p.paid_amount}</td>
+    <td>-</td>
+    <td>-</td>
+    </tr>
+    `
+  })
 
-let agent = agents.find(a=>a.id==p.agent_id)
-let name = agent?.name || "-"
-
-html += `
-<tr>
-<td>${(p.created_at || "").split("T")[0]}</td>
-<td>${name}</td>
-<td>₹ ${p.paid_amount}</td>
-<td>-</td>
-<td>-</td>
-</tr>
-`
-
-})
-
-document.getElementById("paymentTable").innerHTML = html
+  document.getElementById("paymentTable").innerHTML = html
 }
 
+/* SETTLE */
 async function settleAgent(){
+  let agentId = document.getElementById("agentSelect").value
 
-let agentId = document.getElementById("agentSelect").value
+  if(!agentId){
+    alert("Select agent")
+    return
+  }
 
-if(!agentId){
-alert("Select agent")
-return
-}
+  const {data:ledger} = await supabaseClient
+  .from("agent_trip_ledger")
+  .select("*")
+  .eq("agent_id",agentId)
 
-/* ✅ GET FROM LEDGER */
-const {data:ledger} = await supabaseClient
-.from("agent_trip_ledger")
-.select("*")
-.eq("agent_id",agentId)
+  let earned = (ledger || []).reduce((s,l)=>s+Number(l.commission_amount||0),0)
+  let paid   = (ledger || []).reduce((s,l)=>s+Number(l.paid_amount||0),0)
 
-let earned = (ledger || []).reduce((s,l)=>s+Number(l.commission_amount||0),0)
-let paid   = (ledger || []).reduce((s,l)=>s+Number(l.paid_amount||0),0)
+  let balance = earned - paid
 
-let balance = earned - paid
+  if(balance <= 0){
+    alert("No pending amount")
+    return
+  }
 
-if(balance <= 0){
-alert("No pending amount")
-return
-}
+  await supabaseClient.from("agent_trip_ledger").insert({
+    agent_id: agentId,
+    commission_amount: 0,
+    paid_amount: balance,
+    created_at: new Date().toISOString()
+  })
 
-/* ✅ SAVE IN LEDGER */
-await supabaseClient.from("agent_trip_ledger").insert({
-agent_id: agentId,
-commission_amount: 0,
-paid_amount: balance,
-created_at: new Date().toISOString()
-})
+  alert("Settled ₹ " + balance.toFixed(2))
 
-alert("Settled ₹ " + balance.toFixed(2))
-
-await loadPayments()
+  await loadPayments()
 }
 
 </script>

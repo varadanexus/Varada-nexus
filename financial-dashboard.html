@@ -53,14 +53,17 @@ const supabaseClient = window.supabaseClient
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+document.getElementById("sidebar-container").innerHTML = data
 
-/* EXISTING */
+/* WAIT FOR DOM + SCRIPT LOAD (CRITICAL FIX) */
+setTimeout(async ()=>{
+
+/* USER INIT */
 await initSidebar()
 
-/* 🔥 ADD THIS LINE (CRITICAL FIX) */
-if(typeof initSidebarUI === "function"){
-initSidebarUI()
+/* UI INIT (SAFE CALL) */
+if(typeof window.initSidebarUI === "function"){
+window.initSidebarUI()
 }
 
 /* RBAC */
@@ -69,17 +72,28 @@ await applyMenuRBAC()
 }
 
 /* SHOW SIDEBAR */
-document.getElementById("sidebar").style.display="block"
+document.getElementById("sidebar").style.display = "block"
+
+}, 100)  // 🔥 small delay fixes everything
+
 })
 
 async function initSidebar(){
+
 const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-document.getElementById("userName").innerText=session.user.email.split("@")[0]
-window.logout=async()=>{
-await supabaseClient.auth.signOut()
-window.location="login.html"
+
+if(!session){
+window.location = "login.html"
+return
 }
+
+document.getElementById("userName").innerText = session.user.email.split("@")[0]
+
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location = "login.html"
+}
+
 }
 </script>
 

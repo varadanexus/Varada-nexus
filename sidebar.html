@@ -1,4 +1,10 @@
-<div id="sidebar" class="sidebar" style="display:none">  
+<div id="sidebar" class="sidebar" style="display:none">
+
+<!-- TOP BAR -->
+<div class="top-bar">
+<button onclick="toggleSidebar()" class="toggle-btn">☰</button>
+<button onclick="toggleTheme()" class="theme-btn">🌗</button>
+</div>
 
 <!-- LOGO -->
 <div class="logo-box">  
@@ -14,6 +20,13 @@
     <div id="userRole">Admin</div>  
   </div>  
 </div>  
+
+<!-- 🔔 NOTIFICATIONS -->
+<div class="notif-box" onclick="toggleNotifications()">
+🔔 Notifications <span id="notifCount" class="badge">0</span>
+</div>
+
+<div id="notifPanel" class="notif-panel"></div>
 
 <!-- MENU -->
 <div class="menu">
@@ -159,5 +172,169 @@ color:#f87171;
 .bottom a:hover{
 background:rgba(248,113,113,0.15);
 }
+
+/* TOP BAR */
+.top-bar{
+display:flex;
+justify-content:space-between;
+padding:5px 15px;
+}
+
+.toggle-btn,.theme-btn{
+background:none;
+border:none;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+/* COLLAPSE */
+.sidebar.collapsed{
+width:80px;
+}
+
+.sidebar.collapsed span,
+.sidebar.collapsed #userRole,
+.sidebar.collapsed #userName{
+display:none;
+}
+
+/* NOTIFICATIONS */
+.notif-box{
+padding:10px 15px;
+margin:5px 10px;
+background:rgba(255,255,255,0.05);
+border-radius:8px;
+cursor:pointer;
+}
+
+.notif-panel{
+display:none;
+margin:10px;
+padding:10px;
+background:#111827;
+border-radius:10px;
+max-height:200px;
+overflow:auto;
+}
+
+.notif-panel.show{
+display:block;
+}
+
+.badge{
+background:red;
+padding:2px 6px;
+border-radius:10px;
+font-size:10px;
+}
+
+/* LIGHT THEME */
+body.light .sidebar{
+background:#ffffff;
+color:#111;
+}
+
+body.light .sidebar a{
+color:#333;
+}
+
+body.light .sidebar a:hover{
+background:#e0e7ff;
+}
   
 </style>
+
+<script>
+
+// COLLAPSE
+function toggleSidebar(){
+document.getElementById("sidebar").classList.toggle("collapsed")
+}
+
+// THEME
+function toggleTheme(){
+let body=document.body
+
+if(body.classList.contains("light")){
+body.classList.remove("light")
+localStorage.setItem("theme","dark")
+}else{
+body.classList.add("light")
+localStorage.setItem("theme","light")
+}
+}
+
+// LOAD THEME
+window.addEventListener("DOMContentLoaded",()=>{
+let theme=localStorage.getItem("theme")
+if(theme==="light"){
+document.body.classList.add("light")
+}
+})
+
+// ACTIVE MENU
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll(".sidebar a").forEach(link=>{
+if(link.dataset.page === currentPage){
+link.classList.add("active")
+}
+})
+
+// NOTIFICATIONS
+function toggleNotifications(){
+document.getElementById("notifPanel").classList.toggle("show")
+}
+
+// LOAD NOTIFICATIONS
+async function loadNotifications(){
+
+const supabaseClient = window.supabaseClient
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const {data} = await supabaseClient
+.from("notifications")
+.select("*")
+.eq("user_id",session.user.id)
+.order("created_at",{ascending:false})
+
+let html=""
+data?.forEach(n=>{
+html+=`<div>${n.message}</div>`
+})
+
+document.getElementById("notifPanel").innerHTML=html
+document.getElementById("notifCount").innerText=data?.length || 0
+
+}
+
+// REALTIME
+function subscribeNotifications(){
+
+const supabaseClient = window.supabaseClient
+
+supabaseClient
+.channel("notifications")
+.on("postgres_changes",{
+event:"INSERT",
+schema:"public",
+table:"notifications"
+},payload=>{
+loadNotifications()
+})
+.subscribe()
+
+}
+
+// INIT
+setTimeout(()=>{
+loadNotifications()
+subscribeNotifications()
+},500)
+
+</script>
+
+

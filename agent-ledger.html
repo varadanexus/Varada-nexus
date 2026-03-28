@@ -14,7 +14,9 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Arial;
-  background: #f1f5f9;
+  background:#0a0f1c;
+color:#e5e7eb;
+font-family:'Inter',sans-serif;
 }
 
 /* Layout */
@@ -24,46 +26,45 @@ body {
 }
 
 /* Card */
-.card {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 14px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
 }
 
 /* Heading */
 h2 {
   margin-bottom: 20px;
-  color: #1e293b;
+  color:#e5e7eb;
 }
 
 /* Inputs */
-select, input {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  font-size: 14px;
+select,input{
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
 }
 
 /* Buttons */
-button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: 0.2s;
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
 }
 
-button:hover {
-  background: #1d4ed8;
+button:hover{
+background:#2563eb;
 }
-
+  
 #sidebar a{
 display:flex;
 align-items:center;
@@ -89,32 +90,22 @@ box-shadow:0 0 10px rgba(37,99,235,0.4);
 }
   
 /* Table */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 10px;
-  overflow: hidden;
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
 }
 
-th {
-  background: #f8fafc;
-  text-align: left;
-  font-weight: 600;
-  color: #334155;
+th{
+font-size:12px;
+color:#9ca3af;
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
-td, th {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-tr:hover {
-  background: #f9fafb;
-}
-
-/* Balance colors */
-td:last-child {
-  font-weight: bold;
+td{
+border-bottom:1px solid rgba(255,255,255,0.04);
 }
 
 /* Pagination */
@@ -128,8 +119,21 @@ td:last-child {
 /* Section titles */
 h3 {
   margin-bottom: 10px;
-  color: #334155;
+  color:#9ca3af
 }
+
+th,td{
+padding:10px;
+}
+
+tr:hover{
+background:#0f172a;
+}
+
+.card h2{
+text-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+  
 </style>
 </head>
 
@@ -586,7 +590,11 @@ function downloadPDF(){
 
 let rows = document.querySelectorAll("#ledgerTable tr")
 
-let agentName = document.getElementById("agentSelect").selectedOptions[0].text
+let select = document.getElementById("agentSelect")
+
+let agentName = select.value 
+? select.selectedOptions[0].text 
+: "All Agents"
 
 let content = `
 <h2>Agent Ledger Report</h2>

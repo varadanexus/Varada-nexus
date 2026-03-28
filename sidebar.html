@@ -124,6 +124,10 @@ height:100vh;
 background:#0f172a;
 color:white;
 overflow-y:auto;
+
+/* 🔥 ADD THESE */
+z-index:99999;
+pointer-events:auto;
 }
 
 /* LOGO */
@@ -227,6 +231,20 @@ margin-top:10px;
 padding:10px;
 border-top:1px solid rgba(255,255,255,0.1);
 } 
+
+/* 🔥 FORCE SIDEBAR ABOVE EVERYTHING */
+body *{
+pointer-events:auto;
+}
+
+.main{
+position:relative;
+z-index:1;
+}
+
+.sidebar{
+z-index:99999 !important;
+}
 
 </style>
 

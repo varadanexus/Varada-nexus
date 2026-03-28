@@ -13,51 +13,77 @@
 
 body{
 margin:0;
-font-family:Arial;
-background:#f4f6f9;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
+/* MAIN */
 .main{
 margin-left:220px;
-padding:30px;
+padding:24px;
 }
 
+/* CARDS */
 .card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
 }
 
+/* INPUTS */
 select,input{
 padding:10px;
-border:1px solid #ccc;
-border-radius:4px;
-margin-right:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+margin-right:6px;
 }
 
+/* BUTTON */
 button{
-padding:10px 14px;
-background:#1f3c88;
+padding:8px 14px;
+background:#3b82f6;
 color:white;
 border:none;
-border-radius:4px;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
 }
 
+button:hover{
+background:#2563eb;
+}
+
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
 }
 
 th{
-background:#eee;
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+tr:hover{
+background:#0f172a;
 }
 
 </style>
@@ -86,19 +112,43 @@ const supabaseClient = supabase.createClient(
 
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-await initSidebar()
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-document.getElementById("sidebar").style.display="block"
+await initSidebar()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
 
 })
 
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
+  
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -237,34 +287,25 @@ document.getElementById("agentSelect").innerHTML = html
 async function savePayment(){
 
 let agentId = document.getElementById("agentSelect").value
-let amount = document.getElementById("amount").value
+let amount = Number(document.getElementById("amount").value)
 
 if(!agentId || !amount){
 alert("Enter details")
 return
 }
 
-const {error} = await supabaseClient
-.from("agent_payments")
-.insert({
+await supabaseClient.from("agent_trip_ledger").insert({
 agent_id: agentId,
-amount: amount,
-payment_mode: document.getElementById("mode").value,
-remarks: document.getElementById("remarks").value
+commission_amount: 0,
+paid_amount: amount,
+created_at: new Date().toISOString()
 })
-
-if(error){
-console.error(error)
-alert("Error saving ❌")
-return
-}
 
 alert("Payment saved ✅")
 
 document.getElementById("amount").value=""
 document.getElementById("remarks").value=""
 
-await loadAgents()
 await loadPayments()
 }
 
@@ -273,8 +314,9 @@ await loadPayments()
 async function loadPayments(){
 
 const {data} = await supabaseClient
-.from("agent_payments")
+.from("agent_trip_ledger")
 .select("*")
+.gt("paid_amount",0)
 .order("created_at",{ascending:false})
 
 payments = data || []
@@ -285,20 +327,20 @@ payments.forEach(p=>{
 
 let agent = agents.find(a=>a.id==p.agent_id)
 let name = agent?.name || "-"
+
 html += `
 <tr>
 <td>${(p.created_at || "").split("T")[0]}</td>
 <td>${name}</td>
-<td>₹ ${p.amount}</td>
-<td>${p.payment_mode}</td>
-<td>${p.remarks || ""}</td>
+<td>₹ ${p.paid_amount}</td>
+<td>-</td>
+<td>-</td>
 </tr>
 `
 
 })
 
 document.getElementById("paymentTable").innerHTML = html
-
 }
 
 async function settleAgent(){
@@ -310,20 +352,14 @@ alert("Select agent")
 return
 }
 
-/* GET TOTAL EARNED */
-const {data:trips} = await supabaseClient
-.from("trips")
-.select("commission_amount")
+/* ✅ GET LEDGER DATA */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("*")
 .eq("agent_id",agentId)
 
-/* GET TOTAL PAID */
-const {data:payments} = await supabaseClient
-.from("agent_payments")
-.select("amount")
-.eq("agent_id",agentId)
-
-let earned = (trips || []).reduce((s,t)=>s+Number(t.commission_amount||0),0)
-let paid = (payments || []).reduce((s,p)=>s+Number(p.amount||0),0)
+let earned = (ledger || []).reduce((s,l)=>s+Number(l.commission_amount||0),0)
+let paid   = (ledger || []).reduce((s,l)=>s+Number(l.paid_amount||0),0)
 
 let balance = earned - paid
 
@@ -332,17 +368,16 @@ alert("No pending amount")
 return
 }
 
-/* INSERT PAYMENT */
-await supabaseClient.from("agent_payments").insert({
-agent_id:agentId,
-amount:balance,
-payment_mode:"Auto Settlement",
-remarks:"Full settlement"
+/* ✅ INSERT PAYMENT INTO LEDGER */
+await supabaseClient.from("agent_trip_ledger").insert({
+agent_id: agentId,
+commission_amount: 0,
+paid_amount: balance,
+created_at: new Date().toISOString()
 })
 
 alert("Settled ₹ " + balance.toFixed(2))
 
-await loadAgents()
 await loadPayments()
 }
 

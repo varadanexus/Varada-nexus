@@ -7,7 +7,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
-
+<script src="supabase-client.js"></script>
 <style>
 /* GLOBAL */
 body{
@@ -95,6 +95,12 @@ display:none;
 <body>
 
 <script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+    
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -212,6 +218,23 @@ window.location.href="dashboard.html"
 
 /* RUN AFTER LOAD */
 window.addEventListener("DOMContentLoaded", enforceAccess)
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const email = session.user.email
+
+document.getElementById("userName").innerText =
+email.split("@")[0]
+
+window.logout = async ()=>{
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
 
 </script>
 

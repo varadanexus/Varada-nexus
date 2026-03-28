@@ -53,21 +53,19 @@ const supabaseClient = window.supabaseClient
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
-if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
-document.getElementById("sidebar").style.display="block"
-})
 
-async function initSidebar(){
-const {data:{session}} = await supabaseClient.auth.getSession()
-if(!session) return
-document.getElementById("userName").innerText=session.user.email.split("@")[0]
-window.logout=async()=>{
-await supabaseClient.auth.signOut()
-window.location="login.html"
-}
-}
+document.getElementById("sidebar-container").innerHTML = data
+
+/* WAIT FOR DOM RENDER */
+setTimeout(async ()=>{
+
+    await initSidebar()
+
+    attachSidebarEvents()
+
+}, 0)
+
+})
 </script>
 
 <div class="main">
@@ -545,6 +543,44 @@ setInterval(()=>{
     clearTimeout(refreshTimer)
 refreshTimer = setTimeout(()=>init(),500)
 },30000)
+
+function attachSidebarEvents(){
+
+const sidebar = document.getElementById("sidebar")
+if(!sidebar) return
+
+console.log("✅ Sidebar working")
+
+/* ACTIVE MENU */
+let currentPage = window.location.pathname.split("/").pop()
+
+sidebar.querySelectorAll("a").forEach(link=>{
+    if(link.dataset.page === currentPage){
+        link.classList.add("active")
+    }
+})
+
+/* COLLAPSIBLE */
+sidebar.querySelectorAll("[data-toggle]").forEach(toggle=>{
+
+    toggle.onclick = function(e){
+
+        e.preventDefault()
+
+        const section = this.closest(".menu-section")
+        if(!section) return
+
+        sidebar.querySelectorAll(".menu-section").forEach(sec=>{
+            if(sec !== section) sec.classList.remove("open")
+        })
+
+        section.classList.toggle("open")
+
+    }
+
+})
+
+}
 
 </script>
 <div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">

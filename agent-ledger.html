@@ -64,6 +64,30 @@ button:hover {
   background: #1d4ed8;
 }
 
+#sidebar a{
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px 14px;
+color:#9ca3af;
+text-decoration:none;
+border-radius:8px;
+margin:4px 8px;
+transition:0.2s;
+}
+
+#sidebar a:hover{
+background:#0f172a;
+color:#e5e7eb;
+}
+
+#sidebar a.active{
+background:linear-gradient(90deg,#1d4ed8,#2563eb);
+color:white;
+font-weight:600;
+box-shadow:0 0 10px rgba(37,99,235,0.4);
+}
+  
 /* Table */
 table {
   width: 100%;
@@ -122,19 +146,20 @@ const supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>
 
 <script>
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+function setActiveMenu(){
 
-await initSidebar()
+let currentPage = window.location.pathname.split("/").pop()
 
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+let page = link.getAttribute("data-page")
+
+if(page === currentPage){
+link.classList.add("active")
 }
 
-document.getElementById("sidebar").style.display="block"
 })
+}
 
 async function initSidebar(){
 
@@ -231,12 +256,14 @@ window.location.href="login.html"
 
 let agents=[]
 let allEntries=[]
+let currentView = []
 let currentPage = 1
 let rowsPerPage = parseInt(localStorage.getItem("rowsPerPage")) || 50
 
   
 window.onload = async ()=>{
 await loadAgents()
+document.getElementById("rowsPerPage").value = rowsPerPage
 }
 
 /* LOAD AGENTS */
@@ -262,8 +289,8 @@ ${a.name || "No Name"}
 })
 
 document.getElementById("agentSelect").innerHTML = html
-  document.getElementById("payAgent").innerHTML = html
-}
+document.getElementById("payAgent").innerHTML = html
+})
 
 /* LOAD LEDGER */
 async function loadLedger(){
@@ -383,7 +410,11 @@ let entries = allEntries.filter(e => {
 let d = new Date(e.date)
 
 if(from && d < new Date(from)) return false
-if(to && d > new Date(to)) return false
+if(to){
+let end = new Date(to)
+end.setHours(23,59,59,999)
+if(d > end) return false
+}
 
 return true
 })
@@ -405,11 +436,7 @@ return
 }
 
 /* SORT */
-entries.sort((a,b)=>{
-let aNum = parseInt((a.ref || "").replace(/\D/g,'')) || 0
-let bNum = parseInt((b.ref || "").replace(/\D/g,'')) || 0
-return aNum - bNum
-})
+entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
 
 let start = (currentPage - 1) * rowsPerPage
 let end = start + rowsPerPage
@@ -440,7 +467,7 @@ ${balance.toFixed(2)}
 })
 
 html += `
-<tr style="font-weight:bold;background:#f1f1f1;">
+<tr style="font-weight:600;background:#0b1220;color:#e5e7eb;">
 <td colspan="3">Total</td>
 <td>${entries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</td>
 <td>${entries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</td>
@@ -488,7 +515,7 @@ function renderChart(entries){
 let grouped = {}
 
 entries.forEach(e=>{
-let d = new Date(e.date).toLocaleDateString()
+let d = new Date(e.date).toISOString().split("T")[0]
 
 if(!grouped[d]){
 grouped[d] = 0
@@ -532,9 +559,9 @@ let content = `
 <h3>Agent: ${agentName}</h3>
 <p>Date: ${new Date().toLocaleDateString()}</p>
 
-<p><b>Total Earned:</b> ₹${allEntries.reduce((s,e)=>s+e.debit,0).toFixed(2)}</p>
-<p><b>Total Paid:</b> ₹${allEntries.reduce((s,e)=>s+e.credit,0).toFixed(2)}</p>
-<p><b>Balance:</b> ₹${allEntries.reduce((s,e)=>s+e.debit-e.credit,0).toFixed(2)}</p>
+<p><b>Total Earned:</b> ₹${currentView.reduce((s,e)=>s+e.debit,0).toFixed(2)}</p>
+<p><b>Total Paid:</b> ₹${currentView.reduce((s,e)=>s+e.credit,0).toFixed(2)}</p>
+<p><b>Balance:</b> ₹${currentView.reduce((s,e)=>s+e.debit-e.credit,0).toFixed(2)}</p>
 
 <br>
 

@@ -11,7 +11,6 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-<style>
 
 /* GLOBAL */
 body{
@@ -110,6 +109,10 @@ background:#0b1220;
 font-weight:600;
 }
 
+#kpiCards{
+min-height:80px;
+}
+  
 /* KPI CARDS */
 #kpiCards .card{
 background:linear-gradient(145deg,#0f172a,#111827);
@@ -134,9 +137,12 @@ border-radius:12px;
 padding:10px;
 }
 
+#ledgerChart{
+height:260px !important;
+}
+
 /* 🔥 IMPORTANT: DO NOT TOUCH SIDEBAR */
-</style>
-  
+
 </style>
 </head>
 
@@ -219,7 +225,9 @@ window.location.href="login.html"
 
 <h2>Agent Ledger</h2>
 <div id="kpiCards" style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;"></div>
-<canvas id="ledgerChart" height="100" style="margin-bottom:20px;"></canvas>
+<div style="height:260px;">
+<canvas id="ledgerChart"></canvas>
+</div>
 
 <div class="card">
 
@@ -467,8 +475,10 @@ function renderFiltered(entries){
 
 currentView = entries
   
+if(entries.length > 0){
 renderKPIs(entries)
 renderChart(entries)
+}
   
 if(entries.length === 0){
 ledgerTable.innerHTML =
@@ -553,6 +563,8 @@ let chartInstance = null
 
 function renderChart(entries){
 
+if(entries.length === 0) return
+
 let grouped = {}
 
 entries.forEach(e=>{
@@ -584,6 +596,10 @@ data: data,
 borderWidth: 2,
 tension: 0.3
 }]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false
 }
 })
 }

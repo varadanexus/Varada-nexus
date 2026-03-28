@@ -1,4 +1,4 @@
-<div id="sidebar" class="sidebar">
+<div id="sidebar" class="sidebar" style="display:none">
 
 <!-- TOP BAR -->
 <div class="top-bar">
@@ -14,7 +14,7 @@
 <!-- USER -->
 <div class="user-box">  
   <div class="avatar">👤</div>  
-  <div class="user-info">  
+  <div>  
     <div id="userName">Loading...</div>  
     <div id="userRole">Admin</div>  
   </div>  
@@ -68,7 +68,7 @@ No notifications
 
 <style>
 
-/* 🔥 SIDEBAR FIX */
+/* SIDEBAR */
 .sidebar{
 position:fixed;
 left:0;
@@ -78,8 +78,7 @@ height:100vh;
 background:linear-gradient(180deg,#0f172a,#020617);
 color:white;
 overflow-y:auto;
-z-index:99999; /* 🔥 CRITICAL FIX */
-pointer-events:auto;
+z-index:9999;
 transition:0.3s;
 }
 
@@ -89,8 +88,8 @@ width:80px;
 }
 
 .sidebar.collapsed .label,
-.sidebar.collapsed #userRole,
-.sidebar.collapsed #userName{
+.sidebar.collapsed #userName,
+.sidebar.collapsed #userRole{
 display:none;
 }
 
@@ -106,17 +105,6 @@ color:white;
 font-size:18px;
 cursor:pointer;
 }
-
-/* LOGO */
-.logo-box{
-display:flex;
-align-items:center;
-gap:10px;
-padding:15px;
-border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-.logo{height:28px;}
 
 /* USER */
 .user-box{
@@ -141,7 +129,6 @@ justify-content:center;
 /* MENU */
 .sidebar a{
 display:flex;
-align-items:center;
 gap:10px;
 padding:10px;
 margin:5px 10px;
@@ -152,12 +139,10 @@ text-decoration:none;
 
 .sidebar a:hover{
 background:#1d4ed8;
-color:white;
 }
 
 .sidebar a.active{
 background:#2563eb;
-color:white;
 }
 
 /* NOTIFICATIONS */
@@ -189,61 +174,4 @@ border-radius:10px;
 font-size:10px;
 }
 
-/* LOGOUT */
-.bottom{
-padding:10px;
-border-top:1px solid rgba(255,255,255,0.1);
-}
-
 </style>
-
-<script>
-
-/* INIT */
-function initSidebarUI(){
-
-console.log("Sidebar UI initialized ✅")
-
-/* ACTIVE MENU */
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-if(link.dataset.page === currentPage){
-link.classList.add("active")
-}
-})
-
-/* CLICK BINDINGS (🔥 FIX) */
-document.getElementById("toggleBtn").onclick = toggleSidebar
-document.getElementById("notifBox").onclick = toggleNotifications
-
-}
-
-/* COLLAPSE */
-function toggleSidebar(){
-
-let sb = document.getElementById("sidebar")
-let main = document.querySelector(".main")
-
-if(!sb || !main) return
-
-sb.classList.toggle("collapsed")
-main.classList.toggle("collapsed")   // 🔥 THIS IS THE REAL FIX
-
-}
-
-/* NOTIFICATIONS */
-function toggleNotifications(){
-let panel = document.getElementById("notifPanel")
-if(!panel) return
-
-panel.classList.toggle("show")
-console.log("Notifications toggled ✅")
-}
-
-/* GLOBAL (SAFETY) */
-window.initSidebarUI = initSidebarUI
-window.toggleSidebar = toggleSidebar
-window.toggleNotifications = toggleNotifications
-
-</script>

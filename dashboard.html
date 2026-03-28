@@ -141,38 +141,38 @@ document.getElementById("sidebar-container").innerHTML = data
 
 const sidebar = document.getElementById("sidebar")
 if(sidebar){
-    sidebar.style.display = "none"   // ✅ HIDE FIRST
+    sidebar.style.display = "none"   // 🔥 hide initially
 }
 
 setTimeout(async ()=>{
 
-    console.log("✅ Sidebar injected")
+    console.log("🔥 Sidebar injected")
 
-    /* 🔥 1. APPLY RBAC FIRST */
+    /* ✅ STEP 1: RBAC FIRST (LIKE OLD SYSTEM) */
     if(typeof applyMenuRBAC === "function"){
         await applyMenuRBAC()
         console.log("✅ RBAC applied")
     }
 
-    /* 🔥 2. INIT USER */
+    /* ✅ STEP 2: USER INIT */
     await initSidebar()
     console.log("✅ User initialized")
 
-    /* 🔥 3. HIGHLIGHT */
-    forceActiveMenu()
-    console.log("✅ Highlight applied")
+    /* ✅ STEP 3: ACTIVE MENU */
+    setActiveMenu()
+    console.log("✅ Active menu applied")
 
-    /* 🔥 4. ICONS */
+    /* ✅ STEP 4: ICONS */
     if(window.lucide){
         lucide.createIcons()
     }
 
-    /* 🔥 5. SHOW SIDEBAR */
+    /* ✅ STEP 5: SHOW SIDEBAR */
     if(sidebar){
         sidebar.style.display = "block"
     }
 
-},300)
+},200)
 
 })
 /* SIDEBAR USER + ROLE */

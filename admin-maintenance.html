@@ -94,14 +94,74 @@ display:none;
 
 <body>
 
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
 <script>
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-    
+document.getElementById("sidebar-container").innerHTML = data
 
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+await initSidebar()
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
+
+})
+</script>
+
+<script>
+async function loadSidebar(){
+
+try{
+
+const res = await fetch("sidebar.html")
+const html = await res.text()
+
+document.getElementById("sidebar-container").innerHTML = html
+
+/* USER NAME */
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(session){
+document.getElementById("userName").innerText =
+session.user.email.split("@")[0]
+}
+
+/* RBAC */
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+/* ACTIVE MENU */
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+if(link.getAttribute("data-page") === currentPage){
+link.classList.add("active")
+}
+})
+
+}catch(err){
+console.error("Sidebar error:", err)
+}
+
+}
+
+/* RUN */
+loadSidebar()
 
 function setActiveMenu(){
 
@@ -216,26 +276,7 @@ window.location.href="login.html"
 
 </script>
 
-<!-- SIDEBAR -->
-<div id="sidebar-container"></div>
 
-<script>
-fetch("sidebar.html")
-.then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
-
-await initSidebar()
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
-
-})
-</script>
 
 <div class="main">
 

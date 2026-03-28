@@ -135,7 +135,6 @@ fetch("sidebar.html")
 
     document.getElementById("sidebar-container").innerHTML = data
 
-    /* 🔥 MATCH FINANCIAL DASHBOARD FLOW */
     setTimeout(async () => {
 
         await initSidebar()
@@ -144,14 +143,19 @@ fetch("sidebar.html")
             await applyMenuRBAC()
         }
 
-        attachSidebarEvents()   // ✅ THIS WAS MISSING
+        attachSidebarEvents()
 
-        console.log("🔥 Sidebar fully initialized")
+        /* 🔥 FORCE ACTIVE AGAIN (CRITICAL FIX) */
+        forceActiveMenu()
 
-    }, 100)
+        /* ICON FIX */
+        if(window.lucide){
+            lucide.createIcons()
+        }
+
+    }, 200)   // 🔥 increased delay
 
 })
-
 /* SIDEBAR USER + ROLE */
 
 async function initSidebar(){
@@ -216,7 +220,28 @@ function setActiveMenu(){
     })
 
 }
-  
+
+function forceActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    console.log("📄 Current Page:", currentPage)
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+
+        let page = link.getAttribute("data-page")
+
+        console.log("Checking:", page)
+
+        if(page === currentPage){
+            link.classList.add("active")
+            console.log("✅ Activated:", page)
+        }
+
+    })
+
+}
+    
 /* DASHBOARD DATA */
 
 async function loadDashboard(){

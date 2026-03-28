@@ -12,14 +12,7 @@
 
 <style>
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
-.main{
-margin-left:240px;
-transition:0.3s;
-}
-
-.main.collapsed{
-margin-left:80px !important;
-}
+.main{margin-left:220px;padding:25px;}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .title{font-size:22px;font-weight:600;}
 .badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
@@ -60,47 +53,21 @@ const supabaseClient = window.supabaseClient
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
-document.getElementById("sidebar-container").innerHTML = data
-
-setTimeout(async ()=>{
-
+document.getElementById("sidebar-container").innerHTML=data
 await initSidebar()
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
-
-const sidebar = document.getElementById("sidebar")
-const toggleBtn = document.getElementById("toggleBtn")
-const notifBox = document.getElementById("notifBox")
-const notifPanel = document.getElementById("notifPanel")
-const main = document.querySelector(".main")
-
-sidebar.style.display = "block"
-
-/* ACTIVE MENU */
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-if(link.dataset.page === currentPage){
-link.classList.add("active")
-}
+if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
+document.getElementById("sidebar").style.display="block"
 })
 
-/* COLLAPSE */
-toggleBtn.onclick = ()=>{
-sidebar.classList.toggle("collapsed")
-main.classList.toggle("collapsed")
+async function initSidebar(){
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+document.getElementById("userName").innerText=session.user.email.split("@")[0]
+window.logout=async()=>{
+await supabaseClient.auth.signOut()
+window.location="login.html"
 }
-
-/* NOTIFICATIONS */
-notifBox.onclick = ()=>{
-notifPanel.classList.toggle("show")
 }
-
-},200)
-
-})
 </script>
 
 <div class="main">

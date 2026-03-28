@@ -110,7 +110,10 @@ font-weight:600;
 }
 
 #kpiCards{
-min-height:80px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
 }
   
 /* KPI CARDS */
@@ -225,8 +228,8 @@ window.location.href="login.html"
 
 <h2>Agent Ledger</h2>
 <div id="kpiCards" style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;"></div>
-<div style="height:260px;">
-<canvas id="ledgerChart"></canvas>
+<div id="chartContainer" style="height:260px; display:none;">
+  <canvas id="ledgerChart"></canvas>
 </div>
 
 <div class="card">
@@ -386,7 +389,11 @@ document.getElementById("ledgerTable").innerHTML =
 `<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
 
 // 🔥 CLEAR KPI + CHART
-document.getElementById("kpiCards").innerHTML = ""
+document.getElementById("kpiCards").innerHTML = `
+<div class="card" style="width:100%; text-align:center; opacity:0.7;">
+Select an agent to view ledger
+</div>
+`
 
 if(chartInstance){
 chartInstance.destroy()
@@ -485,8 +492,16 @@ function renderFiltered(entries){
 currentView = entries
   
 if(entries.length > 0){
+
+document.getElementById("chartContainer").style.display = "block"
+
 renderKPIs(entries)
 renderChart(entries)
+
+}else{
+
+document.getElementById("chartContainer").style.display = "none"
+
 }
   
 if(entries.length === 0){

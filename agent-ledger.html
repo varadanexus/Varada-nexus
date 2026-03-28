@@ -381,8 +381,17 @@ let entries = [...allEntries]
 
   
 if(entries.length === 0){
+
 document.getElementById("ledgerTable").innerHTML =
 `<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
+
+// 🔥 CLEAR KPI + CHART
+document.getElementById("kpiCards").innerHTML = ""
+
+if(chartInstance){
+chartInstance.destroy()
+}
+
 return
 }
 
@@ -481,8 +490,20 @@ renderChart(entries)
 }
   
 if(entries.length === 0){
+
+document.getElementById("kpiCards").innerHTML = `
+<div class="card" style="width:100%; text-align:center;">
+No data available
+</div>
+`
+
+if(chartInstance){
+chartInstance.destroy()
+}
+
 ledgerTable.innerHTML =
 `<tr><td colspan="6" style="text-align:center;">No records found</td></tr>`
+
 return
 }
 

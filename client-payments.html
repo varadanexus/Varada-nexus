@@ -149,11 +149,6 @@ setTimeout(async ()=>{
 },200)
 
 })
-await initSidebar()
-
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
 
 /* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
 document.getElementById("sidebar").style.display="block"

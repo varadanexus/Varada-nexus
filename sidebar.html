@@ -52,7 +52,7 @@
 <!-- CLIENT -->
 <div class="menu-section collapsible">
 
-  <div class="menu-title toggle">Client ⌄</div>
+  <div class="menu-title toggle" data-toggle>Client ⌄</div>
 
   <div class="submenu">
     <a href="client-billing.html" data-page="client-billing.html">Billing</a>
@@ -65,7 +65,7 @@
 <!-- TRANSPORTER -->
 <div class="menu-section collapsible">
 
-  <div class="menu-title toggle">Transporter ⌄</div>
+  <div class="menu-title toggle" data-toggle>Transporter ⌄</div>
 
   <div class="submenu">
     <a href="admin-payments.html" data-page="admin-payments.html">Payments</a>
@@ -77,7 +77,7 @@
 <!-- AGENT -->
 <div class="menu-section collapsible">
 
-  <div class="menu-title toggle">Agent ⌄</div>
+  <div class="menu-title toggle" data-toggle>Agent ⌄</div>
 
   <div class="submenu">
     <a href="agent-dashboard-admin.html">Dashboard</a>
@@ -92,7 +92,7 @@
 <!-- SETTINGS -->
 <div class="menu-section collapsible">
 
-  <div class="menu-title toggle">Settings ⌄</div>
+  <div class="menu-title toggle" data-toggle>Settings ⌄</div>
 
   <div class="submenu">
     <a href="master-data.html">Master Data</a>
@@ -245,14 +245,33 @@ link.classList.add("active")
 },100)
 })()
 
-/* COLLAPSIBLE */
-document.addEventListener("click", function(e){
 
-if(e.target.classList.contains("toggle")){
-let parent = e.target.parentElement
+
+</script>
+
+<script>
+
+function initSidebarInteractions(){
+
+console.log("🔥 Sidebar interactions working")
+
+document.querySelectorAll("[data-toggle]").forEach(toggle=>{
+
+toggle.onclick = function(){
+
+let parent = this.parentElement
+
+// close others (accordion)
+document.querySelectorAll(".menu-section").forEach(sec=>{
+if(sec !== parent) sec.classList.remove("open")
+})
+
 parent.classList.toggle("open")
+
 }
 
 })
+
+}
 
 </script>

@@ -96,6 +96,11 @@ margin-top:5px;
 color:#22c55e;
 }
 
+.card select,
+.card input{
+margin-bottom:8px;
+}
+  
 #totalPaid{
 color:#ef4444;
 }
@@ -174,6 +179,8 @@ setTimeout(async ()=>{
 
     await initSidebar()
 
+setActiveMenu()   // ✅ ADD THIS LINE
+
     if(sidebar) sidebar.style.display = "block"
 
 },200)
@@ -236,12 +243,12 @@ display:none;
 
 <div class="card" style="flex:1; min-width:200px;">
 <h3>💰 Earned</h3>
-<h2 id="totalEarned" style="color:#16a34a;">₹ 0</h2>
+<h2 id="totalEarned">₹ 0</h2>
 </div>
 
 <div class="card" style="flex:1; min-width:200px;">
 <h3>💸 Paid</h3>
-<h2 id="totalPaid" style="color:#dc2626;">₹ 0</h2>
+<h2 id="totalPaid">₹ 0</h2>
 </div>
 
 <div class="card" style="flex:1; min-width:200px;">
@@ -345,8 +352,9 @@ let alertBox = document.getElementById("alertBox")
 
 if(balance > 50000){
 alertBox.style.display = "block"
-alertBox.style.background = "#fee2e2"
-alertBox.style.color = "#991b1b"
+alertBox.style.background = "rgba(239,68,68,0.15)"
+alertBox.style.color = "#ef4444"
+alertBox.style.border = "1px solid rgba(239,68,68,0.3)"
 alertBox.innerText = `⚠ High pending: ₹ ${balance.toFixed(2)}`
 }else{
 alertBox.style.display = "none"
@@ -371,14 +379,30 @@ let paid=labels.map(k=>monthly[k].p)
 
 if(chartInstance){chartInstance.destroy()}
 
+if(!labels.length){
+document.getElementById("financeChart").style.display="none"
+return
+}
+
 chartInstance=new Chart(document.getElementById("financeChart"),{
 type:"bar",
 data:{
 labels:labels,
 datasets:[
-{label:"Earned",data:earned,backgroundColor:"#28a745"},
-{label:"Paid",data:paid,backgroundColor:"#dc3545"}
+{label:"Earned",data:earned,backgroundColor:"#22c55e"},
+{label:"Paid",data:paid,backgroundColor:"#ef4444"}
 ]
+},
+options:{
+plugins:{
+legend:{
+labels:{ color:"#e5e7eb" }
+}
+},
+scales:{
+x:{ ticks:{ color:"#9ca3af" } },
+y:{ ticks:{ color:"#9ca3af" } }
+}
 }
 })
 
@@ -407,7 +431,9 @@ loadSummary()
 
 /* 🏆 LEADERBOARD */
 async function loadLeaderboard(){
-if(!agents.length) await loadAgents()
+if(!agents || agents.length === 0){
+await loadAgents()
+}
 const {data, error} = await supabaseClient
 .from("agent_trip_ledger")
 .select("agent_id, commission_amount")

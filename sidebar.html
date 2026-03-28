@@ -1,86 +1,102 @@
-<div id="sidebar" class="sidebar" style="display:none">
+<div id="sidebar" class="sidebar" style="display:none">  
 
-<div class="logo-box">
-<img src="images/logo.png" class="logo">
-<span>Varada Nexus</span>
+<!-- LOGO -->
+<div class="logo-box">  
+<img src="images/logo.png" class="logo">  
+<span>Varada Nexus</span>  
+</div>  
+
+<!-- USER -->
+<div class="user-box">  
+  <div class="avatar">👤</div>  
+  <div>  
+    <div id="userName">Loading...</div>  
+    <div id="userRole">Admin</div>  
+  </div>  
+</div>  
+
+<!-- MENU -->
+<div class="menu">
+
+<a href="financial-dashboard.html" data-page="financial-dashboard.html">💼 Financial Dashboard</a>  
+<a href="dashboard.html" data-page="dashboard.html">📊 Dashboard</a>  
+<a href="trips.html" data-page="trips.html">🚛 Trips</a>  
+<a href="expenses.html" data-page="expenses.html">💳 Expenses</a>  
+<a href="client-billing.html" data-page="client-billing.html">🧾 Client Billing</a>  
+<a href="client-payments.html" data-page="client-payments.html">💰 Client Payments</a>  
+<a href="client-ledger.html" data-page="client-ledger.html">📘 Client Ledger</a>  
+
+<a href="admin-payments.html" data-page="admin-payments.html">🏦 Transporter Payments</a>  
+<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">📑 Transporter Ledger</a>  
+
+<a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">👥 Agent Dashboard</a>  
+<a href="agent-payments.html" data-page="agent-payments.html">💸 Agent Payments</a>  
+<a href="agent-ledger.html" data-page="agent-ledger.html">📗 Agent Ledger</a>  
+<a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">✅ Withdraw Approvals</a>  
+
+<a href="agents.html" data-page="agents.html">🧑‍💼 Agents</a>  
+<a href="master-data.html" data-page="master-data.html">🗂 Master Data</a>  
+<a href="rate-entry.html" data-page="rate-entry.html">📉 Rates</a>  
+<a href="admin-users.html" data-page="admin-users.html">👤 Users</a>  
+<a href="role-permissions.html" data-page="role-permissions.html">🔐 Permissions</a>  
+<a href="admin-maintenance.html" data-page="admin-maintenance.html">🛠 Maintenance</a>  
+<a href="profit-analysis.html" data-page="profit-analysis.html">📈 Profit Analysis</a>  
+
 </div>
 
-<div class="user-box">
-  <div class="avatar">👤</div>
-  <div>
-    <div id="userName">Loading...</div>
-    <div id="userRole">Admin</div>
-  </div>
+<!-- LOGOUT -->
+<div class="bottom">
+<a href="#" onclick="logout();return false;">🚪 Logout</a>  
 </div>
-
-<a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
-<a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
-<a href="trips.html" data-page="trips.html">Trips</a>
-<a href="expenses.html" data-page="expenses.html">Expenses</a>
-<a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
-<a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
-<a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
-<a href="admin-payments.html" data-page="admin-payments.html">Transporter Payments</a>
-<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
-<a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">Agent Dashboard</a>
-<a href="agent-payments.html" data-page="agent-payments.html">Agent Payments</a>
-<a href="agent-ledger.html" data-page="agent-ledger.html">Agent Ledger</a>
-<a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">Withdraw Approvals</a>
-<a href="agents.html" data-page="agents.html">Agents</a>
-<a href="master-data.html" data-page="master-data.html">Master Data</a>
-<a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
-<a href="admin-users.html" data-page="admin-users.html">Users</a>
-<a href="role-permissions.html" data-page="role-permissions.html">Role Permissions</a>
-<a href="admin-maintenance.html" data-page="admin-maintenance.html">System Maintenance</a>
-<a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
-
-
-<a href="#" data-page="logout" onclick="logout();return false;">Logout</a>
 
 </div>
 
 <style>
+  
 .sidebar{
 position:fixed;
 left:0;
 top:0;
-width:220px;
+width:240px;
 height:100vh;
-background:#111827;
+background:linear-gradient(180deg,#0f172a,#020617);
 color:white;
-padding-top:20px;
+padding-top:15px;
 overflow-y:auto;
+box-shadow:4px 0 25px rgba(0,0,0,0.6);
+transition:0.3s;
 }
 
+/* LOGO */
 .logo-box{
 display:flex;
 align-items:center;
 gap:10px;
-padding:0 20px 20px 20px;
+padding:15px 20px;
 font-size:18px;
-font-weight:bold;
-border-bottom:1px solid rgba(255,255,255,0.2);
-margin-bottom:10px;
+font-weight:600;
+border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 .logo{height:28px;}
 
+/* USER */
 .user-box{
 display:flex;
 align-items:center;
 gap:10px;
-margin:10px;
+margin:15px;
 padding:12px;
-background:rgba(255,255,255,0.08);
-border-radius:8px;
-border-bottom:1px solid rgba(255,255,255,0.2);
+background:rgba(255,255,255,0.05);
+border-radius:10px;
+backdrop-filter:blur(10px);
 }
 
 .avatar{
-width:35px;
-height:35px;
+width:38px;
+height:38px;
 border-radius:50%;
-background:#4c6ef5;
+background:linear-gradient(135deg,#3b82f6,#2563eb);
 display:flex;
 align-items:center;
 justify-content:center;
@@ -88,22 +104,60 @@ font-size:18px;
 }
 
 #userName{
-font-weight:bold;
+font-weight:600;
 font-size:14px;
 }
 
 #userRole{
 font-size:12px;
-color:#cbd5ff;
-}
-  
-.sidebar a{
-display:block;
-color:white;
-padding:12px 20px;
-text-decoration:none;
-font-size:14px;
+color:#94a3b8;
 }
 
-.sidebar a:hover{background:#162c66;}
+/* MENU */
+.menu{
+padding:5px;
+}
+
+.sidebar a{
+display:flex;
+align-items:center;
+gap:10px;
+color:#cbd5f5;
+padding:10px 15px;
+margin:4px 10px;
+border-radius:8px;
+text-decoration:none;
+font-size:14px;
+transition:all 0.25s ease;
+}
+
+/* HOVER */
+.sidebar a:hover{
+background:rgba(59,130,246,0.15);
+color:white;
+transform:translateX(4px);
+}
+
+/* ACTIVE */
+.sidebar a.active{
+background:linear-gradient(90deg,#2563eb,#1d4ed8);
+color:white;
+box-shadow:0 4px 12px rgba(37,99,235,0.4);
+}
+
+/* LOGOUT */
+.bottom{
+margin-top:10px;
+padding:10px;
+border-top:1px solid rgba(255,255,255,0.1);
+}
+
+.bottom a{
+color:#f87171;
+}
+
+.bottom a:hover{
+background:rgba(248,113,113,0.15);
+}
+  
 </style>

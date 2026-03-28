@@ -1,110 +1,80 @@
-<div id="sidebar" class="sidebar" style="display:none">
-
-<!-- TOP BAR -->
-<div class="top-bar">
-<button id="toggleBtn" class="toggle-btn">☰</button>
-</div>
+<div id="sidebar" class="sidebar">
 
 <!-- LOGO -->
-<div class="logo-box">  
-<img src="images/logo.png" class="logo">  
-<span class="label">Varada Nexus</span>  
-</div>  
-
-<!-- USER -->
-<div class="user-box">  
-  <div class="avatar">👤</div>  
-  <div>  
-    <div id="userName">Loading...</div>  
-    <div id="userRole">Admin</div>  
-  </div>  
-</div>  
-
-<!-- 🔔 NOTIFICATIONS -->
-<div id="notifBox" class="notif-box">
-🔔 <span class="label">Notifications</span> 
-<span id="notifCount" class="badge">0</span>
+<div class="logo-box">
+<img src="images/logo.png" class="logo">
+<span>Varada Nexus</span>
 </div>
 
-<div id="notifPanel" class="notif-panel">
-No notifications
+<!-- USER -->
+<div class="user-box">
+  <div class="avatar">👤</div>
+  <div>
+    <div id="userName">Loading...</div>
+    <div id="userRole">Admin</div>
+  </div>
 </div>
 
 <!-- MENU -->
 <div class="menu">
 
-<a href="financial-dashboard.html" data-page="financial-dashboard.html">💼 <span class="label">Financial Dashboard</span></a>  
-<a href="dashboard.html" data-page="dashboard.html">📊 <span class="label">Dashboard</span></a>  
-<a href="trips.html" data-page="trips.html">🚛 <span class="label">Trips</span></a>  
-<a href="expenses.html" data-page="expenses.html">💳 <span class="label">Expenses</span></a>  
-<a href="client-billing.html" data-page="client-billing.html">🧾 <span class="label">Client Billing</span></a>  
-<a href="client-payments.html" data-page="client-payments.html">💰 <span class="label">Client Payments</span></a>  
-<a href="client-ledger.html" data-page="client-ledger.html">📘 <span class="label">Client Ledger</span></a>  
+<a href="financial-dashboard.html" data-page="financial-dashboard.html">Financial Dashboard</a>
+<a href="dashboard.html" data-page="dashboard.html">Dashboard</a>
+<a href="trips.html" data-page="trips.html">Trips</a>
+<a href="expenses.html" data-page="expenses.html">Expenses</a>
+<a href="client-billing.html" data-page="client-billing.html">Client Billing</a>
+<a href="client-payments.html" data-page="client-payments.html">Client Payments</a>
+<a href="client-ledger.html" data-page="client-ledger.html">Client Ledger</a>
 
-<a href="admin-payments.html" data-page="admin-payments.html">🏦 <span class="label">Transporter Payments</span></a>  
-<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">📑 <span class="label">Transporter Ledger</span></a>  
+<a href="admin-payments.html" data-page="admin-payments.html">Transporter Payments</a>
+<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Transporter Ledger</a>
 
-<a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">👥 <span class="label">Agent Dashboard</span></a>  
-<a href="agent-payments.html" data-page="agent-payments.html">💸 <span class="label">Agent Payments</span></a>  
-<a href="agent-ledger.html" data-page="agent-ledger.html">📗 <span class="label">Agent Ledger</span></a>  
-<a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">✅ <span class="label">Withdraw Approvals</span></a>  
+<a href="agent-dashboard-admin.html" data-page="agent-dashboard-admin.html">Agent Dashboard</a>
+<a href="agent-payments.html" data-page="agent-payments.html">Agent Payments</a>
+<a href="agent-ledger.html" data-page="agent-ledger.html">Agent Ledger</a>
+<a href="agent-withdraw-approval.html" data-page="agent-withdraw-approval.html">Withdraw Approvals</a>
 
-<a href="agents.html" data-page="agents.html">🧑‍💼 <span class="label">Agents</span></a>  
-<a href="master-data.html" data-page="master-data.html">🗂 <span class="label">Master Data</span></a>  
-<a href="rate-entry.html" data-page="rate-entry.html">📉 <span class="label">Rates</span></a>  
-<a href="admin-users.html" data-page="admin-users.html">👤 <span class="label">Users</span></a>  
-<a href="role-permissions.html" data-page="role-permissions.html">🔐 <span class="label">Permissions</span></a>  
-<a href="admin-maintenance.html" data-page="admin-maintenance.html">🛠 <span class="label">Maintenance</span></a>  
-<a href="profit-analysis.html" data-page="profit-analysis.html">📈 <span class="label">Profit Analysis</span></a>  
+<a href="agents.html" data-page="agents.html">Agents</a>
+<a href="master-data.html" data-page="master-data.html">Master Data</a>
+<a href="rate-entry.html" data-page="rate-entry.html">Rates</a>
+<a href="admin-users.html" data-page="admin-users.html">Users</a>
+<a href="role-permissions.html" data-page="role-permissions.html">Permissions</a>
+<a href="admin-maintenance.html" data-page="admin-maintenance.html">Maintenance</a>
+<a href="profit-analysis.html" data-page="profit-analysis.html">Profit Analysis</a>
 
 </div>
 
 <!-- LOGOUT -->
 <div class="bottom">
-<a href="#" onclick="logout();return false;">🚪 <span class="label">Logout</span></a>  
+<a href="#" onclick="logout();return false;">Logout</a>
 </div>
 
 </div>
 
 <style>
-
-/* SIDEBAR */
 .sidebar{
 position:fixed;
 left:0;
 top:0;
 width:240px;
 height:100vh;
-background:linear-gradient(180deg,#0f172a,#020617);
+background:#0f172a;
 color:white;
 overflow-y:auto;
 z-index:9999;
-transition:0.3s;
 }
 
-/* COLLAPSE */
-.sidebar.collapsed{
-width:80px;
+/* LOGO */
+.logo-box{
+display:flex;
+align-items:center;
+gap:10px;
+padding:15px;
+font-weight:600;
+border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
-.sidebar.collapsed .label,
-.sidebar.collapsed #userName,
-.sidebar.collapsed #userRole{
-display:none;
-}
-
-/* TOP */
-.top-bar{
-padding:10px;
-}
-
-.toggle-btn{
-background:none;
-border:none;
-color:white;
-font-size:18px;
-cursor:pointer;
-}
+.logo{height:28px;}
 
 /* USER */
 .user-box{
@@ -117,8 +87,8 @@ border-radius:10px;
 }
 
 .avatar{
-width:38px;
-height:38px;
+width:36px;
+height:36px;
 border-radius:50%;
 background:#2563eb;
 display:flex;
@@ -128,50 +98,45 @@ justify-content:center;
 
 /* MENU */
 .sidebar a{
-display:flex;
-gap:10px;
-padding:10px;
+display:block;
+padding:10px 15px;
 margin:5px 10px;
-border-radius:8px;
+border-radius:6px;
 color:#cbd5f5;
 text-decoration:none;
+font-size:14px;
 }
 
 .sidebar a:hover{
 background:#1d4ed8;
+color:white;
 }
 
 .sidebar a.active{
 background:#2563eb;
+color:white;
 }
 
-/* NOTIFICATIONS */
-.notif-box{
-margin:10px;
+/* LOGOUT */
+.bottom{
 padding:10px;
-background:#111827;
-border-radius:8px;
-cursor:pointer;
+border-top:1px solid rgba(255,255,255,0.1);
 }
-
-.notif-panel{
-display:none;
-margin:10px;
-padding:10px;
-background:#020617;
-border-radius:8px;
-}
-
-.notif-panel.show{
-display:block;
-}
-
-/* BADGE */
-.badge{
-background:red;
-padding:2px 6px;
-border-radius:10px;
-font-size:10px;
-}
-
 </style>
+
+<script>
+
+/* ACTIVE MENU */
+(function(){
+let currentPage = window.location.pathname.split("/").pop()
+
+setTimeout(()=>{
+document.querySelectorAll("#sidebar a").forEach(link=>{
+if(link.dataset.page === currentPage){
+link.classList.add("active")
+}
+})
+},100)
+})()
+
+</script>

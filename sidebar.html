@@ -187,43 +187,38 @@ box-sizing:border-box; /* ✅ prevents overflow */
 .logo-box{
 display:flex;
 align-items:center;
-gap:10px;
-padding:12px 14px;
+gap:12px;
+padding:14px 14px;   /* slightly increased */
 border-bottom:1px solid rgba(255,255,255,0.06);
 }
 
 /* ✅ FIXED LOGO */
 .logo{
-height:26px;
-width:26px;
-object-fit:contain;   /* no cropping */
+height:32px;   /* was 26px */
+width:32px;
+object-fit:contain;
 }
 
 /* BRAND */
 .brand{
-font-size:15px;
+font-size:17px;   /* was 15px */
 font-weight:600;
-white-space:nowrap;
+letter-spacing:0.3px;
 }
 
 /* USER */
 .user-box{
 display:flex;
 gap:10px;
-margin:10px;
-padding:10px;
-background:rgba(255,255,255,0.04);
+margin:8px 10px;     /* reduced */
+padding:8px;         /* reduced */
+background:rgba(255,255,255,0.035); /* lighter */
 border-radius:10px;
 }
 
 .avatar{
-width:34px;
-height:34px;
-background:linear-gradient(135deg,#3b82f6,#2563eb);
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
+width:30px;   /* was 34px */
+height:30px;
 }
 
 /* MENU */

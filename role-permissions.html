@@ -10,17 +10,149 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-h2{color:#1f3c88;}
-.form-box{background:white;padding:20px;border-radius:6px;width:400px;margin-bottom:20px;}
-input{width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;}
-button{padding:10px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
-.save-all{margin-top:20px;padding:12px 20px;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center;}
-th{background:#eee;}
-.role-name{text-align:left;font-weight:bold;}
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h2{
+margin-bottom:18px;
+font-weight:600;
+}
+
+h3{
+margin-bottom:10px;
+font-size:14px;
+color:#9ca3af;
+}
+
+/* FORM BOX */
+.form-box{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+max-width:400px;
+}
+
+/* INPUT */
+input{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+margin-bottom:10px;
+font-size:13px;
+}
+
+/* BUTTON */
+button{
+padding:8px 12px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+font-size:12px;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* SAVE BUTTON */
+.save-all{
+margin-top:20px;
+padding:10px 16px;
+}
+
+/* TABLE WRAPPER */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+}
+
+/* HEADER */
+th{
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* CELLS */
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:12px;
+vertical-align:top;
+}
+
+/* ROLE COLUMN */
+.role-name{
+text-align:left;
+font-weight:600;
+color:#e5e7eb;
+}
+
+/* CHECKBOX LABEL */
+label{
+display:block;
+margin-bottom:4px;
+font-size:11px;
+color:#9ca3af;
+cursor:pointer;
+}
+
+/* CHECKBOX */
+input[type="checkbox"]{
+margin-right:6px;
+cursor:pointer;
+}
+
+/* HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* SCROLL FIX (IMPORTANT) */
+table{
+display:block;
+overflow:auto;
+white-space:nowrap;
+}
+
+/* STICKY FIRST COLUMN (VERY USEFUL) */
+td:first-child, th:first-child{
+position:sticky;
+left:0;
+background:#111827;
+z-index:2;
+}
+
+/* RESPONSIVE */
+.form-box{
+width:100%;
+max-width:400px;
+}
 </style>
 
 </head>
@@ -37,19 +169,44 @@ const supabaseClient = window.supabaseClient
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-await initSidebar()
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
+await initSidebar()
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
 
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
+ 
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -202,7 +359,14 @@ return
 
 let html=`<thead><tr><th>Role</th>`
 
-pages.forEach(p=>{ html+=`<th>${p.name}</th>` })
+pages.forEach(p=>{
+html+=`<th title="Toggle all permissions for this page">
+${p.name}
+<br>
+<input type="checkbox"
+onclick="toggleColumn('${p.file}', this.checked)">
+</th>`
+})
 
 html+=`</tr></thead><tbody>`
 
@@ -223,11 +387,25 @@ x.page_name===p.file &&
 )
 
 html+=`
-<label style="display:block">
+<label style="
+display:flex;
+align-items:center;
+gap:6px;
+margin-bottom:4px;
+">
 <input type="checkbox"
 id="${role.id}_${p.file}_${a}"
 ${existing && existing.can_access ? "checked":""}>
- ${a}
+<span style="
+background:#0f172a;
+padding:2px 6px;
+border-radius:6px;
+font-size:10px;
+color:#9ca3af;
+text-transform:capitalize;
+">
+${a}
+</span>
 </label>
 `
 
@@ -306,6 +484,14 @@ alert("Error saving permissions")
 
 btn.disabled = false
 btn.innerText = "Save All Permissions"
+
+}
+
+function toggleColumn(page, checked){
+
+document.querySelectorAll(`[id*="_${page}_"]`).forEach(cb=>{
+cb.checked = checked
+})
 
 }
 

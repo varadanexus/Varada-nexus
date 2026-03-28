@@ -137,25 +137,42 @@ fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 
-    document.getElementById("sidebar-container").innerHTML = data
+document.getElementById("sidebar-container").innerHTML = data
 
-    setTimeout(async () => {
+const sidebar = document.getElementById("sidebar")
+if(sidebar){
+    sidebar.style.display = "none"   // ✅ HIDE FIRST
+}
 
-        await initSidebar()
+setTimeout(async ()=>{
 
-        if(typeof applyMenuRBAC==="function"){
-            await applyMenuRBAC()
-        }
+    console.log("✅ Sidebar injected")
 
-        /* ❌ REMOVED attachSidebarEvents() */
+    /* 🔥 1. APPLY RBAC FIRST */
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+        console.log("✅ RBAC applied")
+    }
 
-        forceActiveMenu()
+    /* 🔥 2. INIT USER */
+    await initSidebar()
+    console.log("✅ User initialized")
 
-        if(window.lucide){
-            lucide.createIcons()
-        }
+    /* 🔥 3. HIGHLIGHT */
+    forceActiveMenu()
+    console.log("✅ Highlight applied")
 
-    }, 200)
+    /* 🔥 4. ICONS */
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    /* 🔥 5. SHOW SIDEBAR */
+    if(sidebar){
+        sidebar.style.display = "block"
+    }
+
+},300)
 
 })
 /* SIDEBAR USER + ROLE */

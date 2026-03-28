@@ -56,9 +56,15 @@ fetch("sidebar.html")
 
 document.getElementById("sidebar-container").innerHTML = data
 
-/* 🔥 SIMPLE & STABLE ORDER */
-initSidebar()
-attachSidebarEvents()
+/* 🔥 WAIT FOR DOM TO APPLY */
+setTimeout(async () => {
+
+    await initSidebar()
+    attachSidebarEvents()
+
+    console.log("🔥 Sidebar fully initialized")
+
+}, 100)
 
 })
 </script>
@@ -539,6 +545,32 @@ setInterval(()=>{
 refreshTimer = setTimeout(()=>init(),500)
 },30000)
 
+async function initSidebar(){
+
+const sidebar = document.getElementById("sidebar")
+if(!sidebar) return
+
+const { data:{session} } = await supabaseClient.auth.getSession()
+
+if(!session){
+    window.location = "login.html"
+    return
+}
+
+/* ✅ SET USER NAME */
+const nameEl = sidebar.querySelector("#userName")
+if(nameEl){
+    nameEl.innerText = session.user.email.split("@")[0]
+}
+
+/* ✅ LOGOUT FUNCTION */
+window.logout = async ()=>{
+    await supabaseClient.auth.signOut()
+    window.location = "login.html"
+}
+
+}
+    
 function attachSidebarEvents(){
 
 const sidebar = document.getElementById("sidebar")

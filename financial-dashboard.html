@@ -13,7 +13,6 @@
 <style>
 body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{margin-left:220px;padding:25px;}
-.sidebar{z-index:99999;}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .title{font-size:22px;font-weight:600;}
 .badge{background:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;}
@@ -71,33 +70,6 @@ window.location="login.html"
 }
 </script>
 
-<script>
-
-function initSidebarInteractions(){
-
-console.log("🔥 Sidebar interactions working")
-
-document.querySelectorAll("[data-toggle]").forEach(toggle=>{
-
-toggle.onclick = function(){
-
-let parent = this.parentElement
-
-// close others (accordion)
-document.querySelectorAll(".menu-section").forEach(sec=>{
-if(sec !== parent) sec.classList.remove("open")
-})
-
-parent.classList.toggle("open")
-
-}
-
-})
-
-}
-
-</script>
-    
 <div class="main">
 
 <div class="header">

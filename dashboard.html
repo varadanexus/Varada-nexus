@@ -131,23 +131,25 @@ const supabaseClient = supabase.createClient(
 /* LOAD SIDEBAR + RBAC */
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-    document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-    await initSidebar()
+    document.getElementById("sidebar-container").innerHTML = data
 
-    if(typeof applyMenuRBAC==="function"){
-        await applyMenuRBAC()
-    }
+    /* 🔥 MATCH FINANCIAL DASHBOARD FLOW */
+    setTimeout(async () => {
 
-    /* 🔥 ACTIVE MENU HIGHLIGHT FIX */
-    setActiveMenu()
+        await initSidebar()
 
-    /* SHOW SIDEBAR */
-    document.getElementById("sidebar").style.display="block"
+        if(typeof applyMenuRBAC==="function"){
+            await applyMenuRBAC()
+        }
 
-    /* FIX ICONS */
-    setTimeout(()=>lucide.createIcons(),100)
+        attachSidebarEvents()   // ✅ THIS WAS MISSING
+
+        console.log("🔥 Sidebar fully initialized")
+
+    }, 100)
+
 })
 
 /* SIDEBAR USER + ROLE */

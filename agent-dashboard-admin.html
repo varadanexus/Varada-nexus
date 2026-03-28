@@ -11,34 +11,134 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* CARDS */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* HEADINGS */
+h2{
+font-size:20px;
+margin-bottom:10px;
+font-weight:600;
+}
+
+h3{
+font-size:14px;
+color:#9ca3af;
+margin-bottom:6px;
+}
+
+/* INPUTS */
+select,input{
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+margin-right:6px;
+}
+
+/* BUTTONS */
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* SUMMARY GRID */
 .summary{
 display:flex;
-gap:20px;
+gap:15px;
+flex-wrap:wrap;
 }
 
-.box{
+/* SUMMARY CARDS */
+.summary .card{
 flex:1;
-padding:20px;
-border-radius:8px;
-color:white;
-font-size:18px;
+min-width:200px;
 }
 
-.earn{background:#28a745;}
-.paid{background:#dc3545;}
-.balance{background:#1f3c88;}
+/* VALUE TEXT */
+.summary h2{
+font-size:22px;
+margin-top:5px;
+}
 
-button{padding:8px 12px;margin-left:5px;}
+/* COLORS */
+#totalEarned{
+color:#22c55e;
+}
+
+#totalPaid{
+color:#ef4444;
+}
+
+/* ALERT */
+#alertBox{
+border-radius:10px;
+padding:12px;
+}
+
+/* CHART */
+canvas{
+background:#0f172a;
+border-radius:10px;
+padding:10px;
+}
+
+/* LEADERBOARD */
+#leaderboard{
+list-style:none;
+padding-left:0;
+}
+
+.summary h2{
+text-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+  
+#leaderboard li{
+padding:8px 0;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* TOP AGENT HIGHLIGHT */
+#leaderboard li:first-child{
+color:#facc15;
+font-weight:600;
+}
+
+/* BUTTON GROUP SPACING */
+.card button{
+margin-top:6px;
+margin-right:6px;
+}
 </style>
 
 </head>
@@ -58,12 +158,43 @@ const supabaseClient = supabase.createClient(
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
-if(typeof applyMenuRBAC==="function"){await applyMenuRBAC()}
-document.getElementById("sidebar").style.display="block"
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+
+if(sidebar) sidebar.style.display = "none"
+
+setTimeout(async ()=>{
+
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+    }
+
+    await initSidebar()
+
+    if(sidebar) sidebar.style.display = "block"
+
+},200)
+
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
 
 async function initSidebar(){
 const {data:{session}} = await supabaseClient.auth.getSession()

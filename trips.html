@@ -10,16 +10,80 @@
 <script src="rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:25px;border-radius:8px;margin-bottom:20px;}
-.form-grid{display:grid;grid-template-columns: repeat(7,1fr);gap:12px;}
-button{padding:8px 14px;background:#1f3c88;color:white;border:none;border-radius:4px;}
-.editBtn{background:#5bc0de;}
-.deleteBtn{background:#d9534f;}
-table{width:100%;border-collapse:collapse;background:white;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+h2{
+font-size:20px;
+margin-bottom:12px;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:20px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:20px;
+}
+
+/* FORM GRID */
+.form-grid{
+display:grid;
+grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+gap:12px;
+}
+
+/* INPUTS */
+input, select{
+background:#0f172a;
+border:1px solid rgba(255,255,255,0.05);
+color:white;
+padding:8px;
+border-radius:6px;
+}
+
+/* BUTTON */
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+font-size:12px;
+}
+
+/* ACTION BUTTONS */
+.editBtn{background:#0ea5e9;}
+.deleteBtn{background:#ef4444;}
 </style>
 
 </head>
@@ -33,17 +97,27 @@ th{background:#eee;}
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
+.then(data=>{
+
 document.getElementById("sidebar-container").innerHTML=data
 
-await initSidebar()
+setTimeout(async ()=>{
 
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
-}
+    await initSidebar()
 
-/* ✅ SHOW SIDEBAR */
-document.getElementById("sidebar").style.display="block"
+    if(typeof applyMenuRBAC==="function"){
+        await applyMenuRBAC()
+    }
+
+    forceActiveMenu()   // ✅ ADD THIS
+
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    document.getElementById("sidebar").style.display="block"
+
+},200)
 
 })
 
@@ -71,7 +145,10 @@ const {data:role}=await supabaseClient
 .from("roles").select("role_name").eq("id",userRole.role_id).single()
 
 if(role){
-document.getElementById("userRole").innerText=role.role_name
+const roleEl = document.getElementById("userRole")
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
 }
 
 window.logout=async()=>{
@@ -573,6 +650,19 @@ loadTrips()
 
 }
 
+function forceActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+        let page = link.getAttribute("data-page")
+        if(page === currentPage){
+            link.classList.add("active")
+        }
+    })
+
+}
+  
 /* ================= UPDATE ================= */
 
 async function updateTrip(id){

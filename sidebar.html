@@ -19,42 +19,134 @@
 <div class="menu">
 
 <!-- DASHBOARD -->
-<div class="menu-title">Dashboard</div>
-<a href="financial-dashboard.html" data-page="financial-dashboard.html">📊 Financial Dashboard</a>
-<a href="dashboard.html" data-page="dashboard.html">🏠 Main Dashboard</a>
+<div class="menu-section">
+  <div class="menu-title">Dashboard</div>
+
+  <a href="financial-dashboard.html" data-page="financial-dashboard.html">
+    <span class="icon">📊</span>
+    <span class="text">Financial Dashboard</span>
+  </a>
+
+  <a href="dashboard.html" data-page="dashboard.html">
+    <span class="icon">🏠</span>
+    <span class="text">Main Dashboard</span>
+  </a>
+</div>
 
 <!-- OPERATIONS -->
-<div class="menu-title">Operations</div>
-<a href="trips.html" data-page="trips.html">🚛 Trips</a>
-<a href="expenses.html" data-page="expenses.html">💳 Expenses</a>
+<div class="menu-section">
+  <div class="menu-title">Operations</div>
+
+  <a href="trips.html" data-page="trips.html">
+    <span class="icon">🚛</span>
+    <span class="text">Trips</span>
+  </a>
+
+  <a href="expenses.html" data-page="expenses.html">
+    <span class="icon">💳</span>
+    <span class="text">Expenses</span>
+  </a>
+</div>
 
 <!-- CLIENT -->
-<div class="menu-title">Client</div>
-<a href="client-billing.html" data-page="client-billing.html">Billing</a>
-<a href="client-payments.html" data-page="client-payments.html">Payments</a>
-<a href="client-ledger.html" data-page="client-ledger.html">Ledger</a>
+<div class="menu-section">
+  <div class="menu-title">Client</div>
+
+  <a href="client-billing.html" data-page="client-billing.html">
+    <span class="icon">🧾</span>
+    <span class="text">Billing</span>
+  </a>
+
+  <a href="client-payments.html" data-page="client-payments.html">
+    <span class="icon">💰</span>
+    <span class="text">Payments</span>
+  </a>
+
+  <a href="client-ledger.html" data-page="client-ledger.html">
+    <span class="icon">📘</span>
+    <span class="text">Ledger</span>
+  </a>
+</div>
 
 <!-- TRANSPORTER -->
-<div class="menu-title">Transporter</div>
-<a href="admin-payments.html" data-page="admin-payments.html">Payments</a>
-<a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">Ledger</a>
+<div class="menu-section">
+  <div class="menu-title">Transporter</div>
+
+  <a href="admin-payments.html" data-page="admin-payments.html">
+    <span class="icon">🏦</span>
+    <span class="text">Payments</span>
+  </a>
+
+  <a href="admin-transporter-ledger.html" data-page="admin-transporter-ledger.html">
+    <span class="icon">📑</span>
+    <span class="text">Ledger</span>
+  </a>
+</div>
 
 <!-- AGENT -->
-<div class="menu-title">Agent</div>
-<a href="agent-dashboard-admin.html">Dashboard</a>
-<a href="agent-payments.html">Payments</a>
-<a href="agent-ledger.html">Ledger</a>
-<a href="agent-withdraw-approval.html">Withdraw</a>
-<a href="agents.html">Agents</a>
+<div class="menu-section">
+  <div class="menu-title">Agent</div>
+
+  <a href="agent-dashboard-admin.html">
+    <span class="icon">👥</span>
+    <span class="text">Dashboard</span>
+  </a>
+
+  <a href="agent-payments.html">
+    <span class="icon">💸</span>
+    <span class="text">Payments</span>
+  </a>
+
+  <a href="agent-ledger.html">
+    <span class="icon">📗</span>
+    <span class="text">Ledger</span>
+  </a>
+
+  <a href="agent-withdraw-approval.html">
+    <span class="icon">✅</span>
+    <span class="text">Withdraw</span>
+  </a>
+
+  <a href="agents.html">
+    <span class="icon">🧑‍💼</span>
+    <span class="text">Agents</span>
+  </a>
+</div>
 
 <!-- SETTINGS -->
-<div class="menu-title">Settings</div>
-<a href="master-data.html">Master Data</a>
-<a href="rate-entry.html">Rates</a>
-<a href="admin-users.html">Users</a>
-<a href="role-permissions.html">Permissions</a>
-<a href="admin-maintenance.html">Maintenance</a>
-<a href="profit-analysis.html">Profit Analysis</a>
+<div class="menu-section">
+  <div class="menu-title">Settings</div>
+
+  <a href="master-data.html">
+    <span class="icon">🗂</span>
+    <span class="text">Master Data</span>
+  </a>
+
+  <a href="rate-entry.html">
+    <span class="icon">📉</span>
+    <span class="text">Rates</span>
+  </a>
+
+  <a href="admin-users.html">
+    <span class="icon">👤</span>
+    <span class="text">Users</span>
+  </a>
+
+  <a href="role-permissions.html">
+    <span class="icon">🔐</span>
+    <span class="text">Permissions</span>
+  </a>
+
+  <a href="admin-maintenance.html">
+    <span class="icon">🛠</span>
+    <span class="text">Maintenance</span>
+  </a>
+
+  <a href="profit-analysis.html">
+    <span class="icon">📈</span>
+    <span class="text">Profit Analysis</span>
+  </a>
+</div>
 
 </div>
 
@@ -67,87 +159,43 @@
 
 <style>
 
-.sidebar{
-position:fixed;
-left:0;
-top:0;
-width:240px;
-height:100vh;
-background:#0f172a;
-color:white;
-overflow-y:auto;
-z-index:99999;
-}
-
-/* LOGO */
-.logo-box{
-display:flex;
-align-items:center;
-gap:12px;
-padding:18px;
-border-bottom:1px solid rgba(255,255,255,0.08);
-}
-
-.logo{
-height:34px;
-}
-
-.brand{
-font-size:22px;
-font-weight:700;
-}
-
-/* USER */
-.user-box{
-display:flex;
-gap:10px;
-margin:15px;
-padding:12px;
-background:rgba(255,255,255,0.05);
-border-radius:10px;
-}
-
-.avatar{
-width:36px;
-height:36px;
-border-radius:50%;
-background:#2563eb;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-/* SECTION TITLE */
-.menu-title{
-font-size:11px;
-text-transform:uppercase;
-color:#64748b;
-padding:12px 18px 6px;
-}
-
 /* LINKS */
 .sidebar a{
 display:flex;
 align-items:center;
-gap:10px;
-padding:10px 18px;
-margin:2px 10px;
-border-radius:8px;
+gap:12px;
+padding:11px 16px;
+margin:3px 10px;
+border-radius:10px;
 color:#cbd5f5;
 text-decoration:none;
-position:relative;
 font-size:14px;
+transition:all 0.2s ease;
+}
+
+/* ICON */
+.icon{
+width:20px;
+text-align:center;
+font-size:15px;
+opacity:0.9;
+}
+
+/* TEXT */
+.text{
+flex:1;
 }
 
 /* HOVER */
 .sidebar a:hover{
-background:#1e293b;
+background:rgba(59,130,246,0.12);
 color:white;
+transform:translateX(3px);
 }
 
 /* ACTIVE */
 .sidebar a.active{
-background:#1e293b;
+background:linear-gradient(90deg, rgba(59,130,246,0.25), transparent);
 color:white;
 }
 
@@ -159,14 +207,6 @@ top:6px;
 bottom:6px;
 width:3px;
 background:#3b82f6;
-border-radius:3px;
+border-radius:4px;
 }
-
-/* LOGOUT */
-.bottom{
-padding:12px;
-border-top:1px solid rgba(255,255,255,0.1);
-margin-top:10px;
-}
-
 </style>

@@ -15,9 +15,12 @@ body{margin:0;font-family:'Inter',sans-serif;background:#0a0f1c;color:#e5e7eb;}
 .main{
 margin-left:240px;
 transition:0.3s;
+position:relative;
+z-index:1;
 }
 
-.sidebar.collapsed ~ .main{
+/* 🔥 FIX: JS will control this */
+.main.collapsed{
 margin-left:80px !important;
 }
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}

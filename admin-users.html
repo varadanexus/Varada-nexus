@@ -10,58 +10,129 @@
 <script src="menu-rbac.js"></script>
 
 <style>
+/* GLOBAL */
 body{
 margin:0;
-font-family:Arial;
-background:#f4f6f9;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
+
+/* MAIN */
 .main{
 margin-left:220px;
-padding:30px;
+padding:24px;
 }
+
+/* HEADINGS */
 h2{
-color:#1f3c88;
+margin-bottom:18px;
+font-weight:600;
 }
+
+h3{
+margin-bottom:10px;
+font-size:14px;
+color:#9ca3af;
+}
+
+/* FORM BOX */
 .form-box{
-background:white;
-padding:20px;
-border-radius:6px;
-width:420px;
-margin-bottom:25px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+max-width:420px;
 }
+
+/* INPUTS */
 input,select{
 width:100%;
 padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
 margin-bottom:10px;
-border:1px solid #ccc;
-border-radius:4px;
+font-size:13px;
 }
+
+/* BUTTON */
 button{
-padding:10px 14px;
-background:#1f3c88;
+padding:8px 12px;
+background:#3b82f6;
 color:white;
 border:none;
-border-radius:4px;
+border-radius:8px;
 cursor:pointer;
-margin-right:5px;
+transition:0.2s;
+font-size:12px;
 }
+
 button:hover{
-background:#162c66;
+background:#2563eb;
 }
-.edit-btn{ background:#f0ad4e; }
-.delete-btn{ background:#d9534f; }
+
+/* BUTTON VARIANTS */
+.edit-btn{
+background:#f59e0b;
+}
+.edit-btn:hover{
+background:#d97706;
+}
+
+.delete-btn{
+background:#ef4444;
+}
+.delete-btn:hover{
+background:#dc2626;
+}
+
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
 }
-th,td{
-padding:12px;
-border-bottom:1px solid #ddd;
+
+th{
 text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
-th{ background:#eee; }
+
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+tr:hover{
+background:#0f172a;
+}
+
+/* ACTION BUTTON SPACING */
+td button{
+margin:2px;
+}
+
+/* EMPTY STATE */
+td[colspan]{
+text-align:center;
+color:#9ca3af;
+}
+
+/* RESPONSIVE */
+.form-box{
+width:100%;
+max-width:420px;
+}
 </style>
 
 </head>
@@ -89,16 +160,43 @@ supabaseClient.auth.getSession().then(({data})=>{
 <script>
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
-await initSidebar()
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
 
 if(typeof applyMenuRBAC==="function"){
 await applyMenuRBAC()
 }
 
-document.getElementById("sidebar").style.display="block"
+await initSidebar()
+setActiveMenu()
+
+if(sidebar) sidebar.style.display="block"
+
+},200)
+
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
 
 async function initSidebar(){
 const {data:{session}} = await supabaseClient.auth.getSession()
@@ -229,11 +327,13 @@ ${roles.map(r=>`<option value="${r.id}" ${r.id===roleId?"selected":""}>${r.role_
 </td>
 
 <td>
+<div style="display:flex; flex-wrap:wrap; gap:6px;">
 <button class="edit-btn" onclick="updateRole('${user.id}')">Save</button>
 <button onclick="resetPassword('${user.auth_id}')">Reset</button>
 <button onclick="disableUser('${user.auth_id}')">Disable</button>
 <button onclick="enableUser('${user.auth_id}')">Enable</button>
 <button class="delete-btn" onclick="deleteUser('${user.id}')">Delete</button>
+</div>
 </td>
 </tr>
 `

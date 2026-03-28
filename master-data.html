@@ -10,32 +10,158 @@
 <script src="menu-rbac.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.main{margin-left:220px;padding:30px;}
-.card{background:white;padding:20px;border-radius:8px;margin-bottom:20px;}
-input,select{padding:6px;border:1px solid #ccc;border-radius:4px;margin:4px;}
-button{padding:6px 12px;background:#1f3c88;color:white;border:none;border-radius:4px;}
-.deleteBtn{background:#d9534f;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{padding:10px;border-bottom:1px solid #ddd;}
-th{background:#eee;}
-.pagination{margin-top:10px;}
-/* 🔥 POPUP */
+/* GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* HEADINGS */
+h1{
+margin-bottom:18px;
+font-weight:600;
+}
+
+h3{
+margin-bottom:10px;
+font-size:14px;
+color:#9ca3af;
+}
+
+h4{
+margin-top:20px;
+margin-bottom:10px;
+font-size:13px;
+color:#9ca3af;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* INPUTS */
+input,select{
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+margin:4px;
+font-size:13px;
+}
+
+/* BUTTON */
+button{
+padding:8px 12px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+font-size:12px;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* BUTTON VARIANTS */
+.deleteBtn{
+background:#ef4444;
+}
+
+.deleteBtn:hover{
+background:#dc2626;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+margin-top:10px;
+}
+
+th{
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+tr:hover{
+background:#0f172a;
+}
+
+/* PAGINATION */
+.pagination{
+margin-top:10px;
+display:flex;
+gap:10px;
+}
+
+/* POPUP BACKDROP */
 .popup{
 display:none;
 position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.5);
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
 z-index:2000;
+justify-content:center;
+align-items:center;
 }
 
+/* POPUP BOX */
 .popup-content{
-background:white;
-width:400px;
-margin:80px auto;
+background:#111827;
 padding:20px;
-border-radius:8px;
+border-radius:12px;
+width:420px;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+/* POPUP INPUT FULL WIDTH */
+.popup-content input,
+.popup-content select{
+width:100%;
+margin-bottom:10px;
+}
+
+/* SMALL LABEL TEXT */
+small{
+color:#6b7280;
+}
+
+/* SCROLL FIX (BIG PAGE) */
+.card{
+overflow-x:auto;
 }
 </style>
 
@@ -125,13 +251,13 @@ window.location.href="login.html"
 <!-- CLIENTS -->
 <div class="card">
 <h3>Clients</h3>
-
+<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
 <input id="clientCompany" placeholder="Company">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email">
 
 <button onclick="addClient()">Add Client</button>
-
+</div>
 <table>
 <thead>
 <tr><th>Company</th><th>Phone</th><th>Email</th><th>Action</th></tr>
@@ -147,8 +273,8 @@ window.location.href="login.html"
 
 <!-- TRANSPORTERS -->
 <div class="card">
-<h3>Transporters</h3>
-
+<h3>🚚 Transporters</h3>
+  
 <input id="searchTransporter" placeholder="Search..." oninput="filterTransporters()">
 
 <input id="tName" placeholder="Name">
@@ -187,7 +313,7 @@ window.location.href="login.html"
 
 <!-- ROUTES -->
 <div class="card">
-<h3>Routes</h3>
+<h3>📍 Routes</h3>
 
 <input id="origin" placeholder="Origin">
 <input id="destination" placeholder="Destination">
@@ -205,7 +331,7 @@ window.location.href="login.html"
 
 <!-- TRUCKS -->
 <div class="card">
-<h3>Trucks</h3>
+<h3>🚛 Trucks</h3>
 
 <input id="truckNumber" placeholder="Truck Number">
 <input id="truckId" placeholder="Auto ID" readonly>
@@ -260,7 +386,7 @@ window.location.href="login.html"
 
 <!-- COMMODITIES -->
 <div class="card">
-<h3>Commodities</h3>
+<h3>📦 Commodities</h3>
 
 <input id="commodityName" placeholder="Commodity">
 

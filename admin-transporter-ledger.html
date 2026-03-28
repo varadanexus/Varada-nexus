@@ -10,50 +10,113 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-<script src="menu-rbac.js"></script>
-
 <style>
 
 body{
 margin:0;
-font-family:Arial;
-background:#f4f6f9;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
+/* MAIN */
 .main{
 margin-left:220px;
-padding:30px;
+padding:24px;
 }
 
+/* CARDS */
 .card{
-background:white;
-padding:20px;
-border-radius:8px;
-margin-bottom:20px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
 }
 
-select{
+/* HEADINGS */
+h2{
+margin-bottom:10px;
+font-size:20px;
+font-weight:600;
+}
+
+/* INPUTS + SELECTS */
+select,input{
 padding:10px;
-border:1px solid #ccc;
-border-radius:4px;
-position: relative;
-z-index: 10;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
 }
 
+/* FIX DROPDOWN OVERLAY */
+select{
+position:relative;
+z-index:10;
+}
+
+/* BUTTONS */
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
 }
 
-th,td{
-padding:10px;
-border-bottom:1px solid #ddd;
-}
-
+/* HEADER */
 th{
-background:#eee;
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* ROWS */
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+/* HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* TOTAL ROW */
+tr:last-child{
+background:#0b1220;
+font-weight:600;
+}
+
+/* SEARCH + FILTER BAR */
+#searchBox{
+margin-bottom:10px;
+}
+
+/* PAGINATION */
+button{
+margin-top:6px;
+margin-right:6px;
 }
 
 </style>
@@ -84,19 +147,59 @@ if (!window.supabaseClient) {
 
 fetch("sidebar.html")
 .then(res=>res.text())
-.then(async data=>{
-document.getElementById("sidebar-container").innerHTML=data
+.then(data=>{
 
-await initSidebar()
+document.getElementById("sidebar-container").innerHTML = data
 
-if(typeof applyMenuRBAC==="function"){
-await applyMenuRBAC()
+const sidebar = document.getElementById("sidebar")
+
+/* 🔥 HIDE FIRST */
+if(sidebar){
+    sidebar.style.display = "none"
 }
 
-/* 🔥 SHOW SIDEBAR ONLY AFTER RBAC */
-document.getElementById("sidebar").style.display="block"
+setTimeout(async ()=>{
+
+    /* ✅ RBAC FIRST */
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+    }
+
+    /* ✅ USER INIT */
+    await initSidebar()
+
+    /* ✅ ACTIVE MENU */
+    setActiveMenu()
+
+    /* ✅ ICON FIX */
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    /* ✅ SHOW LAST */
+    if(sidebar){
+        sidebar.style.display = "block"
+    }
+
+},200)
 
 })
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}  
 
 async function initSidebar(){
 
@@ -152,7 +255,7 @@ window.location.href="login.html"
 
 <div class="card">
 
-<div style="display:flex;align-items:center;gap:10px;">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
 <select id="transporterSelect"></select>
 <button onclick="loadLedger()">Load Ledger</button>
 </div>

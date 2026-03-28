@@ -232,10 +232,7 @@ padding:10px;
 border-top:1px solid rgba(255,255,255,0.1);
 } 
 
-/* 🔥 FORCE SIDEBAR ABOVE EVERYTHING */
-body *{
-pointer-events:auto;
-}
+
 
 .main{
 position:relative;
@@ -250,18 +247,21 @@ z-index:99999 !important;
 
 <script>
 
-/* FORCE SCRIPT EXECUTION AFTER LOAD */
 (function(){
 
-function run(){
+function init(){
 
 const sidebar = document.getElementById("sidebar")
 if(!sidebar){
-    setTimeout(run, 50)
+    setTimeout(init, 50)
     return
 }
 
-console.log("✅ Sidebar JS running")
+/* PREVENT MULTIPLE INIT */
+if(sidebar.dataset.loaded === "true") return
+sidebar.dataset.loaded = "true"
+
+console.log("✅ Sidebar initialized")
 
 /* ACTIVE MENU */
 let currentPage = window.location.pathname.split("/").pop()
@@ -272,37 +272,36 @@ sidebar.querySelectorAll("a").forEach(link=>{
     }
 })
 
-/* COLLAPSIBLE */
+/* COLLAPSIBLE (CLEAN + SAFE) */
 sidebar.querySelectorAll("[data-toggle]").forEach(toggle=>{
 
-    toggle.onclick = function(e){
+    toggle.addEventListener("click", function(e){
 
         e.preventDefault()
         e.stopPropagation()
 
-        let section = this.closest(".menu-section")
+        const section = this.closest(".menu-section")
 
         if(!section) return
 
-        // close others
+        /* CLOSE OTHERS */
         sidebar.querySelectorAll(".menu-section").forEach(sec=>{
             if(sec !== section) sec.classList.remove("open")
         })
 
+        /* TOGGLE CURRENT */
         section.classList.toggle("open")
 
-        console.log("🔥 working click")
+        console.log("🔥 toggle working")
 
-    }
+    })
 
 })
 
 }
 
-/* 🔥 CRITICAL: run multiple times to ensure binding */
-run()
-setTimeout(run, 300)
-setTimeout(run, 800)
+/* RUN */
+init()
 
 })()
 

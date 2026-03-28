@@ -182,16 +182,27 @@ overflow-y:auto;
 z-index:9999;
 }
 
+.sidebar img{
+max-width:100%;
+height:auto;
+}
+  
 /* LOGO */
 .logo-box{
 display:flex;
 align-items:center;
 gap:12px;
-padding:20px;
-border-bottom:1px solid rgba(255,255,255,0.05);
+padding:18px;
+border-bottom:1px solid rgba(255,255,255,0.08);
+overflow:hidden; /* 🔥 prevents image overflow */
 }
 
-.logo{height:36px;}
+.logo{
+height:34px;
+width:auto;
+object-fit:contain;
+display:block;
+}
 
 .brand{
 font-size:22px;

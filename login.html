@@ -42,18 +42,51 @@ backdrop-filter:blur(12px);
 border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
+header::after{
+content:"";
+position:absolute;
+left:0;
+bottom:0;
+width:100%;
+height:2px;
+background:linear-gradient(90deg,#3b82f6,#6366f1,#0ea5e9);
+background-size:200% 100%;
+opacity:0.6;
+animation:headerFlow 6s linear infinite;
+}
+
+@keyframes headerFlow{
+0%{background-position:0%}
+100%{background-position:200%}
+}
+  
 /* WRAPPER */
 .logo-wrapper{
 display:flex;
 align-items:center;
-gap:14px;
+gap:12px;
 }
 
 /* LOGO */
-.logo{
-height:44px;
-display:block;
-animation:logoGlow 2.8s ease-in-out infinite alternate;
+.logo::after{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,0.35),
+transparent
+);
+animation:shine 3s infinite;
+}
+
+@keyframes shine{
+0%{left:-100%}
+100%{left:150%}
 }
 
 /* TEXT BLOCK */
@@ -67,20 +100,24 @@ line-height:1.15;
 /* TITLE */
 .brand-text h1{
 margin:0;
-font-size:16px;
+font-size:17px;
 font-weight:600;
-text-shadow: 0 0 12px rgba(255,255,255,0.08);
-color:#e2e8f0;
-letter-spacing:0.3px;
+letter-spacing:0.4px;
+
+background: linear-gradient(90deg,#ffffff,#cbd5f5);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
 }
 
 /* TAGLINE */
 .brand-text p{
-margin:2px 0 0 0;
-font-size:11px;
-color:#94a3b8;
-letter-spacing:0.6px;
-opacity:0.85;
+margin:4px 0 0 0;
+font-size:10.5px;
+color:#cbd5f5;
+letter-spacing:1.2px;
+opacity:0.9;
+text-transform:uppercase;
+font-weight:500;
 }
 
 /* 🔥 SUBTLE PREMIUM GLOW */
@@ -258,8 +295,8 @@ color:#cbd5f5;
 <img src="images/logo.png" class="logo">
 
 <div class="brand-text">
-<h1>Varada Nexus</h1>
-<p>Private Limited</p>
+<h1>Varada Nexus Private Limited</h1>
+<p>Integrated Solutions. Scalable Across Industries.</p>
 </div>
 
 </div>

@@ -34,11 +34,11 @@ color:white;
 /* HEADER */
 header{
 display:flex;
-justify-content:space-between;
 align-items:center;
 padding:15px 30px;
-background:rgba(255,255,255,0.05);
+background:rgba(0,0,0,0.25);
 backdrop-filter:blur(10px);
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
 .logo-wrapper{
@@ -66,13 +66,13 @@ height:80vh;
 
 /* 🔥 GLASS CARD */
 .login-card{
-background:rgba(255,255,255,0.08);
-backdrop-filter:blur(20px);
-border:1px solid rgba(255,255,255,0.1);
+background:rgba(15,23,42,0.75);
+backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,0.08);
 padding:40px;
 border-radius:16px;
 width:380px;
-box-shadow:0 10px 40px rgba(0,0,0,0.3);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
 text-align:center;
 }
 
@@ -83,7 +83,10 @@ margin-bottom:20px;
 
 .brand img{
 height:60px;
-margin-bottom:10px;
+width:auto;
+object-fit:contain;
+display:block;
+margin:0 auto 12px auto;
 }
 
 .brand h2{
@@ -105,7 +108,7 @@ margin-bottom:15px;
 border-radius:8px;
 border:none;
 outline:none;
-background:rgba(255,255,255,0.1);
+background:rgba(255,255,255,0.12);
 color:white;
 }
 
@@ -128,13 +131,18 @@ color:#93c5fd;
 .login-card button{
 width:100%;
 padding:12px;
-background:#3b82f6;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
 border:none;
 border-radius:8px;
 color:white;
 cursor:pointer;
-transition:0.2s;
+transition:0.3s;
 font-weight:600;
+}
+
+.login-card button:hover{
+transform:translateY(-1px);
+box-shadow:0 10px 25px rgba(59,130,246,0.4);
 }
 
 .login-card button:hover{
@@ -174,7 +182,7 @@ color:#cbd5f5;
 
 <!-- 🔥 BRANDING -->
 <div class="brand">
-<img src="images/logo.png">
+<img src="images/logo.png" style="max-height:50px;">
 <h2>Welcome Back</h2>
 <p>Secure access to Varada Nexus ERP</p>
 </div>

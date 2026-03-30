@@ -31,135 +31,38 @@ header{
 position:sticky;
 top:0;
 z-index:1000;
-
-background:rgba(10,15,30,0.55);
+background:rgba(10,15,30,0.6);
 backdrop-filter:blur(20px);
 border-bottom:1px solid rgba(255,255,255,0.06);
-transition:all 0.35s ease;
 }
 
-header.scrolled{
-background:rgba(10,15,30,0.9);
-backdrop-filter:blur(28px);
-}
-
-/* NAV CONTAINER */
 .nav-container{
 max-width:1200px;
 margin:auto;
 display:flex;
-align-items:center;
 justify-content:space-between;
+align-items:center;
 padding:14px 20px;
 }
 
-/* LEFT */
 .nav-left{
 display:flex;
 align-items:center;
 gap:12px;
 }
 
-/* LOGO */
 .logo{
 height:44px;
-transform:translateY(2px);
 }
 
-/* BRAND BLOCK */
-.brand-block{
-display:flex;
-flex-direction:column;
-justify-content:center;
-line-height:1.05;
-}
-
-/* MAIN NAME */
 .brand-name{
-font-size:20px;     /* 🔥 bigger */
+font-size:20px;
 font-weight:600;
-letter-spacing:0.3px;
-
-background: linear-gradient(90deg,#ffffff,#e2e8f0);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
 }
 
-/* SUB TEXT */
 .brand-sub{
 font-size:11px;
-color:#94a3b8;
-letter-spacing:0.6px;
-margin-top:2px;
-}
-
-/* NAV LINKS */
-.nav-links{
-display:flex;
-gap:28px;
-align-items:center;
-}
-
-.nav-links a{
-text-decoration:none;
-color:#cbd5f5;
-font-size:14px;
-position:relative;
-transition:0.3s;
-}
-
-.nav-links a:hover{
-color:white;
-text-shadow:0 0 8px rgba(99,102,241,0.6);
-}
-
-.nav-links a.active{
-color:white;
-}
-
-/* underline */
-.nav-links a::after{
-content:"";
-position:absolute;
-left:0;
-bottom:-6px;
-width:0%;
-height:2px;
-background:linear-gradient(90deg,#3b82f6,#6366f1);
-transition:0.3s;
-}
-
-.nav-links a:hover::after,
-.nav-links a.active::after{
-width:100%;
-}
-
-/* ================= MOBILE ================= */
-.hamburger{
-display:none;
-flex-direction:column;
-cursor:pointer;
-gap:5px;
-}
-
-.hamburger div{
-width:24px;
-height:2px;
-background:white;
-}
-
-/* MOBILE MENU */
-.mobile-menu{
-display:none;
-flex-direction:column;
-gap:18px;
-padding:20px;
-background:rgba(10,15,30,0.95);
-}
-
-.mobile-menu a{
-color:#cbd5f5;
-text-decoration:none;
+opacity:0.6;
 }
 
 /* ================= MAIN ================= */
@@ -170,7 +73,7 @@ align-items:center;
 height:85vh;
 }
 
-/* ================= LOGIN CARD ================= */
+/* ================= CARD ================= */
 .login-card{
 position:relative;
 background:rgba(15,23,42,0.65);
@@ -180,29 +83,15 @@ padding:45px 35px;
 border-radius:18px;
 width:380px;
 text-align:center;
-
-/* 🔥 glow */
-box-shadow:
-0 20px 60px rgba(0,0,0,0.6),
-0 0 40px rgba(59,130,246,0.15);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* subtle gradient border */
+/* FIX CLICK ISSUE */
 .login-card::before{
-content:"";
-position:absolute;
-inset:0;
-border-radius:18px;
-padding:1px;
-background:linear-gradient(135deg,#3b82f6,#6366f1,transparent);
--webkit-mask:
-linear-gradient(#fff 0 0) content-box,
-linear-gradient(#fff 0 0);
--webkit-mask-composite: xor;
-mask-composite: exclude;
+pointer-events:none;
 }
 
-/* TEXT */
+/* ================= TEXT ================= */
 .brand h2{
 margin:0;
 font-size:22px;
@@ -211,50 +100,79 @@ font-size:22px;
 .brand p{
 font-size:13px;
 color:#cbd5f5;
-margin-bottom:20px;
+margin-bottom:25px;
 }
 
-/* INPUTS */
+/* ================= FLOATING FIELD ================= */
 .field{
-margin-bottom:16px;   /* equal spacing */
+position:relative;
+margin-bottom:18px;
 }
 
 .field input,
 .field select{
 width:100%;
-height:48px;                 /* 🔥 equal height */
-padding:0 14px;
+height:50px;
+padding:18px 40px 0 40px;
 border-radius:10px;
-border:1px solid rgba(255,255,255,0.08); /* subtle edge */
-outline:none;
+border:1px solid rgba(255,255,255,0.08);
 background:rgba(255,255,255,0.10);
 color:white;
 font-size:14px;
-
-box-sizing:border-box;       /* 🔥 IMPORTANT FIX */
+box-sizing:border-box;
 }
 
-/* focus */
-.field input:focus,
-.field select:focus{
-border:1px solid rgba(99,102,241,0.7);
-background:rgba(255,255,255,0.16);
-}
-
-.show-password{
+/* ICON */
+.field .icon{
 position:absolute;
-right:14px;
+left:12px;
 top:50%;
 transform:translateY(-50%);
-font-size:12px;
+font-size:14px;
+opacity:0.6;
+}
+
+/* FLOAT LABEL */
+.field label{
+position:absolute;
+left:40px;
+top:50%;
+transform:translateY(-50%);
+font-size:13px;
+color:#94a3b8;
+transition:0.3s;
+pointer-events:none;
+}
+
+/* ACTIVE STATE */
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label{
+top:8px;
+font-size:11px;
 color:#93c5fd;
 }
 
-/* BUTTON */
+.field input:focus{
+outline:1px solid rgba(99,102,241,0.6);
+background:rgba(255,255,255,0.16);
+}
+
+/* PASSWORD SHOW */
+.show-password{
+position:absolute;
+right:12px;
+top:50%;
+transform:translateY(-50%);
+font-size:12px;
+cursor:pointer;
+color:#93c5fd;
+}
+
+/* ================= BUTTON ================= */
 button{
 width:100%;
-height:44px;
-border-radius:8px;
+height:46px;
+border-radius:10px;
 border:none;
 background:linear-gradient(135deg,#3b82f6,#6366f1);
 color:white;
@@ -274,31 +192,6 @@ color:#f87171;
 margin-top:10px;
 }
 
-/* FOOTER */
-footer{
-text-align:center;
-padding:10px;
-font-size:13px;
-color:#cbd5f5;
-}
-
-/* ================= RESPONSIVE ================= */
-@media(max-width:768px){
-
-.nav-links{
-display:none;
-}
-
-.hamburger{
-display:flex;
-}
-
-.mobile-menu.active{
-display:flex;
-}
-
-}
-
 </style>
 </head>
 
@@ -306,39 +199,14 @@ display:flex;
 
 <header>
 <div class="nav-container">
-
 <div class="nav-left">
 <img src="images/logo.png" class="logo">
-<div class="brand-block">
-<span class="brand-name">Varada Nexus</span>
-<span class="brand-sub">Private Limited</span>
+<div>
+<div class="brand-name">Varada Nexus</div>
+<div class="brand-sub">Private Limited</div>
 </div>
 </div>
-
-<nav class="nav-links" id="navLinks">
-<a href="index.html">Home</a>
-<a href="founder.html">Founder</a>
-<a href="services.html">Services</a>
-<a href="contact.html">Contact</a>
-<a href="login.html">Login</a>
-</nav>
-
-<div class="hamburger" onclick="toggleMenu()">
-<div></div>
-<div></div>
-<div></div>
 </div>
-
-</div>
-
-<div class="mobile-menu" id="mobileMenu">
-<a href="index.html">Home</a>
-<a href="founder.html">Founder</a>
-<a href="services.html">Services</a>
-<a href="contact.html">Contact</a>
-<a href="login.html">Login</a>
-</div>
-
 </header>
 
 <main>
@@ -349,56 +217,38 @@ display:flex;
 <p>Secure access to Varada Nexus ERP</p>
 </div>
 
+<!-- LOGIN TYPE -->
 <div class="field">
+<span class="icon">👤</span>
 <select id="loginType">
 <option value="staff">Staff Login</option>
 <option value="transporter">Customer Login</option>
 </select>
 </div>
 
+<!-- EMAIL -->
 <div class="field">
-<input type="email" id="email" placeholder="Email">
+<span class="icon">📧</span>
+<input type="email" id="email" placeholder=" " required>
+<label>Email</label>
 </div>
 
+<!-- PASSWORD -->
 <div class="field">
-<input type="password" id="password" placeholder="Password">
+<span class="icon">🔒</span>
+<input type="password" id="password" placeholder=" " required>
+<label>Password</label>
 <span class="show-password" onclick="togglePassword()">Show</span>
 </div>
 
-<div class="field">
 <button id="loginBtn" onclick="login()">Login</button>
-</div>
 
 <div id="error" class="error"></div>
 
 </div>
 </main>
 
-<footer>
-© 2025 Varada Nexus Private Limited
-</footer>
-
 <script>
-
-/* NAV ACTIVE AUTO */
-const links = document.querySelectorAll(".nav-links a, .mobile-menu a");
-const current = location.pathname.split("/").pop();
-
-links.forEach(link=>{
-if(link.getAttribute("href") === current){
-link.classList.add("active");
-}
-});
-
-/* MOBILE MENU */
-function toggleMenu(){
-document.getElementById("mobileMenu").classList.toggle("active");
-}
-
-/* SCROLL EFFECT */
-window.addEventListener("scroll",()=>{
-document.querySelector("header").classList.toggle("scrolled",window.scrollY>20);
-});
 
 /* PASSWORD */
 function togglePassword(){
@@ -406,11 +256,28 @@ let p=document.getElementById("password");
 p.type=p.type==="password"?"text":"password";
 }
 
-/* SUPABASE (unchanged) */
+/* SUPABASE */
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 );
+
+/* LOGIN */
+async function login(){
+let email=document.getElementById("email").value;
+let password=document.getElementById("password").value;
+
+const {data,error}=await supabaseClient.auth.signInWithPassword({
+email,password
+});
+
+if(error){
+document.getElementById("error").innerText=error.message;
+return;
+}
+
+alert("Login success");
+}
 
 </script>
 

@@ -32,9 +32,9 @@ color:white;
 }
 
 /* HEADER */
-/* HEADER */
 header{
 display:flex;
+justify-content:center;   /* 🔥 THIS centers horizontally */
 align-items:center;
 padding:20px 40px;
 background:rgba(0,0,0,0.25);
@@ -101,8 +101,10 @@ animation:shine 3.5s infinite;
 .brand-text{
 display:flex;
 flex-direction:column;
-justify-content:center;   /* 🔥 center vertically */
-gap:3px;
+justify-content:center;
+align-items:center;   /* 🔥 center text */
+text-align:center;    /* 🔥 important */
+gap:2px;
 }
 
 /* TITLE */

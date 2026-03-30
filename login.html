@@ -32,36 +32,68 @@ color:white;
 }
 
 /* HEADER */
+/* HEADER */
 header{
 display:flex;
 align-items:center;
-padding:15px 30px;
+padding:16px 30px;
 background:rgba(0,0,0,0.25);
-backdrop-filter:blur(10px);
+backdrop-filter:blur(12px);
 border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
-.logo-wrapper div{
-display:flex;
-flex-direction:column;
-line-height:1.1;
-}
-  
+/* WRAPPER */
 .logo-wrapper{
 display:flex;
 align-items:center;
-gap:10px;
+gap:14px;
 }
 
+/* LOGO */
 .logo{
-height:40px;
+height:44px;
+display:block;
+animation:logoGlow 2.8s ease-in-out infinite alternate;
 }
 
-header h1{
-font-size:18px;
-color:white;
+/* TEXT BLOCK */
+.brand-text{
+display:flex;
+flex-direction:column;
+justify-content:center;
+line-height:1.15;
 }
 
+/* TITLE */
+.brand-text h1{
+margin:0;
+font-size:16px;
+font-weight:600;
+text-shadow: 0 0 12px rgba(255,255,255,0.08);
+color:#e2e8f0;
+letter-spacing:0.3px;
+}
+
+/* TAGLINE */
+.brand-text p{
+margin:2px 0 0 0;
+font-size:11px;
+color:#94a3b8;
+letter-spacing:0.6px;
+opacity:0.85;
+}
+
+/* 🔥 SUBTLE PREMIUM GLOW */
+@keyframes logoGlow{
+0%{
+filter: drop-shadow(0 0 4px rgba(255,215,150,0.15));
+transform:scale(1);
+}
+100%{
+filter: drop-shadow(0 0 14px rgba(255,215,150,0.35));
+transform:scale(1.02);
+}
+}
 /* MAIN */
 main{
 display:flex;
@@ -222,13 +254,14 @@ color:#cbd5f5;
 
 <header>
 <div class="logo-wrapper">
+
 <img src="images/logo.png" class="logo">
-<div>
-<h1 style="margin:0;font-size:16px;">Varada Nexus</h1>
-<span style="font-size:11px;color:#cbd5f5;">
-Private Limited
-</span>
+
+<div class="brand-text">
+<h1>Varada Nexus</h1>
+<p>Private Limited</p>
 </div>
+
 </div>
 </header>
 

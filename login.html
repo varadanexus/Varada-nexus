@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login - Varada Nexus</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <style>
 
@@ -31,10 +31,11 @@ header{
 position:sticky;
 top:0;
 z-index:1000;
-background:rgba(10,15,30,0.6);
+
+background:rgba(10,15,30,0.55);
 backdrop-filter:blur(20px);
-border-bottom:1px solid rgba(255,255,255,0.08);
-transition:0.3s;
+border-bottom:1px solid rgba(255,255,255,0.06);
+transition:all 0.35s ease;
 }
 
 header.scrolled{
@@ -42,43 +43,51 @@ background:rgba(10,15,30,0.9);
 backdrop-filter:blur(28px);
 }
 
+/* NAV CONTAINER */
 .nav-container{
 max-width:1200px;
 margin:auto;
 display:flex;
-justify-content:space-between;
 align-items:center;
+justify-content:space-between;
 padding:14px 20px;
 }
 
 /* LEFT */
 .nav-left{
 display:flex;
-align-items:center;
-gap:12px;
+align-items:flex-start; /* 🔥 key */
+gap:10px;
 }
 
+/* LOGO */
 .logo{
-height:44px;
+height:42px;
+transform:translateY(4px); /* 🔥 optical alignment */
 }
 
+/* BRAND */
 .brand-block{
 display:flex;
 flex-direction:column;
-line-height:1.1;
+margin-top:6px; /* 🔥 optical balance */
+line-height:1.05;
 }
 
 .brand-name{
-font-size:20px;
+font-size:17px;
 font-weight:600;
+background: linear-gradient(90deg,#fff,#e2e8f0);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
 }
 
 .brand-sub{
-font-size:11px;
+font-size:10px;
 opacity:0.6;
 }
 
-/* LINKS */
+/* NAV LINKS */
 .nav-links{
 display:flex;
 gap:28px;
@@ -102,6 +111,7 @@ text-shadow:0 0 8px rgba(99,102,241,0.6);
 color:white;
 }
 
+/* underline */
 .nav-links a::after{
 content:"";
 position:absolute;
@@ -118,12 +128,12 @@ transition:0.3s;
 width:100%;
 }
 
-/* MOBILE */
+/* ================= MOBILE ================= */
 .hamburger{
 display:none;
 flex-direction:column;
-gap:5px;
 cursor:pointer;
+gap:5px;
 }
 
 .hamburger div{
@@ -132,16 +142,18 @@ height:2px;
 background:white;
 }
 
+/* MOBILE MENU */
 .mobile-menu{
 display:none;
 flex-direction:column;
-gap:16px;
+gap:18px;
 padding:20px;
 background:rgba(10,15,30,0.95);
 }
 
-.mobile-menu.active{
-display:flex;
+.mobile-menu a{
+color:#cbd5f5;
+text-decoration:none;
 }
 
 /* ================= MAIN ================= */
@@ -152,7 +164,7 @@ align-items:center;
 height:85vh;
 }
 
-/* ================= CARD ================= */
+/* ================= LOGIN CARD ================= */
 .login-card{
 position:relative;
 background:rgba(15,23,42,0.65);
@@ -162,14 +174,26 @@ padding:45px 35px;
 border-radius:18px;
 width:380px;
 text-align:center;
+
+/* 🔥 glow */
 box-shadow:
 0 20px 60px rgba(0,0,0,0.6),
 0 0 40px rgba(59,130,246,0.15);
 }
 
-/* FIX CLICK BUG */
+/* subtle gradient border */
 .login-card::before{
-pointer-events:none;
+content:"";
+position:absolute;
+inset:0;
+border-radius:18px;
+padding:1px;
+background:linear-gradient(135deg,#3b82f6,#6366f1,transparent);
+-webkit-mask:
+linear-gradient(#fff 0 0) content-box,
+linear-gradient(#fff 0 0);
+-webkit-mask-composite: xor;
+mask-composite: exclude;
 }
 
 /* TEXT */
@@ -181,67 +205,35 @@ font-size:22px;
 .brand p{
 font-size:13px;
 color:#cbd5f5;
-margin-bottom:25px;
+margin-bottom:20px;
 }
 
-/* ================= INPUTS ================= */
+/* INPUTS */
 .field{
+margin-bottom:14px;
 position:relative;
-margin-bottom:18px;
 }
 
 .field input,
 .field select{
 width:100%;
-height:50px;
-padding:18px 40px 0 40px;
-border-radius:10px;
-border:1px solid rgba(255,255,255,0.08);
-background:rgba(255,255,255,0.10);
+height:44px;
+border-radius:8px;
+border:none;
+padding:0 12px;
+background:rgba(255,255,255,0.12);
 color:white;
-font-size:14px;
-box-sizing:border-box;
 }
 
-/* ICON */
-.icon{
-position:absolute;
-left:12px;
-top:50%;
-transform:translateY(-50%);
-font-size:14px;
-opacity:0.6;
-}
-
-/* LABEL */
-.field label{
-position:absolute;
-left:40px;
-top:50%;
-transform:translateY(-50%);
-font-size:13px;
-color:#94a3b8;
-transition:0.3s;
-pointer-events:none;
-}
-
-/* FLOAT */
-.field input:focus + label,
-.field input:not(:placeholder-shown) + label{
-top:8px;
-font-size:11px;
-color:#93c5fd;
-}
-
-.field input:focus{
+.field input:focus,
+.field select:focus{
 outline:1px solid rgba(99,102,241,0.6);
-background:rgba(255,255,255,0.16);
+background:rgba(255,255,255,0.18);
 }
 
-/* PASSWORD */
 .show-password{
 position:absolute;
-right:12px;
+right:10px;
 top:50%;
 transform:translateY(-50%);
 font-size:12px;
@@ -251,16 +243,18 @@ cursor:pointer;
 /* BUTTON */
 button{
 width:100%;
-height:46px;
-border-radius:10px;
+height:44px;
+border-radius:8px;
 border:none;
 background:linear-gradient(135deg,#3b82f6,#6366f1);
 color:white;
 font-weight:600;
 cursor:pointer;
+transition:0.3s;
 }
 
 button:hover{
+transform:translateY(-1px);
 box-shadow:0 8px 20px rgba(99,102,241,0.4);
 }
 
@@ -270,7 +264,15 @@ color:#f87171;
 margin-top:10px;
 }
 
-/* RESPONSIVE */
+/* FOOTER */
+footer{
+text-align:center;
+padding:10px;
+font-size:13px;
+color:#cbd5f5;
+}
+
+/* ================= RESPONSIVE ================= */
 @media(max-width:768px){
 
 .nav-links{
@@ -278,6 +280,10 @@ display:none;
 }
 
 .hamburger{
+display:flex;
+}
+
+.mobile-menu.active{
 display:flex;
 }
 
@@ -299,7 +305,7 @@ display:flex;
 </div>
 </div>
 
-<nav class="nav-links">
+<nav class="nav-links" id="navLinks">
 <a href="index.html">Home</a>
 <a href="founder.html">Founder</a>
 <a href="services.html">Services</a>
@@ -334,7 +340,6 @@ display:flex;
 </div>
 
 <div class="field">
-<span class="icon">👤</span>
 <select id="loginType">
 <option value="staff">Staff Login</option>
 <option value="transporter">Customer Login</option>
@@ -342,33 +347,35 @@ display:flex;
 </div>
 
 <div class="field">
-<span class="icon">📧</span>
-<input type="email" id="email" placeholder=" " required>
-<label>Email</label>
+<input type="email" id="email" placeholder="Email">
 </div>
 
 <div class="field">
-<span class="icon">🔒</span>
-<input type="password" id="password" placeholder=" " required>
-<label>Password</label>
+<input type="password" id="password" placeholder="Password">
 <span class="show-password" onclick="togglePassword()">Show</span>
 </div>
 
-<button onclick="login()">Login</button>
+<div class="field">
+<button id="loginBtn" onclick="login()">Login</button>
+</div>
 
 <div id="error" class="error"></div>
 
 </div>
 </main>
 
+<footer>
+© 2025 Varada Nexus Private Limited
+</footer>
+
 <script>
 
-/* ACTIVE LINK */
-const links=document.querySelectorAll(".nav-links a,.mobile-menu a");
-const current=location.pathname.split("/").pop();
+/* NAV ACTIVE AUTO */
+const links = document.querySelectorAll(".nav-links a, .mobile-menu a");
+const current = location.pathname.split("/").pop();
 
 links.forEach(link=>{
-if(link.getAttribute("href")===current){
+if(link.getAttribute("href") === current){
 link.classList.add("active");
 }
 });
@@ -378,7 +385,7 @@ function toggleMenu(){
 document.getElementById("mobileMenu").classList.toggle("active");
 }
 
-/* SCROLL */
+/* SCROLL EFFECT */
 window.addEventListener("scroll",()=>{
 document.querySelector("header").classList.toggle("scrolled",window.scrollY>20);
 });
@@ -389,26 +396,11 @@ let p=document.getElementById("password");
 p.type=p.type==="password"?"text":"password";
 }
 
-/* SUPABASE */
+/* SUPABASE (unchanged) */
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 );
-
-/* LOGIN */
-async function login(){
-let email=document.getElementById("email").value;
-let password=document.getElementById("password").value;
-
-const {error}=await supabaseClient.auth.signInWithPassword({email,password});
-
-if(error){
-document.getElementById("error").innerText=error.message;
-return;
-}
-
-alert("Login success");
-}
 
 </script>
 

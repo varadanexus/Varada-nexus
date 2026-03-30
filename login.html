@@ -241,9 +241,12 @@ pass.type = pass.type==="password" ? "text" : "password"
 async function login(){
 
 let btn = document.getElementById("loginBtn")
-btn.innerText = "Logging in..."
+
+if(btn.disabled) return   // 🚫 PREVENT DOUBLE CLICK
+
 btn.disabled = true
-  
+btn.innerText = "Logging in..."
+
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 let loginType = document.getElementById("loginType").value
@@ -256,6 +259,8 @@ email,password
 
 if(error){
 document.getElementById("error").innerText=error.message
+btn.disabled = false
+btn.innerText = "Login"
 return
 }
 
@@ -290,8 +295,10 @@ if(loginType === "transporter"){
     return
   }
 
-  document.getElementById("error").innerText="Customer not registered"
-  return
+document.getElementById("error").innerText="Customer not registered"
+btn.disabled = false
+btn.innerText = "Login"
+return
 }
 
 /* STAFF LOGIN */
@@ -303,6 +310,8 @@ const {data:dbUser,error:userError}=await supabaseClient
 
 if(userError || !dbUser){
 document.getElementById("error").innerText="User not registered in ERP"
+btn.disabled = false
+btn.innerText = "Login"
 return
 }
 
@@ -319,6 +328,19 @@ const {data:role}=await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
+/* ✅ FIXED SESSION TOKEN */
+let existingToken = localStorage.getItem("erp_session_token")
+
+let token = existingToken || crypto.randomUUID()
+
+await supabaseClient
+.from("users")
+.update({session_token:token})
+.eq("id",dbUser.id)
+
+localStorage.setItem("erp_session_token",token)
+
+/* REDIRECT */
 if(roleName.includes("admin") || roleName.includes("manager")){
     window.location.href="financial-dashboard.html"
 }else{

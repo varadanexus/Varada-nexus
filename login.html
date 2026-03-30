@@ -69,6 +69,12 @@ gap:16px;
 }
 
 /* LOGO */
+.logo{
+height:42px;
+position:relative;
+display:block;
+}
+  
 .logo::after{
 content:"";
 position:absolute;
@@ -96,30 +102,31 @@ animation:shine 3.5s infinite;
 display:flex;
 flex-direction:column;
 justify-content:center;
-gap:2px;
+gap:1px;   /* 🔥 tighter = premium */
 }
 
 /* TITLE */
 .brand-text h1{
 margin:0;
-font-size:17px;
+font-size:19px;   /* 🔥 bigger */
 font-weight:600;
-letter-spacing:0.4px;
+letter-spacing:0.3px;
+line-height:1.1;
 
-background: linear-gradient(90deg,#ffffff,#cbd5f5);
+background: linear-gradient(90deg,#ffffff,#e2e8f0);
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 }
 
 /* TAGLINE */
 .brand-text p{
-margin:4px 0 0 0;
-font-size:10.5px;
-color:#cbd5f5;
-letter-spacing:1.2px;
-opacity:0.9;
-text-transform:uppercase;
-font-weight:500;
+margin:2px 0 0 0;
+font-size:9.5px;      /* 🔥 smaller */
+color:#94a3b8;        /* 🔥 softer */
+letter-spacing:0.8px; /* 🔥 less aggressive */
+opacity:0.8;
+text-transform:none;  /* 🔥 remove loud uppercase */
+font-weight:400;
 }
 
 /* 🔥 SUBTLE PREMIUM GLOW */
@@ -178,9 +185,10 @@ color:#cbd5f5;
 
 .legal{
 font-size:10px;
-color:#64748b;
-margin-top:2px;
-letter-spacing:0.8px;
+color:#cbd5f5;   /* 🔥 brighter */
+opacity:0.7;
+margin-top:1px;
+letter-spacing:0.6px;
 }
   
 /* INPUTS FIXED */

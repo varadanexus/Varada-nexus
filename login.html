@@ -32,15 +32,26 @@ color:white;
 }
 
 /* HEADER */
+/* 🔥 PREMIUM NAVBAR */
 header{
-display:flex;
-justify-content:center;   /* 🔥 THIS centers horizontally */
-align-items:center;
-padding:20px 40px;
-background:rgba(0,0,0,0.25);
-backdrop-filter:blur(14px);
-border-bottom:1px solid rgba(255,255,255,0.05);
-position:relative;
+position:sticky;
+top:0;
+z-index:1000;
+
+background:rgba(10,15,30,0.55);
+backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
+
+border-bottom:1px solid rgba(255,255,255,0.06);
+
+transition:all 0.35s ease;
+}
+
+/* 🔥 SHRINK ON SCROLL */
+header.scrolled{
+background:rgba(10,15,30,0.85);
+backdrop-filter:blur(26px);
+padding:10px 40px;
 }
 
 header::after{
@@ -101,13 +112,34 @@ display:flex;
 align-items:center;
 justify-content:space-between;
 width:100%;
+padding:16px 20px;
+transition:all 0.3s ease;
 }
 
 /* LEFT SIDE */
 .nav-left{
 display:flex;
 align-items:center;
-gap:12px;
+gap:10px;
+}
+
+/* LOGO */
+.logo{
+height:40px;
+transform:translateY(1px); /* 🔥 optical alignment */
+}
+
+/* BRAND */
+.brand-name{
+font-size:17px;
+font-weight:600;
+letter-spacing:0.2px;
+}
+
+.brand-sub{
+font-size:10px;
+opacity:0.7;
+margin-top:2px;
 }
 
 /* LOGO */
@@ -141,7 +173,8 @@ letter-spacing:0.5px;
 /* NAV LINKS */
 .nav-links{
 display:flex;
-gap:26px;
+gap:32px;
+align-items:center;
 }
 
 /* LINKS */
@@ -149,8 +182,38 @@ gap:26px;
 text-decoration:none;
 color:#cbd5f5;
 font-size:14px;
-transition:0.25s;
+font-weight:500;
+letter-spacing:0.2px;
 position:relative;
+transition:all 0.25s ease;
+}
+
+/* HOVER */
+.nav-links a:hover{
+color:white;
+}
+
+/* ACTIVE LINK */
+.nav-links a.active{
+color:white;
+}
+
+/* PREMIUM UNDERLINE */
+.nav-links a::after{
+content:"";
+position:absolute;
+left:0;
+bottom:-8px;
+width:0%;
+height:2px;
+background:linear-gradient(90deg,#3b82f6,#6366f1);
+border-radius:2px;
+transition:0.35s ease;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after{
+width:100%;
 }
 
 /* HOVER */
@@ -349,6 +412,11 @@ font-size:13px;
 color:#cbd5f5;
 }
 
+.nav-links a:hover{
+color:white;
+text-shadow:0 0 8px rgba(99,102,241,0.6);
+}
+  
 </style>
 
 </head>
@@ -545,5 +613,16 @@ if(roleName.includes("admin") || roleName.includes("manager")){
 
 </script>
 
+<script>
+window.addEventListener("scroll", function(){
+    const header = document.querySelector("header");
+    if(window.scrollY > 20){
+        header.classList.add("scrolled");
+    } else {
+        header.classList.remove("scrolled");
+    }
+});
+</script>
+  
 </body>
 </html>

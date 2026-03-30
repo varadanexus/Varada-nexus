@@ -100,22 +100,51 @@ color:#cbd5f5;
 }
 
 /* INPUTS FIXED */
-.login-card select,
-.login-card input{
+
+/* 🔥 UNIFORM FIELD SYSTEM */
+.field{
+position:relative;
 width:100%;
-height:44px;               /* ✅ FORCE SAME HEIGHT */
-padding:0 12px;            /* ✅ REMOVE vertical padding */
+height:44px;
 margin-bottom:15px;
+}
+
+.field input,
+.field select{
+width:100%;
+height:100%;
+padding:0 12px;
 border-radius:8px;
 border:none;
 outline:none;
 background:rgba(255,255,255,0.12);
 color:white;
 font-size:14px;
-display:flex;
-align-items:center;
 }
 
+/* FOCUS */
+.field input:focus,
+.field select:focus{
+outline:1px solid rgba(99,102,241,0.6);
+background:rgba(255,255,255,0.16);
+}
+
+/* PLACEHOLDER */
+.field input::placeholder{
+color:#94a3b8;
+}
+
+/* PASSWORD BUTTON */
+.show-password{
+position:absolute;
+right:12px;
+top:50%;
+transform:translateY(-50%);
+font-size:12px;
+color:#93c5fd;
+cursor:pointer;
+}
+  
 .login-card input:focus,
 .login-card select:focus{
 outline:1px solid rgba(99,102,241,0.6);
@@ -132,29 +161,11 @@ color:#94a3b8;
 color:#e2e8f0;
 }
 
-/* PASSWORD WRAPPER FIX */
-.password-wrapper{
-position:relative;
-}
-
-/* PERFECT CENTER ALIGN */
-.show-password{
-position:absolute;
-right:12px;
-top:50%;
-transform:translateY(-50%);
-height:100%;
-display:flex;
-align-items:center;
-font-size:12px;
-color:#93c5fd;
-cursor:pointer;
-}
 
 /* BUTTON */
 .login-card button{
 width:100%;
-padding:12px;
+height:44px;
 background:linear-gradient(135deg,#3b82f6,#6366f1);
 border:none;
 border-radius:8px;
@@ -209,14 +220,18 @@ color:#cbd5f5;
 <p>Secure access to Varada Nexus ERP</p>
 </div>
 
+<div class="field">
 <select id="loginType">
 <option value="staff">Staff Login</option>
 <option value="transporter">Customer Login</option>
 </select>
+</div>
 
+<div class="field">
 <input type="email" id="email" placeholder="Email">
+</div>
 
-<div class="password-wrapper">
+<div class="field">
 <input type="password" id="password" placeholder="Password">
 <span class="show-password" onclick="togglePassword()">Show</span>
 </div>

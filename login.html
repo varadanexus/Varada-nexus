@@ -61,14 +61,7 @@ animation:headerFlow 6s linear infinite;
 100%{background-position:200%}
 }
   
-/* WRAPPER */
-.logo-wrapper{
-display:flex;
-flex-direction:column;   /* 🔥 STACK */
-align-items:center;      /* 🔥 CENTER EVERYTHING */
-justify-content:center;
-gap:6px;
-}
+
 
 /* LOGO */
 .logo{
@@ -100,38 +93,91 @@ animation:shine 3.5s infinite;
 100%{left:150%}
 }
 
-/* TEXT BLOCK */
-.brand-text{
+/* 🔥 NAV CONTAINER */
+.nav-container{
+max-width:1200px;
+margin:0 auto;
 display:flex;
-flex-direction:column;
-justify-content:center;
 align-items:center;
-text-align:center;
-gap:2px;
-
-margin-top:10px;    /* 🔥 THIS moves text slightly down */
+justify-content:space-between;
+width:100%;
 }
 
-/* TITLE */
-.logo-wrapper h1{
-margin:0;
-font-size:28px;
-font-weight:700;
-letter-spacing:0.3px;
-line-height:1.1;
+/* LEFT SIDE */
+.nav-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
 
+/* LOGO */
+.logo{
+height:42px;
+}
+
+/* BRAND BLOCK */
+.brand-block{
+display:flex;
+flex-direction:column;
+line-height:1.1;
+}
+
+/* BRAND NAME */
+.brand-name{
+font-size:18px;
+font-weight:600;
 background: linear-gradient(90deg,#ffffff,#e2e8f0);
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 }
 
-/* TAGLINE */
-.tagline{
-margin:0;
-font-size:13px;
+/* PRIVATE LIMITED */
+.brand-sub{
+font-size:11px;
+color:#94a3b8;
+letter-spacing:0.5px;
+}
+
+/* NAV LINKS */
+.nav-links{
+display:flex;
+gap:26px;
+}
+
+/* LINKS */
+.nav-links a{
+text-decoration:none;
 color:#cbd5f5;
-opacity:0.85;
-letter-spacing:0.4px;
+font-size:14px;
+transition:0.25s;
+position:relative;
+}
+
+/* HOVER */
+.nav-links a:hover{
+color:white;
+}
+
+/* ACTIVE */
+.nav-links a.active{
+color:white;
+}
+
+/* UNDERLINE EFFECT */
+.nav-links a::after{
+content:"";
+position:absolute;
+left:0;
+bottom:-6px;
+width:0%;
+height:2px;
+background:linear-gradient(90deg,#3b82f6,#6366f1);
+transition:0.3s;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after{
+width:100%;
 }
 
 /* 🔥 SUBTLE PREMIUM GLOW */
@@ -188,6 +234,11 @@ font-size:13px;
 color:#cbd5f5;
 }
 
+header{
+position:sticky;
+top:0;
+z-index:1000;
+}
   
 /* INPUTS FIXED */
 
@@ -305,18 +356,28 @@ color:#cbd5f5;
 <body>
 
 <header>
-<div class="logo-wrapper">
 
-<img src="images/logo.png" class="logo">
+<div class="nav-container">
 
-<h1>Varada Nexus Private Limited</h1>
-<p class="tagline">Integrated Solutions Across Industries</p>
+    <div class="nav-left">
+        <img src="images/logo.png" class="logo">
+        <div class="brand-block">
+            <span class="brand-name">Varada Nexus</span>
+            <span class="brand-sub">Private Limited</span>
+        </div>
+    </div>
+
+    <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="founder.html">Founder</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact</a>
+        <a href="login.html" class="active">Login</a>
+    </nav>
 
 </div>
 
-</div>
 </header>
-
 <main>
 
 <div class="login-card">

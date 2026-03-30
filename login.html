@@ -112,6 +112,21 @@ background:rgba(255,255,255,0.12);
 color:white;
 }
 
+.login-card input::placeholder{
+color:#94a3b8;
+}
+
+.login-card select{
+color:#e2e8f0;
+}
+
+@media(max-width:480px){
+.login-card{
+width:90%;
+padding:25px;
+}
+}
+  
 /* PASSWORD */
 .password-wrapper{
 position:relative;
@@ -134,7 +149,8 @@ padding:12px;
 background:linear-gradient(135deg,#3b82f6,#6366f1);
 border:none;
 border-radius:8px;
-color:white;
+color:#f1f5f9;
+font-weight:500;
 cursor:pointer;
 transition:0.3s;
 font-weight:600;
@@ -143,10 +159,7 @@ font-weight:600;
 .login-card button:hover{
 transform:translateY(-1px);
 box-shadow:0 10px 25px rgba(59,130,246,0.4);
-}
-
-.login-card button:hover{
-background:#2563eb;
+background:linear-gradient(135deg,#2563eb,#4f46e5);
 }
 
 /* ERROR */
@@ -199,7 +212,7 @@ color:#cbd5f5;
 <span class="show-password" onclick="togglePassword()">Show</span>
 </div>
 
-<button onclick="login()">Login</button>
+<button id="loginBtn" onclick="login()">Login</button>
 
 <div id="error" class="error"></div>
 
@@ -215,7 +228,7 @@ color:#cbd5f5;
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"YOUR_KEY_HERE"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
 /* TOGGLE PASSWORD */
@@ -227,6 +240,10 @@ pass.type = pass.type==="password" ? "text" : "password"
 /* LOGIN (UNCHANGED LOGIC) */
 async function login(){
 
+let btn = document.getElementById("loginBtn")
+btn.innerText = "Logging in..."
+btn.disabled = true
+  
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 let loginType = document.getElementById("loginType").value

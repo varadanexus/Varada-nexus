@@ -56,35 +56,41 @@ padding:14px 20px;
 /* LEFT */
 .nav-left{
 display:flex;
-align-items:flex-start; /* 🔥 key */
-gap:10px;
+align-items:center;
+gap:12px;
 }
 
 /* LOGO */
 .logo{
-height:42px;
-transform:translateY(4px); /* 🔥 optical alignment */
+height:44px;
+transform:translateY(2px);
 }
 
-/* BRAND */
+/* BRAND BLOCK */
 .brand-block{
 display:flex;
 flex-direction:column;
-margin-top:6px; /* 🔥 optical balance */
+justify-content:center;
 line-height:1.05;
 }
 
+/* MAIN NAME */
 .brand-name{
-font-size:17px;
+font-size:20px;     /* 🔥 bigger */
 font-weight:600;
-background: linear-gradient(90deg,#fff,#e2e8f0);
+letter-spacing:0.3px;
+
+background: linear-gradient(90deg,#ffffff,#e2e8f0);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 }
 
+/* SUB TEXT */
 .brand-sub{
-font-size:10px;
-opacity:0.6;
+font-size:11px;
+color:#94a3b8;
+letter-spacing:0.6px;
+margin-top:2px;
 }
 
 /* NAV LINKS */
@@ -210,34 +216,38 @@ margin-bottom:20px;
 
 /* INPUTS */
 .field{
-margin-bottom:14px;
-position:relative;
+margin-bottom:16px;   /* equal spacing */
 }
 
 .field input,
 .field select{
 width:100%;
-height:44px;
-border-radius:8px;
-border:none;
-padding:0 12px;
-background:rgba(255,255,255,0.12);
+height:48px;                 /* 🔥 equal height */
+padding:0 14px;
+border-radius:10px;
+border:1px solid rgba(255,255,255,0.08); /* subtle edge */
+outline:none;
+background:rgba(255,255,255,0.10);
 color:white;
+font-size:14px;
+
+box-sizing:border-box;       /* 🔥 IMPORTANT FIX */
 }
 
+/* focus */
 .field input:focus,
 .field select:focus{
-outline:1px solid rgba(99,102,241,0.6);
-background:rgba(255,255,255,0.18);
+border:1px solid rgba(99,102,241,0.7);
+background:rgba(255,255,255,0.16);
 }
 
 .show-password{
 position:absolute;
-right:10px;
+right:14px;
 top:50%;
 transform:translateY(-50%);
 font-size:12px;
-cursor:pointer;
+color:#93c5fd;
 }
 
 /* BUTTON */

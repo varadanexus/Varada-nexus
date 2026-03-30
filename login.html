@@ -64,8 +64,8 @@ animation:headerFlow 6s linear infinite;
 /* WRAPPER */
 .logo-wrapper{
 display:flex;
-align-items:center;
-gap:16px;
+align-items:flex-start;   /* 🔥 KEY FIX */
+gap:14px;
 }
 
 /* LOGO */
@@ -102,16 +102,16 @@ animation:shine 3.5s infinite;
 display:flex;
 flex-direction:column;
 justify-content:center;
-gap:1px;   /* 🔥 tighter = premium */
+gap:0px;   /* 🔥 removes uneven spacing */
 }
 
 /* TITLE */
 .brand-text h1{
 margin:0;
-font-size:19px;   /* 🔥 bigger */
+font-size:22px;   /* 🔥 bigger = dominant */
 font-weight:600;
-letter-spacing:0.3px;
-line-height:1.1;
+letter-spacing:0.2px;
+line-height:1.05;
 
 background: linear-gradient(90deg,#ffffff,#e2e8f0);
 -webkit-background-clip: text;
@@ -119,14 +119,12 @@ background: linear-gradient(90deg,#ffffff,#e2e8f0);
 }
 
 /* TAGLINE */
-.brand-text p{
-margin:2px 0 0 0;
-font-size:9.5px;      /* 🔥 smaller */
-color:#94a3b8;        /* 🔥 softer */
-letter-spacing:0.8px; /* 🔥 less aggressive */
-opacity:0.8;
-text-transform:none;  /* 🔥 remove loud uppercase */
-font-weight:400;
+.tagline{
+margin-top:3px;
+font-size:9px;
+color:#64748b;     /* 🔥 more muted */
+letter-spacing:0.6px;
+opacity:0.7;
 }
 
 /* 🔥 SUBTLE PREMIUM GLOW */
@@ -185,10 +183,10 @@ color:#cbd5f5;
 
 .legal{
 font-size:10px;
-color:#cbd5f5;   /* 🔥 brighter */
-opacity:0.7;
-margin-top:1px;
-letter-spacing:0.6px;
+color:#94a3b8;
+opacity:0.8;
+margin-top:2px;
+letter-spacing:0.8px;
 }
   
 /* INPUTS FIXED */
@@ -313,8 +311,8 @@ color:#cbd5f5;
 
 <div class="brand-text">
 <h1>Varada Nexus</h1>
-<p>Integrated Solutions Across Industries</p>
 <span class="legal">Private Limited</span>
+<p class="tagline">Integrated Solutions Across Industries</p>
 </div>
 
 </div>

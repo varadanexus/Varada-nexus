@@ -29,47 +29,259 @@
 <meta name="keywords" content="Dr. Althi Prudhvi, Varada Nexus Founder, Healthcare Leader, Hospital Consultant, Entrepreneur, Rajahmundry">
 <meta name="author" content="Varada Nexus Private Limited">
 <meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="style.css">
+   
+
+<style>
+
+/* 🔥 GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
+color:white;
+}
+
+@keyframes gradientBG{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 HEADER (same as homepage) */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(0,0,0,0.25);
+backdrop-filter:blur(14px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+transition:0.3s;
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+height:48px;
+}
+
+.logo{
+height:100%;
+max-height:48px;
+transition:0.3s;
+}
+
+.logo:hover{
+transform:scale(1.05);
+filter:drop-shadow(0 0 10px rgba(255,215,150,0.6));
+}
+
+.brand-block{
+display:flex;
+flex-direction:column;
+justify-content:center;
+transform:translateY(4px);
+}
+
+.brand-name{font-size:19px;font-weight:600;}
+.brand-sub{font-size:10px;color:#94a3b8;}
+
+.nav-links{
+display:flex;
+gap:28px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+color:white;
+}
+
+/* 🔥 HERO (FOUNDER SECTION) */
+.founder-hero{
+text-align:center;
+padding:80px 20px 40px;
+}
+
+.founder-img{
+width:180px;
+height:180px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid rgba(255,255,255,0.15);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+margin-bottom:20px;
+transition:0.3s;
+}
+
+.founder-img:hover{
+transform:scale(1.05);
+}
+
+.founder-name{
+font-size:32px;
+font-weight:700;
+margin-bottom:8px;
+}
+
+.founder-role{
+color:#94a3b8;
+font-size:14px;
+}
+
+/* 🔥 GLASS CARD CONTENT */
+.content{
+max-width:900px;
+margin:40px auto;
+padding:30px;
+background:rgba(15,23,42,0.6);
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter:blur(16px);
+}
+
+/* TEXT */
+.content p{
+color:#cbd5f5;
+line-height:1.7;
+margin-bottom:16px;
+}
+
+/* 🔥 QUOTE */
+.quote{
+margin:30px 0;
+padding:20px;
+border-left:3px solid #3b82f6;
+background:rgba(255,255,255,0.05);
+border-radius:10px;
+font-style:italic;
+}
+
+/* 🔥 TIMELINE */
+.timeline{
+margin-top:30px;
+}
+
+.timeline h3{
+margin-bottom:10px;
+}
+
+.timeline li{
+margin-bottom:10px;
+color:#cbd5f5;
+}
+
+/* 🔥 SCROLL ANIMATION */
+.fade-up{
+opacity:0;
+transform:translateY(40px);
+transition:all 0.8s ease;
+}
+
+.fade-up.show{
+opacity:1;
+transform:translateY(0);
+}
+
+/* 🔥 MOBILE */
+@media(max-width:768px){
+
+.founder-img{
+width:140px;
+height:140px;
+}
+
+.founder-name{
+font-size:24px;
+}
+
+.content{
+padding:20px;
+}
+
+}
+
+</style>
+    
 </head>
 <body>
     
 <header>
-    <div class="logo-wrapper">
-        <img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
-        <h1>Varada Nexus Private Limited</h1>
-    </div>
-    <nav>
+<div class="nav-container">
+
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-block">
+<span class="brand-name">Varada Nexus</span>
+<span class="brand-sub">Private Limited</span>
+</div>
+</div>
+
+<nav class="nav-links">
 <a href="index.html">Home</a>
-<a href="founder.html">Founder</a>
+<a href="founder.html" class="active">Founder</a>
 <a href="services.html">Services</a>
 <a href="contact.html">Contact</a>
 <a href="login.html">Login</a>
 </nav>
+
+</div>
 </header>
 
-    <main>
-  <img src="images/chairman.jpg" alt="Dr. Althi Prudhvi – Founder" style="width: 100%; max-width: 400px; display: block; margin: 0 auto 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+  <main>
 
-  <h2 style="text-align: center;">Dr. Althi Prudhvi</h2>
-  <h3 style="text-align: center; margin-top: -10px; color: #444;">Founder & Chairman – Varada Nexus Private Limited</h3>
+<!-- 🔥 HERO -->
+<section class="founder-hero fade-up">
 
-  <p>Dr. Althi Prudhvi is the visionary founder and chairman of Varada Nexus Private Limited, a company he established in 2023 with a mission to bridge healthcare, trade, and consulting through innovation and ethical enterprise. As a doctor with a strong foundation in public service and a passion for entrepreneurship, he has rapidly grown the company into a multi-sectoral force.</p>
+<img src="images/chairman.jpg" class="founder-img">
 
-  <p>Today, under his leadership, Varada Nexus actively delivers services across hospital infrastructure and consultancy, import-export, mining logistics, HR and PR management, e-commerce, and commercial arbitrage. His leadership style is marked by strategic thinking, social commitment, and results-driven execution.</p>
+<div class="founder-name">Dr. Althi Prudhvi</div>
+<div class="founder-role">Founder & Chairman – Varada Nexus Private Limited</div>
 
-  <blockquote style="border-left: 4px solid #004aad; padding-left: 15px; margin: 30px 0; color: #333;">
-    “Leadership is not about titles or power — it’s about responsibility, execution, and vision. I believe in building institutions that serve with integrity and scale with purpose.”
-    <br><span style="font-style: italic;">– Dr. Althi Prudhvi</span>
-  </blockquote>
+</section>
 
-  <h3>🧭 Leadership Timeline</h3>
-  <ul>
-    <li><strong>2023:</strong> Founded Varada Nexus Private Limited with a core focus on hospital consulting and public service</li>
-    <li><strong>2024:</strong> Expanded into mining logistics, HR consultancy, and global import-export</li>
-    <li><strong>2025:</strong> Introduced e-commerce support and arbitrage services; developed cross-sector partnerships</li>
-  </ul>
+<!-- 🔥 CONTENT -->
+<section class="content fade-up">
 
-  <p>Dr. Prudhvi continues to guide Varada Nexus with a long-term vision: to empower institutions and entrepreneurs through impactful solutions — blending business, healthcare, and innovation into a single platform for growth.</p>
+<p>
+Dr. Althi Prudhvi is the visionary founder and chairman of Varada Nexus Private Limited, building a multi-sector enterprise spanning healthcare, logistics, and global trade.
+</p>
+
+<p>
+With a strong foundation in medicine and a passion for entrepreneurship, he has transformed Varada Nexus into a platform that bridges innovation, execution, and impact.
+</p>
+
+<div class="quote">
+“Leadership is not about titles or power — it’s about responsibility, execution, and vision.”
+</div>
+
+<div class="timeline">
+<h3>Leadership Timeline</h3>
+<ul>
+<li><strong>2023:</strong> Founded Varada Nexus with hospital consultancy focus</li>
+<li><strong>2024:</strong> Expanded into logistics, HR, and import-export</li>
+<li><strong>2025:</strong> Entered e-commerce and multi-sector partnerships</li>
+</ul>
+</div>
+
+</section>
+
 </main>
     <footer>
         &copy; 2025 Varada Nexus Private Limited
@@ -87,5 +299,20 @@ s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
 <!--End of Tawk.to Script-->
+
+<script>
+const observer = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+entry.target.classList.add("show");
+}
+});
+});
+
+document.querySelectorAll(".fade-up").forEach(el=>{
+observer.observe(el);
+});
+</script>
+    
 </body>
 </html>

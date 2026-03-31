@@ -106,13 +106,16 @@ width:100%;
 /* LEFT SIDE */
 .nav-left{
 display:flex;
-align-items:center;   /* keep center */
-gap:14px;             /* slightly better spacing */
+align-items:center;
+gap:14px;
+height:48px; /* 🔥 lock height */
 }
 
 /* LOGO */
 .logo{
-height:44px;
+height:100%;     /* 🔥 match nav-left height */
+max-height:48px;
+width:auto;
 display:block;
 }
 
@@ -121,15 +124,15 @@ display:block;
 display:flex;
 flex-direction:column;
 justify-content:center;
-line-height:1;
-transform:translateY(1px); /* 🔥 optical alignment fix */
+height:100%;              /* 🔥 SAME as logo */
+line-height:1.05;
 }
 
 /* BRAND NAME */
 .brand-name{
-font-size:20px;        /* 🔥 bigger = matches logo weight */
+font-size:19px;          /* 🔥 slightly reduced for balance */
 font-weight:600;
-letter-spacing:0.2px;
+line-height:1;
 }
 
 /* PRIVATE LIMITED */
@@ -137,7 +140,7 @@ letter-spacing:0.2px;
 font-size:10px;
 color:#94a3b8;
 letter-spacing:0.6px;
-margin-top:2px;
+margin-top:1px;
 }
 
 /* NAV LINKS */

@@ -1,143 +1,387 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    <!-- Google tag (gtag.js) -->
+
+<!-- Google tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-67FXEH77BB"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-67FXEH77BB');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-67FXEH77BB');
 </script>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Services - Varada Nexus</title>
-    <!-- Open Graph Meta Tags -->
-<meta property="og:title" content="Services – Varada Nexus Private Limited">
-<meta property="og:description" content="Explore our wide range of services including hospital consultancy, import-export, logistics, e-commerce, mining, HR, and arbitrage.">
-<meta property="og:image" content="https://www.varadanexus.com/images/services_banner.jpg">
-<meta property="og:url" content="https://www.varadanexus.com/services.html">
-<meta property="og:type" content="website">
 
-<!-- Twitter Card Tags -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Services – Varada Nexus Private Limited">
-<meta name="twitter:description" content="Full-spectrum consulting and execution in healthcare, trade, logistics, HR, and e-commerce.">
-<meta name="twitter:image" content="https://www.varadanexus.com/images/services_banner.jpg">
-    <meta name="description" content="Explore the services offered by Varada Nexus including hospital construction, healthcare consultancy, HR and PR solutions, import-export, mining logistics, e-commerce, and arbitrage advisory.">
-<meta name="keywords" content="Hospital Construction, Healthcare Consultancy, HR Services, Mining Transport, Import Export, Arbitrage, E-Commerce, Varada Nexus">
-<meta name="author" content="Varada Nexus Private Limited">
-<meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="style.css">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Services – Varada Nexus</title>
+
+<style>
+
+/* 🔥 GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
+background-size:400% 400%;
+animation:bg 12s ease infinite;
+color:white;
+}
+
+@keyframes bg{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 HEADER */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(0,0,0,0.4);
+backdrop-filter:blur(14px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px 20px;
+}
+
+.logo{height:42px;}
+
+.nav-links{
+display:flex;
+gap:28px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+color:white;
+}
+
+/* 🔥 HERO */
+.hero{
+text-align:center;
+padding:100px 20px 40px;
+max-width:900px;
+margin:auto;
+}
+
+.hero h1{
+font-size:42px;
+background:linear-gradient(90deg,#fff,#94a3b8);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.hero p{
+color:#cbd5f5;
+}
+
+/* 🔥 GRID */
+.services-grid{
+max-width:1200px;
+margin:60px auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:24px;
+padding:0 20px;
+}
+
+/* 🔥 CARD */
+.card{
+background:rgba(15,23,42,0.7);
+border-radius:18px;
+padding:24px;
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter:blur(16px);
+transition:0.4s;
+cursor:pointer;
+position:relative;
+overflow:hidden;
+}
+
+/* hover glow */
+.card::before{
+content:"";
+position:absolute;
+inset:0;
+background:radial-gradient(circle at top, rgba(59,130,246,0.3), transparent 70%);
+opacity:0;
+transition:0.4s;
+}
+
+.card:hover::before{
+opacity:1;
+}
+
+.card:hover{
+transform:translateY(-10px);
+box-shadow:0 40px 80px rgba(0,0,0,0.6);
+}
+
+/* ICON */
+.icon{
+width:40px;
+height:40px;
+margin-bottom:10px;
+}
+
+/* TEXT */
+.card h3{
+margin-bottom:10px;
+}
+
+.card p{
+color:#cbd5f5;
+font-size:14px;
+}
+
+/* EXPAND */
+.card-content{
+max-height:0;
+overflow:hidden;
+transition:0.4s ease;
+}
+
+.card.active .card-content{
+max-height:300px;
+margin-top:10px;
+}
+
+.card-content li{
+font-size:13px;
+margin-bottom:6px;
+color:#94a3b8;
+}
+
+/* 🔥 INDUSTRIES */
+.industries{
+max-width:1100px;
+margin:80px auto;
+text-align:center;
+}
+
+.industries h2{
+margin-bottom:20px;
+}
+
+.industry-list{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:14px;
+}
+
+.industry{
+padding:10px 16px;
+border-radius:20px;
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.1);
+font-size:13px;
+transition:0.3s;
+}
+
+.industry:hover{
+background:rgba(59,130,246,0.2);
+}
+
+/* 🔥 CTA */
+.cta{
+text-align:center;
+padding:80px 20px;
+}
+
+.cta a{
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+padding:12px 28px;
+border-radius:8px;
+color:white;
+text-decoration:none;
+}
+
+/* 🔥 ANIMATION */
+.fade-up{
+opacity:0;
+transform:translateY(40px);
+transition:0.8s;
+}
+
+.fade-up.show{
+opacity:1;
+transform:translateY(0);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+.hero h1{font-size:28px;}
+}
+
+</style>
+
 </head>
+
 <body>
-    
+
 <header>
-    <div class="logo-wrapper">
-        <img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
-        <h1>Varada Nexus Private Limited</h1>
-    </div>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="founder.html">Founder</a>
-        <a href="services.html">Services</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html">Login</a>
-    </nav>
+<div class="nav-container">
+<img src="images/logo.png" class="logo">
+
+<nav class="nav-links">
+<a href="index.html">Home</a>
+<a href="founder.html">Founder</a>
+<a href="services.html" class="active">Services</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Login</a>
+</nav>
+</div>
 </header>
 
-    <main>
-        <img src="images/logistics.jpg" alt="Logistics Banner" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 20px;">
-        
-   <div class="services-section">
-    <h3>🏥 1. Hospital Construction</h3>
-    <p>We offer complete end-to-end solutions for hospital construction projects. Our services include:</p>
-    <ul>
-      <li>Feasibility studies & site evaluation</li>
-      <li>Architecture & structural planning</li>
-      <li>Compliance with NABH, fire, and municipal regulations</li>
-      <li>Interior design tailored to medical workflow</li>
-      <li>Utility planning (oxygen lines, medical gases, HVAC, etc.)</li>
-      <li>Coordination with civil contractors and specialized engineers</li>
-      <li>Budgeting, scheduling, and quality control</li>
-    </ul>
-    <p><strong>We ensure every project is compliant, efficient, and ready for operational success.</strong></p>
+<main>
 
-    <h3>🩺 2. Hospital Consultancy</h3>
-    <p>With deep expertise in the healthcare sector, we provide:</p>
-    <ul>
-      <li>Turnkey hospital setup guidance (Greenfield or Brownfield)</li>
-      <li>Licensing and regulatory approvals (Fire, Pollution Control, Biomedical Waste, AERB, etc.)</li>
-      <li>Medical equipment planning and procurement</li>
-      <li>Manpower recruitment and training planning</li>
-      <li>Designing Standard Operating Procedures (SOPs)</li>
-      <li>Hospital information system (HIS) and EMR implementation</li>
-      <li>Commissioning and mock drills for pre-launch readiness</li>
-    </ul>
-    <p><strong>Our consultancy ensures hospitals are not only functional but future-ready.</strong></p>
+<section class="hero fade-up">
+<h1>Our Services</h1>
+<p>Integrated solutions across healthcare, logistics, trade, and digital ecosystems.</p>
+</section>
 
-    <h3>👨‍⚕️ 3. HR & PR Management</h3>
-    <p>We understand that skilled personnel and public presence are key to success. Our offerings include:</p>
-    <ul>
-      <li>Talent acquisition for hospitals and healthcare organizations</li>
-      <li>Doctors, Nurses, Paramedics, Admins, Technicians</li>
-      <li>Screening, evaluation, and placement support</li>
-      <li>HR policy drafting and institutional onboarding</li>
-      <li>Public relations support: branding, hospital image building</li>
-      <li>Digital presence setup and media management</li>
-    </ul>
-    <p><strong>We help you build a capable team and a trusted brand.</strong></p>
+<!-- 🔥 SERVICES -->
+<section class="services-grid">
 
-    <h3>🌍 4. Import & Export Services</h3>
-    <p>Varada Nexus deals in international and domestic trade of a wide variety of products. Our services include:</p>
-    <ul>
-      <li>Product sourcing and supplier management</li>
-      <li>Regulatory compliance and customs clearance</li>
-      <li>Logistics, warehousing, and cross-border shipment coordination</li>
-      <li>Export documentation, certifications, and trade finance support</li>
-      <li>Identifying new markets and B2B trade partnerships</li>
-    </ul>
-    <p><strong>We help you take your products to global markets and bring the world to you.</strong></p>
+<div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M3 21h18M4 21V7l8-4 8 4v14"/>
+</svg>
+<h3>Hospital Construction</h3>
+<p>End-to-end hospital infrastructure solutions.</p>
+<div class="card-content">
+<ul>
+<li>Feasibility & planning</li>
+<li>NABH compliance</li>
+<li>Medical utilities</li>
+<li>Execution</li>
+</ul>
+</div>
+</div>
 
-    <h3>⛏️ 5. Mining Consultancy & Transport</h3>
-    <p>We provide professional solutions to the mining and minerals industry:</p>
-    <ul>
-      <li>Consultancy for quarry operations and resource management</li>
-      <li>Transport logistics for bulk raw materials like granite, coal, and aggregates</li>
-      <li>Compliance with environmental and mining regulations</li>
-      <li>Vendor and supply chain coordination</li>
-      <li>Domestic and international trade linkages</li>
-    </ul>
-    <p><strong>Our experience ensures reliable operations with regulatory peace of mind.</strong></p>
+<div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M12 6v6l4 2"/>
+</svg>
+<h3>Hospital Consultancy</h3>
+<p>Operational excellence from setup to launch.</p>
+<div class="card-content">
+<ul>
+<li>Licensing</li>
+<li>Equipment planning</li>
+<li>SOPs</li>
+<li>HIS systems</li>
+</ul>
+</div>
+</div>
 
-    <h3>🛒 6. E-Commerce & Retail</h3>
-    <p>We support local producers and niche businesses with:</p>
-    <ul>
-      <li>Product development and branding strategy</li>
-      <li>E-commerce website setup (Shopify, WooCommerce, etc.)</li>
-      <li>Inventory, payment gateway, and order management systems</li>
-      <li>Integration with marketplaces like Amazon, Flipkart, Meesho</li>
-      <li>Digital marketing and customer engagement campaigns</li>
-    </ul>
-    <p><strong>Whether physical or digital, we turn ideas into marketable businesses.</strong></p>
+<div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M12 12c2 0 4-2 4-4s-2-4-4-4-4 2-4 4 2 4 4 4z"/>
+</svg>
+<h3>HR & PR</h3>
+<p>Talent + brand building.</p>
+<div class="card-content">
+<ul>
+<li>Recruitment</li>
+<li>Branding</li>
+<li>Media</li>
+</ul>
+</div>
+</div>
 
-    <h3>⚖️ 7. Arbitrage Services</h3>
-    <p>We provide advisory and execution support in:</p>
-    <ul>
-      <li>Regulatory arbitrage: navigating shifting compliance frameworks</li>
-      <li>Legal and commercial arbitrage opportunities</li>
-      <li>Real estate or procurement arbitrage in healthcare and trade sectors</li>
-      <li>Documentation, compliance structuring, and financial modeling</li>
-    </ul>
-    <p><strong>Our goal is to unlock untapped value through strategic positioning.</strong></p>
+<div class="card fade-up">
+<h3>Import & Export</h3>
+<p>Global trade execution.</p>
+<div class="card-content">
+<ul>
+<li>Sourcing</li>
+<li>Customs</li>
+<li>Export</li>
+</ul>
+</div>
+</div>
 
-  </div>
+<div class="card fade-up">
+<h3>Mining & Logistics</h3>
+<p>Reliable transport solutions.</p>
+<div class="card-content">
+<ul>
+<li>Bulk transport</li>
+<li>Compliance</li>
+<li>Supply chain</li>
+</ul>
+</div>
+</div>
+
+<div class="card fade-up">
+<h3>E-Commerce</h3>
+<p>Digital business growth.</p>
+<div class="card-content">
+<ul>
+<li>Store setup</li>
+<li>Marketplace</li>
+<li>Marketing</li>
+</ul>
+</div>
+</div>
+
+<div class="card fade-up">
+<h3>Arbitrage</h3>
+<p>Strategic advisory.</p>
+<div class="card-content">
+<ul>
+<li>Regulatory strategy</li>
+<li>Market positioning</li>
+<li>Financial modeling</li>
+</ul>
+</div>
+</div>
+
+</section>
+
+<!-- 🔥 INDUSTRIES -->
+<section class="industries fade-up">
+<h2>Industries We Serve</h2>
+<div class="industry-list">
+<div class="industry">Healthcare</div>
+<div class="industry">Infrastructure</div>
+<div class="industry">Mining</div>
+<div class="industry">Logistics</div>
+<div class="industry">Global Trade</div>
+<div class="industry">E-Commerce</div>
+<div class="industry">Retail</div>
+<div class="industry">Consulting</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="cta fade-up">
+<a href="contact.html">Work With Us</a>
+</section>
+
 </main>
-    <footer>
-        &copy; 2025 Varada Nexus Private Limited
-    </footer>
-    <!--Start of Tawk.to Script-->
+
+<footer>
+&copy; 2025 Varada Nexus Private Limited
+</footer>
+
+<!-- Chatbot (UNCHANGED) -->
 <script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){
@@ -149,6 +393,31 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
-<!--End of Tawk.to Script-->
+
+<!-- 🔥 INTERACTIONS -->
+<script>
+
+/* scroll animation */
+const observer = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+entry.target.classList.add("show");
+}
+});
+});
+
+document.querySelectorAll(".fade-up").forEach(el=>{
+observer.observe(el);
+});
+
+/* expandable cards */
+document.querySelectorAll(".card").forEach(card=>{
+card.addEventListener("click",()=>{
+card.classList.toggle("active");
+});
+});
+
+</script>
+
 </body>
 </html>

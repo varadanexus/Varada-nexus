@@ -141,9 +141,11 @@ font-weight:700;
 margin-bottom:8px;
 }
 
-.founder-role{
-color:#94a3b8;
-font-size:14px;
+..founder-role{
+color:rgba(255,255,255,0.85);   /* 🔥 brighter */
+font-size:15px;
+margin-top:6px;
+letter-spacing:0.3px;
 }
 
 /* 🔥 GLASS CARD CONTENT */
@@ -218,6 +220,10 @@ padding:20px;
 
 }
 
+.founder-name{
+text-shadow:0 0 20px rgba(255,255,255,0.2);
+}
+    
 /* 🔥 FOUNDER HERO UPGRADE */
 .founder-hero{
 display:flex;
@@ -234,7 +240,11 @@ content:"";
 position:absolute;
 width:260px;
 height:260px;
-background:radial-gradient(circle, rgba(59,130,246,0.35), transparent 70%);
+background:linear-gradient(
+to bottom,
+rgba(0,0,0,0.2),
+rgba(0,0,0,0.4)
+);
 filter:blur(40px);
 z-index:0;
 }
@@ -265,6 +275,11 @@ justify-content:center;
 gap:40px;
 margin-top:30px;
 flex-wrap:wrap;
+
+background:rgba(0,0,0,0.25);
+padding:15px 25px;
+border-radius:12px;
+backdrop-filter:blur(10px);
 }
 
 .stat{
@@ -277,10 +292,17 @@ margin-bottom:4px;
 }
 
 .stat p{
-font-size:12px;
-color:#94a3b8;
+font-size:13px;
+color:rgba(255,255,255,0.75);  /* 🔥 more visible */
 }
 
+.stat h3{
+font-size:22px;
+font-weight:700;
+color:white;
+text-shadow:0 0 12px rgba(255,255,255,0.4); /* 🔥 glow */
+}
+    
 /* 🔥 CONTENT CARD UPGRADE */
 .content{
 background:linear-gradient(

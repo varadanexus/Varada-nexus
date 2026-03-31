@@ -49,13 +49,13 @@ color:white;
 100%{background-position:0% 50%}
 }
 
-/* 🔥 HEADER (same as homepage) */
+/* 🔥 NAVBAR (INDEX MATCH) */
 header{
 position:sticky;
 top:0;
 z-index:1000;
-background:rgba(0,0,0,0.25);
-backdrop-filter:blur(14px);
+background:rgba(10,15,30,0.55);
+backdrop-filter:blur(20px);
 border-bottom:1px solid rgba(255,255,255,0.08);
 transition:0.3s;
 }
@@ -83,19 +83,28 @@ transition:0.3s;
 }
 
 .logo:hover{
-transform:scale(1.05);
 filter:drop-shadow(0 0 10px rgba(255,215,150,0.6));
+transform:scale(1.05);
 }
 
 .brand-block{
 display:flex;
 flex-direction:column;
 justify-content:center;
+height:100%;
 transform:translateY(4px);
 }
 
-.brand-name{font-size:19px;font-weight:600;}
-.brand-sub{font-size:10px;color:#94a3b8;}
+.brand-name{
+font-size:19px;
+font-weight:600;
+}
+
+.brand-sub{
+font-size:10px;
+color:#94a3b8;
+margin-top:2px;
+}
 
 .nav-links{
 display:flex;
@@ -111,6 +120,13 @@ font-size:14px;
 .nav-links a:hover,
 .nav-links a.active{
 color:white;
+}
+
+/* SHRINK EFFECT */
+header.shrink{
+padding:6px 20px !important;
+background:rgba(0,0,0,0.55);
+backdrop-filter:blur(18px);
 }
 
 /* 🔥 HERO (FOUNDER SECTION) */
@@ -141,7 +157,7 @@ font-weight:700;
 margin-bottom:8px;
 }
 
-..founder-role{
+.founder-role{
 color:rgba(255,255,255,0.85);   /* 🔥 brighter */
 font-size:15px;
 margin-top:6px;
@@ -203,25 +219,54 @@ transform:translateY(0);
 }
 
 /* 🔥 MOBILE */
-@media(max-width:768px){
+@media (max-width: 768px){
 
-.founder-img{
-width:140px;
-height:140px;
+/* NAVBAR STACK */
+.nav-container{
+flex-direction:column;
+gap:12px;
 }
 
+/* NAV LINKS */
+.nav-links{
+flex-wrap:wrap;
+justify-content:center;
+gap:14px;
+}
+
+/* HERO */
+.founder-hero{
+padding:60px 16px 30px;
+}
+
+/* IMAGE */
+.founder-img{
+width:130px;
+height:130px;
+}
+
+/* NAME */
 .founder-name{
 font-size:24px;
 }
 
+/* ROLE */
+.founder-role{
+font-size:13px;
+}
+
+/* STATS */
+.stats{
+gap:20px;
+padding:12px;
+}
+
+/* CONTENT */
 .content{
 padding:20px;
+margin:20px 12px;
 }
 
-}
-
-.founder-name{
-text-shadow:0 0 20px rgba(255,255,255,0.2);
 }
     
 /* 🔥 FOUNDER HERO UPGRADE */
@@ -352,6 +397,10 @@ header.shrink .logo{
 max-height:36px;
 }
 
+*{
+box-sizing:border-box;
+}
+    
 </style>
     
 </head>

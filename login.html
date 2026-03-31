@@ -33,14 +33,12 @@ color:white;
 
 /* HEADER */
 header{
-display:flex;
-justify-content:center;   /* 🔥 THIS centers horizontally */
-align-items:center;
-padding:20px 40px;
-background:rgba(0,0,0,0.25);
-backdrop-filter:blur(14px);
-border-bottom:1px solid rgba(255,255,255,0.05);
-position:relative;
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(10,15,30,0.55);
+backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,0.08);
 }
 
 header::after{
@@ -96,75 +94,55 @@ animation:shine 3.5s infinite;
 /* 🔥 NAV CONTAINER */
 .nav-container{
 max-width:1200px;
-margin:0 auto;
+margin:auto;
 display:flex;
 align-items:center;
 justify-content:space-between;
-width:100%;
+padding:14px 20px;
 }
 
-/* LEFT SIDE */
 .nav-left{
 display:flex;
 align-items:center;
 gap:14px;
-height:48px; /* 🔥 lock height */
+height:48px;
 }
 
-/* LOGO */
 .logo{
-height:100%;     /* 🔥 match nav-left height */
+height:100%;
 max-height:48px;
-width:auto;
-display:block;
 }
 
-/* BRAND BLOCK */
 .brand-block{
 display:flex;
 flex-direction:column;
 justify-content:center;
-height:100%;
-line-height:1.05;
-transform:translateY(4px);   /* 🔥 pushes text DOWN */
+transform:translateY(4px);
 }
 
-/* BRAND NAME */
 .brand-name{
-font-size:19px;          /* 🔥 slightly reduced for balance */
+font-size:19px;
 font-weight:600;
-line-height:1;
 }
 
-/* PRIVATE LIMITED */
 .brand-sub{
 font-size:10px;
 color:#94a3b8;
-letter-spacing:0.6px;
-margin-top:1px;
+margin-top:2px;
 }
 
-/* NAV LINKS */
 .nav-links{
 display:flex;
-gap:26px;
+gap:28px;
 }
 
-/* LINKS */
 .nav-links a{
-text-decoration:none;
 color:#cbd5f5;
+text-decoration:none;
 font-size:14px;
-transition:0.25s;
-position:relative;
 }
 
-/* HOVER */
-.nav-links a:hover{
-color:white;
-}
-
-/* ACTIVE */
+.nav-links a:hover,
 .nav-links a.active{
 color:white;
 }
@@ -202,7 +180,8 @@ main{
 display:flex;
 justify-content:center;
 align-items:center;
-height:80vh;
+min-height:calc(100vh - 100px);
+padding:40px 20px;
 }
 
 /* 🔥 GLASS CARD */
@@ -355,6 +334,25 @@ font-size:13px;
 color:#cbd5f5;
 }
 
+@media (max-width:768px){
+
+.nav-container{
+flex-direction:column;
+gap:12px;
+}
+
+.nav-links{
+flex-wrap:wrap;
+justify-content:center;
+gap:14px;
+}
+
+.login-card{
+padding:30px 20px;
+}
+
+}
+  
 </style>
 
 </head>

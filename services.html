@@ -72,10 +72,20 @@ color:white;
 
 /* 🔥 HERO */
 .hero{
-text-align:center;
-padding:100px 20px 40px;
-max-width:900px;
-margin:auto;
+position:relative;
+}
+
+.hero::after{
+content:"";
+position:absolute;
+width:300px;
+height:300px;
+background:radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%);
+top:0;
+left:50%;
+transform:translateX(-50%);
+filter:blur(60px);
+z-index:-1;
 }
 
 .hero h1{
@@ -101,23 +111,23 @@ padding:0 20px;
 
 /* 🔥 CARD */
 .card{
-background:rgba(15,23,42,0.7);
+background:linear-gradient(145deg, rgba(15,23,42,0.85), rgba(15,23,42,0.55));
 border-radius:18px;
-padding:24px;
+padding:26px;
 border:1px solid rgba(255,255,255,0.08);
-backdrop-filter:blur(16px);
+backdrop-filter:blur(18px);
 transition:0.4s;
 cursor:pointer;
 position:relative;
 overflow:hidden;
 }
 
-/* hover glow */
+/* glow */
 .card::before{
 content:"";
 position:absolute;
 inset:0;
-background:radial-gradient(circle at top, rgba(59,130,246,0.3), transparent 70%);
+background:radial-gradient(circle at 50% 0%, rgba(59,130,246,0.35), transparent 70%);
 opacity:0;
 transition:0.4s;
 }
@@ -127,8 +137,8 @@ opacity:1;
 }
 
 .card:hover{
-transform:translateY(-10px);
-box-shadow:0 40px 80px rgba(0,0,0,0.6);
+transform:translateY(-12px) scale(1.02);
+box-shadow:0 50px 120px rgba(0,0,0,0.7);
 }
 
 /* ICON */
@@ -149,15 +159,17 @@ font-size:14px;
 }
 
 /* EXPAND */
-.card-content{
-max-height:0;
-overflow:hidden;
-transition:0.4s ease;
+.card.active .card-content{
+max-height:400px;
+opacity:1;
+margin-top:12px;
 }
 
-.card.active .card-content{
-max-height:300px;
-margin-top:10px;
+.card-content{
+max-height:0;
+opacity:0;
+overflow:hidden;
+transition:all 0.5s ease;
 }
 
 .card-content li{
@@ -185,16 +197,18 @@ gap:14px;
 }
 
 .industry{
-padding:10px 16px;
-border-radius:20px;
-background:rgba(255,255,255,0.05);
+padding:10px 18px;
+border-radius:30px;
+background:rgba(255,255,255,0.06);
 border:1px solid rgba(255,255,255,0.1);
 font-size:13px;
 transition:0.3s;
+backdrop-filter:blur(10px);
 }
 
 .industry:hover{
-background:rgba(59,130,246,0.2);
+background:rgba(59,130,246,0.25);
+transform:scale(1.05);
 }
 
 /* 🔥 CTA */
@@ -236,7 +250,11 @@ transform:translateY(0);
 
 <header>
 <div class="nav-container">
+
+<div style="display:flex;align-items:center;gap:10px;">
 <img src="images/logo.png" class="logo">
+<span style="font-weight:600;">Varada Nexus</span>
+</div>
 
 <nav class="nav-links">
 <a href="index.html">Home</a>
@@ -245,6 +263,7 @@ transform:translateY(0);
 <a href="contact.html">Contact</a>
 <a href="login.html">Login</a>
 </nav>
+
 </div>
 </header>
 
@@ -306,6 +325,9 @@ transform:translateY(0);
 </div>
 
 <div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M3 12h18M12 3v18"/>
+</svg>
 <h3>Import & Export</h3>
 <p>Global trade execution.</p>
 <div class="card-content">
@@ -318,6 +340,9 @@ transform:translateY(0);
 </div>
 
 <div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M2 12h20M12 2v20"/>
+</svg>
 <h3>Mining & Logistics</h3>
 <p>Reliable transport solutions.</p>
 <div class="card-content">
@@ -330,6 +355,9 @@ transform:translateY(0);
 </div>
 
 <div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M5 6h14l-1 12H6L5 6z"/>
+</svg>
 <h3>E-Commerce</h3>
 <p>Digital business growth.</p>
 <div class="card-content">
@@ -342,6 +370,9 @@ transform:translateY(0);
 </div>
 
 <div class="card fade-up">
+<svg class="icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+<path d="M4 4l16 16M20 4L4 20"/>
+</svg>
 <h3>Arbitrage</h3>
 <p>Strategic advisory.</p>
 <div class="card-content">
@@ -417,6 +448,15 @@ card.classList.toggle("active");
 });
 });
 
+window.addEventListener("scroll", () => {
+const header = document.querySelector("header");
+if(window.scrollY > 50){
+header.style.background = "rgba(0,0,0,0.7)";
+}else{
+header.style.background = "rgba(0,0,0,0.4)";
+}
+});
+  
 </script>
 
 </body>

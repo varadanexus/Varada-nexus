@@ -29,62 +29,247 @@
 <meta name="keywords" content="Contact Varada Nexus, Rajahmundry Office, Hospital Consultancy Contact, Connect with Varada Nexus, Andhra Pradesh Business, Healthcare Consultant India">
 <meta name="author" content="Varada Nexus Private Limited">
 <meta name="robots" content="index, follow">
-    <link rel="stylesheet" href="style.css">
+
+<style>
+
+/* 🔥 GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
+color:white;
+}
+
+@keyframes gradientBG{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* NAVBAR (INDEX MATCH) */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(10,15,30,0.55);
+backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+height:48px;
+}
+
+.logo{
+height:100%;
+max-height:48px;
+}
+
+.brand-block{
+display:flex;
+flex-direction:column;
+transform:translateY(4px);
+}
+
+.brand-name{font-size:19px;font-weight:600;}
+.brand-sub{font-size:10px;color:#94a3b8;}
+
+.nav-links{
+display:flex;
+gap:28px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+color:white;
+}
+
+/* HERO */
+.contact-hero{
+text-align:center;
+padding:100px 20px 40px;
+}
+
+.contact-hero h1{
+font-size:40px;
+background:linear-gradient(90deg,#fff,#94a3b8);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.contact-hero p{
+color:#cbd5f5;
+}
+
+/* GRID */
+.contact-grid{
+max-width:1100px;
+margin:40px auto;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:30px;
+padding:0 20px;
+}
+
+/* CARD */
+.card{
+background:rgba(15,23,42,0.7);
+padding:30px;
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter:blur(16px);
+}
+
+/* FORM */
+input, textarea{
+width:100%;
+padding:12px;
+margin-top:6px;
+margin-bottom:14px;
+border-radius:8px;
+border:none;
+background:rgba(255,255,255,0.05);
+color:white;
+}
+
+button{
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+border:none;
+padding:12px 24px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+}
+
+/* IMAGE */
+.contact-img{
+width:100%;
+border-radius:12px;
+margin-bottom:20px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+.contact-grid{
+grid-template-columns:1fr;
+}
+
+.nav-container{
+flex-direction:column;
+gap:10px;
+}
+
+.nav-links{
+flex-wrap:wrap;
+justify-content:center;
+}
+
+.contact-hero h1{
+font-size:28px;
+}
+
+}
+
+</style>
+    
 </head>
 <body>
     
 <header>
-    <div class="logo-wrapper">
-        <img src="images/logo.png" alt="Varada Nexus Logo" class="logo">
-        <h1>Varada Nexus Private Limited</h1>
-    </div>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="founder.html">Founder</a>
-        <a href="services.html">Services</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html">Login</a>
-    </nav>
+<div class="nav-container">
+
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-block">
+<span class="brand-name">Varada Nexus</span>
+<span class="brand-sub">Private Limited</span>
+</div>
+</div>
+
+<nav class="nav-links">
+<a href="index.html">Home</a>
+<a href="founder.html">Founder</a>
+<a href="services.html">Services</a>
+<a href="contact.html" class="active">Contact</a>
+<a href="login.html">Login</a>
+</nav>
+
+</div>
 </header>
 
-    <main>
-        <h2>Contact</h2>
-        
-        <img src="images/retail.jpg" alt="Retail Office">
-        <p><strong>Varada Nexus Private Limited</strong><br>
+   <main>
+
+<section class="contact-hero">
+<h1>Contact Us</h1>
+<p>Let’s build something scalable together.</p>
+</section>
+
+<div class="contact-grid">
+
+<!-- LEFT -->
+<div class="card">
+<img src="images/retail.jpg" class="contact-img">
+
+<p><strong>Varada Nexus Private Limited</strong><br>
 KB Nagar, A.V.A Road<br>
 Rajahmundry, Andhra Pradesh – 533103<br>
 India</p>
 
-<p><strong>Email:</strong> <a href="mailto:connect@varadanexus.com">connect@varadanexus.com</a></p>
+<p><strong>Email:</strong> connect@varadanexus.com</p>
 
 <p><strong>CIN:</strong> U43121AP2025PTC117741<br>
 <strong>GSTIN:</strong> 37AAKCV7495B1ZV</p>
-       <form action="https://formspree.io/f/mvgrnzgd" method="POST">
-  
-  <label>Name:<br>
-    <input type="text" name="name" required>
-  </label><br>
+</div>
 
-  <label>Email:<br>
-    <input type="email" name="email" required>
-  </label><br>
+<!-- RIGHT (FORM - UNTOUCHED CORE) -->
+<div class="card">
 
-  <label>Subject:<br>
-    <input type="text" name="subject">
-  </label><br>
+<form action="https://formspree.io/f/mvgrnzgd" method="POST">
 
-  <label>Message:<br>
-    <textarea name="message" rows="5" required></textarea>
-  </label><br>
+<label>Name</label>
+<input type="text" name="name" required>
 
-  <!-- 🛡️ Spam protection field -->
-  <input type="text" name="_gotcha" style="display:none">
+<label>Email</label>
+<input type="email" name="email" required>
 
-  <button type="submit">Send Message</button>
+<label>Subject</label>
+<input type="text" name="subject">
+
+<label>Message</label>
+<textarea name="message" rows="5" required></textarea>
+
+<input type="text" name="_gotcha" style="display:none">
+
+<button type="submit">Send Message</button>
+
 </form>
-    
-    </main>
+
+</div>
+
+</div>
+
+</main>
     <footer>
         &copy; 2025 Varada Nexus Private Limited
     </footer>

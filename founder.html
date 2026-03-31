@@ -365,24 +365,35 @@ max-height:36px;
 <img src="images/chairman.jpg" class="founder-img">
 
 <div class="founder-name">Dr. Althi Prudhvi</div>
+<div style="
+display:inline-block;
+margin-top:10px;
+padding:6px 12px;
+border-radius:20px;
+background:rgba(59,130,246,0.2);
+border:1px solid rgba(59,130,246,0.4);
+font-size:12px;
+">
+✔ Verified Founder
+</div>
 <div class="founder-role">Founder & Chairman – Varada Nexus Private Limited</div>
-
-</section>
 
 <div class="stats">
   <div class="stat">
-    <h3>5+ Sectors</h3>
-    <p>Business Domains</p>
+     <h3>🚀 5+</h3>
+    <p>Sectors</p>
   </div>
   <div class="stat">
-    <h3>3+ Years</h3>
-    <p>Leadership</p>
+     <h3>📈 4+</h3>
+    <p>Years Leadership</p>
   </div>
   <div class="stat">
-    <h3>Multi-Industry</h3>
-    <p>Expertise</p>
+    <h3>🌐 Multi</h3>
+     <p>Industry Expertise</p>
   </div>
 </div>
+    
+</section>
       
 <!-- 🔥 CONTENT -->
 <section class="content fade-up">
@@ -448,6 +459,34 @@ header.classList.add("shrink");
 }else{
 header.classList.remove("shrink");
 }
+});
+
+function animateStats() {
+document.querySelectorAll(".stat h3").forEach(el => {
+let text = el.innerText;
+let num = parseInt(text);
+
+if(!isNaN(num)){
+let count = 0;
+let interval = setInterval(() => {
+count++;
+el.innerText = count + "+";
+if(count >= num) clearInterval(interval);
+}, 40);
+}
+});
+}
+
+const statsObserver = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+animateStats();
+}
+});
+});
+
+document.querySelectorAll(".stats").forEach(el=>{
+statsObserver.observe(el);
 });
     
 </script>

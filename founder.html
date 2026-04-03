@@ -352,19 +352,45 @@ text-shadow:0 0 12px rgba(255,255,255,0.4); /* 🔥 glow */
     
 /* 🔥 CONTENT CARD UPGRADE */
 .content{
+max-width:1000px;
+margin:80px auto;   /* 🔥 more spacing */
+padding:40px;       /* 🔥 more padding */
 background:linear-gradient(
 145deg,
-rgba(15,23,42,0.8),
-rgba(15,23,42,0.5)
+rgba(15,23,42,0.85),
+rgba(15,23,42,0.55)
 );
-box-shadow:0 30px 80px rgba(0,0,0,0.6);
+border-radius:20px;
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 40px 120px rgba(0,0,0,0.7);
 transition:0.3s;
+}
+
+.content h3{
+font-size:22px;
+margin-bottom:14px;
+letter-spacing:0.5px;
 }
 
 .content:hover{
 transform:translateY(-6px);
 }
 
+.content{
+position:relative;
+}
+
+.content::after{
+content:"";
+position:absolute;
+bottom:-40px;
+left:50%;
+transform:translateX(-50%);
+width:60%;
+height:1px;
+background:rgba(255,255,255,0.06);
+}
+    
 /* 🔥 QUOTE PREMIUM */
 .quote{
 font-size:15px;
@@ -433,29 +459,39 @@ box-sizing:border-box;
 <main>
 
 <!-- 🔥 HERO (SPLIT EXECUTIVE) -->
-<section class="founder-hero fade-up" style="display:flex;gap:60px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left;max-width:1100px;margin:auto;">
+<section class="founder-hero fade-up" style="
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:80px;
+max-width:1200px;
+margin:80px auto 40px;
+padding:0 20px;
+flex-wrap:wrap;
+">
 
-<img src="images/chairman.jpg" class="founder-img" style="border-radius:20px;width:260px;height:260px;">
+<!-- LEFT TEXT -->
+<div style="flex:1;min-width:300px;">
 
-<div style="max-width:520px;">
+<div style="font-size:12px;letter-spacing:1.5px;color:#94a3b8;margin-bottom:12px;">
+FOUNDER & CHAIRMAN
+</div>
 
-<div style="font-size:13px;color:#94a3b8;margin-bottom:10px;">FOUNDER & CHAIRMAN</div>
+<h1 style="font-size:48px;margin:0 0 10px;">Dr. Althi Prudhvi</h1>
 
-<div class="founder-name" style="font-size:42px;">Dr. Althi Prudhvi</div>
-
-<p style="color:#cbd5f5;margin-top:14px;font-size:16px;line-height:1.7;">
+<p style="color:#cbd5f5;font-size:17px;line-height:1.8;max-width:520px;">
 Building and operating systems across healthcare, mining, logistics, and global trade — 
-with a focus on execution, scalability, and real-world impact.
+focused on execution, scalability, and real-world impact.
 </p>
 
-<div class="stats" style="margin-top:20px;">
+<div class="stats" style="margin-top:30px;justify-content:flex-start;">
   <div class="stat">
     <h3>5+</h3>
     <p>Industries</p>
   </div>
   <div class="stat">
     <h3>50+</h3>
-    <p>Fleet Network</p>
+    <p>Fleet</p>
   </div>
   <div class="stat">
     <h3>55+</h3>
@@ -463,6 +499,17 @@ with a focus on execution, scalability, and real-world impact.
   </div>
 </div>
 
+</div>
+
+<!-- RIGHT IMAGE -->
+<div style="flex:1;display:flex;justify-content:center;min-width:280px;">
+<img src="images/chairman.jpg" style="
+width:300px;
+height:300px;
+object-fit:cover;
+border-radius:20px;
+box-shadow:0 30px 100px rgba(0,0,0,0.7);
+">
 </div>
 
 </section>

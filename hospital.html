@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hospital Construction – Varada Nexus</title>
 
-<link rel="stylesheet" href="style.css">
-
 <style>
+
+/* 🔥 GLOBAL */
 body{
 margin:0;
 font-family:'Inter',sans-serif;
@@ -23,24 +23,173 @@ color:white;
 100%{background-position:0% 50%}
 }
 
+/* 🔥 NAVBAR */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(0,0,0,0.3);
+backdrop-filter:blur(16px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+}
+
+.logo{
+height:40px;
+}
+
+.brand{
+display:flex;
+flex-direction:column;
+}
+
+.brand-name{
+font-size:18px;
+font-weight:600;
+}
+
+.brand-sub{
+font-size:10px;
+color:#94a3b8;
+}
+
+.nav-links{
+display:flex;
+gap:26px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover{
+color:white;
+}
+
+/* 🔥 HERO */
+.hero{
+text-align:center;
+padding:100px 20px 40px;
+}
+
+.hero h1{
+font-size:40px;
+margin-bottom:10px;
+}
+
+.hero p{
+color:#cbd5f5;
+max-width:600px;
+margin:auto;
+}
+
+/* 🔥 CONTENT CARD */
 .service{
 max-width:900px;
-margin:100px auto;
+margin:40px auto;
 padding:30px;
 background:rgba(15,23,42,0.7);
 border-radius:16px;
+backdrop-filter:blur(12px);
 }
 
-h1{font-size:32px;}
-p{color:#cbd5f5;}
+/* LIST */
+ul{
+margin-top:20px;
+}
+
+li{
+margin-bottom:10px;
+color:#cbd5f5;
+}
+
+/* 🔥 PROCESS SECTION */
+.process{
+max-width:1000px;
+margin:60px auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+padding:0 20px;
+}
+
+.step{
+background:rgba(255,255,255,0.05);
+padding:20px;
+border-radius:12px;
+text-align:center;
+}
+
+/* 🔥 CTA */
+.cta{
+text-align:center;
+margin:60px 0;
+}
+
+.cta a{
+display:inline-block;
+padding:12px 26px;
+border-radius:8px;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+color:white;
+text-decoration:none;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+.hero h1{font-size:28px;}
+.nav-container{flex-direction:column;gap:10px;}
+}
 
 </style>
 </head>
 
 <body>
 
-<h1 style="text-align:center;">Hospital Construction</h1>
+<!-- 🔥 NAVBAR -->
+<header>
+<div class="nav-container">
 
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand">
+<span class="brand-name">Varada Nexus</span>
+<span class="brand-sub">Private Limited</span>
+</div>
+</div>
+
+<div class="nav-links">
+<a href="index.html">Home</a>
+<a href="services.html">Services</a>
+<a href="contact.html">Contact</a>
+</div>
+
+</div>
+</header>
+
+<!-- 🔥 HERO -->
+<section class="hero">
+<h1>Hospital Construction</h1>
+<p>End-to-end infrastructure solutions designed for modern healthcare systems.</p>
+</section>
+
+<!-- 🔥 MAIN CONTENT -->
 <div class="service">
 
 <p>We provide complete hospital infrastructure solutions from planning to execution.</p>
@@ -52,6 +201,36 @@ p{color:#cbd5f5;}
 <li>Full execution</li>
 </ul>
 
+</div>
+
+<!-- 🔥 PROCESS -->
+<section class="process">
+
+<div class="step">
+<h3>Planning</h3>
+<p>Site evaluation and feasibility analysis</p>
+</div>
+
+<div class="step">
+<h3>Design</h3>
+<p>Architecture aligned with healthcare standards</p>
+</div>
+
+<div class="step">
+<h3>Execution</h3>
+<p>End-to-end project management</p>
+</div>
+
+<div class="step">
+<h3>Launch</h3>
+<p>Ready-to-operate hospital delivery</p>
+</div>
+
+</section>
+
+<!-- 🔥 CTA -->
+<div class="cta">
+<a href="contact.html">Request Consultation</a>
 </div>
 
 </body>

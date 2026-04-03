@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Team – Varada Nexus</title>
+
+<style>
+
+/* 🔥 GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
+color:white;
+}
+
+@keyframes gradientBG{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 SECTION */
+.section{
+max-width:1200px;
+margin:80px auto;
+padding:0 20px;
+text-align:center;
+}
+
+.section h2{
+font-size:30px;
+background:linear-gradient(90deg,#fff,#60a5fa);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* 🔥 TREE */
+.tree{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:40px;
+margin-top:40px;
+}
+
+/* 🔥 ROW */
+.row{
+display:flex;
+gap:40px;
+flex-wrap:wrap;
+justify-content:center;
+position:relative;
+}
+
+/* 🔥 CONNECTOR */
+.row::before{
+content:"";
+position:absolute;
+top:-20px;
+height:2px;
+width:60%;
+background:rgba(255,255,255,0.2);
+left:20%;
+}
+
+/* 🔥 CARD */
+.card{
+background:rgba(15,23,42,0.7);
+border:1px solid rgba(255,255,255,0.08);
+padding:20px;
+border-radius:16px;
+backdrop-filter:blur(14px);
+transition:0.3s;
+cursor:pointer;
+width:220px;
+}
+
+.card:hover{
+transform:translateY(-10px) scale(1.02);
+box-shadow:0 30px 80px rgba(0,0,0,0.7);
+}
+
+/* 🔥 AVATAR */
+.avatar{
+width:70px;
+height:70px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+font-size:20px;
+margin:auto;
+margin-bottom:10px;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+}
+
+/* TEXT */
+.name{font-weight:600;}
+.role{font-size:12px;color:#94a3b8;}
+.desc{font-size:13px;color:#cbd5f5;}
+
+/* 🔥 BUTTON */
+.toggle{
+margin-top:20px;
+padding:10px 20px;
+border:none;
+border-radius:8px;
+background:#3b82f6;
+color:white;
+cursor:pointer;
+}
+
+/* 🔥 HIDDEN */
+.hidden{display:none;}
+
+/* 🔥 MODAL */
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:flex;
+align-items:center;
+justify-content:center;
+visibility:hidden;
+opacity:0;
+transition:0.3s;
+}
+
+.modal.active{
+visibility:visible;
+opacity:1;
+}
+
+.modal-content{
+background:#020617;
+padding:30px;
+border-radius:16px;
+max-width:400px;
+text-align:center;
+}
+
+.close{
+margin-top:20px;
+cursor:pointer;
+color:#60a5fa;
+}
+
+</style>
+</head>
+
+<body>
+
+<section class="section">
+
+<h2>Core Leadership</h2>
+
+<div class="tree">
+
+<!-- CMD -->
+<div class="card" onclick="openModal(this)">
+<div class="avatar">AP</div>
+<div class="name">Dr. Althi Prudhvi</div>
+<div class="role">CMD</div>
+<div class="desc">Leads multi-sector execution.</div>
+</div>
+
+<button class="toggle" onclick="toggleLevel()">Expand Team</button>
+
+<!-- LEVELS -->
+<div id="teamLevels" class="hidden">
+
+<div class="row">
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">BJ</div>
+<div class="name">Boddu Jaswanth</div>
+<div class="role">COO</div>
+<div class="desc">Operations & logistics execution.</div>
+</div>
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">AS</div>
+<div class="name">Althi Suresh</div>
+<div class="role">Director & Legal</div>
+<div class="desc">Legal and governance lead.</div>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">KE</div>
+<div class="name">Koti Eswar</div>
+<div class="role">Technical Head</div>
+<div class="desc">Infrastructure systems.</div>
+</div>
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">IG</div>
+<div class="name">Inapakolla Ganesh</div>
+<div class="role">Marketing Head</div>
+<div class="desc">Growth & branding.</div>
+</div>
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">PAC</div>
+<div class="name">Abhiram Chandra</div>
+<div class="role">HR Head</div>
+<div class="desc">People & organization.</div>
+</div>
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">YCK</div>
+<div class="name">Chandra Kaladhar</div>
+<div class="role">Strategy Head</div>
+<div class="desc">Expansion & mining strategy.</div>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">SKV</div>
+<div class="name">Sai Kiran Varma</div>
+<div class="role">Architect</div>
+<div class="desc">Infrastructure design.</div>
+</div>
+
+<div class="card" onclick="openModal(this)">
+<div class="avatar">PHK</div>
+<div class="name">Hari Krishna</div>
+<div class="role">Geologist</div>
+<div class="desc">Resource evaluation.</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- 🔥 MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+
+/* 🔥 TOGGLE */
+function toggleLevel(){
+document.getElementById("teamLevels").classList.toggle("hidden");
+}
+
+/* 🔥 MODAL */
+function openModal(card){
+let name = card.querySelector(".name").innerText;
+let role = card.querySelector(".role").innerText;
+let desc = card.querySelector(".desc").innerText;
+
+document.getElementById("modalContent").innerHTML = `
+<h3>${name}</h3>
+<p>${role}</p>
+<p>${desc}</p>
+<div class="close" onclick="closeModal()">Close</div>
+`;
+
+document.getElementById("modal").classList.add("active");
+}
+
+function closeModal(){
+document.getElementById("modal").classList.remove("active");
+}
+
+</script>
+
+</body>
+</html>

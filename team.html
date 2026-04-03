@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,23 +11,14 @@
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
-background-size:400% 400%;
-animation:gradientBG 12s ease infinite;
+background:radial-gradient(circle at top,#1e3a8a,#020617);
 color:white;
-}
-
-@keyframes gradientBG{
-0%{background-position:0% 50%}
-50%{background-position:100% 50%}
-100%{background-position:0% 50%}
 }
 
 /* 🔥 NAVBAR */
 header{
 position:sticky;
 top:0;
-z-index:1000;
 background:rgba(10,15,30,0.6);
 backdrop-filter:blur(20px);
 border-bottom:1px solid rgba(255,255,255,0.08);
@@ -38,53 +28,26 @@ border-bottom:1px solid rgba(255,255,255,0.08);
 max-width:1200px;
 margin:auto;
 display:flex;
-align-items:center;
 justify-content:space-between;
 padding:14px 20px;
 }
 
-.nav-left{
-display:flex;
-align-items:center;
-gap:14px;
-}
-
-.logo{
-height:42px;
-}
-
-.brand-name{
-font-size:18px;
-font-weight:600;
-}
-
-.nav-links{
-display:flex;
-gap:24px;
-}
-
 .nav-links a{
 color:#cbd5f5;
+margin-left:20px;
 text-decoration:none;
-font-size:14px;
 }
 
-.nav-links a:hover{
-color:white;
-}
-
-/* 🔥 PAGE CONTAINER */
+/* 🔥 HERO */
 .container{
 max-width:1200px;
-margin:80px auto;
+margin:60px auto;
 padding:0 20px;
 text-align:center;
 }
 
-/* TITLE */
 h1{
-font-size:32px;
-margin-bottom:10px;
+font-size:34px;
 }
 
 .sub{
@@ -97,68 +60,71 @@ margin-bottom:60px;
 display:flex;
 flex-direction:column;
 align-items:center;
-gap:70px;
+gap:90px;
 }
 
 /* LEVEL */
 .level{
 display:flex;
-justify-content:center;
 gap:60px;
+justify-content:center;
 position:relative;
 flex-wrap:wrap;
 }
 
-/* VERTICAL LINE */
+/* CONNECTORS */
 .level::before{
 content:"";
 position:absolute;
-top:-40px;
+top:-50px;
+height:50px;
 width:2px;
-height:40px;
 background:rgba(255,255,255,0.2);
 left:50%;
 transform:translateX(-50%);
 }
 
-.level:first-child::before{
-display:none;
-}
+.level:first-child::before{display:none;}
 
-/* HORIZONTAL LINE */
 .level-line{
 position:absolute;
-top:-40px;
+top:-50px;
 height:2px;
-background:rgba(255,255,255,0.2);
 width:80%;
 left:10%;
+background:rgba(255,255,255,0.2);
 }
 
 /* 🔥 CARD */
 .card{
-background:rgba(15,23,42,0.7);
+background:rgba(15,23,42,0.75);
+padding:22px;
+border-radius:16px;
+width:210px;
+cursor:pointer;
+transition:0.4s;
+backdrop-filter:blur(14px);
 border:1px solid rgba(255,255,255,0.08);
-padding:20px;
-border-radius:14px;
-width:200px;
-text-align:center;
-transition:0.3s;
-backdrop-filter:blur(10px);
 }
 
 .card:hover{
-transform:translateY(-8px);
-box-shadow:0 20px 60px rgba(0,0,0,0.6);
+transform:translateY(-10px) scale(1.03);
+box-shadow:0 25px 80px rgba(0,0,0,0.8);
+}
+
+/* CMD SPECIAL */
+.card.cmd{
+transform:scale(1.15);
+box-shadow:0 30px 120px rgba(59,130,246,0.3);
 }
 
 /* AVATAR */
 .avatar{
-width:60px;
-height:60px;
+width:65px;
+height:65px;
 border-radius:50%;
 margin:auto;
-margin-bottom:10px;
+margin-bottom:12px;
 display:flex;
 align-items:center;
 justify-content:center;
@@ -167,16 +133,42 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 }
 
 /* TEXT */
-.name{font-weight:600;}
+.name{font-weight:600;font-size:15px;}
 .role{font-size:12px;color:#94a3b8;margin-top:4px;}
 .desc{font-size:12px;color:#cbd5f5;margin-top:6px;}
+
+/* 🔥 MODAL */
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:#0f172a;
+padding:30px;
+border-radius:16px;
+width:300px;
+text-align:center;
+}
+
+.close{
+margin-top:20px;
+cursor:pointer;
+color:#3b82f6;
+}
 
 /* FOOTER */
 footer{
 text-align:center;
-padding:30px;
+padding:40px;
 color:#94a3b8;
-font-size:12px;
 }
 
 </style>
@@ -184,27 +176,18 @@ font-size:12px;
 
 <body>
 
-<!-- 🔥 NAVBAR -->
 <header>
 <div class="nav-container">
-
-<div class="nav-left">
-<img src="images/logo.png" class="logo">
-<div class="brand-name">Varada Nexus</div>
-</div>
-
+<div>Varada Nexus</div>
 <nav class="nav-links">
 <a href="index.html">Home</a>
 <a href="founder.html">Founder</a>
 <a href="services.html">Services</a>
 <a href="team.html" style="color:white;">Team</a>
-<a href="contact.html">Contact</a>
 </nav>
-
 </div>
 </header>
 
-<!-- 🔥 CONTENT -->
 <div class="container">
 
 <h1>Leadership Team</h1>
@@ -214,11 +197,11 @@ font-size:12px;
 
 <!-- CMD -->
 <div class="level">
-<div class="card">
+<div class="card cmd" onclick="openModal('Dr. Althi Prudhvi','Chairman & Managing Director','Leads multi-sector execution and enterprise strategy.')">
 <div class="avatar">AP</div>
 <div class="name">Dr. Althi Prudhvi</div>
-<div class="role">Chairman & Managing Director</div>
-<div class="desc">Leads multi-sector execution</div>
+<div class="role">CMD</div>
+<div class="desc">Enterprise leadership</div>
 </div>
 </div>
 
@@ -226,18 +209,16 @@ font-size:12px;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card">
+<div class="card" onclick="openModal('Boddu Jaswanth','COO','Oversees logistics and operational execution.')">
 <div class="avatar">BJ</div>
 <div class="name">Boddu Jaswanth</div>
 <div class="role">COO</div>
-<div class="desc">Operations & logistics</div>
 </div>
 
-<div class="card">
+<div class="card" onclick="openModal('Althi Suresh','Director & Legal','Handles legal governance and compliance.')">
 <div class="avatar">AS</div>
 <div class="name">Althi Suresh</div>
-<div class="role">Director & Legal</div>
-<div class="desc">Legal & governance</div>
+<div class="role">Director</div>
 </div>
 
 </div>
@@ -246,32 +227,28 @@ font-size:12px;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card">
+<div class="card" onclick="openModal('Koti Eswar','Technical Head','Leads infrastructure systems.')">
 <div class="avatar">KE</div>
 <div class="name">Koti Eswar</div>
-<div class="role">Technical Head</div>
-<div class="desc">Infrastructure systems</div>
+<div class="role">Technical</div>
 </div>
 
-<div class="card">
+<div class="card" onclick="openModal('Inapakolla Ganesh','Marketing Head','Drives growth and branding.')">
 <div class="avatar">IG</div>
-<div class="name">Inapakolla Ganesh</div>
-<div class="role">Marketing Head</div>
-<div class="desc">Growth & branding</div>
+<div class="name">Ganesh</div>
+<div class="role">Marketing</div>
 </div>
 
-<div class="card">
+<div class="card" onclick="openModal('Abhiram Chandra','HR Head','Manages people and culture.')">
 <div class="avatar">PAC</div>
-<div class="name">Abhiram Chandra</div>
-<div class="role">HR Head</div>
-<div class="desc">People & organization</div>
+<div class="name">Abhiram</div>
+<div class="role">HR</div>
 </div>
 
-<div class="card">
+<div class="card" onclick="openModal('Chandra Kaladhar','Strategy Head','Leads expansion and mining strategy.')">
 <div class="avatar">YCK</div>
-<div class="name">Chandra Kaladhar</div>
-<div class="role">Strategy & Growth Head</div>
-<div class="desc">Expansion & mining strategy</div>
+<div class="name">Kaladhar</div>
+<div class="role">Strategy</div>
 </div>
 
 </div>
@@ -280,18 +257,16 @@ font-size:12px;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card">
+<div class="card" onclick="openModal('Sai Kiran Varma','Architect','Designs infrastructure systems.')">
 <div class="avatar">SKV</div>
-<div class="name">Sai Kiran Varma</div>
+<div class="name">Sai Kiran</div>
 <div class="role">Architect</div>
-<div class="desc">Infrastructure design</div>
 </div>
 
-<div class="card">
+<div class="card" onclick="openModal('Hari Krishna','Geologist','Handles resource evaluation.')">
 <div class="avatar">PHK</div>
 <div class="name">Hari Krishna</div>
 <div class="role">Geologist</div>
-<div class="desc">Resource evaluation</div>
 </div>
 
 </div>
@@ -300,10 +275,32 @@ font-size:12px;
 
 </div>
 
-<!-- 🔥 FOOTER -->
+<!-- 🔥 MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<h3 id="m-name"></h3>
+<p id="m-role"></p>
+<p id="m-desc"></p>
+<div class="close" onclick="closeModal()">Close</div>
+</div>
+</div>
+
 <footer>
 © 2025 Varada Nexus Private Limited
 </footer>
+
+<script>
+function openModal(name, role, desc){
+document.getElementById("modal").style.display="flex";
+document.getElementById("m-name").innerText=name;
+document.getElementById("m-role").innerText=role;
+document.getElementById("m-desc").innerText=desc;
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none";
+}
+</script>
 
 </body>
 </html>

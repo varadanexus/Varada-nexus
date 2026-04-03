@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +12,68 @@
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-background:#020617;
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
 color:white;
 }
 
-/* 🔥 CONTAINER */
+@keyframes gradientBG{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 NAVBAR */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(10,15,30,0.6);
+backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+}
+
+.logo{
+height:42px;
+}
+
+.brand-name{
+font-size:18px;
+font-weight:600;
+}
+
+.nav-links{
+display:flex;
+gap:24px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover{
+color:white;
+}
+
+/* 🔥 PAGE CONTAINER */
 .container{
 max-width:1200px;
 margin:80px auto;
@@ -23,6 +81,7 @@ padding:0 20px;
 text-align:center;
 }
 
+/* TITLE */
 h1{
 font-size:32px;
 margin-bottom:10px;
@@ -30,18 +89,18 @@ margin-bottom:10px;
 
 .sub{
 color:#94a3b8;
-margin-bottom:50px;
+margin-bottom:60px;
 }
 
-/* 🔥 ORG STRUCTURE */
+/* 🔥 ORG */
 .org{
 display:flex;
 flex-direction:column;
 align-items:center;
-gap:60px;
+gap:70px;
 }
 
-/* 🔥 LEVEL */
+/* LEVEL */
 .level{
 display:flex;
 justify-content:center;
@@ -50,7 +109,7 @@ position:relative;
 flex-wrap:wrap;
 }
 
-/* 🔥 CONNECTOR VERTICAL */
+/* VERTICAL LINE */
 .level::before{
 content:"";
 position:absolute;
@@ -62,12 +121,11 @@ left:50%;
 transform:translateX(-50%);
 }
 
-/* REMOVE FIRST */
 .level:first-child::before{
 display:none;
 }
 
-/* 🔥 CONNECTOR HORIZONTAL */
+/* HORIZONTAL LINE */
 .level-line{
 position:absolute;
 top:-40px;
@@ -79,13 +137,14 @@ left:10%;
 
 /* 🔥 CARD */
 .card{
-background:#0f172a;
+background:rgba(15,23,42,0.7);
 border:1px solid rgba(255,255,255,0.08);
 padding:20px;
 border-radius:14px;
 width:200px;
 text-align:center;
 transition:0.3s;
+backdrop-filter:blur(10px);
 }
 
 .card:hover{
@@ -93,7 +152,7 @@ transform:translateY(-8px);
 box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* 🔥 AVATAR */
+/* AVATAR */
 .avatar{
 width:60px;
 height:60px;
@@ -112,11 +171,40 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 .role{font-size:12px;color:#94a3b8;margin-top:4px;}
 .desc{font-size:12px;color:#cbd5f5;margin-top:6px;}
 
+/* FOOTER */
+footer{
+text-align:center;
+padding:30px;
+color:#94a3b8;
+font-size:12px;
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- 🔥 NAVBAR -->
+<header>
+<div class="nav-container">
+
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-name">Varada Nexus</div>
+</div>
+
+<nav class="nav-links">
+<a href="index.html">Home</a>
+<a href="founder.html">Founder</a>
+<a href="services.html">Services</a>
+<a href="team.html" style="color:white;">Team</a>
+<a href="contact.html">Contact</a>
+</nav>
+
+</div>
+</header>
+
+<!-- 🔥 CONTENT -->
 <div class="container">
 
 <h1>Leadership Team</h1>
@@ -124,7 +212,7 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 
 <div class="org">
 
-<!-- 🔥 LEVEL 1 -->
+<!-- CMD -->
 <div class="level">
 <div class="card">
 <div class="avatar">AP</div>
@@ -134,7 +222,7 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 </div>
 </div>
 
-<!-- 🔥 LEVEL 2 -->
+<!-- COO + Director -->
 <div class="level">
 <div class="level-line"></div>
 
@@ -154,7 +242,7 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 
 </div>
 
-<!-- 🔥 LEVEL 3 -->
+<!-- HEADS -->
 <div class="level">
 <div class="level-line"></div>
 
@@ -188,7 +276,7 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 
 </div>
 
-<!-- 🔥 LEVEL 4 -->
+<!-- SPECIALISTS -->
 <div class="level">
 <div class="level-line"></div>
 
@@ -211,6 +299,11 @@ background:linear-gradient(135deg,#3b82f6,#6366f1);
 </div>
 
 </div>
+
+<!-- 🔥 FOOTER -->
+<footer>
+© 2025 Varada Nexus Private Limited
+</footer>
 
 </body>
 </html>

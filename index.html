@@ -436,6 +436,51 @@ transition:0.3s;
 transform:translateY(-2px);
 box-shadow:0 10px 30px rgba(99,102,241,0.6);
 }
+
+/* 🔥 STATS SECTION */
+.stats-section{
+max-width:1100px;
+margin:120px auto;
+text-align:center;
+padding:40px 20px;
+}
+
+.stats-grid{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:40px;
+margin-top:40px;
+}
+
+.stat-box{
+text-align:center;
+background:rgba(255,255,255,0.04);
+padding:30px 40px;
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+transition:0.3s;
+}
+
+.stat-box:hover{
+transform:translateY(-8px);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+.stat-number{
+font-size:38px;
+font-weight:700;
+background:linear-gradient(90deg,#fff,#60a5fa);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.stat-label{
+margin-top:8px;
+font-size:13px;
+color:#94a3b8;
+}
     
 </style>
     
@@ -680,6 +725,40 @@ Our execution framework ensures structured delivery across all projects.
 
 </section>
 
+<!-- 🔥 STATS (SCALE PROOF) -->
+<section class="stats-section fade-up">
+
+<h2>Our Scale</h2>
+<p style="color:#cbd5f5;max-width:700px;margin:auto;">
+Real operations, real infrastructure, and measurable execution across industries.
+</p>
+
+<div class="stats-grid">
+
+<div class="stat-box">
+<div class="stat-number" data-target="50">0</div>
+<div class="stat-label">Fleet Strength (Trucks)</div>
+</div>
+
+<div class="stat-box">
+<div class="stat-number" data-target="55">0</div>
+<div class="stat-label">Projects Executed</div>
+</div>
+
+<div class="stat-box">
+<div class="stat-number" data-target="5">0</div>
+<div class="stat-label">Industries Operated</div>
+</div>
+
+<div class="stat-box">
+<div class="stat-number" data-target="100">0</div>
+<div class="stat-label">Execution Focus (%)</div>
+</div>
+
+</div>
+
+</section>
+    
 <!-- 🔥 FINAL CTA -->
 <section class="cta fade-up">
 <h2>Build, Operate, and Scale with Confidence</h2>
@@ -733,6 +812,45 @@ header.classList.add("shrink");
 header.classList.remove("shrink");
 }
 });
+
+<script>
+
+/* 🔥 COUNT-UP ANIMATION */
+function animateCounters(){
+document.querySelectorAll(".stat-number").forEach(el=>{
+let target = +el.getAttribute("data-target");
+let count = 0;
+
+let speed = target / 50;
+
+let update = ()=>{
+count += speed;
+if(count < target){
+el.innerText = Math.floor(count);
+requestAnimationFrame(update);
+}else{
+el.innerText = target + "+";
+}
+};
+
+update();
+});
+}
+
+const statsObserver = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+animateCounters();
+}
+});
+});
+
+document.querySelectorAll(".stats-section").forEach(el=>{
+statsObserver.observe(el);
+});
+
+</script>
+    
 </script>
     
 </body>

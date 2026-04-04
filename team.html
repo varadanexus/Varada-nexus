@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,37 +12,86 @@
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-background:radial-gradient(circle at top,#1e3a8a,#020617);
+background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
 color:white;
 }
 
-/* 🔥 NAVBAR */
+@keyframes gradientBG{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 NAVBAR (MATCH FOUNDER PAGE) */
 header{
 position:sticky;
 top:0;
-background:rgba(10,15,30,0.6);
+z-index:1000;
+background:rgba(10,15,30,0.55);
 backdrop-filter:blur(20px);
 border-bottom:1px solid rgba(255,255,255,0.08);
+transition:0.3s;
 }
 
 .nav-container{
 max-width:1200px;
 margin:auto;
 display:flex;
+align-items:center;
 justify-content:space-between;
 padding:14px 20px;
 }
 
-.nav-links a{
-color:#cbd5f5;
-margin-left:20px;
-text-decoration:none;
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+height:48px;
 }
 
-/* 🔥 HERO */
+.logo{
+height:100%;
+max-height:48px;
+}
+
+.brand-block{
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
+.brand-name{
+font-size:19px;
+font-weight:600;
+}
+
+.brand-sub{
+font-size:10px;
+color:#94a3b8;
+}
+
+.nav-links{
+display:flex;
+gap:28px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+color:white;
+}
+
+/* 🔥 PAGE */
 .container{
 max-width:1200px;
-margin:60px auto;
+margin:80px auto;
 padding:0 20px;
 text-align:center;
 }
@@ -52,10 +102,10 @@ font-size:34px;
 
 .sub{
 color:#94a3b8;
-margin-bottom:60px;
+margin-bottom:70px;
 }
 
-/* 🔥 ORG */
+/* 🔥 ORG STRUCTURE */
 .org{
 display:flex;
 flex-direction:column;
@@ -63,16 +113,14 @@ align-items:center;
 gap:90px;
 }
 
-/* LEVEL */
 .level{
 display:flex;
-gap:60px;
 justify-content:center;
+gap:60px;
 position:relative;
 flex-wrap:wrap;
 }
 
-/* CONNECTORS */
 .level::before{
 content:"";
 position:absolute;
@@ -84,7 +132,9 @@ left:50%;
 transform:translateX(-50%);
 }
 
-.level:first-child::before{display:none;}
+.level:first-child::before{
+display:none;
+}
 
 .level-line{
 position:absolute;
@@ -97,14 +147,14 @@ background:rgba(255,255,255,0.2);
 
 /* 🔥 CARD */
 .card{
-background:rgba(15,23,42,0.75);
+background:rgba(15,23,42,0.7);
+border:1px solid rgba(255,255,255,0.08);
 padding:22px;
 border-radius:16px;
 width:210px;
 cursor:pointer;
 transition:0.4s;
 backdrop-filter:blur(14px);
-border:1px solid rgba(255,255,255,0.08);
 }
 
 .card:hover{
@@ -112,7 +162,7 @@ transform:translateY(-10px) scale(1.03);
 box-shadow:0 25px 80px rgba(0,0,0,0.8);
 }
 
-/* CMD SPECIAL */
+/* CMD HIGHLIGHT */
 .card.cmd{
 transform:scale(1.15);
 box-shadow:0 30px 120px rgba(59,130,246,0.3);
@@ -171,23 +221,46 @@ padding:40px;
 color:#94a3b8;
 }
 
+/* MOBILE */
+@media(max-width:768px){
+.level{
+gap:20px;
+}
+.card{
+width:90%;
+}
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- 🔥 NAVBAR -->
 <header>
 <div class="nav-container">
-<div>Varada Nexus</div>
+
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-block">
+<span class="brand-name">Varada Nexus</span>
+<span class="brand-sub">Private Limited</span>
+</div>
+</div>
+
 <nav class="nav-links">
 <a href="index.html">Home</a>
 <a href="founder.html">Founder</a>
 <a href="services.html">Services</a>
-<a href="team.html" style="color:white;">Team</a>
+<a href="team.html" class="active">Team</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Login</a>
 </nav>
+
 </div>
 </header>
 
+<!-- 🔥 CONTENT -->
 <div class="container">
 
 <h1>Leadership Team</h1>
@@ -197,10 +270,10 @@ color:#94a3b8;
 
 <!-- CMD -->
 <div class="level">
-<div class="card cmd" onclick="openModal('Dr. Althi Prudhvi','Chairman & Managing Director','Leads multi-sector execution and enterprise strategy.')">
+<div class="card cmd" onclick="openModal('Dr. Althi Prudhvi','CMD','Leads multi-sector execution and enterprise strategy.')">
 <div class="avatar">AP</div>
 <div class="name">Dr. Althi Prudhvi</div>
-<div class="role">CMD</div>
+<div class="role">Chairman & Managing Director</div>
 <div class="desc">Enterprise leadership</div>
 </div>
 </div>
@@ -209,16 +282,16 @@ color:#94a3b8;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Boddu Jaswanth','COO','Oversees logistics and operational execution.')">
+<div class="card" onclick="openModal('Boddu Jaswanth','COO','Oversees logistics and operations.')">
 <div class="avatar">BJ</div>
 <div class="name">Boddu Jaswanth</div>
 <div class="role">COO</div>
 </div>
 
-<div class="card" onclick="openModal('Althi Suresh','Director & Legal','Handles legal governance and compliance.')">
+<div class="card" onclick="openModal('Althi Suresh','Director','Handles legal governance.')">
 <div class="avatar">AS</div>
 <div class="name">Althi Suresh</div>
-<div class="role">Director</div>
+<div class="role">Director & Legal</div>
 </div>
 
 </div>
@@ -227,28 +300,28 @@ color:#94a3b8;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Koti Eswar','Technical Head','Leads infrastructure systems.')">
+<div class="card" onclick="openModal('Koti Eswar','Technical Head','Infrastructure systems leader.')">
 <div class="avatar">KE</div>
 <div class="name">Koti Eswar</div>
-<div class="role">Technical</div>
+<div class="role">Technical Head</div>
 </div>
 
-<div class="card" onclick="openModal('Inapakolla Ganesh','Marketing Head','Drives growth and branding.')">
+<div class="card" onclick="openModal('Inapakolla Ganesh','Marketing Head','Growth and branding.')">
 <div class="avatar">IG</div>
-<div class="name">Ganesh</div>
-<div class="role">Marketing</div>
+<div class="name">Inapakolla Ganesh</div>
+<div class="role">Marketing Head</div>
 </div>
 
-<div class="card" onclick="openModal('Abhiram Chandra','HR Head','Manages people and culture.')">
+<div class="card" onclick="openModal('Abhiram Chandra','HR Head','People & organization.')">
 <div class="avatar">PAC</div>
-<div class="name">Abhiram</div>
-<div class="role">HR</div>
+<div class="name">Abhiram Chandra</div>
+<div class="role">HR Head</div>
 </div>
 
-<div class="card" onclick="openModal('Chandra Kaladhar','Strategy Head','Leads expansion and mining strategy.')">
+<div class="card" onclick="openModal('Chandra Kaladhar','Strategy Head','Expansion & mining strategy.')">
 <div class="avatar">YCK</div>
-<div class="name">Kaladhar</div>
-<div class="role">Strategy</div>
+<div class="name">Chandra Kaladhar</div>
+<div class="role">Strategy & Growth</div>
 </div>
 
 </div>
@@ -257,13 +330,13 @@ color:#94a3b8;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Sai Kiran Varma','Architect','Designs infrastructure systems.')">
+<div class="card" onclick="openModal('Sai Kiran Varma','Architect','Infrastructure design.')">
 <div class="avatar">SKV</div>
-<div class="name">Sai Kiran</div>
+<div class="name">Sai Kiran Varma</div>
 <div class="role">Architect</div>
 </div>
 
-<div class="card" onclick="openModal('Hari Krishna','Geologist','Handles resource evaluation.')">
+<div class="card" onclick="openModal('Hari Krishna','Geologist','Resource evaluation.')">
 <div class="avatar">PHK</div>
 <div class="name">Hari Krishna</div>
 <div class="role">Geologist</div>

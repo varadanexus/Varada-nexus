@@ -287,9 +287,16 @@ height:100%;
 object-fit:cover;
 }
 
-body.modal-open .card{
-filter:blur(3px);
-opacity:0.5;
+/* Blur everything EXCEPT CMD */
+body.modal-open .card:not(.cmd){
+  filter:blur(3px);
+  opacity:0.4;
+}
+
+/* Keep CMD sharp */
+body.modal-open .card.cmd{
+  filter:none !important;
+  opacity:1 !important;
 }
   
 .close{
@@ -594,8 +601,8 @@ if(img){
 
 function closeModal(){
 document.getElementById("modal").style.display="none";
-}
 document.body.classList.remove("modal-open");
+}
 window.onclick = function(e){
   let modal = document.getElementById("modal");
   if(e.target === modal){

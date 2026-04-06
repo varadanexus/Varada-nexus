@@ -268,10 +268,13 @@ will-change: transform, width, height, top, left;
 }
 
 /* Hide background cleanly */
+.org{
+transition:opacity 0.35s ease;
+}
+
 body.modal-open .org{
-opacity:0;
+opacity:0.15;
 pointer-events:none;
-transition:0.25s ease;
 }
   
 .close{
@@ -559,6 +562,8 @@ clone.style.left = rect.left + "px";
 clone.style.width = rect.width + "px";
 clone.style.height = rect.height + "px";
 clone.style.boxSizing = "border-box";
+clone.style.transform = "translateZ(0)";
+clone.style.backfaceVisibility = "hidden";
 
 document.body.appendChild(clone);
 activeClone = clone;
@@ -575,7 +580,6 @@ requestAnimationFrame(()=>{
   clone.style.left = "50%";
   clone.style.transform = "translate(-50%, -50%) scale(1)";
   clone.style.width = "340px";
-  clone.style.height = "420px";
   clone.style.borderRadius = "20px";
 });
 
@@ -602,7 +606,7 @@ clone.innerHTML = `
 </div>
 `;
 
-},380);
+},480);
 }
 
 
@@ -615,8 +619,7 @@ if(activeClone && activeCard){
   activeClone.style.top = rect.top + "px";
   activeClone.style.left = rect.left + "px";
   activeClone.style.width = rect.width + "px";
-  activeClone.style.height = rect.height + "px";
-  activeClone.style.transform = "translate(0,0) scale(1)";
+  activeClone.style.transform = "none";
   activeClone.style.borderRadius = "18px";
 
   setTimeout(()=>{

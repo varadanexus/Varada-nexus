@@ -730,8 +730,8 @@ card.style.height = rect.height + "px";
 
 card.classList.add("morphing");
 card.style.pointerEvents = "auto";
-card.dataset.originalParent = card.parentElement;
-card.dataset.originalNext = card.nextElementSibling;
+card._originalParent = card.parentElement;
+card._originalNext = card.nextElementSibling;
 document.body.appendChild(card);
 
 requestAnimationFrame(()=>{
@@ -751,7 +751,7 @@ setTimeout(()=>{
     <h3>${name}</h3>
     <p class="m-role">${role}</p>
     <p class="m-desc">${desc}</p>
-    <div class="close" onclick="closeModal()">Close</div>
+    <div class="close" onclick="closeModal(event)">Close</div>
   `;
 
 },350);
@@ -785,14 +785,14 @@ setTimeout(()=>{
   card.style.height = card.dataset.height + "px";
 
   /* 🔥 FIX PARENT RESTORE (CRITICAL BUG) */
-  let parent = card.dataset.originalParent;
-  let next = card.dataset.originalNext;
+  let parent = card._originalParent;
+let next = card._originalNext;
 
-  if(next && next !== "null"){
-    parent.insertBefore(card, document.querySelector(`[data-id="${next}"]`) || null);
-  } else {
-    parent.appendChild(card);
-  }
+if(next){
+  parent.insertBefore(card, next);
+}else{
+  parent.appendChild(card);
+}
 
   /* CLEANUP */
   card.classList.remove("morphing");

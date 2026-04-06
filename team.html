@@ -155,7 +155,9 @@ overflow:hidden;
 /* HOVER SAFE */
 .card:hover{
 transform:translateY(-6px);
-box-shadow:0 40px 120px rgba(0,0,0,0.9);
+box-shadow:
+0 30px 100px rgba(0,0,0,0.9),
+0 0 25px rgba(59,130,246,0.15); /* 🔥 soft glow */
 }
 
 /* CLICK FIX */
@@ -212,7 +214,8 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.7);
+background:rgba(0,0,0,0.6);
+backdrop-filter:blur(8px); /* 🔥 ADD THIS */
 display:none;
 align-items:center;
 justify-content:center;
@@ -538,6 +541,14 @@ if(img){
 function closeModal(){
 document.getElementById("modal").style.display="none";
 }
+
+window.onclick = function(e){
+  let modal = document.getElementById("modal");
+  if(e.target === modal){
+    closeModal();
+  }
+}
+  
 </script>
 
 </body>

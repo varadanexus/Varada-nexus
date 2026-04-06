@@ -615,34 +615,40 @@ operational control, and on-ground experience across industries.
   
 <script>
 function openModal(name, role, desc, img, initials){
-document.body.style.overflow = "hidden";
-// reset transforms
-document.querySelectorAll(".card").forEach(c=>{
-  c.style.transform="none";
-});
+
+try {
+
+// safer reset
+let cards = document.querySelectorAll(".card");
+if(cards){
+  cards.forEach(c=>{
+    c.style.transform="none";
+  });
+}
 
 let modal = document.getElementById("modal");
-let content = document.querySelector(".modal-content");
-
-// FORCE animation reset
-content.style.animation = "none";
-content.offsetHeight; // 🔥 trigger reflow
-content.style.animation = "slideUp 0.35s ease forwards";
+if(!modal) return;
 
 document.body.classList.add("modal-open");
-modal.style.display="flex";
+modal.style.display = "flex";
 
-document.getElementById("m-name").innerText=name;
-document.getElementById("m-role").innerText=role;
-document.getElementById("m-desc").innerText=desc;
+// set content
+document.getElementById("m-name").innerText = name;
+document.getElementById("m-role").innerText = role;
+document.getElementById("m-desc").innerText = desc;
 
-let avatar=document.getElementById("m-img");
+let avatar = document.getElementById("m-img");
 
 if(img){
-  avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
+  avatar.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
 }else{
-  avatar.innerHTML=initials || '';
+  avatar.innerHTML = initials || '';
 }
+
+} catch(e){
+console.error("Modal error:", e);
+}
+
 }
 
 function closeModal(){
@@ -656,6 +662,10 @@ window.onclick = function(e){
     closeModal();
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("JS Loaded ✅");
+});
   
 </script>
 

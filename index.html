@@ -38,16 +38,44 @@
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-background:linear-gradient(-45deg,#0f172a,#1e3a8a,#0ea5e9,#020617);
+background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
 background-size:400% 400%;
-animation:gradientBG 12s ease infinite;
+animation:bg 12s ease infinite;
+position:relative;
+overflow-x:hidden;
 color:white;
 }
 
-@keyframes gradientBG{
+@keyframes bg{
 0%{background-position:0% 50%}
 50%{background-position:100% 50%}
 100%{background-position:0% 50%}
+}
+
+body::before{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+background:radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
+top:-150px;
+left:50%;
+transform:translateX(-50%);
+filter:blur(140px);
+z-index:-1;
+}
+
+.hero::before{
+content:"";
+position:absolute;
+width:500px;
+height:500px;
+background:radial-gradient(circle, rgba(59,130,246,0.2), transparent 70%);
+top:-100px;
+left:50%;
+transform:translateX(-50%);
+filter:blur(100px);
+z-index:-1;
 }
     
 header{
@@ -386,7 +414,11 @@ transition:0.3s;
 }
 
 .card{
-background:rgba(15,23,42,0.75);
+background:linear-gradient(
+160deg,
+rgba(255,255,255,0.05),
+rgba(15,23,42,0.9)
+);
 border:1px solid rgba(255,255,255,0.08);
 padding:22px;
 border-radius:16px;

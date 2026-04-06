@@ -708,36 +708,35 @@ operational control, and on-ground experience across industries.
 </footer>
   
 <script>
+
+  
 function openModal(name, role, desc, img, initials){
 
 let card = event.currentTarget;
+card.dataset.original = card.innerHTML;
 let rect = card.getBoundingClientRect();
 
-/* SAVE ORIGINAL POSITION */
 card.dataset.top = rect.top;
 card.dataset.left = rect.left;
 card.dataset.width = rect.width;
 card.dataset.height = rect.height;
 
-/* LOCK POSITION */
 card.style.top = rect.top + "px";
 card.style.left = rect.left + "px";
 card.style.width = rect.width + "px";
 card.style.height = rect.height + "px";
 
-/* ACTIVATE MORPH */
 card.classList.add("morphing");
+card.dataset.originalParent = card.parentElement;
+card.dataset.originalNext = card.nextElementSibling;
 document.body.appendChild(card);
 
-/* FORCE repaint */
 card.getBoundingClientRect();
 
-/* MOVE TO CENTER */
 setTimeout(()=>{
   card.classList.add("active");
 },10);
 
-/* AFTER EXPAND → LOAD CONTENT */
 setTimeout(()=>{
 
   card.innerHTML = `
@@ -758,27 +757,54 @@ setTimeout(()=>{
 document.body.classList.add("modal-open");
 
 }
+
+
 function closeModal(){
 
 let card = document.querySelector(".card.morphing");
 
-/* RESTORE ORIGINAL CONTENT (IMPORTANT) */
-location.reload(); // clean reset (fast + safe)
+/* REMOVE ACTIVE STATE (go back animation) */
+card.classList.remove("active");
 
-/* OPTIONAL advanced version without reload → tell me */
+/* WAIT FOR ANIMATION */
+setTimeout(()=>{
+
+  /* RESTORE ORIGINAL CONTENT */
+  card.innerHTML = card.dataset.original;
+
+  /* RESTORE POSITION */
+  card.style.top = card.dataset.top + "px";
+  card.style.left = card.dataset.left + "px";
+  card.style.width = card.dataset.width + "px";
+  card.style.height = card.dataset.height + "px";
+
+  /* MOVE BACK TO ORIGINAL FLOW */
+let parent = card.dataset.originalParent;
+
+if(card.dataset.originalNext){
+  parent.insertBefore(card, card.dataset.originalNext);
+}else{
+  parent.appendChild(card);
 }
+
+  /* CLEANUP */
+  card.classList.remove("morphing");
+  card.removeAttribute("style");
+
+},400);
+
+/* REMOVE BLUR */
+document.body.classList.remove("modal-open");
+
+}
+
+  
 window.addEventListener("scroll", ()=>{
-
 let scrollY = window.scrollY;
-
-/* background glow moves slower */
 document.body.style.backgroundPosition = `0% ${scrollY * 0.02}px`;
-
-/* floating radial */
 let glow = document.querySelector("body::before");
-
 });
-
+  
 document.querySelectorAll(".card").forEach(card=>{
 card.addEventListener("mousemove",(e)=>{
 let rect = card.getBoundingClientRect();

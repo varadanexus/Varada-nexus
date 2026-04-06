@@ -495,7 +495,13 @@ width:90%;
 
 <!-- CMD -->
 <div class="level">
-<div class="card cmd" onclick="openModal('Dr. Althi Prudhvi','CMD','Leads multi-sector execution and enterprise strategy.')">
+<div class="card cmd" onclick="openModal(
+'Dr. Althi Prudhvi',
+'Chairman & Managing Director',
+'Leads multi-sector execution and enterprise strategy.',
+'images/team/prudhvi.jpg',
+'AP'
+)">
 <div class="avatar">
   <img src="images/team/prudhvi.jpg" onerror="this.parentElement.innerHTML='AP'">
 </div>
@@ -509,7 +515,13 @@ width:90%;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Boddu Jaswanth','COO','Oversees logistics and operations.')">
+<div class="card" onclick="openModal(
+'Boddu Jaswanth',
+'COO',
+'Oversees logistics and operations.',
+'images/team/jaswanth.jpg',
+'BJ'
+)">
 <div class="avatar">
   <img src="images/team/jaswanth.jpg" onerror="this.parentElement.innerHTML='BJ'">
 </div>
@@ -517,7 +529,13 @@ width:90%;
 <div class="role">COO</div>
 </div>
 
-<div class="card" onclick="openModal('Althi Suresh','Director','Handles legal governance.')">
+<div class="card" onclick="openModal(
+'Althi Suresh',
+'Director & Legal',
+'Handles legal governance.',
+'images/team/suresh.jpg',
+'AS'
+)">
 <div class="avatar">
   <img src="images/team/suresh.jpg" onerror="this.parentElement.innerHTML='AS'">
 </div>
@@ -531,19 +549,36 @@ width:90%;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Koti Eswar','Technical Head','Infrastructure systems leader.')">
+<div class="card" onclick="openModal(
+'B. Koti Eswar',
+'Technical Head',
+'Infrastructure systems leader.',
+'',
+'KE'
+)">
 <div class="avatar">KE</div>
 <div class="name">B.Koti Eswar</div>
 <div class="role">Technical Head</div>
 </div>
 
-<div class="card" onclick="openModal('Inapakolla Ganesh','Marketing Head','Growth and branding.')">
+<div class="card" onclick="openModal(
+'Inapakolla Ganesh',
+'Marketing Head',
+'Growth and branding.',
+'',
+'IG'
+)">
 <div class="avatar">IG</div>
 <div class="name">Inapakolla Ganesh</div>
 <div class="role">Marketing Head</div>
 </div>
 
-<div class="card" onclick="openModal('Abhiram Chandra','HR Head','People & organization.')">
+<div class="card" onclick="openModal(
+'P. Abhiram Chandra',
+'HR Head',
+'Leads people and organizational systems.',
+'images/team/abhiram.jpg',
+'PAC'
 <div class="avatar">
   <img src="images/team/abhiram.jpg" onerror="this.parentElement.innerHTML='PAC'">
 </div>
@@ -551,7 +586,13 @@ width:90%;
 <div class="role">HR Head</div>
 </div>
 
-<div class="card" onclick="openModal('Chandra Kaladhar','Strategy Head','Expansion & mining strategy.')">
+<div class="card" onclick="openModal(
+'Y. Chandra Kaladhar',
+'Strategy & Growth',
+'Expansion & mining strategy.',
+'images/team/kaladhar.jpg',
+'YCK'
+)">
 <div class="avatar">
   <img src="images/team/kaladhar.jpg" onerror="this.parentElement.innerHTML='YCK'">
 </div>
@@ -565,7 +606,13 @@ width:90%;
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal('Sai Kiran Varma','Architect','Infrastructure design.')">
+<div class="card" onclick="openModal(
+'K. Sai Kiran Varma',
+'Architect',
+'Infrastructure design.',
+'images/team/saikiran.jpg',
+'SKV'
+)">
 <div class="avatar">
   <img src="images/team/saikiran.jpg" onerror="this.parentElement.innerHTML='SKV'">
 </div>
@@ -573,7 +620,13 @@ width:90%;
 <div class="role">Architect</div>
 </div>
 
-<div class="card" onclick="openModal('Hari Krishna','Geologist','Resource evaluation.')">
+<div class="card" onclick="openModal(
+'P. Hari Krishna',
+'Geologist',
+'Resource evaluation.',
+'images/team/hari.jpg',
+'PHK'
+)">
 <div class="avatar">
   <img src="images/team/hari.jpg" onerror="this.parentElement.innerHTML='PHK'">
 </div>
@@ -613,12 +666,14 @@ document.getElementById("m-name").innerText = name;
 document.getElementById("m-role").innerText = role;
 document.getElementById("m-desc").innerText = desc;
 
-/* IMAGE LOGIC */
 let avatar = document.getElementById("m-img");
 
-avatar.innerHTML = `
-  <img src="${img}" onerror="this.parentElement.innerHTML='${initials}'">
-`;
+/* SAFE FALLBACK */
+if(img){
+  avatar.innerHTML = `<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
+}else{
+  avatar.innerHTML = initials || '';
+}
 }
 
 function closeModal(){

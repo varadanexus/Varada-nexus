@@ -234,24 +234,6 @@ transform:translateY(-2px);
 box-shadow:0 10px 40px rgba(0,0,0,0.5);
 }
     
-/* 🔥 GLASS CARD CONTENT */
-.content{
-max-width:1100px;
-margin:80px auto;
-padding:50px;
-
-background:rgba(255,255,255,0.06);
-backdrop-filter:blur(30px);
-
-border-radius:24px;
-border:1px solid rgba(255,255,255,0.12);
-
-box-shadow:
-0 40px 120px rgba(0,0,0,0.8),
-inset 0 1px 0 rgba(255,255,255,0.15);
-
-transition:all 0.5s cubic-bezier(0.22,1,0.36,1);
-}
 
 /* 🔥 LIGHT SWEEP */
 .content::before{
@@ -897,8 +879,6 @@ with a focus on execution, scalability, and real-world impact.
 
 </section>
 
-<div class="section-divider"></div>
-
 <!-- 🔥 FOUNDER MESSAGE (VERY HIGH-END SECTION) -->
 <section id="message" class="content fade-up">
 
@@ -927,7 +907,7 @@ Today, we operate across multiple sectors, integrating expertise, infrastructure
 
 </section>
 
-<div class="section-divider"></div>
+
     
 <!-- 🔥 CORE EXECUTION MODEL -->
 <section class="content fade-up">
@@ -947,7 +927,7 @@ Varada Nexus operates on a structured execution model — combining strategy, in
 
 </section>
 
-<div class="section-divider"></div>
+
     
 <!-- 🔥 LEADERSHIP EDGE -->
 <section class="content fade-up">
@@ -965,7 +945,7 @@ This enables the company to execute projects end-to-end — from concept to deli
 
 </section>
 
-<div class="section-divider"></div>
+
     
 <!-- 🔥 SCALE & OPERATIONS -->
 <section class="content fade-up">
@@ -981,7 +961,7 @@ This enables the company to execute projects end-to-end — from concept to deli
 
 </section>
 
-<div class="section-divider"></div>
+
     
 <!-- 🔥 GROWTH TIMELINE -->
 <section class="content fade-up">
@@ -997,7 +977,7 @@ This enables the company to execute projects end-to-end — from concept to deli
 
 </section>
 
-<div class="section-divider"></div>
+
     
 <!-- 🔥 VISION -->
 <section class="content fade-up">
@@ -1016,7 +996,6 @@ bridging the gap between planning and real-world delivery.
 
 </section>
 
-<div class="section-divider"></div>
     
 <!-- 🔥 FINAL AUTHORITY CLOSE -->
 <section class="cta fade-up">
@@ -1132,6 +1111,56 @@ let translateY = scrollY * 0.25;
 bg.style.transform = `translateY(${translateY}px) scale(1.05)`;
 bg.style.filter = `blur(${blur}px) brightness(${brightness})`;
 
+});
+
+/* 🔥 APPLE SCROLL STACKING */
+
+main{
+position:relative;
+}
+
+/* Each section behaves like a layer */
+.content{
+position:sticky;
+top:120px; /* distance from top */
+z-index:1;
+}
+
+/* Progressive stacking depth */
+.content:nth-of-type(1){ z-index:2; }
+.content:nth-of-type(2){ z-index:3; }
+.content:nth-of-type(3){ z-index:4; }
+.content:nth-of-type(4){ z-index:5; }
+.content:nth-of-type(5){ z-index:6; }
+.content:nth-of-type(6){ z-index:7; }
+
+/* Smooth scale effect (Apple feel) */
+.content{
+transform-origin:center top;
+transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Slight shrink when stacked */
+.content.stacked{
+transform:scale(0.96);
+}
+
+// 🔥 APPLE STACK EFFECT
+const cards = document.querySelectorAll(".content");
+
+window.addEventListener("scroll", () => {
+cards.forEach((card, index) => {
+
+const rect = card.getBoundingClientRect();
+
+// when card reaches top zone → shrink previous
+if(rect.top < 140){
+card.classList.add("stacked");
+}else{
+card.classList.remove("stacked");
+}
+
+});
 });
     
 </script>

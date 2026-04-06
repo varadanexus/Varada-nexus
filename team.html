@@ -221,6 +221,29 @@ box-shadow:
 0 0 25px rgba(59,130,246,0.15); /* 🔥 soft glow */
 }
 
+/* 🔥 ACTIVE MORPH CARD */
+.card.morphing{
+position:fixed;
+z-index:10000;
+margin:0;
+transition:all 0.45s cubic-bezier(.22,1,.36,1);
+}
+
+/* FINAL STATE */
+.card.morphing.active{
+top:50% !important;
+left:50% !important;
+width:320px !important;
+transform:translate(-50%, -50%) scale(1) !important;
+border-radius:20px;
+box-shadow:0 40px 120px rgba(0,0,0,0.9);
+}
+
+/* hide original content during morph */
+.card.morphing .tags{
+opacity:0;
+}
+
 /* CLICK FIX */
 .card:active{
 transform:none !important;
@@ -690,71 +713,60 @@ function openModal(name, role, desc, img, initials){
 let card = event.currentTarget;
 let rect = card.getBoundingClientRect();
 
-/* 🔥 CREATE MORPH ELEMENT */
-let morph = document.createElement("div");
-morph.className = "morph-card";
+/* SAVE ORIGINAL POSITION */
+card.dataset.top = rect.top;
+card.dataset.left = rect.left;
+card.dataset.width = rect.width;
+card.dataset.height = rect.height;
 
-/* COPY POSITION */
-morph.style.top = rect.top + "px";
-morph.style.left = rect.left + "px";
-morph.style.width = rect.width + "px";
-morph.style.height = rect.height + "px";
+/* LOCK POSITION */
+card.style.top = rect.top + "px";
+card.style.left = rect.left + "px";
+card.style.width = rect.width + "px";
+card.style.height = rect.height + "px";
 
-/* COPY CONTENT */
-morph.innerHTML = card.innerHTML;
+/* ACTIVATE MORPH */
+card.classList.add("morphing");
+document.body.appendChild(card);
 
-document.body.appendChild(morph);
+/* FORCE repaint */
+card.getBoundingClientRect();
 
-/* BLUR BACKGROUND */
+/* MOVE TO CENTER */
+setTimeout(()=>{
+  card.classList.add("active");
+},10);
+
+/* AFTER EXPAND → LOAD CONTENT */
+setTimeout(()=>{
+
+  card.innerHTML = `
+    <div class="modal-avatar">
+      ${img 
+        ? `<img src="${img}">` 
+        : initials}
+    </div>
+    <h3>${name}</h3>
+    <p class="m-role">${role}</p>
+    <p class="m-desc">${desc}</p>
+    <div class="close" onclick="closeModal()">Close</div>
+  `;
+
+},350);
+
+/* blur background */
 document.body.classList.add("modal-open");
 
-/* FORCE REPAINT */
-morph.getBoundingClientRect();
-
-/* ANIMATE TO CENTER */
-setTimeout(()=>{
-  morph.classList.add("morph-active");
-},10);
-
-/* AFTER ANIMATION → SHOW REAL MODAL */
-setTimeout(()=>{
-
-  let modal = document.getElementById("modal");
-modal.style.display="flex";
-
-setTimeout(()=>{
-  modal.classList.add("show");
-},10);
-
-  document.getElementById("m-name").innerText=name;
-  document.getElementById("m-role").innerText=role;
-  document.getElementById("m-desc").innerText=desc;
-
-  let avatar=document.getElementById("m-img");
-
-  if(img){
-    avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
-  }else{
-    avatar.innerHTML=initials || '';
-  }
-
-  morph.remove();
-
-},400);
 }
-
 function closeModal(){
-let modal = document.getElementById("modal");
 
-modal.classList.remove("show");
+let card = document.querySelector(".card.morphing");
 
-setTimeout(()=>{
-  modal.style.display="none";
-},200);
+/* RESTORE ORIGINAL CONTENT (IMPORTANT) */
+location.reload(); // clean reset (fast + safe)
 
-document.body.classList.remove("modal-open");
+/* OPTIONAL advanced version without reload → tell me */
 }
-
 window.addEventListener("scroll", ()=>{
 
 let scrollY = window.scrollY;

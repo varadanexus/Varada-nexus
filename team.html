@@ -285,6 +285,28 @@ opacity:1;
 }
 }
 
+/* 🔥 MORPH ELEMENT */
+.morph-card{
+position:fixed;
+z-index:10000;
+border-radius:18px;
+background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
+box-shadow:0 40px 120px rgba(0,0,0,0.9);
+transition:all 0.4s cubic-bezier(.22,1,.36,1);
+overflow:hidden;
+pointer-events:none;
+}
+
+/* FINAL STATE */
+.morph-active{
+top:50% !important;
+left:50% !important;
+width:320px !important;
+height:auto !important;
+transform:translate(-50%,-50%) scale(1) !important;
+border-radius:20px !important;
+}
+  
 .modal-avatar{
 width:120px;
 height:120px;
@@ -592,24 +614,55 @@ operational control, and on-ground experience across industries.
 <script>
 function openModal(name, role, desc, img, initials){
 
-// 🔥 CLEAN RESET
-document.querySelectorAll(".card").forEach(c=>{
-  c.style.transform="none";
-});
+let card = event.currentTarget;
+let rect = card.getBoundingClientRect();
+
+/* 🔥 CREATE MORPH ELEMENT */
+let morph = document.createElement("div");
+morph.className = "morph-card";
+
+/* COPY POSITION */
+morph.style.top = rect.top + "px";
+morph.style.left = rect.left + "px";
+morph.style.width = rect.width + "px";
+morph.style.height = rect.height + "px";
+
+/* COPY CONTENT */
+morph.innerHTML = card.innerHTML;
+
+document.body.appendChild(morph);
+
+/* BLUR BACKGROUND */
 document.body.classList.add("modal-open");
-document.getElementById("modal").style.display="flex";
 
-document.getElementById("m-name").innerText=name;
-document.getElementById("m-role").innerText=role;
-document.getElementById("m-desc").innerText=desc;
+/* FORCE REPAINT */
+morph.getBoundingClientRect();
 
-let avatar=document.getElementById("m-img");
+/* ANIMATE TO CENTER */
+setTimeout(()=>{
+  morph.classList.add("morph-active");
+},10);
 
-if(img){
-  avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
-}else{
-  avatar.innerHTML=initials || '';
-}
+/* AFTER ANIMATION → SHOW REAL MODAL */
+setTimeout(()=>{
+
+  document.getElementById("modal").style.display="flex";
+
+  document.getElementById("m-name").innerText=name;
+  document.getElementById("m-role").innerText=role;
+  document.getElementById("m-desc").innerText=desc;
+
+  let avatar=document.getElementById("m-img");
+
+  if(img){
+    avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
+  }else{
+    avatar.innerHTML=initials || '';
+  }
+
+  morph.remove();
+
+},400);
 }
 
 function closeModal(){

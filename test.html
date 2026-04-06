@@ -287,7 +287,7 @@ backdrop-filter:blur(10px);
 display:none;
 align-items:center;
 justify-content:center;
-z-index:9999;
+z-index:99999;
 }
 
 .modal-content{
@@ -615,13 +615,22 @@ operational control, and on-ground experience across industries.
   
 <script>
 function openModal(name, role, desc, img, initials){
-
-// 🔥 CLEAN RESET
+document.body.style.overflow = "hidden";
+// reset transforms
 document.querySelectorAll(".card").forEach(c=>{
   c.style.transform="none";
 });
+
+let modal = document.getElementById("modal");
+let content = document.querySelector(".modal-content");
+
+// FORCE animation reset
+content.style.animation = "none";
+content.offsetHeight; // 🔥 trigger reflow
+content.style.animation = "slideUp 0.35s ease forwards";
+
 document.body.classList.add("modal-open");
-document.getElementById("modal").style.display="flex";
+modal.style.display="flex";
 
 document.getElementById("m-name").innerText=name;
 document.getElementById("m-role").innerText=role;
@@ -637,6 +646,7 @@ if(img){
 }
 
 function closeModal(){
+document.body.style.overflow = "auto";
 document.getElementById("modal").style.display="none";
 document.body.classList.remove("modal-open");
 }

@@ -170,16 +170,26 @@ box-shadow:0 30px 120px rgba(59,130,246,0.3);
 
 /* AVATAR */
 .avatar{
-width:65px;
-height:65px;
+width:70px;
+height:70px;
 border-radius:50%;
 margin:auto;
 margin-bottom:12px;
+overflow:hidden;
 display:flex;
 align-items:center;
 justify-content:center;
 font-weight:700;
 background:linear-gradient(135deg,#3b82f6,#6366f1);
+font-size:16px;
+}
+
+/* IMAGE INSIDE AVATAR */
+.avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:50%;
 }
 
 /* TEXT */
@@ -271,7 +281,9 @@ width:90%;
 <!-- CMD -->
 <div class="level">
 <div class="card cmd" onclick="openModal('Dr. Althi Prudhvi','CMD','Leads multi-sector execution and enterprise strategy.')">
-<div class="avatar">AP</div>
+<div class="avatar">
+  <img src="images/team/prudhvi.jpg" onerror="this.parentElement.innerHTML='AP'">
+</div>
 <div class="name">Dr. Althi Prudhvi</div>
 <div class="role">Chairman & Managing Director</div>
 <div class="desc">Enterprise leadership</div>
@@ -283,13 +295,17 @@ width:90%;
 <div class="level-line"></div>
 
 <div class="card" onclick="openModal('Boddu Jaswanth','COO','Oversees logistics and operations.')">
-<div class="avatar">BJ</div>
+<div class="avatar">
+  <img src="images/team/jaswanth.jpg" onerror="this.parentElement.innerHTML='BJ'">
+</div>
 <div class="name">Boddu Jaswanth</div>
 <div class="role">COO</div>
 </div>
 
 <div class="card" onclick="openModal('Althi Suresh','Director','Handles legal governance.')">
-<div class="avatar">AS</div>
+<div class="avatar">
+  <img src="images/team/suresh.jpg" onerror="this.parentElement.innerHTML='AS'">
+</div>
 <div class="name">Althi Suresh</div>
 <div class="role">Director & Legal</div>
 </div>
@@ -302,7 +318,7 @@ width:90%;
 
 <div class="card" onclick="openModal('Koti Eswar','Technical Head','Infrastructure systems leader.')">
 <div class="avatar">KE</div>
-<div class="name">Koti Eswar</div>
+<div class="name">B.Koti Eswar</div>
 <div class="role">Technical Head</div>
 </div>
 
@@ -313,14 +329,18 @@ width:90%;
 </div>
 
 <div class="card" onclick="openModal('Abhiram Chandra','HR Head','People & organization.')">
-<div class="avatar">PAC</div>
-<div class="name">Abhiram Chandra</div>
+<div class="avatar">
+  <img src="images/team/abhiram.jpg" onerror="this.parentElement.innerHTML='PAC'">
+</div>
+<div class="name">P.Abhiram Chandra</div>
 <div class="role">HR Head</div>
 </div>
 
 <div class="card" onclick="openModal('Chandra Kaladhar','Strategy Head','Expansion & mining strategy.')">
-<div class="avatar">YCK</div>
-<div class="name">Chandra Kaladhar</div>
+<div class="avatar">
+  <img src="images/team/kaladhar.jpg" onerror="this.parentElement.innerHTML='YCK'">
+</div>
+<div class="name">Y.Chandra Kaladhar</div>
 <div class="role">Strategy & Growth</div>
 </div>
 
@@ -331,14 +351,18 @@ width:90%;
 <div class="level-line"></div>
 
 <div class="card" onclick="openModal('Sai Kiran Varma','Architect','Infrastructure design.')">
-<div class="avatar">SKV</div>
-<div class="name">Sai Kiran Varma</div>
+<div class="avatar">
+  <img src="images/team/saikiran.jpg" onerror="this.parentElement.innerHTML='SKV'">
+</div>
+<div class="name">K.Sai Kiran Varma</div>
 <div class="role">Architect</div>
 </div>
 
 <div class="card" onclick="openModal('Hari Krishna','Geologist','Resource evaluation.')">
-<div class="avatar">PHK</div>
-<div class="name">Hari Krishna</div>
+<div class="avatar">
+  <img src="images/team/hari.jpg" onerror="this.parentElement.innerHTML='PHK'">
+</div>
+<div class="name">P.Hari Krishna</div>
 <div class="role">Geologist</div>
 </div>
 

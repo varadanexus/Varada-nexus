@@ -361,6 +361,84 @@ cursor:pointer;
 color:#3b82f6;
 }
 
+.modal-content{
+background:linear-gradient(
+145deg,
+rgba(15,23,42,0.95),
+rgba(15,23,42,0.8)
+);
+padding:40px 30px;
+border-radius:20px;
+width:320px;
+text-align:center;
+
+border:1px solid rgba(255,255,255,0.1);
+
+box-shadow:
+0 40px 120px rgba(0,0,0,0.9),
+0 0 40px rgba(59,130,246,0.15);
+
+backdrop-filter:blur(20px);
+
+animation:popIn 0.4s ease;
+}
+
+@keyframes popIn{
+from{
+opacity:0;
+transform:scale(0.8) translateY(20px);
+}
+to{
+opacity:1;
+transform:scale(1) translateY(0);
+}
+}
+
+/* IMAGE */
+.modal-avatar{
+width:120px;
+height:120px;
+border-radius:50%;
+margin:0 auto 18px;
+
+overflow:hidden;
+
+border:3px solid rgba(255,255,255,0.2);
+
+box-shadow:
+0 20px 60px rgba(0,0,0,0.8),
+0 0 20px rgba(59,130,246,0.2);
+
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+font-size:20px;
+}
+
+/* IMAGE INSIDE */
+.modal-avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+/* TEXT */
+.m-role{
+color:#94a3b8;
+font-size:14px;
+margin-top:6px;
+}
+
+.m-desc{
+color:#cbd5f5;
+font-size:14px;
+margin-top:10px;
+line-height:1.6;
+}
+
 /* FOOTER */
 footer{
 text-align:center;
@@ -511,12 +589,16 @@ width:90%;
 
 <!-- 🔥 MODAL -->
 <div class="modal" id="modal">
-<div class="modal-content">
-<h3 id="m-name"></h3>
-<p id="m-role"></p>
-<p id="m-desc"></p>
-<div class="close" onclick="closeModal()">Close</div>
-</div>
+  <div class="modal-content">
+
+    <div class="modal-avatar" id="m-img"></div>
+
+    <h3 id="m-name"></h3>
+    <p id="m-role" class="m-role"></p>
+    <p id="m-desc" class="m-desc"></p>
+
+    <div class="close" onclick="closeModal()">Close</div>
+  </div>
 </div>
 
 <footer>
@@ -524,11 +606,19 @@ width:90%;
 </footer>
 
 <script>
-function openModal(name, role, desc){
+function openModal(name, role, desc, img, initials){
 document.getElementById("modal").style.display="flex";
-document.getElementById("m-name").innerText=name;
-document.getElementById("m-role").innerText=role;
-document.getElementById("m-desc").innerText=desc;
+
+document.getElementById("m-name").innerText = name;
+document.getElementById("m-role").innerText = role;
+document.getElementById("m-desc").innerText = desc;
+
+/* IMAGE LOGIC */
+let avatar = document.getElementById("m-img");
+
+avatar.innerHTML = `
+  <img src="${img}" onerror="this.parentElement.innerHTML='${initials}'">
+`;
 }
 
 function closeModal(){

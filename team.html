@@ -306,16 +306,17 @@ body.modal-open .card:not(.cmd){
 }
 
 /* Blur ALL cards including CMD */
-body.modal-open .card{
-  filter:blur(4px);
-  opacity:0.25;
+body.modal-open .org{
+  opacity:0;
   pointer-events:none;
+  transition:0.3s ease;
 }
 
 /* 🔥 MORPH BASE */
 .morph-clone{
 position:fixed;
 z-index:100000;
+backdrop-filter: blur(20px);
 border-radius:18px;
 background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
 box-shadow:0 40px 120px rgba(0,0,0,0.9);
@@ -662,7 +663,7 @@ requestAnimationFrame(()=>{
   clone.style.transition = "all 0.45s cubic-bezier(.22,1,.36,1)";
   clone.style.top = "50%";
   clone.style.left = "50%";
-  clone.style.transform = "translate(-50%, -50%)";
+  clone.style.transform = "translate(-50%, -50%) scale(1.05)";
   clone.style.width = "340px";
 });
 

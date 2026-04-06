@@ -300,23 +300,29 @@ object-fit:cover;
 }
 
 /* Blur everything EXCEPT CMD */
+body.modal-open .card:not(.cmd){
+  filter:blur(3px);
+  opacity:0.4;
+}
+
+/* Blur ALL cards including CMD */
 body.modal-open .org{
   opacity:0;
   pointer-events:none;
-  transition:0.25s ease;
+  transition:0.3s ease;
 }
 
 /* 🔥 MORPH BASE */
 .morph-clone{
 position:fixed;
 z-index:100000;
+backdrop-filter: blur(20px);
 border-radius:18px;
 background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
-box-shadow:0 60px 200px rgba(0,0,0,0.95);
+box-shadow:0 40px 120px rgba(0,0,0,0.9);
 transition:all 0.45s cubic-bezier(.22,1,.36,1);
 overflow:hidden;
 pointer-events:auto;
-backdrop-filter:blur(20px);
 }
 
 /* FINAL STATE */
@@ -649,6 +655,8 @@ card.style.visibility = "hidden";
 
 /* SHOW MODAL BG */
 document.body.classList.add("modal-open");
+let modal = document.getElementById("modal");
+modal.style.display = "flex";
 
 /* 🔥 EXPAND ANIMATION */
 requestAnimationFrame(()=>{
@@ -689,6 +697,9 @@ activeClone.innerHTML = `
 
 function closeModal(){
 
+let modal = document.getElementById("modal");
+modal.classList.remove("show");
+
 /* 🔥 SHRINK BACK */
 if(activeClone && activeCard){
 
@@ -709,7 +720,10 @@ if(activeClone && activeCard){
 
   },400);
 }
+
+/* HIDE MODAL */
 setTimeout(()=>{
+  modal.style.display="none";
   document.body.classList.remove("modal-open");
 },200);
 }

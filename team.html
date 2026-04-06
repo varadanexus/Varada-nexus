@@ -108,6 +108,19 @@ top:100px;
 left:50%;
 transform:translateX(-50%);
 }
+
+.container::after{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+background:radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%);
+filter:blur(120px);
+z-index:-1;
+bottom:-200px;
+left:50%;
+transform:translateX(-50%);
+}
   
 h1{
 font-size:34px;
@@ -207,27 +220,37 @@ transform:translateY(-12px) scale(1.04);
 box-shadow:0 40px 120px rgba(0,0,0,0.9);
 }
 
-.card:hover{
-transform:translateY(-10px) scale(1.03);
-box-shadow:0 25px 80px rgba(0,0,0,0.8);
+.card{
+box-shadow:
+0 10px 40px rgba(0,0,0,0.6),
+inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
+.card:hover{
+box-shadow:
+0 40px 120px rgba(0,0,0,0.9),
+0 0 40px rgba(59,130,246,0.2);
+}
+  
 /* CMD HIGHLIGHT */
 .card.cmd{
-transform:scale(1.2);
-box-shadow:0 40px 150px rgba(59,130,246,0.35);
+transform:scale(1.25);
+box-shadow:
+0 50px 180px rgba(59,130,246,0.35),
+0 0 60px rgba(59,130,246,0.25);
 }
 
-.org:hover .card{
-opacity:0.4;
-filter:blur(2px);
-transition:0.4s;
+/* ONLY blur when hovering a card */
+.org:has(.card:hover) .card{
+opacity:0.3;
+filter:blur(3px) scale(0.98);
 }
 
+/* Keep hovered card sharp */
 .org .card:hover{
 opacity:1 !important;
-filter:blur(0) !important;
-z-index:10;
+filter:blur(0) scale(1.05) !important;
+z-index:20;
 }
   
 /* GLOW AURA */
@@ -513,5 +536,26 @@ document.getElementById("modal").style.display="none";
 }
 </script>
 
+<script>
+document.querySelectorAll(".card").forEach(card=>{
+card.addEventListener("mousemove", (e)=>{
+const rect = card.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+
+card.style.transform = `
+perspective(1000px)
+rotateX(${-(y - rect.height/2)/20}deg)
+rotateY(${(x - rect.width/2)/20}deg)
+scale(1.05)
+`;
+});
+
+card.addEventListener("mouseleave", ()=>{
+card.style.transform = "scale(1)";
+});
+});
+</script>
+  
 </body>
 </html>

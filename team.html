@@ -701,7 +701,7 @@ operational control, and on-ground experience across industries.
     <p id="m-role" class="m-role"></p>
     <p id="m-desc" class="m-desc"></p>
 
-    <div class="close" onclick="closeModal()">Close</div>
+    <div class="close" onclick="closeModal(event)">Close</div>
   </div>
 </div>
 
@@ -729,6 +729,7 @@ card.style.width = rect.width + "px";
 card.style.height = rect.height + "px";
 
 card.classList.add("morphing");
+card.style.pointerEvents = "auto";
 card.dataset.originalParent = card.parentElement;
 card.dataset.originalNext = card.nextElementSibling;
 document.body.appendChild(card);
@@ -761,11 +762,14 @@ document.body.classList.add("modal-open");
 }
 
 
-function closeModal(){
+function closeModal(e){
+
+if(e) e.stopPropagation(); // 🔥 prevents bubbling issues
 
 let card = document.querySelector(".card.morphing");
+if(!card) return;
 
-/* REMOVE ACTIVE STATE (go back animation) */
+/* REMOVE ACTIVE (reverse animation) */
 card.classList.remove("active");
 
 /* WAIT FOR ANIMATION */
@@ -780,14 +784,15 @@ setTimeout(()=>{
   card.style.width = card.dataset.width + "px";
   card.style.height = card.dataset.height + "px";
 
-  /* MOVE BACK TO ORIGINAL FLOW */
-let parent = card.dataset.originalParent;
+  /* 🔥 FIX PARENT RESTORE (CRITICAL BUG) */
+  let parent = card.dataset.originalParent;
+  let next = card.dataset.originalNext;
 
-if(card.dataset.originalNext){
-  parent.insertBefore(card, card.dataset.originalNext);
-}else{
-  parent.appendChild(card);
-}
+  if(next && next !== "null"){
+    parent.insertBefore(card, document.querySelector(`[data-id="${next}"]`) || null);
+  } else {
+    parent.appendChild(card);
+  }
 
   /* CLEANUP */
   card.classList.remove("morphing");
@@ -797,7 +802,6 @@ if(card.dataset.originalNext){
 
 /* REMOVE BLUR */
 document.body.classList.remove("modal-open");
-
 }
 
   

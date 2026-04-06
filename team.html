@@ -321,6 +321,7 @@ background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
 box-shadow:0 40px 120px rgba(0,0,0,0.9);
 transition:all 0.45s cubic-bezier(.22,1,.36,1);
 overflow:hidden;
+pointer-events:auto;
 }
 
 /* FINAL STATE */
@@ -332,6 +333,7 @@ transform:translate(-50%,-50%) !important;
 border-radius:20px;
 }
 
+  
 /* TEXT FADE */
 .modal-content{
 opacity:0;
@@ -401,7 +403,7 @@ operational control, and on-ground experience across industries.
 <!-- CMD -->
 <div class="level">
 
-<div class="card cmd spotlight" onclick="openModal(
+<div class="card cmd spotlight" onclick="openModal(event,
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
 'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems, infrastructure, and scalable business models across industries.',
@@ -432,7 +434,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Boddu Jaswanth',
 'COO',
 'Leads large-scale logistics operations including fleet coordination, route optimization, and execution of commodity transport across multiple states.',
@@ -451,7 +453,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Althi Suresh',
 'Director & Legal',
 'Oversees legal strategy, compliance, contracts, and regulatory frameworks across all business verticals, ensuring operational security and governance.',
@@ -477,7 +479,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'B. Koteswar',
 'Technical Head',
 'Leads technical infrastructure, system architecture, and execution of operational technologies supporting logistics, mining, and digital platforms.',
@@ -494,7 +496,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'I. Ganesh',
 'Marketing Head',
 'Leads brand strategy, market positioning, digital growth, and customer acquisition across all business verticals.',
@@ -512,7 +514,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'P. Abhiram Chandra',
 'HR Head',
 'Leads talent acquisition, workforce structuring, and organizational systems to support scalable operations across multiple sectors.',
@@ -532,7 +534,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Y. Chandra Kaladhar',
 'Strategy & Growth',
 'Drives expansion strategy, mining operations planning, and growth initiatives across resource and infrastructure sectors.',
@@ -558,7 +560,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'K. Sai Kiran Varma',
 'Architect',
 'Leads architectural planning, infrastructure design, and project execution for industrial and commercial developments.',
@@ -577,7 +579,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'P. Hari Krishna',
 'Geologist',
 'Handles geological surveys, mineral analysis, and resource evaluation to support mining operations and strategic extraction planning.',
@@ -624,20 +626,25 @@ operational control, and on-ground experience across industries.
 <script>
 
 let activeClone = null;
+let activeCard = null;
 
-function openModal(name, role, desc, img, initials){
+function openModal(e, name, role, desc, img, initials){
 
-let card = event.currentTarget;
+let card = e.currentTarget;
+activeCard = card;
+
 let rect = card.getBoundingClientRect();
 
-/* CREATE CLONE */
+/* 🔥 CREATE CLONE */
 let clone = card.cloneNode(true);
 clone.classList.add("morph-clone");
 
+clone.style.position = "fixed";
 clone.style.top = rect.top + "px";
 clone.style.left = rect.left + "px";
 clone.style.width = rect.width + "px";
 clone.style.height = rect.height + "px";
+clone.style.margin = 0;
 
 document.body.appendChild(clone);
 activeClone = clone;
@@ -650,27 +657,38 @@ document.body.classList.add("modal-open");
 let modal = document.getElementById("modal");
 modal.style.display = "flex";
 
-/* ANIMATE */
+/* 🔥 EXPAND ANIMATION */
 requestAnimationFrame(()=>{
-  clone.classList.add("morph-final");
+  clone.style.transition = "all 0.45s cubic-bezier(.22,1,.36,1)";
+  clone.style.top = "50%";
+  clone.style.left = "50%";
+  clone.style.transform = "translate(-50%, -50%)";
+  clone.style.width = "340px";
 });
 
-/* AFTER EXPAND → SHOW CONTENT */
+/* AFTER EXPAND → SHOW TEXT */
 setTimeout(()=>{
 
-document.getElementById("m-name").innerText=name;
-document.getElementById("m-role").innerText=role;
-document.getElementById("m-desc").innerText=desc;
+/* 🔥 TRANSFORM CLONE INTO MODAL */
+activeClone.innerHTML = `
+<div style="padding:30px;text-align:center">
 
-let avatar=document.getElementById("m-img");
+  <div style="width:120px;height:120px;border-radius:50%;margin:auto;overflow:hidden;margin-bottom:18px;">
+    ${img 
+      ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;">`
+      : initials}
+  </div>
 
-if(img){
-  avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
-}else{
-  avatar.innerHTML=initials || '';
-}
+  <h3 style="margin:10px 0">${name}</h3>
+  <p style="color:#94a3b8;margin-bottom:10px">${role}</p>
+  <p style="color:#cbd5f5;font-size:14px">${desc}</p>
 
-modal.classList.add("show");
+  <div style="margin-top:20px;color:#3b82f6;cursor:pointer" onclick="closeModal()">
+    Close
+  </div>
+
+</div>
+`;
 
 },300);
 }
@@ -681,19 +699,23 @@ function closeModal(){
 let modal = document.getElementById("modal");
 modal.classList.remove("show");
 
-/* SHRINK BACK */
-if(activeClone){
+/* 🔥 SHRINK BACK */
+if(activeClone && activeCard){
 
-  activeClone.classList.remove("morph-final");
+  let rect = activeCard.getBoundingClientRect();
+
+  activeClone.style.top = rect.top + "px";
+  activeClone.style.left = rect.left + "px";
+  activeClone.style.width = rect.width + "px";
+  activeClone.style.transform = "translate(0,0)";
 
   setTimeout(()=>{
     activeClone.remove();
     activeClone = null;
 
-    /* SHOW ORIGINAL BACK */
-    document.querySelectorAll(".card").forEach(c=>{
-      c.style.visibility="visible";
-    });
+    /* RESTORE ORIGINAL */
+    activeCard.style.visibility = "visible";
+    activeCard = null;
 
   },400);
 }

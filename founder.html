@@ -696,64 +696,33 @@ margin-bottom:14px;
 
 /* 🔥 ULTRA HERO LAYOUT */
 /* 🔥 LUXURY HERO */
+/* 🔥 HERO CENTERED STACK */
 .founder-hero{
 display:flex;
+flex-direction:column;
 align-items:center;
-justify-content:space-between;
-gap:80px;
-max-width:1200px;
+justify-content:center;
+text-align:center;
+
+max-width:900px;
 margin:100px auto;
 padding:0 20px;
-flex-wrap:wrap;
 }
 
-/* TEXT SIDE */
+/* IMAGE TOP */
+.hero-top{
+margin-bottom:30px;
+}
+
+/* TEXT */
 .hero-left{
-max-width:520px;
+max-width:600px;
 }
 
-/* IMAGE SIDE */
-.hero-right{
-position:relative;
-}
-
-/* 🔥 GOLD TAG */
-.gold-tag{
-color:var(--gold);
-border:1px solid rgba(251,191,36,0.4);
-background:rgba(251,191,36,0.08);
-}
-
-/* 🔥 NAME (BLUE + GOLD MIX) */
-.founder-name{
-font-size:50px;
-font-weight:800;
-line-height:1.1;
-
-background:linear-gradient(
-90deg,
-#ffffff,
-#60a5fa,
-#fbbf24
-);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-
-text-shadow:0 0 30px rgba(59,130,246,0.3);
-}
-
-/* DESCRIPTION */
-.hero-desc{
-color:var(--text-soft);
-font-size:17px;
-line-height:1.7;
-margin-top:16px;
-}
-
-/* 🔥 FLOATING IMAGE */
+/* IMAGE STYLE */
 .founder-img{
-width:280px;
-height:280px;
+width:240px;
+height:240px;
 border-radius:20px;
 
 animation:float 6s ease-in-out infinite;
@@ -762,8 +731,8 @@ border:1px solid rgba(255,255,255,0.1);
 
 box-shadow:
 0 30px 100px rgba(0,0,0,0.8),
-0 0 40px rgba(59,130,246,0.2),
-0 0 20px rgba(251,191,36,0.2);
+0 0 40px rgba(59,130,246,0.25),
+0 0 20px rgba(251,191,36,0.25);
 }
 
 @keyframes float{
@@ -853,6 +822,12 @@ scroll-behavior:smooth;
 <!-- 🔥 HERO (SPLIT EXECUTIVE) -->
 <section class="founder-hero fade-up">
 
+<!-- 🔥 IMAGE FIRST -->
+<div class="hero-top">
+<img src="images/chairman.jpg" class="founder-img">
+</div>
+
+<!-- 🔥 TEXT BELOW -->
 <div class="hero-left">
 
 <div class="founder-tag gold-tag">FOUNDER & CHAIRMAN</div>
@@ -872,10 +847,6 @@ with a focus on execution, scalability, and real-world impact.
   <div class="stat"><h3>55+</h3><p>Projects</p></div>
 </div>
 
-</div>
-
-<div class="hero-right">
-<img src="images/chairman.jpg" class="founder-img">
 </div>
 
 </section>

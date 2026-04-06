@@ -96,6 +96,19 @@ padding:0 20px;
 text-align:center;
 }
 
+.container::before{
+content:"";
+position:absolute;
+width:500px;
+height:500px;
+background:radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+filter:blur(100px);
+z-index:-1;
+top:100px;
+left:50%;
+transform:translateX(-50%);
+}
+  
 h1{
 font-size:34px;
 }
@@ -142,19 +155,56 @@ top:-50px;
 height:2px;
 width:80%;
 left:10%;
-background:rgba(255,255,255,0.2);
+background:linear-gradient(
+90deg,
+transparent,
+rgba(255,255,255,0.3),
+transparent
+);
 }
 
 /* 🔥 CARD */
 .card{
-background:rgba(15,23,42,0.7);
+background:linear-gradient(
+145deg,
+rgba(15,23,42,0.85),
+rgba(15,23,42,0.6)
+);
 border:1px solid rgba(255,255,255,0.08);
-padding:28px; /* increased */
-border-radius:16px;
-width:240px; /* increased */
+padding:28px;
+border-radius:18px;
+width:250px;
 cursor:pointer;
-transition:0.4s;
-backdrop-filter:blur(14px);
+transition:all 0.4s ease;
+backdrop-filter:blur(18px);
+position:relative;
+overflow:hidden;
+}
+
+/* LIGHT SWEEP EFFECT */
+.card::before{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,0.08),
+transparent
+);
+transition:0.8s;
+}
+
+.card:hover::before{
+left:100%;
+}
+
+.card:hover{
+transform:translateY(-12px) scale(1.04);
+box-shadow:0 40px 120px rgba(0,0,0,0.9);
 }
 
 .card:hover{
@@ -164,14 +214,37 @@ box-shadow:0 25px 80px rgba(0,0,0,0.8);
 
 /* CMD HIGHLIGHT */
 .card.cmd{
-transform:scale(1.15);
-box-shadow:0 30px 120px rgba(59,130,246,0.3);
+transform:scale(1.2);
+box-shadow:0 40px 150px rgba(59,130,246,0.35);
+}
+
+.org:hover .card{
+opacity:0.4;
+filter:blur(2px);
+transition:0.4s;
+}
+
+.org .card:hover{
+opacity:1 !important;
+filter:blur(0) !important;
+z-index:10;
+}
+  
+/* GLOW AURA */
+.card.cmd::after{
+content:"";
+position:absolute;
+width:250px;
+height:250px;
+background:radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%);
+filter:blur(60px);
+z-index:-1;
 }
 
 /* AVATAR */
 .avatar{
-width:100px;
-height:100px;
+width:110px;
+height:110px;
 border-radius:50%;
 margin:auto;
 margin-bottom:16px;
@@ -180,15 +253,21 @@ display:flex;
 align-items:center;
 justify-content:center;
 font-weight:700;
-background:linear-gradient(135deg,#3b82f6,#6366f1);
 font-size:18px;
 
-/* 🔥 NEW */
-box-shadow:0 10px 30px rgba(0,0,0,0.6);
-border:2px solid rgba(255,255,255,0.15);
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+
+border:2px solid rgba(255,255,255,0.2);
+box-shadow:0 15px 40px rgba(0,0,0,0.6);
 transition:0.4s;
 }
 
+.card.cmd .avatar{
+width:130px;
+height:130px;
+}
+
+/* IMAGE */
 .avatar img{
 width:100%;
 height:100%;
@@ -197,10 +276,9 @@ border-radius:50%;
 transition:0.4s;
 }
 
-/* 🔥 HOVER EFFECT */
-.card:hover .avatar{
-transform:scale(1.08);
-box-shadow:0 20px 60px rgba(59,130,246,0.4);
+/* HOVER ZOOM */
+.card:hover .avatar img{
+transform:scale(1.1);
 }
 
 .card:hover .avatar img{
@@ -215,8 +293,9 @@ height:120px;
 /* TEXT */
 .name{
 font-weight:600;
-font-size:16px;
+font-size:17px;
 margin-top:6px;
+letter-spacing:0.3px;
 }
 
 .role{

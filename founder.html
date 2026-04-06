@@ -146,66 +146,73 @@ backdrop-filter:blur(18px);
 }
 
 /* 🔥 HERO (FOUNDER SECTION) */
+/* 🔥 CEO HERO FINAL */
 .founder-hero{
-text-align:center;
-padding:80px 20px 40px;
+position:relative;
+width:100%;
+height:100vh;
+
+background:url('images/chairman.jpg') center/cover no-repeat;
+
+display:flex;
+align-items:center;
 }
 
-.founder-hero::after{
-content:"";
-position:absolute;
-width:500px;
-height:500px;
-background:radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%);
-bottom:-100px;
-left:50%;
-transform:translateX(-50%);
-filter:blur(100px);
-z-index:-1;
-}
-    
-.founder-img{
-width:260px;
-height:260px;
-border-radius:20px;
-object-fit:cover;
+/* 🔥 OVERLAY */
+.hero-overlay{
+width:100%;
+height:100%;
 
-border:1px solid rgba(255,255,255,0.1);
+background:linear-gradient(
+90deg,
+rgba(2,6,23,0.9) 0%,
+rgba(2,6,23,0.7) 40%,
+rgba(2,6,23,0.2) 70%,
+transparent 100%
+);
 
-box-shadow:
-0 30px 100px rgba(0,0,0,0.8),
-0 0 40px rgba(59,130,246,0.2);
-
-transition:0.4s;
+display:flex;
+align-items:center;
 }
 
-.founder-img:hover{
-transform:scale(1.05);
-filter:brightness(1.1) contrast(1.05);
+/* TEXT LEFT */
+.hero-content{
+max-width:600px;
+padding-left:80px;
 }
 
+/* NAME */
 .founder-name{
-font-size:42px;
-font-weight:700;
-letter-spacing:0.5px;
+font-size:60px;
+font-weight:800;
 
-background:linear-gradient(90deg,#ffffff,#60a5fa);
+background:linear-gradient(90deg,#ffffff,#60a5fa,#fbbf24);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-
-text-shadow:0 0 30px rgba(255,255,255,0.2);
 }
 
-.founder-role{
-color:rgba(255,255,255,0.85);   /* 🔥 brighter */
-font-size:15px;
-margin-top:6px;
-letter-spacing:0.3px;
+/* DESC */
+.hero-desc{
+color:#cbd5f5;
+font-size:18px;
+line-height:1.7;
+margin-top:10px;
 }
 
-.founder-name{
-text-shadow:0 0 20px rgba(255,255,255,0.25);
+/* BUTTON */
+.hero-btn{
+display:inline-block;
+margin-top:25px;
+padding:14px 28px;
+
+background:linear-gradient(135deg,#3b82f6,#fbbf24);
+color:#020617;
+
+border-radius:10px;
+text-decoration:none;
+font-weight:700;
 }
+
 
 /* 🔥 GLASS CARD CONTENT */
 .content{
@@ -389,16 +396,6 @@ padding:24px;
 
 }
     
-/* 🔥 FOUNDER HERO UPGRADE */
-.founder-hero{
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-padding:100px 20px 60px;
-position:relative;
-}
-
 /* 🔥 GLOW AURA */
 .founder-hero::before{
 content:"";
@@ -694,19 +691,6 @@ backdrop-filter:blur(10px);
 margin-bottom:14px;
 }
 
-/* 🔥 ULTRA HERO LAYOUT */
-/* 🔥 FULL WIDTH CEO HERO */
-.founder-hero{
-position:relative;
-height:90vh;
-width:100%;
-
-background:url('images/chairman.jpg') center/cover no-repeat;
-
-display:flex;
-align-items:center;
-}
-
 /* 🔥 DARK BLUE OVERLAY (PREMIUM LOOK) */
 .hero-overlay{
 width:100%;
@@ -772,6 +756,11 @@ transform:translateY(-2px);
 box-shadow:0 10px 30px rgba(59,130,246,0.4);
 }
 
+.hero-content{
+max-width:600px;
+padding-left:80px;
+z-index:2;
+}
 /* 🔥 GLOW BACKDROP */
 .hero-right::before{
 content:"";
@@ -796,6 +785,7 @@ z-index:-1;
 
 .founder-hero{
 height:auto;
+overflow:hidden;
 padding:80px 0;
 }
 
@@ -803,9 +793,6 @@ padding:80px 0;
 padding:0 20px;
 }
 
-.founder-name{
-font-size:34px;
-}
 
 .hero-desc{
 font-size:14px;
@@ -813,25 +800,9 @@ font-size:14px;
 
 }
 
-.founder-hero{
-animation:zoomBg 20s ease infinite alternate;
-}
-
 @keyframes zoomBg{
 0%{background-size:100%}
 100%{background-size:110%}
-}
-    
-/* 🔥 NAME SUPER ELITE */
-.founder-name{
-font-size:48px;
-font-weight:800;
-
-background:linear-gradient(90deg,#fff,#60a5fa,#3b82f6);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-
-text-shadow:0 0 40px rgba(59,130,246,0.3);
 }
 
 /* 🔥 SECTION TRANSITION FADE */
@@ -1085,12 +1056,6 @@ header.classList.remove("shrink");
 }
 });
 
-window.addEventListener("scroll", () => {
-const img = document.querySelector(".founder-img");
-if(img){
-img.style.transform = `translateY(${window.scrollY * 0.05}px)`;
-}
-});
     
 function animateStats() {
 document.querySelectorAll(".stat h3").forEach(el => {
@@ -1120,15 +1085,6 @@ document.querySelectorAll(".stats").forEach(el=>{
 statsObserver.observe(el);
 });
 
-// 🔥 PARALLAX EFFECT
-window.addEventListener("scroll", () => {
-  const img = document.querySelector(".founder-img");
-  let offset = window.scrollY;
-
-  if(img){
-    img.style.transform = `translateY(${offset * 0.1}px)`;
-  }
-});
     
 </script>
     

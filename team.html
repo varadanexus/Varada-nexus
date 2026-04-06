@@ -447,6 +447,20 @@ padding:40px;
 color:#94a3b8;
 }
 
+.tags{
+  margin-top:12px;
+}
+
+.tags span{
+  display:inline-block;
+  padding:6px 10px;
+  margin:4px;
+  font-size:11px;
+  background:rgba(59,130,246,0.15);
+  border:1px solid rgba(59,130,246,0.3);
+  border-radius:6px;
+}
+  
 /* MOBILE */
 @media(max-width:768px){
 .level{
@@ -490,7 +504,14 @@ width:90%;
 <div class="container">
 
 <h1>Leadership Team</h1>
-<div class="sub">Structured execution across all verticals</div>
+<div class="sub">
+Execution-led leadership across healthcare, logistics, mining, and trade operations.
+<p style="max-width:700px;margin:20px auto;color:#cbd5f5;">
+Our leadership team is structured for execution — combining domain expertise,
+operational control, and on-ground experience across industries.
+</p>
+</div>
+
 
 <div class="org">
 
@@ -499,7 +520,7 @@ width:90%;
 <div class="card cmd" onclick="openModal(
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
-'Leads multi-sector execution and enterprise strategy.',
+'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems that scale in real-world environments.',
 'images/team/prudhvi.jpg',
 'AP'
 )">
@@ -519,7 +540,7 @@ width:90%;
 <div class="card" onclick="openModal(
 'Boddu Jaswanth',
 'COO',
-'Oversees logistics and operations.',
+'Leads large-scale logistics operations including fleet coordination, route optimization, and execution of commodity transport across multiple states.',
 'images/team/jaswanth.jpg',
 'BJ'
 )">
@@ -527,6 +548,11 @@ width:90%;
   <img src="images/team/jaswanth.jpg" onerror="this.parentElement.innerHTML='BJ'">
 </div>
 <div class="name">Boddu Jaswanth</div>
+<div class="tags">
+  <span>Logistics</span>
+  <span>Operations</span>
+  <span>Fleet Management</span>
+</div>
 <div class="role">COO</div>
 </div>
 

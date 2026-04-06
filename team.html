@@ -427,6 +427,9 @@ body.modal-open .card:not(.cmd){
 body.modal-open .org{
   filter:blur(4px);
   opacity:0.25;
+}
+
+body.modal-open .org *{
   pointer-events:none;
 }
   
@@ -802,6 +805,7 @@ if(next){
 
 },400);
 
+  console.log("CLOSE CLICKED"); // 👈 add this
 /* REMOVE BLUR */
 document.body.classList.remove("modal-open");
 }
@@ -824,6 +828,9 @@ card.style.setProperty("--y", y + "px");
 });
 });
   
+
+
+
 </script>
 
 </body>

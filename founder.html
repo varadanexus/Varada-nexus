@@ -797,11 +797,6 @@ font-size:14px;
 100%{background-size:110%}
 }
 
-/* 🔥 SECTION TRANSITION FADE */
-.section-divider{
-margin:80px auto;
-opacity:0.2;
-}
 
 .btn{
 color:#0f172a;
@@ -819,6 +814,32 @@ color:white !important;
 /* 🔥 SCROLL SMOOTH */
 html{
 scroll-behavior:smooth;
+}
+
+/* 🔥 APPLE SCROLL STACKING */
+
+main{
+position:relative;
+}
+
+.content{
+position:sticky;
+top:120px;
+z-index:1;
+
+transform-origin:center top;
+transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+
+.content:nth-of-type(1){ z-index:2; }
+.content:nth-of-type(2){ z-index:3; }
+.content:nth-of-type(3){ z-index:4; }
+.content:nth-of-type(4){ z-index:5; }
+.content:nth-of-type(5){ z-index:6; }
+.content:nth-of-type(6){ z-index:7; }
+
+.content.stacked{
+transform:scale(0.96);
 }
     
 </style>
@@ -1113,40 +1134,9 @@ bg.style.filter = `blur(${blur}px) brightness(${brightness})`;
 
 });
 
-/* 🔥 APPLE SCROLL STACKING */
-
-main{
-position:relative;
-}
-
-/* Each section behaves like a layer */
-.content{
-position:sticky;
-top:120px; /* distance from top */
-z-index:1;
-}
-
-/* Progressive stacking depth */
-.content:nth-of-type(1){ z-index:2; }
-.content:nth-of-type(2){ z-index:3; }
-.content:nth-of-type(3){ z-index:4; }
-.content:nth-of-type(4){ z-index:5; }
-.content:nth-of-type(5){ z-index:6; }
-.content:nth-of-type(6){ z-index:7; }
-
-/* Smooth scale effect (Apple feel) */
-.content{
-transform-origin:center top;
-transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
-}
-
-/* Slight shrink when stacked */
-.content.stacked{
-transform:scale(0.96);
-}
-
 // 🔥 APPLE STACK EFFECT
 const cards = document.querySelectorAll(".content");
+    
 
 window.addEventListener("scroll", () => {
 cards.forEach((card, index) => {

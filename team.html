@@ -306,45 +306,10 @@ body.modal-open .card:not(.cmd){
 }
 
 /* Blur ALL cards including CMD */
-body.modal-open .org{
-  opacity:0;
+body.modal-open .card{
+  filter:blur(4px);
+  opacity:0.25;
   pointer-events:none;
-  transition:0.3s ease;
-}
-
-/* 🔥 MORPH BASE */
-.morph-clone{
-position:fixed;
-z-index:100000;
-backdrop-filter: blur(20px);
-border-radius:18px;
-background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
-box-shadow:0 40px 120px rgba(0,0,0,0.9);
-transition:all 0.45s cubic-bezier(.22,1,.36,1);
-overflow:hidden;
-pointer-events:auto;
-}
-
-/* FINAL STATE */
-.morph-final{
-top:50% !important;
-left:50% !important;
-width:340px !important;
-transform:translate(-50%,-50%) !important;
-border-radius:20px;
-}
-
-  
-/* TEXT FADE */
-.modal-content{
-opacity:0;
-transform:translateY(20px);
-transition:0.3s ease;
-}
-
-.modal.show .modal-content{
-opacity:1;
-transform:translateY(0);
 }
   
 .close{
@@ -404,7 +369,7 @@ operational control, and on-ground experience across industries.
 <!-- CMD -->
 <div class="level">
 
-<div class="card cmd spotlight" onclick="openModal(event,
+<div class="card cmd spotlight" onclick="openModal(
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
 'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems, infrastructure, and scalable business models across industries.',
@@ -435,7 +400,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Boddu Jaswanth',
 'COO',
 'Leads large-scale logistics operations including fleet coordination, route optimization, and execution of commodity transport across multiple states.',
@@ -454,7 +419,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Althi Suresh',
 'Director & Legal',
 'Oversees legal strategy, compliance, contracts, and regulatory frameworks across all business verticals, ensuring operational security and governance.',
@@ -480,7 +445,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'B. Koteswar',
 'Technical Head',
 'Leads technical infrastructure, system architecture, and execution of operational technologies supporting logistics, mining, and digital platforms.',
@@ -497,7 +462,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'I. Ganesh',
 'Marketing Head',
 'Leads brand strategy, market positioning, digital growth, and customer acquisition across all business verticals.',
@@ -515,7 +480,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'P. Abhiram Chandra',
 'HR Head',
 'Leads talent acquisition, workforce structuring, and organizational systems to support scalable operations across multiple sectors.',
@@ -535,7 +500,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Y. Chandra Kaladhar',
 'Strategy & Growth',
 'Drives expansion strategy, mining operations planning, and growth initiatives across resource and infrastructure sectors.',
@@ -561,7 +526,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'K. Sai Kiran Varma',
 'Architect',
 'Leads architectural planning, infrastructure design, and project execution for industrial and commercial developments.',
@@ -580,7 +545,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'P. Hari Krishna',
 'Geologist',
 'Handles geological surveys, mineral analysis, and resource evaluation to support mining operations and strategic extraction planning.',
@@ -625,118 +590,39 @@ operational control, and on-ground experience across industries.
 </footer>
   
 <script>
+function openModal(name, role, desc, img, initials){
 
-let activeClone = null;
-let activeCard = null;
-
-function openModal(e, name, role, desc, img, initials){
-
-let card = e.currentTarget;
-activeCard = card;
-
-let rect = card.getBoundingClientRect();
-
-/* 🔥 CREATE CLONE */
-let clone = card.cloneNode(true);
-clone.classList.add("morph-clone");
-
-clone.style.position = "fixed";
-clone.style.top = rect.top + "px";
-clone.style.left = rect.left + "px";
-clone.style.width = rect.width + "px";
-clone.style.height = rect.height + "px";
-clone.style.margin = 0;
-
-document.body.appendChild(clone);
-activeClone = clone;
-
-/* HIDE ORIGINAL */
-card.style.visibility = "hidden";
-
-/* SHOW MODAL BG */
-document.body.classList.add("modal-open");
-let modal = document.getElementById("modal");
-modal.style.display = "flex";
-
-/* 🔥 EXPAND ANIMATION */
-requestAnimationFrame(()=>{
-  clone.style.transition = "all 0.45s cubic-bezier(.22,1,.36,1)";
-  clone.style.top = "50%";
-  clone.style.left = "50%";
-  clone.style.transform = "translate(-50%, -50%) scale(1.05)";
-  clone.style.width = "340px";
+// 🔥 CLEAN RESET
+document.querySelectorAll(".card").forEach(c=>{
+  c.style.transform="none";
 });
+document.body.classList.add("modal-open");
+document.getElementById("modal").style.display="flex";
 
-/* AFTER EXPAND → SHOW TEXT */
-setTimeout(()=>{
+document.getElementById("m-name").innerText=name;
+document.getElementById("m-role").innerText=role;
+document.getElementById("m-desc").innerText=desc;
 
-/* 🔥 TRANSFORM CLONE INTO MODAL */
-activeClone.innerHTML = `
-<div style="padding:30px;text-align:center">
+let avatar=document.getElementById("m-img");
 
-  <div style="width:120px;height:120px;border-radius:50%;margin:auto;overflow:hidden;margin-bottom:18px;">
-    ${img 
-      ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;">`
-      : initials}
-  </div>
-
-  <h3 style="margin:10px 0">${name}</h3>
-  <p style="color:#94a3b8;margin-bottom:10px">${role}</p>
-  <p style="color:#cbd5f5;font-size:14px">${desc}</p>
-
-  <div style="margin-top:20px;color:#3b82f6;cursor:pointer" onclick="closeModal()">
-    Close
-  </div>
-
-</div>
-`;
-
-},300);
+if(img){
+  avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
+}else{
+  avatar.innerHTML=initials || '';
 }
-
+}
 
 function closeModal(){
-
-let modal = document.getElementById("modal");
-modal.classList.remove("show");
-
-/* 🔥 SHRINK BACK */
-if(activeClone && activeCard){
-
-  let rect = activeCard.getBoundingClientRect();
-
-  activeClone.style.top = rect.top + "px";
-  activeClone.style.left = rect.left + "px";
-  activeClone.style.width = rect.width + "px";
-  activeClone.style.transform = "translate(0,0)";
-
-  setTimeout(()=>{
-    activeClone.remove();
-    activeClone = null;
-
-    /* RESTORE ORIGINAL */
-    activeCard.style.visibility = "visible";
-    activeCard = null;
-
-  },400);
+document.getElementById("modal").style.display="none";
+document.body.classList.remove("modal-open");
 }
-
-/* HIDE MODAL */
-setTimeout(()=>{
-  modal.style.display="none";
-  document.body.classList.remove("modal-open");
-},200);
-}
-
-
-/* CLICK OUTSIDE */
 window.onclick = function(e){
   let modal = document.getElementById("modal");
   if(e.target === modal){
     closeModal();
   }
 }
-
+  
 </script>
 
 </body>

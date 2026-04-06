@@ -325,16 +325,15 @@ object-fit:cover;
 }
 
 /* Blur everything EXCEPT CMD */
-body.modal-open .card:not(.cmd){
-  filter:blur(3px);
-  opacity:0.4;
-}
-
-/* Blur ALL cards including CMD */
-body.modal-open .card{
+body.modal-open .org{
   filter:blur(4px);
   opacity:0.25;
   pointer-events:none;
+}
+
+/* keep modal fully interactive */
+.modal{
+  pointer-events:auto;
 }
   
 .close{

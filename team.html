@@ -227,6 +227,7 @@ position:fixed;
 z-index:10000;
 margin:0;
 transition:all 0.45s cubic-bezier(.22,1,.36,1);
+transform-origin:center;
 }
 
 /* FINAL STATE */
@@ -234,6 +235,7 @@ transition:all 0.45s cubic-bezier(.22,1,.36,1);
 top:50% !important;
 left:50% !important;
 width:320px !important;
+height:auto !important; /* 🔥 ADD THIS */
 transform:translate(-50%, -50%) scale(1) !important;
 border-radius:20px;
 box-shadow:0 40px 120px rgba(0,0,0,0.9);
@@ -421,7 +423,7 @@ body.modal-open .card:not(.cmd){
 }
 
 /* Blur ALL cards including CMD */
-body.modal-open .card{
+body.modal-open .card:not(.morphing){
   filter:blur(4px);
   opacity:0.25;
   pointer-events:none;
@@ -731,11 +733,11 @@ card.dataset.originalParent = card.parentElement;
 card.dataset.originalNext = card.nextElementSibling;
 document.body.appendChild(card);
 
-card.getBoundingClientRect();
-
-setTimeout(()=>{
-  card.classList.add("active");
-},10);
+requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+    card.classList.add("active");
+  });
+});
 
 setTimeout(()=>{
 

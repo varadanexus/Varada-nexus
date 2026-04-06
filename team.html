@@ -215,11 +215,6 @@ transition:0.8s;
 left:100%;
 }
 
-.card:hover{
-transform:translateY(-12px) scale(1.04);
-box-shadow:0 40px 120px rgba(0,0,0,0.9);
-}
-
 .card{
 box-shadow:
 0 10px 40px rgba(0,0,0,0.6),
@@ -227,6 +222,7 @@ inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .card:hover{
+transform:translateY(-12px) scale(1.04);
 box-shadow:
 0 40px 120px rgba(0,0,0,0.9),
 0 0 40px rgba(59,130,246,0.2);
@@ -300,10 +296,6 @@ transition:0.4s;
 }
 
 /* HOVER ZOOM */
-.card:hover .avatar img{
-transform:scale(1.1);
-}
-
 .card:hover .avatar img{
 transform:scale(1.1);
 }
@@ -579,6 +571,7 @@ width:90%;
 'Leads people and organizational systems.',
 'images/team/abhiram.jpg',
 'PAC'
+)">
 <div class="avatar">
   <img src="images/team/abhiram.jpg" onerror="this.parentElement.innerHTML='PAC'">
 </div>

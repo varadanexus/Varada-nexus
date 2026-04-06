@@ -157,6 +157,7 @@ transition:0.3s ease;
 backdrop-filter:blur(18px);
 position:relative;
 transform:translateZ(0);
+will-change:transform;
 overflow:hidden;
 }
 
@@ -262,6 +263,7 @@ backdrop-filter:blur(8px); /* 🔥 ADD THIS */
 display:none;
 align-items:center;
 justify-content:center;
+z-index:9999;
 }
 
 .modal-content{
@@ -303,10 +305,11 @@ body.modal-open .card:not(.cmd){
   opacity:0.4;
 }
 
-/* Keep CMD sharp */
-body.modal-open .card.cmd{
-  filter:none !important;
-  opacity:1 !important;
+/* Blur ALL cards including CMD */
+body.modal-open .card{
+  filter:blur(4px);
+  opacity:0.25;
+  pointer-events:none;
 }
   
 .close{

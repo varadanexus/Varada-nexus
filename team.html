@@ -223,8 +223,9 @@ box-shadow:
 
 /* 🔥 ACTIVE MORPH CARD */
 .card.morphing{
-position:fixed;
-z-index:10000;
+  position:fixed;
+  z-index:999999; /* 🔥 super high */
+  pointer-events:auto !important;
 margin:0;
 transition:all 0.45s cubic-bezier(.22,1,.36,1);
 transform-origin:center;
@@ -423,7 +424,7 @@ body.modal-open .card:not(.cmd){
 }
 
 /* Blur ALL cards including CMD */
-body.modal-open .card:not(.morphing){
+body.modal-open .org{
   filter:blur(4px);
   opacity:0.25;
   pointer-events:none;

@@ -36,7 +36,22 @@ top:-150px;
 left:50%;
 transform:translateX(-50%);
 filter:blur(140px);
+will-change:transform;
+transition:transform 0.1s linear;
 z-index:-1;
+}
+
+.bg-glow{
+position:fixed;
+width:700px;
+height:700px;
+background:radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
+top:-150px;
+left:50%;
+transform:translateX(-50%);
+filter:blur(140px);
+z-index:-1;
+pointer-events:none;
 }
   
 /* 🔥 NAVBAR */
@@ -161,6 +176,43 @@ will-change:transform;
 overflow:hidden;
 }
 
+.card::before{
+content:"";
+position:absolute;
+inset:0;
+background:radial-gradient(
+circle at var(--x) var(--y),
+rgba(255,255,255,0.08),
+transparent 60%
+);
+opacity:0;
+transition:0.2s;
+}
+
+.card:hover::before{
+opacity:1;
+}
+  
+.card::after{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,0.12),
+transparent
+);
+transition:0.8s;
+}
+
+.card:hover::after{
+left:100%;
+}
+  
 /* HOVER SAFE */
 .card:hover{
 transform:translateY(-6px);
@@ -285,6 +337,24 @@ opacity:1;
 }
 }
 
+/* 🔥 TEXT MORPH */
+.modal-content *{
+opacity:0;
+transform:translateY(10px);
+transition:all 0.4s ease;
+}
+
+.modal.show .modal-content *{
+opacity:1;
+transform:translateY(0);
+}
+
+/* stagger effect */
+.modal.show .modal-content h3{transition-delay:0.1s;}
+.modal.show .modal-content .m-role{transition-delay:0.15s;}
+.modal.show .modal-content .m-desc{transition-delay:0.2s;}
+.modal.show .modal-content .close{transition-delay:0.25s;}
+  
 /* 🔥 MORPH ELEMENT */
 .morph-card{
 position:fixed;
@@ -350,8 +420,11 @@ color:#94a3b8;
 </head>
 
 <body>
+  
+<div class="bg-glow"></div>
 
 <header>
+  
 <div class="nav-container">
 
 <div class="nav-left">
@@ -646,7 +719,12 @@ setTimeout(()=>{
 /* AFTER ANIMATION → SHOW REAL MODAL */
 setTimeout(()=>{
 
-  document.getElementById("modal").style.display="flex";
+  let modal = document.getElementById("modal");
+modal.style.display="flex";
+
+setTimeout(()=>{
+  modal.classList.add("show");
+},10);
 
   document.getElementById("m-name").innerText=name;
   document.getElementById("m-role").innerText=role;
@@ -666,15 +744,39 @@ setTimeout(()=>{
 }
 
 function closeModal(){
-document.getElementById("modal").style.display="none";
+let modal = document.getElementById("modal");
+
+modal.classList.remove("show");
+
+setTimeout(()=>{
+  modal.style.display="none";
+},200);
+
 document.body.classList.remove("modal-open");
 }
-window.onclick = function(e){
-  let modal = document.getElementById("modal");
-  if(e.target === modal){
-    closeModal();
-  }
-}
+
+window.addEventListener("scroll", ()=>{
+
+let scrollY = window.scrollY;
+
+/* background glow moves slower */
+document.body.style.backgroundPosition = `0% ${scrollY * 0.02}px`;
+
+/* floating radial */
+let glow = document.querySelector("body::before");
+
+});
+
+document.querySelectorAll(".card").forEach(card=>{
+card.addEventListener("mousemove",(e)=>{
+let rect = card.getBoundingClientRect();
+let x = e.clientX - rect.left;
+let y = e.clientY - rect.top;
+
+card.style.setProperty("--x", x + "px");
+card.style.setProperty("--y", y + "px");
+});
+});
   
 </script>
 

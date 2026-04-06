@@ -59,10 +59,12 @@ justify-content:space-between;
 padding:14px 20px;
 }
   
-.nav-left{  
-gap:14px;  
-height:48px;  
-}  
+.nav-left{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  height:48px;
+}
   
 .logo{  
 height:100%;  
@@ -542,9 +544,10 @@ margin-bottom:14px;
 transform:translateY(-6px);  
 }  
   
-.content{  
-position:relative;  
-}  
+.content{
+  position:sticky;
+  top:120px;
+}
   
 .content::after{  
 content:"";  
@@ -935,16 +938,6 @@ document.querySelectorAll(".fade-up").forEach(el=>{
 observer.observe(el);  
 });  
 
- window.addEventListener("scroll", () => {
-   cards.forEach((card, index) => {
-     const rect = card.getBoundingClientRect();
-     if(rect.top < 140){
-       card.classList.add("stacked");
-     }else{
-       card.classList.remove("stacked");
-   }
-   });
- });
     
 window.addEventListener("scroll", () => {  
 const header = document.querySelector("header");  

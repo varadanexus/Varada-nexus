@@ -36,22 +36,7 @@ top:-150px;
 left:50%;
 transform:translateX(-50%);
 filter:blur(140px);
-will-change:transform;
-transition:transform 0.1s linear;
 z-index:-1;
-}
-
-.bg-glow{
-position:fixed;
-width:700px;
-height:700px;
-background:radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
-top:-150px;
-left:50%;
-transform:translateX(-50%);
-filter:blur(140px);
-z-index:-1;
-pointer-events:none;
 }
   
 /* 🔥 NAVBAR */
@@ -176,75 +161,12 @@ will-change:transform;
 overflow:hidden;
 }
 
-.card::before{
-content:"";
-position:absolute;
-inset:0;
-background:radial-gradient(
-circle at var(--x) var(--y),
-rgba(255,255,255,0.08),
-transparent 60%
-);
-opacity:0;
-transition:0.2s;
-}
-
-.card:hover::before{
-opacity:1;
-}
-  
-.card::after{
-content:"";
-position:absolute;
-top:0;
-left:-100%;
-width:100%;
-height:100%;
-background:linear-gradient(
-120deg,
-transparent,
-rgba(255,255,255,0.12),
-transparent
-);
-transition:0.8s;
-}
-
-.card:hover::after{
-left:100%;
-}
-  
 /* HOVER SAFE */
 .card:hover{
 transform:translateY(-6px);
 box-shadow:
 0 30px 100px rgba(0,0,0,0.9),
 0 0 25px rgba(59,130,246,0.15); /* 🔥 soft glow */
-}
-
-/* 🔥 ACTIVE MORPH CARD */
-.card.morphing{
-  position:fixed;
-  z-index:999999; /* 🔥 super high */
-  pointer-events:auto !important;
-margin:0;
-transition:all 0.45s cubic-bezier(.22,1,.36,1);
-transform-origin:center;
-}
-
-/* FINAL STATE */
-.card.morphing.active{
-top:50% !important;
-left:50% !important;
-width:320px !important;
-height:auto !important; /* 🔥 ADD THIS */
-transform:translate(-50%, -50%) scale(1) !important;
-border-radius:20px;
-box-shadow:0 40px 120px rgba(0,0,0,0.9);
-}
-
-/* hide original content during morph */
-.card.morphing .tags{
-opacity:0;
 }
 
 /* CLICK FIX */
@@ -330,32 +252,46 @@ border-radius:6px;
 }
 
 /* 🔥 MODAL */
-
-
-
-/* 🔥 MORPH ELEMENT */
-.morph-card{
+.modal{
 position:fixed;
-z-index:10000;
-border-radius:18px;
-background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
-box-shadow:0 40px 120px rgba(0,0,0,0.9);
-transition:all 0.4s cubic-bezier(.22,1,.36,1);
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+backdrop-filter:blur(8px); /* 🔥 ADD THIS */
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+
+.modal-content{
+background:#0f172a;
+padding:40px 30px;
+border-radius:20px;
+width:320px;
+text-align:center;
+
+transform:translateY(60px);
+opacity:0;
+animation:slideUp 0.35s ease forwards;
+}
+
+@keyframes slideUp{
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+.modal-avatar{
+width:120px;
+height:120px;
+border-radius:50%;
+margin:0 auto 18px;
 overflow:hidden;
-pointer-events:none;
 }
-
-/* FINAL STATE */
-.morph-active{
-top:50% !important;
-left:50% !important;
-width:320px !important;
-height:auto !important;
-transform:translate(-50%,-50%) scale(1) !important;
-border-radius:20px !important;
-}
-  
-
 
 .modal-avatar img{
 width:100%;
@@ -370,24 +306,13 @@ body.modal-open .card:not(.cmd){
 }
 
 /* Blur ALL cards including CMD */
-body.modal-open .org{
+body.modal-open .card{
   filter:blur(4px);
   opacity:0.25;
-}
-
-/* allow morph card to still receive clicks */
-.card.morphing,
-.card.morphing *{
-  pointer-events:auto !important;
-}
-
-.card.morphing{
-  isolation:isolate;
+  pointer-events:none;
 }
   
 .close{
-pointer-events:auto;
-z-index:1000000;
 margin-top:20px;
 cursor:pointer;
 color:#3b82f6;
@@ -403,11 +328,8 @@ color:#94a3b8;
 </head>
 
 <body>
-  
-<div class="bg-glow"></div>
 
 <header>
-  
 <div class="nav-container">
 
 <div class="nav-left">
@@ -447,7 +369,7 @@ operational control, and on-ground experience across industries.
 <!-- CMD -->
 <div class="level">
 
-<div class="card cmd spotlight" onclick="openModal(event,
+<div class="card cmd spotlight" onclick="openModal(
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
 'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems, infrastructure, and scalable business models across industries.',
@@ -478,7 +400,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Boddu Jaswanth',
 'COO',
 'Leads large-scale logistics operations including fleet coordination, route optimization, and execution of commodity transport across multiple states.',
@@ -497,7 +419,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Althi Suresh',
 'Director & Legal',
 'Oversees legal strategy, compliance, contracts, and regulatory frameworks across all business verticals, ensuring operational security and governance.',
@@ -523,7 +445,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'B. Koteswar',
 'Technical Head',
 'Leads technical infrastructure, system architecture, and execution of operational technologies supporting logistics, mining, and digital platforms.',
@@ -540,7 +462,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'I. Ganesh',
 'Marketing Head',
 'Leads brand strategy, market positioning, digital growth, and customer acquisition across all business verticals.',
@@ -558,7 +480,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'P. Abhiram Chandra',
 'HR Head',
 'Leads talent acquisition, workforce structuring, and organizational systems to support scalable operations across multiple sectors.',
@@ -578,7 +500,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'Y. Chandra Kaladhar',
 'Strategy & Growth',
 'Drives expansion strategy, mining operations planning, and growth initiatives across resource and infrastructure sectors.',
@@ -604,7 +526,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'K. Sai Kiran Varma',
 'Architect',
 'Leads architectural planning, infrastructure design, and project execution for industrial and commercial developments.',
@@ -623,7 +545,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(event,
+<div class="card" onclick="openModal(
 'P. Hari Krishna',
 'Geologist',
 'Handles geological surveys, mineral analysis, and resource evaluation to support mining operations and strategic extraction planning.',
@@ -649,126 +571,58 @@ operational control, and on-ground experience across industries.
 
 </div>
 
+<!-- 🔥 MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+
+    <div class="modal-avatar" id="m-img"></div>
+
+    <h3 id="m-name"></h3>
+    <p id="m-role" class="m-role"></p>
+    <p id="m-desc" class="m-desc"></p>
+
+    <div class="close" onclick="closeModal()">Close</div>
+  </div>
+</div>
+
 <footer>
 © 2025 Varada Nexus Private Limited
 </footer>
   
 <script>
+function openModal(name, role, desc, img, initials){
 
-  
-function openModal(e, name, role, desc, img, initials){
-let card = e.currentTarget;
-card.dataset.original = card.innerHTML;
-let rect = card.getBoundingClientRect();
-
-card.dataset.top = rect.top;
-card.dataset.left = rect.left;
-card.dataset.width = rect.width;
-card.dataset.height = rect.height;
-
-card.style.top = rect.top + "px";
-card.style.left = rect.left + "px";
-card.style.width = rect.width + "px";
-card.style.height = rect.height + "px";
-
-card.classList.add("morphing");
-card.style.pointerEvents = "auto";
-card._originalParent = card.parentElement;
-card._originalNext = card.nextElementSibling;
-document.body.appendChild(card);
-
-requestAnimationFrame(()=>{
-  requestAnimationFrame(()=>{
-    card.classList.add("active");
-  });
+// 🔥 CLEAN RESET
+document.querySelectorAll(".card").forEach(c=>{
+  c.style.transform="none";
 });
-
-setTimeout(()=>{
-
-  card.innerHTML = `
-    <div class="modal-avatar">
-      ${img 
-        ? `<img src="${img}">` 
-        : initials}
-    </div>
-    <h3>${name}</h3>
-    <p class="m-role">${role}</p>
-    <p class="m-desc">${desc}</p>
-    <div class="close" onclick="closeModal(event)">Close</div>
-  `;
-
-},350);
-
-/* blur background */
 document.body.classList.add("modal-open");
+document.getElementById("modal").style.display="flex";
 
-}
+document.getElementById("m-name").innerText=name;
+document.getElementById("m-role").innerText=role;
+document.getElementById("m-desc").innerText=desc;
 
+let avatar=document.getElementById("m-img");
 
-function closeModal(e){
-
-if(e) e.stopPropagation(); // 🔥 prevents bubbling issues
-
-let card = document.querySelector(".card.morphing");
-if(!card) return;
-
-/* REMOVE ACTIVE (reverse animation) */
-card.classList.remove("active");
-
-/* WAIT FOR ANIMATION */
-setTimeout(()=>{
-
-  /* RESTORE ORIGINAL CONTENT */
-  card.innerHTML = card.dataset.original;
-
-  /* RESTORE POSITION */
-  card.style.top = card.dataset.top + "px";
-  card.style.left = card.dataset.left + "px";
-  card.style.width = card.dataset.width + "px";
-  card.style.height = card.dataset.height + "px";
-
-  /* 🔥 FIX PARENT RESTORE (CRITICAL BUG) */
-  let parent = card._originalParent;
-let next = card._originalNext;
-
-if(next){
-  parent.insertBefore(card, next);
+if(img){
+  avatar.innerHTML=`<img src="${img}" onerror="this.parentElement.innerHTML='${initials || ''}'">`;
 }else{
-  parent.appendChild(card);
+  avatar.innerHTML=initials || '';
+}
 }
 
-  /* CLEANUP */
-  card.classList.remove("morphing");
-  card.removeAttribute("style");
-
-},400);
-
-  console.log("CLOSE CLICKED"); // 👈 add this
-/* REMOVE BLUR */
+function closeModal(){
+document.getElementById("modal").style.display="none";
 document.body.classList.remove("modal-open");
 }
-
+window.onclick = function(e){
+  let modal = document.getElementById("modal");
+  if(e.target === modal){
+    closeModal();
+  }
+}
   
-window.addEventListener("scroll", ()=>{
-let scrollY = window.scrollY;
-document.body.style.backgroundPosition = `0% ${scrollY * 0.02}px`;
-let glow = document.querySelector("body::before");
-});
-  
-document.querySelectorAll(".card").forEach(card=>{
-card.addEventListener("mousemove",(e)=>{
-let rect = card.getBoundingClientRect();
-let x = e.clientX - rect.left;
-let y = e.clientY - rect.top;
-
-card.style.setProperty("--x", x + "px");
-card.style.setProperty("--y", y + "px");
-});
-});
-  
-
-
-
 </script>
 
 </body>

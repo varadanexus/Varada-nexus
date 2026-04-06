@@ -272,6 +272,10 @@ will-change: transform, width, height, top, left;
 transition:opacity 0.35s ease;
 }
 
+.org{
+transition:opacity 0.35s ease;
+}
+
 body.modal-open .org{
 opacity:0.15;
 pointer-events:none;
@@ -562,6 +566,8 @@ clone.style.left = rect.left + "px";
 clone.style.width = rect.width + "px";
 clone.style.height = rect.height + "px";
 clone.style.boxSizing = "border-box";
+clone.style.transform = "translateZ(0)";
+clone.style.backfaceVisibility = "hidden";
 clone.style.transform = "translateZ(0)";
 clone.style.backfaceVisibility = "hidden";
 

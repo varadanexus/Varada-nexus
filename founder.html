@@ -512,7 +512,7 @@ background:rgba(255,255,255,0.12);
 /* 🔥 LIGHT SWEEP */
 .content{
 max-width:1100px;
-margin:-120px auto 60px;
+margin:120px auto;
 padding:50px;
 
 background:rgba(15,23,42,0.55); /* 🔥 glass effect */
@@ -533,6 +533,10 @@ position:relative;
 z-index:2;
 }
 
+.content{
+min-height:80vh; /* gives breathing room */
+}
+    
 /* 🔥 GOLD EDGE ON HOVER */
 .content:hover{
 transform:translateY(-10px);
@@ -824,7 +828,7 @@ position:relative;
 
 .content{
 position:sticky;
-top:120px;
+top:160px;
 z-index:1;
 
 transform-origin:center top;
@@ -838,8 +842,17 @@ transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
 .content:nth-of-type(5){ z-index:6; }
 .content:nth-of-type(6){ z-index:7; }
 
+.content:nth-of-type(1){ margin-top:120px; }
+.content:nth-of-type(2){ margin-top:160px; }
+.content:nth-of-type(3){ margin-top:200px; }
+.content:nth-of-type(4){ margin-top:240px; }
+.content:nth-of-type(5){ margin-top:280px; }
+.content:nth-of-type(6){ margin-top:320px; }
+
 .content.stacked{
-transform:scale(0.96);
+transform:scale(0.94);
+filter:blur(2px);
+opacity:0.85;
 }
     
 </style>

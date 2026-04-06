@@ -489,7 +489,7 @@ operational control, and on-ground experience across industries.
 <!-- CMD -->
 <div class="level">
 
-<div class="card cmd spotlight" onclick="openModal(
+<div class="card cmd spotlight" onclick="openModal(event,
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
 'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems, infrastructure, and scalable business models across industries.',
@@ -520,7 +520,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Boddu Jaswanth',
 'COO',
 'Leads large-scale logistics operations including fleet coordination, route optimization, and execution of commodity transport across multiple states.',
@@ -539,7 +539,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Althi Suresh',
 'Director & Legal',
 'Oversees legal strategy, compliance, contracts, and regulatory frameworks across all business verticals, ensuring operational security and governance.',
@@ -565,7 +565,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'B. Koteswar',
 'Technical Head',
 'Leads technical infrastructure, system architecture, and execution of operational technologies supporting logistics, mining, and digital platforms.',
@@ -582,7 +582,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'I. Ganesh',
 'Marketing Head',
 'Leads brand strategy, market positioning, digital growth, and customer acquisition across all business verticals.',
@@ -600,7 +600,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'P. Abhiram Chandra',
 'HR Head',
 'Leads talent acquisition, workforce structuring, and organizational systems to support scalable operations across multiple sectors.',
@@ -620,7 +620,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'Y. Chandra Kaladhar',
 'Strategy & Growth',
 'Drives expansion strategy, mining operations planning, and growth initiatives across resource and infrastructure sectors.',
@@ -646,7 +646,7 @@ operational control, and on-ground experience across industries.
 <div class="level">
 <div class="level-line"></div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'K. Sai Kiran Varma',
 'Architect',
 'Leads architectural planning, infrastructure design, and project execution for industrial and commercial developments.',
@@ -665,7 +665,7 @@ operational control, and on-ground experience across industries.
 </div>
 </div>
 
-<div class="card" onclick="openModal(
+<div class="card" onclick="openModal(event,
 'P. Hari Krishna',
 'Geologist',
 'Handles geological surveys, mineral analysis, and resource evaluation to support mining operations and strategic extraction planning.',
@@ -712,9 +712,8 @@ operational control, and on-ground experience across industries.
 <script>
 
   
-function openModal(name, role, desc, img, initials){
-
-let card = event.currentTarget;
+function openModal(e, name, role, desc, img, initials){
+let card = e.currentTarget;
 card.dataset.original = card.innerHTML;
 let rect = card.getBoundingClientRect();
 

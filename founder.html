@@ -166,20 +166,20 @@ padding-left:80px;
 
 /* NAME */
 .founder-name{
-font-size:60px;
+font-size:56px;
 font-weight:800;
-letter-spacing:-0.5px;
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+line-height:1.1;
+color:white;
+text-shadow:0 4px 20px rgba(0,0,0,0.7);
+margin:10px 0;
 }
 
 /* DESC */
 .hero-desc{
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
 font-size:18px;
 line-height:1.7;
 margin-top:10px;
+color:#e2e8f0;
 }
 
 /* BUTTON */
@@ -246,8 +246,7 @@ box-shadow:0 40px 120px rgba(0,0,0,0.8);
 .content h3{
 font-size:22px;
 margin-bottom:14px;
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+color:white;
 }
 
 /* TEXT */
@@ -627,8 +626,7 @@ line-height:1.7;
 }
 
 .cta h2{
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+color:white;
 }
 
 .cta{
@@ -780,6 +778,14 @@ color:#0f172a;
 font-weight:700;
 }
 
+.founder-name,
+.hero-desc,
+.content h3,
+.cta h2{
+color:white !important;
+-webkit-text-fill-color:unset !important;
+}
+    
 /* 🔥 SCROLL SMOOTH */
 html{
 scroll-behavior:smooth;

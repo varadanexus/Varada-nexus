@@ -135,7 +135,14 @@ top:-50px;
 height:2px;
 width:80%;
 left:10%;
-background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+background:linear-gradient(90deg,transparent,#3b82f6,transparent);
+animation:lineFlow 3s linear infinite;
+}
+
+@keyframes lineFlow{
+0%{opacity:0.3;}
+50%{opacity:1;}
+100%{opacity:0.3;}
 }
 
 /* 🔥 CARD */
@@ -172,6 +179,32 @@ box-shadow:
 0 0 60px rgba(59,130,246,0.25);
 }
 
+/* 🔥 SPOTLIGHT CMD */
+.spotlight{
+transform:scale(1.15);
+position:relative;
+z-index:5;
+}
+
+.spotlight-glow{
+position:absolute;
+width:300px;
+height:300px;
+background:radial-gradient(circle, rgba(59,130,246,0.35), transparent 70%);
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+filter:blur(80px);
+z-index:-1;
+animation:pulse 3s infinite ease-in-out;
+}
+
+@keyframes pulse{
+0%{opacity:0.6;transform:translate(-50%,-50%) scale(1);}
+50%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}
+100%{opacity:0.6;transform:translate(-50%,-50%) scale(1);}
+}
+  
 /* AVATAR */
 .avatar{
 width:110px;
@@ -227,12 +260,17 @@ padding:40px 30px;
 border-radius:20px;
 width:320px;
 text-align:center;
-animation:popIn 0.3s ease;
+
+transform:translateY(60px);
+opacity:0;
+animation:slideUp 0.35s ease forwards;
 }
 
-@keyframes popIn{
-from{opacity:0;transform:scale(0.8);}
-to{opacity:1;transform:scale(1);}
+@keyframes slideUp{
+to{
+transform:translateY(0);
+opacity:1;
+}
 }
 
 .modal-avatar{
@@ -249,6 +287,11 @@ height:100%;
 object-fit:cover;
 }
 
+body.modal-open .card{
+filter:blur(3px);
+opacity:0.5;
+}
+  
 .close{
 margin-top:20px;
 cursor:pointer;
@@ -305,25 +348,32 @@ operational control, and on-ground experience across industries.
 
 <!-- CMD -->
 <div class="level">
-<div class="card cmd" onclick="openModal(
+
+<div class="card cmd spotlight" onclick="openModal(
 'Dr. Althi Prudhvi',
 'Chairman & Managing Director',
 'Leads multi-sector operations across healthcare, mining, logistics, and global trade. Focused on building execution-driven systems, infrastructure, and scalable business models across industries.',
 'images/team/prudhvi.jpg',
 'AP'
 )">
+<div class="spotlight-glow"></div>
+
 <div class="avatar">
   <img src="images/team/prudhvi.jpg" onerror="this.parentElement.innerHTML='AP'">
 </div>
+
 <div class="name">Dr. Althi Prudhvi</div>
 <div class="role">Chairman & Managing Director</div>
 <div class="desc">Enterprise leadership</div>
+
 <div class="tags">
   <span>Strategy</span>
   <span>Execution</span>
   <span>Leadership</span>
 </div>
+
 </div>
+
 </div>
 
 <!-- COO + Director -->
@@ -526,7 +576,7 @@ function openModal(name, role, desc, img, initials){
 document.querySelectorAll(".card").forEach(c=>{
   c.style.transform="none";
 });
-
+document.body.classList.add("modal-open");
 document.getElementById("modal").style.display="flex";
 
 document.getElementById("m-name").innerText=name;
@@ -545,7 +595,7 @@ if(img){
 function closeModal(){
 document.getElementById("modal").style.display="none";
 }
-
+document.body.classList.remove("modal-open");
 window.onclick = function(e){
   let modal = document.getElementById("modal");
   if(e.target === modal){

@@ -206,6 +206,7 @@ cursor:pointer;
 transition:all 0.4s ease;
 backdrop-filter:blur(18px);
 position:relative;
+will-change: transform;
 overflow:hidden;
 }
 
@@ -691,22 +692,29 @@ document.getElementById("modal").style.display="none";
 
 <script>
 document.querySelectorAll(".card").forEach(card=>{
-card.addEventListener("mousemove", (e)=>{
-const rect = card.getBoundingClientRect();
-const x = e.clientX - rect.left;
-const y = e.clientY - rect.top;
 
-card.style.transform = `
-perspective(1000px)
-rotateX(${-(y - rect.height/2)/20}deg)
-rotateY(${(x - rect.width/2)/20}deg)
-scale(1.05)
-`;
-});
+  card.addEventListener("mousemove", (e)=>{
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-card.addEventListener("mouseleave", ()=>{
-card.style.transform = "";
-});
+    card.style.transform = `
+      perspective(1000px)
+      rotateX(${-(y - rect.height/2)/20}deg)
+      rotateY(${(x - rect.width/2)/20}deg)
+      scale(1.05)
+    `;
+  });
+
+  card.addEventListener("mouseleave", ()=>{
+    card.style.transform = "";
+  });
+
+  // 🔥 FIX: reset on click
+  card.addEventListener("click", ()=>{
+    card.style.transform = "none";
+  });
+
 });
 </script>
   

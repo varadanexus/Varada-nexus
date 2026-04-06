@@ -1,0 +1,345 @@
+<html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leadership – Varada Nexus</title>
+
+<style>
+
+/* 🔥 GLOBAL */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
+background-size:400% 400%;
+animation:bg 12s ease infinite;
+color:white;
+}
+
+@keyframes bg{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+/* 🔥 NAVBAR */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(10,15,30,0.6);
+backdrop-filter:blur(15px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.logo{
+height:40px;
+}
+
+.brand-name{
+font-size:18px;
+font-weight:600;
+}
+
+.nav-links{
+display:flex;
+gap:24px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a.active,
+.nav-links a:hover{
+color:white;
+}
+
+/* 🔥 PAGE */
+.container{
+max-width:1200px;
+margin:80px auto;
+padding:0 20px;
+text-align:center;
+}
+
+h1{
+font-size:32px;
+}
+
+.sub{
+color:#94a3b8;
+margin-bottom:60px;
+}
+
+/* 🔥 GRID */
+.grid{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:30px;
+}
+
+/* 🔥 CARD (CLEAN VERSION) */
+.card{
+width:240px;
+padding:24px;
+border-radius:16px;
+background:rgba(15,23,42,0.85);
+border:1px solid rgba(255,255,255,0.08);
+cursor:pointer;
+transition:0.25s ease;
+}
+
+/* ONLY LIGHT HOVER (NO SCALE BUG) */
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 20px 60px rgba(0,0,0,0.7);
+}
+
+/* CMD */
+.card.cmd{
+border:1px solid rgba(59,130,246,0.5);
+}
+
+/* AVATAR */
+.avatar{
+width:90px;
+height:90px;
+border-radius:50%;
+margin:auto;
+margin-bottom:14px;
+overflow:hidden;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+}
+
+.avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+/* TEXT */
+.name{
+font-weight:600;
+font-size:16px;
+}
+
+.role{
+font-size:13px;
+color:#94a3b8;
+margin-top:4px;
+}
+
+.tags{
+margin-top:10px;
+}
+
+.tags span{
+display:inline-block;
+font-size:11px;
+padding:5px 8px;
+margin:3px;
+background:rgba(59,130,246,0.15);
+border-radius:6px;
+}
+
+/* 🔥 MODAL */
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:#0f172a;
+padding:30px;
+border-radius:18px;
+width:320px;
+text-align:center;
+animation:pop 0.3s ease;
+}
+
+@keyframes pop{
+from{transform:scale(0.8);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}
+
+.modal-avatar{
+width:100px;
+height:100px;
+border-radius:50%;
+margin:auto 0 15px;
+overflow:hidden;
+}
+
+.modal-avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+.close{
+margin-top:20px;
+cursor:pointer;
+color:#3b82f6;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+.card{
+width:90%;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="nav-container">
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-name">Varada Nexus</div>
+</div>
+
+<nav class="nav-links">
+<a href="#">Home</a>
+<a href="#">Founder</a>
+<a href="#">Services</a>
+<a href="#" class="active">Team</a>
+<a href="#">Contact</a>
+</nav>
+</div>
+</header>
+
+<div class="container">
+
+<h1>Leadership Team</h1>
+<div class="sub">Execution-driven leadership across all verticals</div>
+
+<div class="grid">
+
+<!-- CMD -->
+<div class="card cmd" onclick="openModal(
+'Dr. Althi Prudhvi',
+'Chairman & Managing Director',
+'Leads multi-sector operations across healthcare, logistics, mining, and trade.',
+'images/team/prudhvi.jpg'
+)">
+<div class="avatar">
+<img src="images/team/prudhvi.jpg">
+</div>
+<div class="name">Dr. Althi Prudhvi</div>
+<div class="role">CMD</div>
+<div class="tags">
+<span>Strategy</span>
+<span>Execution</span>
+</div>
+</div>
+
+<!-- COO -->
+<div class="card" onclick="openModal(
+'Boddu Jaswanth',
+'COO',
+'Leads logistics operations and fleet execution across regions.',
+'images/team/jaswanth.jpg'
+)">
+<div class="avatar">
+<img src="images/team/jaswanth.jpg">
+</div>
+<div class="name">Boddu Jaswanth</div>
+<div class="role">COO</div>
+<div class="tags">
+<span>Logistics</span>
+<span>Operations</span>
+</div>
+</div>
+
+<!-- LEGAL -->
+<div class="card" onclick="openModal(
+'Althi Suresh',
+'Director & Legal',
+'Handles legal governance and compliance across all business verticals.',
+'images/team/suresh.jpg'
+)">
+<div class="avatar">
+<img src="images/team/suresh.jpg">
+</div>
+<div class="name">Althi Suresh</div>
+<div class="role">Director</div>
+<div class="tags">
+<span>Legal</span>
+<span>Compliance</span>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- 🔥 MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+
+<div class="modal-avatar" id="m-img"></div>
+
+<h3 id="m-name"></h3>
+<p id="m-role"></p>
+<p id="m-desc"></p>
+
+<div class="close" onclick="closeModal()">Close</div>
+
+</div>
+</div>
+
+<script>
+function openModal(name, role, desc, img){
+document.getElementById("modal").style.display="flex";
+
+document.getElementById("m-name").innerText=name;
+document.getElementById("m-role").innerText=role;
+document.getElementById("m-desc").innerText=desc;
+
+document.getElementById("m-img").innerHTML =
+`<img src="${img}">`;
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none";
+}
+</script>
+
+</body>
+</html>
+

@@ -311,6 +311,38 @@ body.modal-open .card{
   opacity:0.25;
   pointer-events:none;
 }
+
+/* 🔥 MORPH BASE */
+.morph-clone{
+position:fixed;
+z-index:100000;
+border-radius:18px;
+background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(15,23,42,0.95));
+box-shadow:0 40px 120px rgba(0,0,0,0.9);
+transition:all 0.45s cubic-bezier(.22,1,.36,1);
+overflow:hidden;
+}
+
+/* FINAL STATE */
+.morph-final{
+top:50% !important;
+left:50% !important;
+width:340px !important;
+transform:translate(-50%,-50%) !important;
+border-radius:20px;
+}
+
+/* TEXT FADE */
+.modal-content{
+opacity:0;
+transform:translateY(20px);
+transition:0.3s ease;
+}
+
+.modal.show .modal-content{
+opacity:1;
+transform:translateY(0);
+}
   
 .close{
 margin-top:20px;
@@ -590,14 +622,41 @@ operational control, and on-ground experience across industries.
 </footer>
   
 <script>
+
+let activeClone = null;
+
 function openModal(name, role, desc, img, initials){
 
-// 🔥 CLEAN RESET
-document.querySelectorAll(".card").forEach(c=>{
-  c.style.transform="none";
-});
+let card = event.currentTarget;
+let rect = card.getBoundingClientRect();
+
+/* CREATE CLONE */
+let clone = card.cloneNode(true);
+clone.classList.add("morph-clone");
+
+clone.style.top = rect.top + "px";
+clone.style.left = rect.left + "px";
+clone.style.width = rect.width + "px";
+clone.style.height = rect.height + "px";
+
+document.body.appendChild(clone);
+activeClone = clone;
+
+/* HIDE ORIGINAL */
+card.style.visibility = "hidden";
+
+/* SHOW MODAL BG */
 document.body.classList.add("modal-open");
-document.getElementById("modal").style.display="flex";
+let modal = document.getElementById("modal");
+modal.style.display = "flex";
+
+/* ANIMATE */
+requestAnimationFrame(()=>{
+  clone.classList.add("morph-final");
+});
+
+/* AFTER EXPAND → SHOW CONTENT */
+setTimeout(()=>{
 
 document.getElementById("m-name").innerText=name;
 document.getElementById("m-role").innerText=role;
@@ -610,19 +669,51 @@ if(img){
 }else{
   avatar.innerHTML=initials || '';
 }
+
+modal.classList.add("show");
+
+},300);
 }
 
+
 function closeModal(){
-document.getElementById("modal").style.display="none";
-document.body.classList.remove("modal-open");
+
+let modal = document.getElementById("modal");
+modal.classList.remove("show");
+
+/* SHRINK BACK */
+if(activeClone){
+
+  activeClone.classList.remove("morph-final");
+
+  setTimeout(()=>{
+    activeClone.remove();
+    activeClone = null;
+
+    /* SHOW ORIGINAL BACK */
+    document.querySelectorAll(".card").forEach(c=>{
+      c.style.visibility="visible";
+    });
+
+  },400);
 }
+
+/* HIDE MODAL */
+setTimeout(()=>{
+  modal.style.display="none";
+  document.body.classList.remove("modal-open");
+},200);
+}
+
+
+/* CLICK OUTSIDE */
 window.onclick = function(e){
   let modal = document.getElementById("modal");
   if(e.target === modal){
     closeModal();
   }
 }
-  
+
 </script>
 
 </body>

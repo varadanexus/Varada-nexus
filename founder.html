@@ -512,12 +512,15 @@ background:rgba(255,255,255,0.12);
 /* 🔥 LIGHT SWEEP */
 .content{
 max-width:1100px;
-margin:120px auto;
+margin:200px auto; /* 👈 BIG GAP */
 padding:50px;
 
-background:rgba(15,23,42,0.55); /* 🔥 glass effect */
-backdrop-filter:blur(20px);
+min-height:90vh; /* 👈 KEY: gives scroll room */
 
+position:sticky;
+top:140px;
+
+background:rgba(15,23,42,0.55);
 backdrop-filter:blur(25px);
 
 border-radius:20px;
@@ -527,9 +530,7 @@ box-shadow:
 0 40px 120px rgba(0,0,0,0.9),
 0 0 40px rgba(59,130,246,0.1);
 
-transition:0.4s;
-
-position:relative;
+transition:0.5s;
 z-index:2;
 }
 
@@ -842,17 +843,11 @@ transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
 .content:nth-of-type(5){ z-index:6; }
 .content:nth-of-type(6){ z-index:7; }
 
-.content:nth-of-type(1){ margin-top:120px; }
-.content:nth-of-type(2){ margin-top:160px; }
-.content:nth-of-type(3){ margin-top:200px; }
-.content:nth-of-type(4){ margin-top:240px; }
-.content:nth-of-type(5){ margin-top:280px; }
-.content:nth-of-type(6){ margin-top:320px; }
 
 .content.stacked{
-transform:scale(0.94);
-filter:blur(2px);
-opacity:0.85;
+transform:scale(0.92);
+filter:blur(3px);
+opacity:0.75;
 }
     
 </style>
@@ -1157,7 +1152,7 @@ cards.forEach((card, index) => {
 const rect = card.getBoundingClientRect();
 
 // when card reaches top zone → shrink previous
-if(rect.top < 140){
+if(rect.top < 180){
 card.classList.add("stacked");
 }else{
 card.classList.remove("stacked");

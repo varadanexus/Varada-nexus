@@ -738,6 +738,12 @@ operational control, and on-ground experience across industries.
 
 <script>
 function openModal(name, role, desc, img, initials){
+
+// 🚫 RESET ALL CARD TRANSFORMS (kills old click animation)
+document.querySelectorAll(".card").forEach(c=>{
+  c.style.transform = "none";
+});
+
 document.getElementById("modal").style.display="flex";
 
 document.getElementById("m-name").innerText = name;

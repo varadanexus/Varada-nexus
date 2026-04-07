@@ -545,9 +545,19 @@ if(p.phone) phones.push(p.phone)
 
 /* 🔹 REMOVE DUPLICATES */
 phones = [...new Set(phones)]
-
+console.log("📩 Payment WA Response:", result)
 console.log("📲 Payment phones:", phones)
-
+console.log("🚀 PAYMENT PAYLOAD:", {
+  phones,
+  template: "payment_update_api",
+  params: [
+    name,
+    payment.id,
+    amount,
+    tripList,
+    status
+  ]
+})
 /* 🔹 SEND */
 if(phones.length){
 
@@ -555,7 +565,7 @@ const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/s
 method: "POST",
 headers: {
 "Content-Type": "application/json",
-"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 },
 body: JSON.stringify({
 phones: phones,

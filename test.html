@@ -69,26 +69,32 @@ async function testWhatsApp(){
     let res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
       },
- body: JSON.stringify({
-  phone: "918125625629",   // ✅ correct format (add 91)
-  template: "hello_world", // ✅ ONLY ONE template
-  params: ["Prudhvi"]
-})
+      body: JSON.stringify({
+        phone: "918125625629",   // ✅ correct format
+        template: "hello_world", // ✅ your AiSensy template
+        params: ["Prudhvi"]
+      })
     })
 
     let data = await res.json()
 
     console.log(data)
 
-    status.innerText = "✅ Message sent successfully"
+    if(res.ok){
+      status.innerText = "✅ Message sent successfully"
+    }else{
+      status.innerText = "❌ " + (data.message || "Error sending message")
+    }
 
   }catch(err){
 
     console.error(err)
 
-    status.innerText = "❌ Error sending message"
+    status.innerText = "❌ Network error"
   }
 }
 </script>

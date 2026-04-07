@@ -491,9 +491,14 @@ alert("Enter transporter name")
 return
 }
 
-if(phone && !/^[0-9]{10}$/.test(phone)){
-alert("Invalid phone")
-return
+if(phone.length === 10){
+  phone = "91" + phone
+}
+
+// final validation
+if(phone && !/^91[0-9]{10}$/.test(phone)){
+  alert("Invalid phone (use 10 digits or 91XXXXXXXXXX)")
+  return
 }
 
 if(gst && !/^[0-9A-Z]{15}$/.test(gst)){
@@ -1037,7 +1042,7 @@ await supabaseClient
 .from("transporters")
 .update({
 transporter_name:eName.value,
-phone:ePhone.value,
+phone: phone,
 gst_number:eGST.value,
 address:eAddress.value,
 pan:ePAN.value,

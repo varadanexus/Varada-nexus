@@ -51,7 +51,7 @@ button:hover{
 
 <div class="card">
   <h2>WhatsApp API Test</h2>
-  <p>Click below to send test message</p>
+  <p>Send Trip Update (UTILITY)</p>
 
   <button onclick="testWhatsApp()">Send Test Message</button>
 
@@ -70,13 +70,26 @@ async function testWhatsApp(){
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+        "Authorization": "Bearer YOUR_ANON_KEY",
+        "apikey": "YOUR_ANON_KEY"
       },
       body: JSON.stringify({
-        phone: "918125625629",   // ✅ correct format
-        template: "hello_world", // ✅ your AiSensy template
-        params: ["Prudhvi"]
+
+        // ✅ NEW FORMAT (MULTIPLE USERS)
+        phones: ["918125625629"],
+
+        // ✅ YOUR APPROVED TEMPLATE
+        template: "trip_update_template",
+
+        // ✅ MATCH YOUR TEMPLATE VARIABLES EXACTLY
+        params: [
+          "Prudhvi",      // {{1}} name
+          "R123",         // {{2}} route id
+          "AP09AB1234",   // {{3}} truck number
+          "Ramesh",       // {{4}} transporter
+          "25.50"         // {{5}} weight in MT
+        ]
+
       })
     })
 
@@ -85,9 +98,9 @@ async function testWhatsApp(){
     console.log(data)
 
     if(res.ok){
-      status.innerText = "✅ Message sent successfully"
+      status.innerText = "✅ Trip message sent"
     }else{
-      status.innerText = "❌ " + (data.message || "Error sending message")
+      status.innerText = "❌ " + (data.error || "Error sending message")
     }
 
   }catch(err){

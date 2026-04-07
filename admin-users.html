@@ -388,14 +388,23 @@ loadUsers()
 
 /* UPDATE ROLE */
 async function updateRole(userId){
-let roleId=document.getElementById("role-"+userId).value
 
-await supabaseClient
+let roleId = document.getElementById("role-"+userId).value
+
+const { error } = await supabaseClient
 .from("user_roles")
-.update({role_id:roleId})
-.eq("user_id",userId)
+.upsert({
+  user_id: userId,
+  role_id: roleId
+}, { onConflict: "user_id" })
 
-alert("Role updated")
+if(error){
+  console.error(error)
+  alert("Update failed ❌")
+  return
+}
+
+alert("Role updated ✅")
 loadUsers()
 }
 

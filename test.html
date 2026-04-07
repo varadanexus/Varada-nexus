@@ -71,13 +71,11 @@ async function testWhatsApp(){
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        phone: "8125625629",   // 🔴 PUT YOUR NUMBER HERE
-        template: "hello_world"
-"trip_update"
-"payment_done", // 🔴 PUT YOUR AISENSY TEMPLATE NAME
-        params: ["Prudhvi"]
-      })
+ body: JSON.stringify({
+  phone: "918125625629",   // ✅ correct format (add 91)
+  template: "hello_world", // ✅ ONLY ONE template
+  params: ["Prudhvi"]
+})
     })
 
     let data = await res.json()

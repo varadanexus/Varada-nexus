@@ -509,54 +509,80 @@ if(transporter?.phone){
 }
 
 /* 2️⃣ MANAGER */
-const {data:managerUsers} = await supabaseClient
-.from("user_roles")
-.select("user_id, roles(role_name)")
-.eq("roles.role_name","manager")
+/* 2️⃣ MANAGER */
+let managerIds = []
 
-if(managerUsers?.length){
+const {data:managerRole} = await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name","manager")
+.single()
 
-  let managerIds = managerUsers.map(x=>x.user_id)
+if(managerRole){
 
-  const {data:managerPhones} = await supabaseClient
-  .from("user_contacts")
-  .select("phone")
-  .in("user_id", managerIds)
+  const {data:users} = await supabaseClient
+  .from("user_roles")
+  .select("user_id")
+  .eq("role_id", managerRole.id)
 
-  managerPhones?.forEach(p=>{
-    if(p.phone) phones.push(p.phone)
-  })
+  managerIds = users?.map(x=>x.user_id) || []
+
 }
+
+const {data:managerPhones} = await supabaseClient
+.from("user_contacts")
+.select("phone")
+.in("user_id", managerIds)
+
+managerPhones?.forEach(p=>{
+  if(p.phone) phones.push(p.phone)
+})
 
 /* 3️⃣ OPERATOR */
-const {data:operatorUsers} = await supabaseClient
-.from("user_roles")
-.select("user_id, roles(role_name)")
-.eq("roles.role_name","operator")
+/* 3️⃣ OPERATOR */
+let operatorIds = []
 
-if(operatorUsers?.length){
+const {data:operatorRole} = await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name","operator")
+.single()
 
-  let operatorIds = operatorUsers.map(x=>x.user_id)
+if(operatorRole){
 
-  const {data:operatorPhones} = await supabaseClient
-  .from("user_contacts")
-  .select("phone")
-  .in("user_id", operatorIds)
+  const {data:users} = await supabaseClient
+  .from("user_roles")
+  .select("user_id")
+  .eq("role_id", operatorRole.id)
 
-  operatorPhones?.forEach(p=>{
-    if(p.phone) phones.push(p.phone)
-  })
+  operatorIds = users?.map(x=>x.user_id) || []
+
 }
+
+const {data:operatorPhones} = await supabaseClient
+.from("user_contacts")
+.select("phone")
+.in("user_id", operatorIds)
+
+operatorPhones?.forEach(p=>{
+  if(p.phone) phones.push(p.phone)
+})
 
 /* 🔥 REMOVE DUPLICATES */
 phones = [...new Set(phones)]
 
 console.log("📲 Sending to:", phones)
+console.log("🔥 WhatsApp trigger started")
 
+console.log("Truck:", selectedTruck)
+console.log("Trip:", trip)
+console.log("Weight:", weightVal)
+console.log("📲 FINAL PHONES:", phones)
+    
 /* 4️⃣ SEND WHATSAPP */
 if(phones.length){
 
-  await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+  const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -575,6 +601,9 @@ if(phones.length){
     })
   })
 
+const result = await res.json()
+console.log("📩 RESPONSE:", result)
+    
   console.log("✅ WhatsApp sent to all roles")
 
 }else{

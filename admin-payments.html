@@ -571,11 +571,11 @@ body: JSON.stringify({
 phones: phones,
 template: "payment_update_api",
 params: [
-String(name),                    // {{1}}
-String(payment.id),              // {{2}}
-String(amount),                  // {{3}}
-String(tripList),                // {{4}}
-String(status)                   // {{5}}
+String(name),
+String(currentInvoice.invoice_no),  // ✅ FIXED
+String(Number(amount).toLocaleString("en-IN")),
+String(tripList),
+String(status)
 ]
 })
 })

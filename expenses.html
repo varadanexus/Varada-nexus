@@ -443,11 +443,11 @@ if(phones.length){
       phones: phones,
       template: "expense_update_api",
       params: [
-        String(name),
-        String(trip.trip_no),   // ✅ CORRECT
-        String(type),
-        String(amount)
-      ]
+  String(name),        // {{1}}
+  String(type),        // {{2}} ✅ Expense Type
+  String(amount),      // {{3}} ✅ Amount
+  String(trip.trip_no) // {{4}} ✅ Trip
+]
     })
   })
 

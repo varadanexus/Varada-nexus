@@ -66,24 +66,25 @@ async function testWhatsApp(){
 
   try{
 
-  let res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
-  method: "POST",
-headers: {
-  "Content-Type": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-}
-  body: JSON.stringify({
-    phones: ["918125625629"],
-    template: "trip_update_api",
-    params: [
-      "Prudhvi",
-      "R001",
-      "AP09AB1234",
-      "Ramesh",
-      "25"
-    ]
-  })
-})
+    let res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+      }, // ✅ THIS COMMA WAS MISSING
+
+      body: JSON.stringify({
+        phones: ["918125625629"],
+        template: "trip_update_api",
+        params: [
+          "Prudhvi",
+          "R001",
+          "AP09AB1234",
+          "Ramesh",
+          "25"
+        ]
+      })
+    })
 
     let data = await res.json()
     console.log(data)

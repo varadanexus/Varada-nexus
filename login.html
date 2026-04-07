@@ -463,9 +463,9 @@ if(loginType === "transporter"){
   .maybeSingle()
 
 // ✅ CHECK AGENT FIRST (MOVE THIS UP)
-const {data:agentCheck} = await supabaseClient
+const {data:agentCheckStaff} = await supabaseClient
 .from("agents")
-.select("id, is_active")
+.select("id")
 .eq("auth_id", authId)
 .maybeSingle()
 
@@ -543,7 +543,7 @@ const {data:transporterCheck} = await supabaseClient
 .eq("auth_id", authId)
 .maybeSingle()
 
-if(agentCheck || transporterCheck){
+if(agentCheckStaff || transporterCheck){
   document.getElementById("error").innerText = "Use Customer Login"
   btn.disabled = false
   btn.innerText = "Login"

@@ -451,36 +451,140 @@ loadInvoices()
 
 async function savePayment(){
 
-let amount=Number(paidAmount.value)
+let amount = Number(paidAmount.value)
 
 if(!currentInvoice){
 alert("Select invoice")
 return
 }
 
-await supabaseClient.from("transporter_payments").insert({
-invoice_id:currentInvoice.id,
+/* 1️⃣ SAVE PAYMENT */
+const {data:payment} = await supabaseClient
+.from("transporter_payments")
+.insert({
+invoice_id: currentInvoice.id,
 amount,
-payment_date:paymentDate.value,
-payment_method:paymentMethod.value
+payment_date: paymentDate.value,
+payment_method: paymentMethod.value
 })
+.select()
+.single()
 
-let paid=(currentInvoice.paid_amount||0)+amount
-let balance=currentInvoice.total_amount-paid
+/* 2️⃣ UPDATE INVOICE */
+let paid = (currentInvoice.paid_amount || 0) + amount
+let balance = currentInvoice.total_amount - paid
 
-let status="Pending"
-if(balance<=0) status="Paid"
-else if(paid>0) status="Partial"
+let status = "Pending"
+if(balance <= 0) status = "Paid"
+else if(paid > 0) status = "Partial"
 
-await supabaseClient.from("transporter_invoices")
+await supabaseClient
+.from("transporter_invoices")
 .update({
-paid_amount:paid,
-balance_amount:balance,
+paid_amount: paid,
+balance_amount: balance,
 status
 })
-.eq("id",currentInvoice.id)
+.eq("id", currentInvoice.id)
 
-alert("Payment Saved")
+/************** WHATSAPP PAYMENT FLOW **************/
+
+try{
+
+let phones = []
+
+/* 🔹 GET TRIPS */
+let tripIds = currentInvoice.trip_ids.split(",")
+
+const {data:tripData} = await supabaseClient
+.from("trips")
+.select("trip_no")
+.in("id", tripIds)
+
+let tripList = tripData.map(t => t.trip_no).join(", ")
+
+/* 🔹 GET TRANSPORTER */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("phone, transporter_name")
+.eq("id", currentInvoice.transporter_id)
+.single()
+
+let name = transporter?.transporter_name || "Transporter"
+
+if(transporter?.phone){
+phones.push(transporter.phone)
+}
+
+/* 🔹 MANAGERS */
+const {data:managerRole} = await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name","manager")
+.single()
+
+let managerIds = []
+
+if(managerRole){
+const {data:users} = await supabaseClient
+.from("user_roles")
+.select("user_id")
+.eq("role_id", managerRole.id)
+
+managerIds = users?.map(x=>x.user_id) || []
+}
+
+const {data:managerPhones} = await supabaseClient
+.from("user_contacts")
+.select("phone")
+.in("user_id", managerIds)
+
+managerPhones?.forEach(p=>{
+if(p.phone) phones.push(p.phone)
+})
+
+/* 🔹 REMOVE DUPLICATES */
+phones = [...new Set(phones)]
+
+console.log("📲 Payment phones:", phones)
+
+/* 🔹 SEND */
+if(phones.length){
+
+const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+},
+body: JSON.stringify({
+phones: phones,
+template: "payment_update_api",
+params: [
+String(name),                    // {{1}}
+String(payment.id),              // {{2}}
+String(amount),                  // {{3}}
+String(tripList),                // {{4}}
+String(status)                   // {{5}}
+]
+})
+})
+
+const result = await res.json()
+console.log("📩 Payment WA Response:", result)
+
+}
+
+}catch(err){
+console.error("Payment WhatsApp error:", err)
+}
+
+/* RESET */
+paidAmount.value=""
+paymentDate.value=""
+paymentMethod.value=""
+
+alert("Payment Saved ✅")
 
 loadInvoices()
 }

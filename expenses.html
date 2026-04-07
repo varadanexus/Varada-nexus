@@ -421,7 +421,7 @@ phones = [...new Set(phones)]
 console.log("📲 Expense WhatsApp phones:", phones)
 console.log("🚀 Expense payload:", {
   phones,
-  template: "expense_update_msg",
+  template: "expense_update_api",
   params: [
     name,
     trip.trip_no,
@@ -441,7 +441,7 @@ if(phones.length){
     },
     body: JSON.stringify({
       phones: phones,
-      template: "expense_update_msg",
+      template: "expense_update_api",
       params: [
         String(name),
         String(trip.trip_no),   // ✅ CORRECT

@@ -489,6 +489,102 @@ if(ledgerError){
 
 alert("Trip Saved ✅")
 
+/************** WHATSAPP FULL FLOW **************/
+
+try {
+
+let phones = []
+
+/* 1️⃣ TRANSPORTER */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("phone, transporter_name")
+.eq("id", selectedTruck?.transporter_id)
+.single()
+
+let transporterName = transporter?.transporter_name || "Transporter"
+
+if(transporter?.phone){
+  phones.push(transporter.phone)
+}
+
+/* 2️⃣ MANAGER */
+const {data:managerUsers} = await supabaseClient
+.from("user_roles")
+.select("user_id, roles(role_name)")
+.eq("roles.role_name","manager")
+
+if(managerUsers?.length){
+
+  let managerIds = managerUsers.map(x=>x.user_id)
+
+  const {data:managerPhones} = await supabaseClient
+  .from("user_contacts")
+  .select("phone")
+  .in("user_id", managerIds)
+
+  managerPhones?.forEach(p=>{
+    if(p.phone) phones.push(p.phone)
+  })
+}
+
+/* 3️⃣ OPERATOR */
+const {data:operatorUsers} = await supabaseClient
+.from("user_roles")
+.select("user_id, roles(role_name)")
+.eq("roles.role_name","operator")
+
+if(operatorUsers?.length){
+
+  let operatorIds = operatorUsers.map(x=>x.user_id)
+
+  const {data:operatorPhones} = await supabaseClient
+  .from("user_contacts")
+  .select("phone")
+  .in("user_id", operatorIds)
+
+  operatorPhones?.forEach(p=>{
+    if(p.phone) phones.push(p.phone)
+  })
+}
+
+/* 🔥 REMOVE DUPLICATES */
+phones = [...new Set(phones)]
+
+console.log("📲 Sending to:", phones)
+
+/* 4️⃣ SEND WHATSAPP */
+if(phones.length){
+
+  await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+    },
+    body: JSON.stringify({
+      phones: phones,
+      template: "trip_update_api",
+      params: [
+        String(transporterName),
+        String(trip.trip_no),
+        String(selectedTruck?.truck_number || ""),
+        String(transporterName),
+        String((parseFloat(weightVal)/1000).toFixed(2))
+      ]
+    })
+  })
+
+  console.log("✅ WhatsApp sent to all roles")
+
+}else{
+  console.warn("⚠️ No phone numbers found")
+}
+
+}catch(err){
+console.error("WhatsApp error:", err)
+}
+
 /* CLEAR FORM */
 route.value=""
 truck.value=""

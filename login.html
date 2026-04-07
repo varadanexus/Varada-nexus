@@ -375,13 +375,6 @@ transition:0.3s;
 </div>
 
 <div class="field">
-<select id="loginType">
-<option value="staff">Staff Login</option>
-<option value="transporter">Customer Login</option>
-</select>
-</div>
-
-<div class="field">
 <input type="email" id="email" placeholder="Email">
 </div>
 
@@ -422,14 +415,13 @@ async function login(){
 
 let btn = document.getElementById("loginBtn")
 
-if(btn.disabled) return   // 🚫 PREVENT DOUBLE CLICK
+if(btn.disabled) return
 
 btn.disabled = true
 btn.innerText = "Logging in..."
 
 let email=document.getElementById("email").value
 let password=document.getElementById("password").value
-let loginType = document.getElementById("loginType").value
 
 if(!email || !password){
   document.getElementById("error").innerText = "Enter email & password"
@@ -437,9 +429,10 @@ if(!email || !password){
   btn.innerText = "Login"
   return
 }
-  
+
 document.getElementById("error").innerText=""
 
+/* 🔐 AUTH */
 const {data,error}=await supabaseClient.auth.signInWithPassword({
 email,password
 })
@@ -453,25 +446,16 @@ return
 
 let authId=data.user.id
 
-/* CUSTOMER LOGIN */
-if(loginType === "transporter"){
-
-  const {data:dbUser} = await supabaseClient
-  .from("users")
-  .select("id")
-  .eq("auth_id", authId)
-  .maybeSingle()
-
-// ✅ CHECK AGENT FIRST (MOVE THIS UP)
-const {data:agentCheckStaff} = await supabaseClient
+/* 🔥 1. AGENT CHECK */
+const {data:agent} = await supabaseClient
 .from("agents")
-.select("id")
+.select("id, is_active")
 .eq("auth_id", authId)
 .maybeSingle()
 
-if(agentCheck){
-  if(agentCheck.is_active === false){
-    document.getElementById("error").innerText = "Agent account is inactive"
+if(agent){
+  if(agent.is_active === false){
+    document.getElementById("error").innerText = "Agent account inactive"
     btn.disabled = false
     btn.innerText = "Login"
     return
@@ -480,102 +464,34 @@ if(agentCheck){
   window.location.href = "agent-dashboard.html"
   return
 }
-  
-  if(dbUser){
 
-    const {data:userRole} = await supabaseClient
-    .from("user_roles")
-    .select("role_id")
-    .eq("user_id", dbUser.id)
-    .maybeSingle()
-
-    if(userRole){
-
-      const {data:role} = await supabaseClient
-      .from("roles")
-      .select("role_name")
-      .eq("id", userRole.role_id)
-      .single()
-
-      let roleName = (role?.role_name || "").toLowerCase().trim()
-
-      // 🚫 BLOCK STAFF HERE
-      if(
-        roleName.includes("admin") ||
-        roleName.includes("manager") ||
-        roleName.includes("operator") ||
-        roleName.includes("accounts")
-      ){
-        document.getElementById("error").innerText = "Use Staff Login"
-        btn.disabled = false
-        btn.innerText = "Login"
-        return
-      }
-
-// ✅ CUSTOMER ROLE
-if(roleName.includes("customer")){
-  window.location.href = "transporter-dashboard.html"
-  return
-}
-
-       }
-    }
-  }
-
-  document.getElementById("error").innerText="Customer not registered"
-  btn.disabled = false
-  btn.innerText = "Login"
-  return
-}
-
-/* STAFF LOGIN */
-
-// ❌ BLOCK customers trying staff login
-const {data:agentCheck} = await supabaseClient
-.from("agents")
-.select("id")
-.eq("auth_id", authId)
-.maybeSingle()
-
-const {data:transporterCheck} = await supabaseClient
-.from("transporters")
-.select("id")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agentCheckStaff || transporterCheck){
-  document.getElementById("error").innerText = "Use Customer Login"
-  btn.disabled = false
-  btn.innerText = "Login"
-  return
-}
-  
-const {data:dbUser,error:userError}=await supabaseClient
+/* 🔥 2. USER */
+const {data:user} = await supabaseClient
 .from("users")
-.select("*")
-.eq("auth_id",authId)
-.single()
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
 
-if(userError || !dbUser){
-document.getElementById("error").innerText="User not registered in ERP"
-btn.disabled = false
-btn.innerText = "Login"
-return
+if(!user){
+  document.getElementById("error").innerText="User not registered"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
 }
 
-const {data:userRoles, error:roleError} = await supabaseClient
+/* 🔥 3. ROLE */
+const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id", dbUser.id)
+.eq("user_id", user.id)
 
-if(roleError || !userRoles || userRoles.length === 0){
+if(!userRoles || userRoles.length === 0){
   document.getElementById("error").innerText="Role not assigned"
   btn.disabled = false
   btn.innerText = "Login"
   return
 }
 
-// 👉 take first role safely
 let roleId = userRoles[0].role_id
 
 const {data:role} = await supabaseClient
@@ -586,30 +502,20 @@ const {data:role} = await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
+/* 🔥 4. ROUTING */
+
 if(roleName.includes("customer")){
-  document.getElementById("error").innerText = "Use Customer Login"
-  btn.disabled = false
-  btn.innerText = "Login"
+  window.location.href="transporter-dashboard.html"
   return
 }
-  
-/* ✅ FIXED SESSION TOKEN */
-let existingToken = localStorage.getItem("erp_session_token")
-let token = crypto.randomUUID()
 
-await supabaseClient
-.from("users")
-.update({session_token:token})
-.eq("id",dbUser.id)
-
-localStorage.setItem("erp_session_token",token)
-
-/* REDIRECT */
 if(roleName.includes("admin") || roleName.includes("manager")){
-    window.location.href="financial-dashboard.html"
-}else{
-    window.location.href="dashboard.html"
+  window.location.href="financial-dashboard.html"
+  return
 }
+
+/* DEFAULT STAFF */
+window.location.href="dashboard.html"
 
 }
 

@@ -74,23 +74,16 @@ async function testWhatsApp(){
         "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
       },
       body: JSON.stringify({
-
-        // ✅ NEW FORMAT (MULTIPLE USERS)
-        phones: ["918125625629"],
-
-        // ✅ YOUR APPROVED TEMPLATE
-        template: "trip_update_template",
-
-        // ✅ MATCH YOUR TEMPLATE VARIABLES EXACTLY
-        params: [
-          "Prudhvi",      // {{1}} name
-          "R123",         // {{2}} route id
-          "AP09AB1234",   // {{3}} truck number
-          "Ramesh",       // {{4}} transporter
-          "25.50"         // {{5}} weight in MT
-        ]
-
-      })
+  phone: "918125625629",
+  template: "trip_update_api",
+  params: [
+    "Prudhvi",     // {{1}}
+    "R001",        // {{2}} Route ID
+    "AP09AB1234",  // {{3}} Truck
+    "Ramesh",      // {{4}} Transporter
+    "25"           // {{5}} MT
+  ]
+})
     })
 
     let data = await res.json()

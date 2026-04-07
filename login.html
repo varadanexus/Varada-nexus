@@ -431,6 +431,13 @@ let email=document.getElementById("email").value
 let password=document.getElementById("password").value
 let loginType = document.getElementById("loginType").value
 
+if(!email || !password){
+  document.getElementById("error").innerText = "Enter email & password"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
+  
 document.getElementById("error").innerText=""
 
 const {data,error}=await supabaseClient.auth.signInWithPassword({
@@ -456,10 +463,12 @@ if(loginType === "transporter"){
   .maybeSingle()
 
   if(agentCheck){
-    if(agentCheck.is_active === false){
-      document.getElementById("error").innerText = "Agent account is inactive"
-      return
-    }
+if(agentCheck.is_active === false){
+  document.getElementById("error").innerText = "Agent account is inactive"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
     window.location.href="agent-dashboard.html"
     return
   }
@@ -499,19 +508,26 @@ const {data:userRoles}=await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",dbUser.id)
+.maybeSingle()
+
+if(!userRoles){
+  document.getElementById("error").innerText="Role not assigned"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
 
 const {data:role}=await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",userRoles[0].role_id)
+.eq("id",userRoles.role_id)
 .single()
 
 let roleName = (role?.role_name || "").toLowerCase()
 
 /* ✅ FIXED SESSION TOKEN */
 let existingToken = localStorage.getItem("erp_session_token")
-
-let token = existingToken || crypto.randomUUID()
+let token = crypto.randomUUID()
 
 await supabaseClient
 .from("users")

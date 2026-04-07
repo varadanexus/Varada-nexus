@@ -378,11 +378,11 @@ if(!trip){
 /* 2️⃣ GET TRANSPORTER */
 const {data:transporter} = await supabaseClient
 .from("transporters")
-.select("phone, name")
+.select("phone, transporter_name")
 .eq("id", trip.transporter_id)
 .single()
 
-let name = transporter?.name || "Transporter"
+let name = transporter?.transporter_name || "Transporter"
 
 if(transporter?.phone){
   phones.push(transporter.phone)
@@ -419,6 +419,16 @@ managerPhones?.forEach(p=>{
 phones = [...new Set(phones)]
 
 console.log("📲 Expense WhatsApp phones:", phones)
+console.log("🚀 Expense payload:", {
+  phones,
+  template: "expense_update_msg",
+  params: [
+    name,
+    trip.trip_no,
+    type,
+    amount
+  ]
+})
 
 /* 5️⃣ SEND */
 if(phones.length){
@@ -431,7 +441,7 @@ if(phones.length){
     },
     body: JSON.stringify({
       phones: phones,
-      template: "expense_update_api",
+      template: "expense_update_msg",
       params: [
         String(name),
         String(trip.trip_no),   // ✅ CORRECT
@@ -441,8 +451,13 @@ if(phones.length){
     })
   })
 
-  const result = await res.json()
-  console.log("📩 Expense WA Response:", result)
+const result = await res.json()
+
+console.log("📩 Expense WA Response:", result)
+
+if(!res.ok){
+  console.error("❌ WhatsApp failed:", result)
+}
 
 }
 

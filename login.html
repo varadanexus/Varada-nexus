@@ -456,6 +456,20 @@ let authId=data.user.id
 /* CUSTOMER LOGIN */
 if(loginType === "transporter"){
 
+// ❌ BLOCK staff trying customer login
+const {data:staffCheck} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(staffCheck){
+  document.getElementById("error").innerText = "Use Staff Login"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
+  
   const {data:agentCheck} = await supabaseClient
   .from("agents")
   .select("id, is_active")
@@ -491,6 +505,27 @@ return
 }
 
 /* STAFF LOGIN */
+
+// ❌ BLOCK customers trying staff login
+const {data:agentCheck} = await supabaseClient
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+const {data:transporterCheck} = await supabaseClient
+.from("transporters")
+.select("id")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agentCheck || transporterCheck){
+  document.getElementById("error").innerText = "Use Customer Login"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
+  
 const {data:dbUser,error:userError}=await supabaseClient
 .from("users")
 .select("*")

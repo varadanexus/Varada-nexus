@@ -128,12 +128,13 @@ gap:10px;
 .popup{
 display:none;
 position:fixed;
+padding-left:220px; /* same as sidebar width */
 top:0;
 left:0;
-width:100%;
-height:100%;
+width:100vw;
+height:100vh;
 background:rgba(0,0,0,0.6);
-z-index:2000;
+z-index:999999; /* 🔥 VERY HIGH */
 justify-content:center;
 align-items:center;
 }
@@ -145,6 +146,8 @@ padding:20px;
 border-radius:12px;
 width:420px;
 border:1px solid rgba(255,255,255,0.08);
+z-index:1000000;
+position:relative;
 }
 
 /* POPUP INPUT FULL WIDTH */
@@ -1111,7 +1114,7 @@ await loadTruckAgents()
 </div>
 
 </div>
-</div>
+
 
 <!-- 🔥 EDIT TRUCK POPUP (PASTE HERE) -->
 <div id="editTruckPopup" class="popup">

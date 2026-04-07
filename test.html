@@ -70,36 +70,33 @@ async function testWhatsApp(){
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+        "Authorization": "Bearer YOUR_ANON_KEY",
+        "apikey": "YOUR_ANON_KEY"
       },
       body: JSON.stringify({
-  phone: "918125625629",
-  template: "trip_update_api",
-  params: [
-    "Prudhvi",     // {{1}}
-    "R001",        // {{2}} Route ID
-    "AP09AB1234",  // {{3}} Truck
-    "Ramesh",      // {{4}} Transporter
-    "25"           // {{5}} MT
-  ]
-})
+        phones: ["918125625629"],   // ✅ FIXED (ARRAY)
+        template: "trip_update_api", // ✅ your campaign name
+        params: [
+          "Prudhvi",
+          "R001",
+          "AP09AB1234",
+          "Ramesh",
+          "25"
+        ]
+      })
     })
 
     let data = await res.json()
-
     console.log(data)
 
     if(res.ok){
-      status.innerText = "✅ Trip message sent"
+      status.innerText = "✅ Message sent successfully"
     }else{
       status.innerText = "❌ " + (data.error || "Error sending message")
     }
 
   }catch(err){
-
     console.error(err)
-
     status.innerText = "❌ Network error"
   }
 }

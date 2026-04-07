@@ -504,23 +504,25 @@ btn.innerText = "Login"
 return
 }
 
-const {data:userRoles}=await supabaseClient
+const {data:userRoles, error:roleError} = await supabaseClient
 .from("user_roles")
 .select("role_id")
-.eq("user_id",dbUser.id)
-.maybeSingle()
+.eq("user_id", dbUser.id)
 
-if(!userRoles){
+if(roleError || !userRoles || userRoles.length === 0){
   document.getElementById("error").innerText="Role not assigned"
   btn.disabled = false
   btn.innerText = "Login"
   return
 }
 
-const {data:role}=await supabaseClient
+// 👉 take first role safely
+let roleId = userRoles[0].role_id
+
+const {data:role} = await supabaseClient
 .from("roles")
 .select("role_name")
-.eq("id",userRoles.role_id)
+.eq("id", roleId)
 .single()
 
 let roleName = (role?.role_name || "").toLowerCase()

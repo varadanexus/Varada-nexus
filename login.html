@@ -456,52 +456,55 @@ let authId=data.user.id
 /* CUSTOMER LOGIN */
 if(loginType === "transporter"){
 
-// ❌ BLOCK staff trying customer login
-const {data:staffCheck} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(staffCheck){
-  document.getElementById("error").innerText = "Use Staff Login"
-  btn.disabled = false
-  btn.innerText = "Login"
-  return
-}
-  
-  const {data:agentCheck} = await supabaseClient
-  .from("agents")
-  .select("id, is_active")
-  .eq("auth_id", authId)
-  .maybeSingle()
-
-  if(agentCheck){
-if(agentCheck.is_active === false){
-  document.getElementById("error").innerText = "Agent account is inactive"
-  btn.disabled = false
-  btn.innerText = "Login"
-  return
-}
-    window.location.href="agent-dashboard.html"
-    return
-  }
-
-  const {data:transporter} = await supabaseClient
-  .from("transporters")
+  const {data:dbUser} = await supabaseClient
+  .from("users")
   .select("id")
   .eq("auth_id", authId)
   .maybeSingle()
 
-  if(transporter){
-    window.location.href="transporter-dashboard.html"
-    return
+  if(dbUser){
+
+    const {data:userRole} = await supabaseClient
+    .from("user_roles")
+    .select("role_id")
+    .eq("user_id", dbUser.id)
+    .maybeSingle()
+
+    if(userRole){
+
+      const {data:role} = await supabaseClient
+      .from("roles")
+      .select("role_name")
+      .eq("id", userRole.role_id)
+      .single()
+
+      let roleName = (role?.role_name || "").toLowerCase().trim()
+
+      // 🚫 BLOCK STAFF HERE
+      if(
+        roleName.includes("admin") ||
+        roleName.includes("manager") ||
+        roleName.includes("operator") ||
+        roleName.includes("accounts")
+      ){
+        document.getElementById("error").innerText = "Use Staff Login"
+        btn.disabled = false
+        btn.innerText = "Login"
+        return
+      }
+
+      // ✅ ALLOW CUSTOMER
+      if(roleName.includes("customer")){
+        window.location.href = "transporter-dashboard.html"
+        return
+      }
+    }
   }
 
-document.getElementById("error").innerText="Customer not registered"
-btn.disabled = false
-btn.innerText = "Login"
-return
+  document.getElementById("error").innerText="Customer not registered"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
 }
 
 /* STAFF LOGIN */
@@ -519,12 +522,6 @@ const {data:transporterCheck} = await supabaseClient
 .eq("auth_id", authId)
 .maybeSingle()
 
-if(agentCheck || transporterCheck){
-  document.getElementById("error").innerText = "Use Customer Login"
-  btn.disabled = false
-  btn.innerText = "Login"
-  return
-}
   
 const {data:dbUser,error:userError}=await supabaseClient
 .from("users")
@@ -562,6 +559,13 @@ const {data:role} = await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
+if(roleName.includes("customer")){
+  document.getElementById("error").innerText = "Use Customer Login"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
+  
 /* ✅ FIXED SESSION TOKEN */
 let existingToken = localStorage.getItem("erp_session_token")
 let token = crypto.randomUUID()

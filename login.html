@@ -502,6 +502,16 @@ const {data:role} = await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
+/* 🔐 SESSION TOKEN FIX */
+let token = crypto.randomUUID()
+
+await supabaseClient
+.from("users")
+.update({session_token:token})
+.eq("id", user.id)
+
+localStorage.setItem("erp_session_token", token)
+
 /* 🔥 4. ROUTING */
 
 if(roleName.includes("customer")){

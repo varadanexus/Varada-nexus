@@ -593,7 +593,7 @@ if(phones.length){
       template: "trip_update_api",
       params: [
         String(transporterName),
-        String(trip.trip_no),
+          String(selectedRoute?.route || ""),
         String(selectedTruck?.truck_number || ""),
         String(transporterName),
         String((parseFloat(weightVal)/1000).toFixed(2))

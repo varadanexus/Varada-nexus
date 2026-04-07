@@ -3,159 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auto Login Test</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<title>WhatsApp Test</title>
 
 <style>
 body{
+  font-family: Arial, sans-serif;
   background:#0f172a;
   color:white;
-  font-family:Arial;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
 
-.box{
+.card{
   background:#1e293b;
   padding:30px;
   border-radius:12px;
-  width:320px;
-}
-
-input, button{
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border-radius:6px;
-  border:none;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
 
 button{
+  padding:12px 20px;
+  border:none;
+  border-radius:8px;
   background:#3b82f6;
   color:white;
+  font-size:16px;
   cursor:pointer;
 }
 
-.error{
-  color:#f87171;
-  margin-top:10px;
+button:hover{
+  background:#2563eb;
+}
+
+.status{
+  margin-top:15px;
+  font-size:14px;
+  color:#94a3b8;
 }
 </style>
+
 </head>
 
 <body>
 
-<div class="box">
-<h3>Auto Login</h3>
+<div class="card">
+  <h2>WhatsApp API Test</h2>
+  <p>Click below to send test message</p>
 
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
+  <button onclick="testWhatsApp()">Send Test Message</button>
 
-<button onclick="login()">Login</button>
-
-<div id="error" class="error"></div>
+  <div class="status" id="status"></div>
 </div>
 
 <script>
+async function testWhatsApp(){
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+  let status = document.getElementById("status")
+  status.innerText = "Sending..."
 
-async function login(){
+  try{
 
-let email = document.getElementById("email").value
-let password = document.getElementById("password").value
+    let res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        phone: "91XXXXXXXXXX",   // 🔴 PUT YOUR NUMBER HERE
+        template: "test_template", // 🔴 PUT YOUR AISENSY TEMPLATE NAME
+        params: ["Prudhvi"]
+      })
+    })
 
-if(!email || !password){
-  document.getElementById("error").innerText = "Enter email & password"
-  return
-}
+    let data = await res.json()
 
-document.getElementById("error").innerText = ""
+    console.log(data)
 
-/* 🔐 AUTH LOGIN */
-const {data,error} = await supabaseClient.auth.signInWithPassword({
-  email,password
-})
+    status.innerText = "✅ Message sent successfully"
 
-if(error){
-  document.getElementById("error").innerText = error.message
-  return
-}
+  }catch(err){
 
-let authId = data.user.id
+    console.error(err)
 
-/* 🔥 STEP 1: CHECK AGENT (HIGHEST PRIORITY) */
-const {data:agent} = await supabaseClient
-.from("agents")
-.select("id, is_active")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agent){
-  if(agent.is_active === false){
-    document.getElementById("error").innerText = "Agent inactive"
-    return
+    status.innerText = "❌ Error sending message"
   }
-
-  window.location.href = "agent-dashboard.html"
-  return
 }
-
-/* 🔥 STEP 2: CHECK USER + ROLE */
-const {data:user} = await supabaseClient
-.from("users")
-.select("id")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(!user){
-  document.getElementById("error").innerText = "User not registered"
-  return
-}
-
-const {data:userRoles} = await supabaseClient
-.from("user_roles")
-.select("role_id")
-.eq("user_id", user.id)
-
-if(!userRoles || userRoles.length === 0){
-  document.getElementById("error").innerText = "Role not assigned"
-  return
-}
-
-let roleId = userRoles[0].role_id
-
-const {data:role} = await supabaseClient
-.from("roles")
-.select("role_name")
-.eq("id", roleId)
-.single()
-
-let roleName = (role?.role_name || "").toLowerCase()
-
-/* 🔥 STEP 3: ROUTING */
-
-if(roleName.includes("customer")){
-  window.location.href = "transporter-dashboard.html"
-  return
-}
-
-if(roleName.includes("admin") || roleName.includes("manager")){
-  window.location.href = "financial-dashboard.html"
-  return
-}
-
-/* DEFAULT STAFF */
-window.location.href = "dashboard.html"
-
-}
-
 </script>
 
 </body>

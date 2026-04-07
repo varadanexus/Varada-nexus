@@ -332,30 +332,131 @@ return "EXP"+year+month+seq.toString().padStart(4,"0")
 
 async function saveExpense(){
 
-let tripId=document.getElementById("trip").value
-let type=document.getElementById("type").value
-let amount=document.getElementById("amount").value
+let tripId = document.getElementById("trip").value
+let type = document.getElementById("type").value
+let amount = document.getElementById("amount").value
 
 if(!tripId || !amount){
 alert("Enter Trip and Amount")
 return
 }
 
-let expenseId=await generateExpenseId()
+let expenseId = await generateExpenseId()
 
-await supabaseClient.from("expenses").insert({
-expense_id:expenseId,
-trip_id:tripId,
-expense_type:type,
-amount:amount,
-expense_date:new Date()
+/* ✅ SAVE EXPENSE */
+const {data:expense, error} = await supabaseClient
+.from("expenses")
+.insert({
+expense_id: expenseId,
+trip_id: tripId,
+expense_type: type,
+amount: amount,
+expense_date: new Date()
+})
+.select()
+.single()
+
+if(error){
+console.error(error)
+alert("Error saving expense ❌")
+return
+}
+
+/************** WHATSAPP EXPENSE FLOW **************/
+
+try{
+
+let phones = []
+
+/* 1️⃣ GET TRIP */
+let trip = trips.find(t => t.id == tripId)
+if(!trip){
+  console.warn("Trip not found")
+  return
+}
+
+/* 2️⃣ GET TRANSPORTER */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("phone, name")
+.eq("id", trip.transporter_id)
+.single()
+
+let name = transporter?.name || "Transporter"
+
+if(transporter?.phone){
+  phones.push(transporter.phone)
+}
+
+/* 3️⃣ MANAGER USERS */
+const {data:managerRole} = await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name","manager")
+.single()
+
+let managerIds = []
+
+if(managerRole){
+  const {data:users} = await supabaseClient
+  .from("user_roles")
+  .select("user_id")
+  .eq("role_id", managerRole.id)
+
+  managerIds = users?.map(x=>x.user_id) || []
+}
+
+const {data:managerPhones} = await supabaseClient
+.from("user_contacts")
+.select("phone")
+.in("user_id", managerIds)
+
+managerPhones?.forEach(p=>{
+  if(p.phone) phones.push(p.phone)
 })
 
+/* 4️⃣ REMOVE DUPLICATES */
+phones = [...new Set(phones)]
+
+console.log("📲 Expense WhatsApp phones:", phones)
+
+/* 5️⃣ SEND */
+if(phones.length){
+
+  const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+    },
+    body: JSON.stringify({
+      phones: phones,
+      template: "expense_update_api",
+      params: [
+        String(name),
+        String(trip.trip_no),   // ✅ CORRECT
+        String(type),
+        String(amount)
+      ]
+    })
+  })
+
+  const result = await res.json()
+  console.log("📩 Expense WA Response:", result)
+
+}
+
+}catch(err){
+console.error("Expense WhatsApp error:", err)
+}
+
+/* RESET FORM */
 document.getElementById("trip").value=""
 document.getElementById("amount").value=""
 
 loadExpenses()
 
+alert("Expense Added ✅")
 }
 
 /* LOAD */

@@ -462,6 +462,25 @@ if(loginType === "transporter"){
   .eq("auth_id", authId)
   .maybeSingle()
 
+// ✅ CHECK AGENT FIRST (MOVE THIS UP)
+const {data:agentCheck} = await supabaseClient
+.from("agents")
+.select("id, is_active")
+.eq("auth_id", authId)
+.maybeSingle()
+
+if(agentCheck){
+  if(agentCheck.is_active === false){
+    document.getElementById("error").innerText = "Agent account is inactive"
+    btn.disabled = false
+    btn.innerText = "Login"
+    return
+  }
+
+  window.location.href = "agent-dashboard.html"
+  return
+}
+  
   if(dbUser){
 
     const {data:userRole} = await supabaseClient
@@ -499,23 +518,6 @@ if(roleName.includes("customer")){
   return
 }
 
-// ✅ AGENT TABLE CHECK (ADD THIS)
-const {data:agentCheck} = await supabaseClient
-.from("agents")
-.select("id, is_active")
-.eq("auth_id", authId)
-.maybeSingle()
-
-if(agentCheck){
-  if(agentCheck.is_active === false){
-    document.getElementById("error").innerText = "Agent account is inactive"
-    btn.disabled = false
-    btn.innerText = "Login"
-    return
-  }
-
-  window.location.href = "agent-dashboard.html"
-  return
        }
     }
   }
@@ -541,6 +543,12 @@ const {data:transporterCheck} = await supabaseClient
 .eq("auth_id", authId)
 .maybeSingle()
 
+if(agentCheck || transporterCheck){
+  document.getElementById("error").innerText = "Use Customer Login"
+  btn.disabled = false
+  btn.innerText = "Login"
+  return
+}
   
 const {data:dbUser,error:userError}=await supabaseClient
 .from("users")

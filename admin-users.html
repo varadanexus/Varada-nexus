@@ -389,7 +389,7 @@ loadUsers()
 /* UPDATE ROLE */
 async function updateRole(userId){
 
-let roleId = document.getElementById("role-"+userId).value
+let roleId = parseInt(document.getElementById("role-"+userId).value)
 
 const { error } = await supabaseClient
 .from("user_roles")

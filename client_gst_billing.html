@@ -160,6 +160,15 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
+/* LOGOUT */
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
+
+}
+
+/* ✅ MOVE HERE */
 function setActiveMenu(){
 
 let currentPage = window.location.pathname.split("/").pop()
@@ -173,15 +182,6 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
     }
 
 })
-
-}
-  
-/* LOGOUT */
-
-window.logout = async function(){
-await supabaseClient.auth.signOut()
-window.location.href="login.html"
-}
 
 }
   

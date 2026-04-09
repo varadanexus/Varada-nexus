@@ -81,27 +81,10 @@ text-align:left;
 
 <script>
 
-let supabaseClient
-
-window.addEventListener("DOMContentLoaded", async () => {
-
-    // wait until supabase is available
-    let attempts = 0
-
-    while(!window.supabaseClient && attempts < 10){
-        await new Promise(r => setTimeout(r, 100))
-        attempts++
-    }
-
-    if(!window.supabaseClient){
-        alert("Supabase not initialized")
-        return
-    }
-
-    supabaseClient = window.supabaseClient
-
-    await init()
-})
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
   
 fetch("sidebar.html")
 .then(res=>res.text())
@@ -201,6 +184,8 @@ window.location.href="login.html"
 
 }
 
+init()
+  
 </script>
   
 <div class="main">

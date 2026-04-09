@@ -301,14 +301,42 @@ Amount: ₹${invoiceAmount}
 `
 }
 
-function generateInvoiceNo(){
-return "INV-"+Date.now()
+async function generateClientInvoiceNo(){
+
+let today = new Date()
+
+let yy = String(today.getFullYear()).slice(-2)
+let mm = String(today.getMonth()+1).padStart(2,'0')
+let dd = String(today.getDate()).padStart(2,'0')
+
+let prefix = `INVC${yy}${mm}${dd}`
+
+/* 🔥 GET LAST TODAY INVOICE */
+const { data } = await supabaseClient
+.from("client_invoices")
+.select("invoice_no")
+.ilike("invoice_no", prefix + "%")
+.order("invoice_no", { ascending: false })
+.limit(1)
+
+let nextNumber = 1
+
+if(data && data.length > 0){
+let last = data[0].invoice_no
+let lastSeq = parseInt(last.slice(-3))
+nextNumber = lastSeq + 1
+}
+
+let seq = String(nextNumber).padStart(3,'0')
+
+return prefix + seq
 }
 
 async function saveInvoice(){
 
+let invoiceNo = await generateClientInvoiceNo()
 let {data:inv}=await supabaseClient.from("client_invoices").insert({
-invoice_no:generateInvoiceNo(),
+invoice_no: invoiceNo,
 trip_no:selectedTrips.map(t=>t.trip_no).join(","),
 client_name:selectedTrips[0].client_name,
 invoice_amount:invoiceAmount,

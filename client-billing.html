@@ -10,6 +10,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 body{
@@ -558,7 +559,22 @@ doc.setFontSize(9)
 doc.text("This is a system generated document.",15,285)
 
 /* QR */
+let qrDiv=document.createElement("div")
 
+new QRCode(qrDiv,{
+text:`INV:${inv.invoice_no}|AMT:${inv.invoice_amount}`,
+width:80,height:80
+})
+
+setTimeout(()=>{
+let qr=qrDiv.querySelector("canvas")
+if(qr){
+doc.addImage(qr.toDataURL(),"PNG",155,65,35,35)
+}
+doc.save(inv.invoice_no+".pdf")
+},300)
+
+}
 
 async function loadInvoices(){
 const {data}=await supabaseClient.from("client_invoices").select("*")

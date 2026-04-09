@@ -259,7 +259,7 @@ let routes=[], trucks=[], commodities=[], clients=[], trips=[]
 
 let currentPage = 1
 let pageSize = 50
-let filteredTrips = []
+let totalCount = 0
 
 init()
 
@@ -689,7 +689,7 @@ if(!session) return
 
 const authId = session.user.id
 
-/* GET USER */
+/* USER */
 const {data:user} = await supabaseClient
 .from("users")
 .select("id")
@@ -698,7 +698,7 @@ const {data:user} = await supabaseClient
 
 if(!user) return
 
-/* GET ROLES */
+/* ROLES */
 const {data:userRoles} = await supabaseClient
 .from("user_roles")
 .select("role_id")
@@ -706,7 +706,6 @@ const {data:userRoles} = await supabaseClient
 
 let roleIds = (userRoles || []).map(r=>r.role_id)
 
-/* GET ROLE NAMES */
 const {data:rolesData} = await supabaseClient
 .from("roles")
 .select("role_name")
@@ -718,8 +717,18 @@ const isTransporter = roleNames.some(r =>
 r.includes("customer") || r.includes("transporter")
 )
 
-/* 🚀 FILTER */
+/* 🔍 FILTER VALUES */
+let routeVal = document.getElementById("searchRoute").value
+let truckVal = document.getElementById("searchTruck").value
+let dateVal = document.getElementById("searchDate").value
 
+/* 📦 BASE QUERY */
+let query = supabaseClient
+.from("trips")
+.select("*", { count: "exact" })
+.order("created_at",{ascending:false})
+
+/* 🔐 ROLE FILTER */
 if(isTransporter){
 
 const {data:transporter} = await supabaseClient
@@ -729,31 +738,44 @@ const {data:transporter} = await supabaseClient
 .single()
 
 if(!transporter){
-trips=[]
-renderTrips()
+renderTrips([])
 return
 }
 
-const {data} = await supabaseClient
-.from("trips")
-.select("*")
-.eq("transporter_id", transporter.id)
-.order("created_at",{ascending:false})
-
-trips = data || []
-
-}else{
-
-const {data} = await supabaseClient
-.from("trips")
-.select("*")
-.order("created_at",{ascending:false})
-
-trips = data || []
-
+query = query.eq("transporter_id", transporter.id)
 }
 
-filteredTrips = trips
+/* 🔎 APPLY FILTERS (DB LEVEL) */
+if(routeVal){
+query = query.eq("route", routeVal)
+}
+
+if(truckVal){
+query = query.eq("truck", truckVal)
+}
+
+if(dateVal){
+query = query.eq("trip_date", dateVal)
+}
+
+/* 📄 PAGINATION */
+let from = (currentPage - 1) * pageSize
+let to = from + pageSize - 1
+
+query = query.range(from, to)
+
+/* 🚀 EXECUTE */
+const {data, count, error} = await query
+
+if(error){
+console.error(error)
+alert("Error loading trips")
+return
+}
+
+trips = data || []
+totalCount = count || 0
+
 renderTrips()
 }
 
@@ -780,17 +802,11 @@ async function renderTrips(){
 const canEdit = await checkPermission("trips.html","edit")
 const canDelete = await checkPermission("trips.html","delete")
 
-/* PAGINATION LOGIC */
-let start = (currentPage - 1) * pageSize
-let end = start + pageSize
-
-let pageData = filteredTrips.slice(start, end)
-
 let html=""
 
-pageData.forEach(t=>{
+trips.forEach(t=>{
 html+=`
-<tr id="row_${t.id}">
+<tr>
 <td>${t.trip_no||""}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>
@@ -811,51 +827,38 @@ ${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete<
 
 tripTable.innerHTML = html
 
-/* PAGE INFO */
-let totalPages = Math.ceil(filteredTrips.length / pageSize)
-document.getElementById("pageInfo").innerText = `Page ${currentPage} / ${totalPages || 1}`
+/* 📊 PAGE INFO */
+let totalPages = Math.ceil(totalCount / pageSize)
 
+document.getElementById("pageInfo").innerText =
+`Page ${currentPage} / ${totalPages || 1} | Total: ${totalCount}`
 }
 
+    
 function nextPage(){
-let totalPages = Math.ceil(filteredTrips.length / pageSize)
+let totalPages = Math.ceil(totalCount / pageSize)
 if(currentPage < totalPages){
   currentPage++
-  renderTrips()
+  loadTrips()
 }
 }
 
 function prevPage(){
 if(currentPage > 1){
   currentPage--
-  renderTrips()
+  loadTrips()
 }
 }
 
 function changePageSize(){
 pageSize = parseInt(document.getElementById("pageSize").value)
 currentPage = 1
-renderTrips()
+loadTrips()
 }
 
 function applyFilters(){
-
-let routeVal = document.getElementById("searchRoute").value
-let truckVal = document.getElementById("searchTruck").value
-let dateVal = document.getElementById("searchDate").value
-
-filteredTrips = trips.filter(t=>{
-
-let matchRoute = routeVal ? t.route === routeVal : true
-let matchTruck = truckVal ? t.truck === truckVal : true
-let matchDate = dateVal ? t.trip_date === dateVal : true
-
-return matchRoute && matchTruck && matchDate
-
-})
-
 currentPage = 1
-renderTrips()
+loadTrips()
 }
 
 function resetFilters(){
@@ -864,10 +867,8 @@ document.getElementById("searchRoute").value = ""
 document.getElementById("searchTruck").value = ""
 document.getElementById("searchDate").value = ""
 
-filteredTrips = trips
 currentPage = 1
-renderTrips()
-
+loadTrips()
 }
     
 /* ================= EDIT ================= */

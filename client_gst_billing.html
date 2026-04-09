@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Client GST Billing - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+margin-bottom:16px;
+}
+
+select,input{
+padding:10px;
+margin:5px;
+border-radius:8px;
+background:#0f172a;
+color:white;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="main">
+
+<h2>Client GST Billing</h2>
+
+<div class="card">
+
+<select id="clientSelect" onchange="loadTripsByClient()"></select>
+
+<div id="tripList"></div>
+
+<br>
+<button onclick="generateGSTInvoice()">Generate Invoice</button>
+
+<div id="preview"></div>
+
+<br>
+<button onclick="saveGSTInvoice()">Save GST Invoice</button>
+
+</div>
+
+</div>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+let trips=[]
+let selectedTrips=[]
+
+let totalContract=0
+let totalFreight=0
+let totalMargin=0
+let totalGST=0
+let totalInvoice=0
+
+init()
+
+async function init(){
+await loadClients()
+}
+
+async function loadClients(){
+
+const {data}=await supabaseClient.from("clients").select("*")
+
+let html='<option>Select Client</option>'
+
+data.forEach(c=>{
+html+=`<option value="${c.company}">${c.company}</option>`
+})
+
+clientSelect.innerHTML=html
+}
+</script>
+
+</body>
+</html>

@@ -349,8 +349,7 @@ bd2?.forEach(b=>usedTrips.push(b.trip_no))
 /* 3️⃣ FILTER UNUSED TRIPS */
 trips = (data || [])
 .filter(t => 
-    !usedTrips.includes(t.trip_no) && 
-    t.billing_status !== "Billed"
+    !usedTrips.includes(t.trip_no)
 )
 
 /* 4️⃣ SORT — LATEST FIRST */

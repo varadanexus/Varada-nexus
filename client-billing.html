@@ -236,7 +236,7 @@ const {data} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("client_name", client)
-.eq("status", "Completed")
+.in("status", ["Completed","Paid","Billed"])
 
 /* ❌ REMOVE ALL FILTERING LOGIC */
 /* ✅ SHOW ALL TRIPS */

@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+
 body{
 margin:0;
 font-family:'Inter',sans-serif;
@@ -43,6 +44,26 @@ border:none;
 border-radius:8px;
 cursor:pointer;
 }
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+font-weight:500;
+text-align:left;
+}
+  
 </style>
 
 </head>
@@ -97,7 +118,7 @@ cursor:pointer;
 
 <h3>GST Invoices</h3>
 
-<table style="width:100%; border-collapse: collapse;">
+<table>
 <thead>
 <tr style="text-align:left; border-bottom:1px solid #333;">
 <th>Invoice</th>
@@ -135,10 +156,11 @@ let totalInvoice=0
 
 init()
 
+init()
+
 async function init(){
 await loadClients()
 loadGSTInvoices()
-loadTripsByClient()   // ✅ ADD THIS
 }
 
 async function loadClients(){
@@ -157,6 +179,11 @@ clientSelect.innerHTML=html
 async function loadTripsByClient(){
 
 let client = document.getElementById("clientSelect").value
+
+if(!client || client === "Select Client"){
+    document.getElementById("tripList").innerHTML = ""
+    return
+}
 
 /* 1️⃣ GET TRIPS */
 const {data} = await supabaseClient
@@ -341,10 +368,11 @@ ${gstType === "included" ? "<br><i>(GST included in total)</i>" : ""}
 async function saveGSTInvoice(){
 
 if(selectedTrips.length === 0){
-  alert("Processing...")
     alert("Generate invoice first")
     return
 }
+
+alert("Processing invoice...")
 
 let client = document.getElementById("clientSelect").value
 let gstType = document.getElementById("gstType").value
@@ -489,7 +517,8 @@ if(lockError){
 }
 
 alert("GST Invoice Saved ✅")
-
+document.getElementById("clientSelect").value = "Select Client"
+  
 /* OPTIONAL: REFRESH */
 loadTripsByClient()
 selectedTrips = []
@@ -542,9 +571,10 @@ return
 
 let rows = ""
 
-for(let inv of data){
+for(let inv of (data || [])){
 
 const { data:trips } = await supabaseClient
+  if(!trips) trips = []
 .from("invoice_trip_breakdown_gst")
 .select("trip_no")
 .eq("invoice_id", inv.id)
@@ -641,7 +671,7 @@ const { data:trips } = await supabaseClient
 .select("trip_id")
 .eq("invoice_id", id)
 
-for(let t of trips){
+for(let t of (trips || [])){
 await supabaseClient
 .from("trips")
 .update({ billing_status: null })
@@ -675,6 +705,16 @@ const { data:inv } = await supabaseClient
 .select("*")
 .eq("id", invoiceId)
 .single()
+
+if(!inv){
+alert("Invoice not found")
+return
+}
+  
+if(amount > inv.balance_amount){
+alert("Amount exceeds pending balance")
+return
+}
 
 let newBalance = inv.balance_amount - amount
 

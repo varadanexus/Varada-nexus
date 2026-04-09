@@ -137,7 +137,8 @@ init()
 
 async function init(){
 await loadClients()
-await loadGSTInvoices()
+loadGSTInvoices()
+loadTripsByClient()   // ✅ ADD THIS
 }
 
 async function loadClients(){
@@ -340,6 +341,7 @@ ${gstType === "included" ? "<br><i>(GST included in total)</i>" : ""}
 async function saveGSTInvoice(){
 
 if(selectedTrips.length === 0){
+  alert("Processing...")
     alert("Generate invoice first")
     return
 }
@@ -578,12 +580,17 @@ const { data:inv } = await supabaseClient
 .eq("id", id)
 .single()
 
+if(!inv){
+alert("Invoice not found")
+return
+}
+
 const { data:trips } = await supabaseClient
 .from("invoice_trip_breakdown_gst")
 .select("*")
 .eq("invoice_id", id)
 
-let tripHTML = trips.map(t=>`
+let tripHTML = (trips || []).map(t=>`
 <tr>
 <td>${t.trip_no}</td>
 <td>${t.contract_value.toFixed(2)}</td>
@@ -626,6 +633,8 @@ async function deleteGSTInvoice(id){
 
 if(!confirm("Delete this invoice?")) return
 
+alert("Deleting...")
+
 /* unlock trips first */
 const { data:trips } = await supabaseClient
 .from("invoice_trip_breakdown_gst")
@@ -658,6 +667,8 @@ loadGSTInvoices()
 
 async function addGSTPayment(invoiceId, amount){
 
+alert("Processing payment...")
+  
 /* get invoice */
 const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
@@ -686,7 +697,7 @@ type: "Payment",
 reference_no: inv.invoice_no,
 debit: 0,
 credit: amount,
-balance: newBalance,
+balance: 0, // temporary (ledger calc later)
 remarks: "GST Payment Received"
 }])
 
@@ -697,11 +708,14 @@ loadGSTInvoices()
 
 function promptGSTPayment(id){
 
-let amt = prompt("Enter payment amount")
+let amt = Number(prompt("Enter payment amount"))
 
-if(!amt) return
+if(!amt || amt <= 0){
+alert("Invalid amount")
+return
+}
 
-addGSTPayment(id, Number(amt))
+addGSTPayment(id, amt)
 }
   
 </script>

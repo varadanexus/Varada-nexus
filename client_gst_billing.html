@@ -483,7 +483,35 @@ ${gstType === "included" ? "<br><i>(GST included in total)</i>" : ""}
 `
 }
 
+async function generateGSTInvoiceNo(){
 
+let today = new Date()
+
+let yy = String(today.getFullYear()).slice(-2)
+let mm = String(today.getMonth()+1).padStart(2,'0')
+let dd = String(today.getDate()).padStart(2,'0')
+
+let prefix = `INVGB${yy}${mm}${dd}`
+
+/* 🔥 GET TODAY'S INVOICES */
+const { data } = await supabaseClient
+.from("client_invoices_gst")
+.select("invoice_no")
+.ilike("invoice_no", prefix + "%")
+
+let max = 0
+
+data?.forEach(i=>{
+let num = parseInt(i.invoice_no.slice(-3)) || 0
+if(num > max) max = num
+})
+
+let next = max + 1
+let seq = String(next).padStart(3,'0')
+
+return prefix + seq
+}
+  
 async function saveGSTInvoice(){
 
 if(selectedTrips.length === 0){
@@ -499,7 +527,8 @@ let gstOn = document.getElementById("gstOn").value
 let gstPercent = Number(document.getElementById("gstPercent").value || 18)
 
 /* 🔥 GENERATE INVOICE NUMBER */
-let invoiceNo = "GST-" + Date.now()
+let invoiceNo = await generateGSTInvoiceNo()
+console.log("GST INVOICE:", invoiceNo)
 
 /* 🔥 CALCULATE FINAL VALUES */
 let netBillingTotal = totalContract - totalExpenseAll

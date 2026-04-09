@@ -187,6 +187,9 @@ ${t.trip_no} | ${t.route || ""}
 
 async function generateGSTInvoice(){
 
+
+let gstType = document.getElementById("gstType").value
+let gstOn = document.getElementById("gstOn").value
 let checked = document.querySelectorAll("#tripList input:checked")
 
 totalContract = 0
@@ -220,25 +223,58 @@ totalExpense += Number(e.amount || 0)
 })
 
 /* 🔥 CORRECT FREIGHT AFTER EXPENSE */
-let netFreight = freight + totalExpense   // transporter cost includes expenses
-
 let margin = contract - netFreight
-let gst = margin * 0.18
 
+let gst = 0
+
+/* 🔥 GST CALCULATION ENGINE */
+
+if(gstOn === "margin"){
+
+    if(gstType === "excluded"){
+        gst = margin * 0.18
+    }
+
+    if(gstType === "included"){
+        let base = margin / 1.18
+        gst = margin - base
+        margin = base
+    }
+
+}
+
+if(gstOn === "total"){
+
+    if(gstType === "excluded"){
+        gst = contract * 0.18
+    }
+
+    if(gstType === "included"){
+        let base = contract / 1.18
+        gst = contract - base
+    }
+
+}
+
+/* TOTALS */
 totalContract += contract
 totalFreight += netFreight
 totalMargin += margin
 totalGST += gst
-
 }
 
-totalInvoice = totalMargin + totalGST
+if(gstOn === "margin"){
+    totalInvoice = totalMargin + totalGST
+}else{
+    totalInvoice = totalContract + totalGST
+}
 
 document.getElementById("preview").innerHTML = `
 Contract Value: ₹${totalContract.toFixed(2)} <br>
-Freight (incl expenses): ₹${totalFreight.toFixed(2)} <br>
-Margin: ₹${totalMargin.toFixed(2)} <br>
+Freight: ₹${totalFreight.toFixed(2)} <br>
+Service Charges (Margin): ₹${totalMargin.toFixed(2)} <br>
 GST (18%): ₹${totalGST.toFixed(2)} <br>
+<hr>
 <b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>
 `
 }

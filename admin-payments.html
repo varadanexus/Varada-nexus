@@ -374,9 +374,9 @@ return `
 <td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
 <td>${t.trip_no}</td>
 <td>${t.weight_kg}</td>
-<td>₹${tripAmount.toFixed(0)}</td>
-<td>₹${totalExpenses.toFixed(0)}</td>
-<td>₹${netAmount.toFixed(0)}</td>
+<td>₹${formatCurrency(tripAmount)}</td>
+<td>₹${formatCurrency(totalExpenses)}</td>
+<td>₹${formatCurrency(netAmount)}</td>
 </tr>
 `
 }).join("")
@@ -415,17 +415,17 @@ const totalExpenses = (t.expenses || []).reduce(
 // ✅ net payable
 const netAmount = tripAmount - totalExpenses
 
-total += netAmount
+total += round2(netAmount)
 weight += Number(t.weight_kg||0)
 })
 
 invoiceAmount=total
-totalAmount.value=total.toFixed(0)
+totalAmount.value = total.toFixed(2)
 
 invoicePreview.innerHTML=`
 Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
 Total Weight: ${weight} KG<br>
-<b>Amount: ₹${total}</b>
+<b>Amount: ₹${formatCurrency(total)}</b>
 `
 }
 
@@ -435,8 +435,8 @@ const { data } = await supabaseClient.from("transporter_invoices").insert({
 invoice_no:"TINV-"+Math.floor(Math.random()*100000),
 transporter_id:transporterSelect.value,
 trip_ids:selectedTrips.map(t=>t.id).join(","),
-total_amount:invoiceAmount,
-balance_amount:invoiceAmount,
+total_amount: Number(invoiceAmount.toFixed(2)),
+balance_amount: Number(invoiceAmount.toFixed(2)),
 paid_amount:0,
 status:"Pending"
 }).select().single()
@@ -451,7 +451,12 @@ loadInvoices()
 
 async function savePayment(){
 
-let amount = Number(paidAmount.value)
+let amount = round2(Number(paidAmount.value || 0))
+
+if(!amount || amount <= 0){
+alert("Invalid amount")
+return
+}
 
 if(!currentInvoice){
 alert("Select invoice")
@@ -471,12 +476,19 @@ payment_method: paymentMethod.value
 .single()
 
 /* 2️⃣ UPDATE INVOICE */
-let paid = (currentInvoice.paid_amount || 0) + amount
-let balance = currentInvoice.total_amount - paid
+let paid = round2((currentInvoice.paid_amount || 0) + amount)
+let balance = round2(currentInvoice.total_amount - paid)
 
 let status = "Pending"
-if(balance <= 0) status = "Paid"
-else if(paid > 0) status = "Partial"
+
+/* 🔥 FINAL FIX */
+if(balance <= 0.01){
+    balance = 0
+    status = "Paid"
+}
+else if(paid > 0){
+    status = "Partial"
+}
 
 await supabaseClient
 .from("transporter_invoices")
@@ -679,12 +691,18 @@ if(!val) return
 
 let inv=invoices.find(i=>i.id==id)
 
-let paid=Number(val)
-let balance=inv.total_amount-paid
+let paid = round2(Number(val || 0))
+let balance = round2(inv.total_amount - paid)
 
-let status="Pending"
-if(balance<=0) status="Paid"
-else if(paid>0) status="Partial"
+let status = "Pending"
+
+if(balance <= 0.01){
+    balance = 0
+    status = "Paid"
+}
+else if(paid > 0){
+    status = "Partial"
+}
 
 await supabaseClient
 .from("transporter_invoices")
@@ -771,7 +789,7 @@ const totalExpenses = (t.expenses || []).reduce(
   0
 )
 
-let netAmount = tripAmount - totalExpenses
+let netAmount = round2(tripAmount - totalExpenses)
 
 totalWeight += mt
 totalExpensesAll += totalExpenses
@@ -1074,6 +1092,11 @@ doc.save(inv.invoice_no + ".pdf")
 // 🚫 STOP function here
 return
 }
+
+function round2(num){
+return Math.round((num + Number.EPSILON) * 100) / 100
+}
+    
 </script>
 
 </body>

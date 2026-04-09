@@ -125,6 +125,52 @@ ${t.trip_no} | ${t.route || ""}
 `).join("")
 
 }
+
+function generateGSTInvoice(){
+
+let checked = document.querySelectorAll("#tripList input:checked")
+
+totalContract = 0
+totalFreight = 0
+totalMargin = 0
+totalGST = 0
+
+selectedTrips = []
+
+checked.forEach(c=>{
+
+let t = trips.find(x => x.id == c.value)
+
+if(!t) return
+
+selectedTrips.push(t)
+
+let mt = (t.weight_kg || 0) / 1000
+
+let contract = mt * (t.company_rate || 0)
+let freight = mt * (t.transporter_rate || 0)
+
+let margin = contract - freight
+let gst = margin * 0.18
+
+totalContract += contract
+totalFreight += freight
+totalMargin += margin
+totalGST += gst
+
+})
+
+totalInvoice = totalMargin + totalGST
+
+document.getElementById("preview").innerHTML = `
+Contract Value: ₹${totalContract.toFixed(2)} <br>
+Freight: ₹${totalFreight.toFixed(2)} <br>
+Margin: ₹${totalMargin.toFixed(2)} <br>
+GST (18%): ₹${totalGST.toFixed(2)} <br>
+<b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>
+`
+}
+
   
 </script>
 

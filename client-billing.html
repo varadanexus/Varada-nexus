@@ -600,9 +600,18 @@ doc.setGState(new doc.GState({opacity:1}))
 doc.setTextColor(0,0,0)
 }
 
-/* 🔷 SIGNATURE */
-doc.line(130,270,195,270)
-doc.text("Authorized Signatory",162,267,{align:"center"})
+/* 🔷 SIGNATURE (FIXED SIZE + CLEAN LOOK) */
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(9)   // 🔥 control size here
+
+let signY = 270
+
+doc.line(130, signY, 195, signY)
+
+doc.text("Authorized Signatory", 162, signY - 3, {
+  align: "center"
+})
 
 /* 🔷 FOOTER */
 doc.setFontSize(9)

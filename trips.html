@@ -268,7 +268,9 @@ await loadRoutes()
 await loadTrucks()
 await loadCommodities()
 await loadClients()
-populateSearchFilters() 
+setTimeout(() => {
+  populateSearchFilters()
+}, 200) 
     
 const canCreate = await checkPermission("trips.html","create")
 if(!canCreate){
@@ -278,8 +280,26 @@ document.getElementById("createCard").style.display="none"
 await loadTrips()
 }
 
-/* ================= LOADS ================= */
+/* ================= SEARCH DROPDOWNS ================= */
 
+function populateSearchFilters(){
+
+/* ROUTES */
+let routeOptions = '<option value="">All Routes</option>' +
+routes.map(r => `<option value="${r.route_code}">${r.route_code}</option>`).join("")
+
+document.getElementById("searchRoute").innerHTML = routeOptions
+
+/* TRUCKS */
+let truckOptions = '<option value="">All Trucks</option>' +
+trucks.map(t => `<option value="${t.truck_number}">${t.truck_number}</option>`).join("")
+
+document.getElementById("searchTruck").innerHTML = truckOptions
+
+}
+    
+/* ================= LOADS ================= */
+    
 async function loadRoutes(){
 const {data}=await supabaseClient.from("routes").select("*")
 routes=data||[]
@@ -518,21 +538,7 @@ if(ledgerError){
 
 alert("Trip Saved ✅")
 
-function populateSearchFilters(){
 
-/* ROUTES DROPDOWN */
-let routeOptions = '<option value="">All Routes</option>' +
-routes.map(r => `<option value="${r.route_code}">${r.route_code}</option>`).join("")
-
-document.getElementById("searchRoute").innerHTML = routeOptions
-
-/* TRUCKS DROPDOWN */
-let truckOptions = '<option value="">All Trucks</option>' +
-trucks.map(t => `<option value="${t.truck_number}">${t.truck_number}</option>`).join("")
-
-document.getElementById("searchTruck").innerHTML = truckOptions
-
-}
 
 /************** WHATSAPP FULL FLOW **************/
 

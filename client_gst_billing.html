@@ -81,6 +81,13 @@ text-align:left;
 
 <script>
 
+let supabaseClient
+
+window.addEventListener("DOMContentLoaded", () => {
+    supabaseClient = window.supabaseClient
+    init()
+})
+  
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -250,10 +257,6 @@ window.location.href="login.html"
 </div>
 
 <script>
-const supabaseClient = window.supabaseClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
 
 let trips=[]
 let selectedTrips=[]
@@ -265,7 +268,6 @@ let totalMargin=0
 let totalGST=0
 let totalInvoice=0
 
-init()
 
 async function init(){
 await loadClients()
@@ -280,9 +282,10 @@ const {data, error} = await supabaseClient
 
 if(error){
 console.log("Client load error:", error)
+alert("Failed to load clients")
 return
 }
-
+  
 let html = '<option value="">Select Client</option>'
 
 (data || []).forEach(c=>{
@@ -290,13 +293,15 @@ html += `<option value="${c.company}">${c.company}</option>`
 })
 
 document.getElementById("clientSelect").innerHTML = html
+
+console.log("Clients:", data)  
 }
 
 async function loadTripsByClient(){
 
 let client = document.getElementById("clientSelect").value
 
-if(!client || client === "Select Client"){
+if(!client){
     document.getElementById("tripList").innerHTML = ""
     return
 }
@@ -872,6 +877,8 @@ return
 
 addGSTPayment(id, amt)
 }
+
+init()
   
 </script>
 

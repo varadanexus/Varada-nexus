@@ -83,9 +83,24 @@ text-align:left;
 
 let supabaseClient
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+
+    // wait until supabase is available
+    let attempts = 0
+
+    while(!window.supabaseClient && attempts < 10){
+        await new Promise(r => setTimeout(r, 100))
+        attempts++
+    }
+
+    if(!window.supabaseClient){
+        alert("Supabase not initialized")
+        return
+    }
+
     supabaseClient = window.supabaseClient
-    init()
+
+    await init()
 })
   
 fetch("sidebar.html")
@@ -878,7 +893,6 @@ return
 addGSTPayment(id, amt)
 }
 
-init()
   
 </script>
 

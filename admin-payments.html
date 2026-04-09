@@ -429,10 +429,41 @@ Total Weight: ${weight} KG<br>
 `
 }
 
+async function generateTransporterInvoiceNo(){
+
+let today = new Date()
+
+let yy = String(today.getFullYear()).slice(-2)
+let mm = String(today.getMonth()+1).padStart(2,'0')
+let dd = String(today.getDate()).padStart(2,'0')
+
+let prefix = `TSTAT${yy}${mm}${dd}`
+
+/* 🔥 GET TODAY'S INVOICES */
+const { data } = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.ilike("invoice_no", prefix + "%")
+
+let max = 0
+
+data?.forEach(i=>{
+let num = parseInt(i.invoice_no.slice(-3)) || 0
+if(num > max) max = num
+})
+
+let next = max + 1
+let seq = String(next).padStart(3,'0')
+
+return prefix + seq
+}
+    
 async function saveInvoice(){
 
+let invoiceNo = await generateTransporterInvoiceNo()
+
 const { data } = await supabaseClient.from("transporter_invoices").insert({
-invoice_no:"TINV-"+Math.floor(Math.random()*100000),
+invoice_no: invoiceNo,
 transporter_id:transporterSelect.value,
 trip_ids:selectedTrips.map(t=>t.id).join(","),
 total_amount: Number(invoiceAmount.toFixed(2)),

@@ -79,11 +79,6 @@ text-align:left;
 
 <div id="sidebar-container"></div>
 
-<script>
-
-let supabaseClient = window.supabaseClient
-
-</script>
 
 <script>
 
@@ -165,6 +160,22 @@ if(role){
 document.getElementById("userRole").innerText = role.role_name
 }
 
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
+  
 /* LOGOUT */
 
 window.logout = async function(){
@@ -274,7 +285,7 @@ alert("Failed to load clients")
 return
 }
   
-let html = '<option value="">Select Client</option>'
+let html = `<option value="">Select Client</option>`;
 
 (data || []).forEach(c=>{
 html += `<option value="${c.company}">${c.company}</option>`

@@ -316,7 +316,7 @@ const { data } = await supabaseClient
 .from("client_invoices")
 .select("invoice_no")
 .ilike("invoice_no", prefix + "%")
-.order("invoice_no", { ascending: false })
+.order("created_at", { ascending: false })
 .limit(1)
 
 let nextNumber = 1
@@ -333,44 +333,67 @@ return prefix + seq
 }
 
 async function saveInvoice(){
-    
-let invoiceNo = await generateClientInvoiceNo()
-console.log("NEW INVOICE:", invoiceNof
-            
-let invoiceNo = await generateClientInvoiceNo()
-let {data:inv}=await supabaseClient.from("client_invoices").insert({
-invoice_no: invoiceNo,
-trip_no:selectedTrips.map(t=>t.trip_no).join(","),
-client_name:selectedTrips[0].client_name,
-invoice_amount:invoiceAmount,
-balance_amount:invoiceAmount,
-payment_status:"Pending"
-}).select().single()
 
+if(selectedTrips.length === 0){
+    alert("Generate invoice first")
+    return
+}
+
+/* 🔥 GENERATE CLEAN INVOICE */
+let invoiceNo = await generateClientInvoiceNo()
+console.log("✅ NEW INVOICE:", invoiceNo)
+
+/* 🔥 INSERT */
+let {data:inv, error} = await supabaseClient
+.from("client_invoices")
+.insert({
+    invoice_no: invoiceNo,
+    trip_no: selectedTrips.map(t=>t.trip_no).join(","),
+    client_name: selectedTrips[0].client_name,
+    invoice_amount: Number(invoiceAmount.toFixed(2)),
+    balance_amount: Number(invoiceAmount.toFixed(2)),
+    payment_status:"Pending"
+})
+.select()
+.single()
+
+if(error){
+    console.error(error)
+    alert("Invoice save failed")
+    return
+}
+
+/* 🔥 BREAKDOWN */
 for(let t of selectedTrips){
 
-let mt=t.weight_kg/1000
-let freight=mt*t.company_rate
+let mt = t.weight_kg / 1000
+let freight = mt * t.company_rate
 
-const {data:exp}=await supabaseClient
+const {data:exp} = await supabaseClient
 .from("expenses")
 .select("amount")
 .eq("trip_id",t.id)
 .eq("expense_type","Fuel")
 
-let fuel=0
-exp?.forEach(e=>fuel+=e.amount)
+let fuel = 0
+exp?.forEach(e=> fuel += Number(e.amount || 0))
 
 await supabaseClient.from("invoice_trip_breakdown").insert({
-invoice_id:inv.id,
-trip_no:t.trip_no,
-amount:freight-fuel
+    invoice_id: inv.id,
+    trip_no: t.trip_no,
+    amount: freight - fuel
 })
 }
 
-alert("Saved")
-loadInvoices()
-loadTripsByClient()
+alert("Invoice Saved ✅")
+
+/* RESET */
+selectedTrips = []
+invoicePreview.innerHTML = ""
+
+/* REFRESH */
+await loadInvoices()
+await loadTripsByClient()
 }
 
 function setActiveMenu(){
@@ -405,7 +428,7 @@ const {data:bd}=await supabaseClient
 
 let tripNos=bd.map(b=>b.trip_no)
 
-/* ✅ FIX 1: INCLUDE ID */
+/* 🔥 GET TRIPS */
 const {data:tripData}=await supabaseClient
 .from("trips")
 .select(`
@@ -419,23 +442,20 @@ company_rate
 `)
 .in("trip_no",tripNos)
 
-/* ✅ FIX 2: FILTER ONLY THESE TRIPS */
-const tripIds = tripData.map(t=>t.id)
-
+/* 🔥 EXPENSES */
 const {data:exp}=await supabaseClient
 .from("expenses")
 .select("trip_id,amount")
-.in("trip_id",tripIds)
+.in("trip_id",tripData.map(t=>t.id))
 .eq("expense_type","Fuel")
 
-/* MAP */
 let fuelMap={}
 exp?.forEach(e=>{
 if(!fuelMap[e.trip_id]) fuelMap[e.trip_id]=0
 fuelMap[e.trip_id]+=Number(e.amount||0)
 })
 
-/* CALCULATIONS */
+/* 🔥 CALCULATIONS */
 let rows=[]
 let totalWeight=0
 let totalFreight=0
@@ -465,23 +485,19 @@ net.toFixed(2)
 
 })
 
-/* ================= PDF (TRANSPORTER STYLE) ================= */
+/* ================= PREMIUM PDF ================= */
 
 let doc=new jsPDF()
 
-/* WATERMARK */
-if(doc.setGState){
+/* 🔷 WATERMARK */
 doc.setGState(new doc.GState({opacity:0.05}))
-}
 doc.addImage("images/logo.png","PNG",40,80,120,120)
-if(doc.setGState){
 doc.setGState(new doc.GState({opacity:1}))
-}
 
-/* LOGO */
+/* 🔷 LOGO */
 doc.addImage("images/logo.png","PNG",15,10,20,20)
 
-/* HEADER */
+/* 🔷 HEADER */
 doc.setFont("helvetica","bold")
 doc.setFontSize(14)
 doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
@@ -491,15 +507,14 @@ doc.setFontSize(10)
 doc.text("Client Invoice",40,25)
 
 doc.setFontSize(9)
-doc.text("CIN: U43121AP2025PTC117741",40,31)
-doc.text("GST: 37AAKCV7495B1ZV",40,36)
+doc.text("GST: 37AAKCV7495B1ZV",40,31)
 
-/* VERIFIED */
+/* 🔷 VERIFIED */
 doc.setTextColor(0,120,0)
 doc.text("✔ Digitally Verified",150,18)
 doc.setTextColor(0,0,0)
 
-/* RIGHT SIDE */
+/* 🔷 RIGHT PANEL */
 doc.setFont("helvetica","bold")
 doc.text("Invoice No:",140,40)
 doc.setFont("helvetica","normal")
@@ -515,7 +530,7 @@ doc.text("Date:",140,54)
 doc.setFont("helvetica","normal")
 doc.text(new Date().toLocaleDateString("en-IN"),170,54)
 
-/* CLIENT */
+/* 🔷 CLIENT BLOCK */
 doc.setFont("helvetica","bold")
 doc.text("Client Details",15,55)
 
@@ -523,22 +538,20 @@ doc.setFont("helvetica","normal")
 doc.text("Name:",15,63)
 doc.text(inv.client_name,40,63)
 
+doc.setDrawColor(200)
 doc.line(15,75,195,75)
 
-/* TABLE */
+/* 🔷 TABLE */
 doc.autoTable({
 startY:80,
 head:[["Trip","Route","Truck","Date","Weight (MT)","Freight","Fuel","Net"]],
 body:rows,
 theme:"grid",
-headStyles:{
-fillColor:[22,160,133],
-textColor:255
-},
-styles:{fontSize:9}
+headStyles:{ fillColor:[22,160,133], textColor:255 },
+styles:{ fontSize:9 }
 })
 
-/* SUMMARY */
+/* 🔷 SUMMARY */
 let summaryY=doc.lastAutoTable.finalY+10
 
 doc.autoTable({
@@ -554,12 +567,13 @@ body:[
 ["Balance","₹ "+inv.balance_amount]
 ],
 theme:"grid",
-headStyles:{fillColor:[0,102,204],textColor:255}
+headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
-/* BANK */
+/* 🔷 BANK */
 let bankY=summaryY+5
 
+doc.setDrawColor(180)
 doc.rect(15,bankY,90,40)
 
 doc.setFontSize(10)
@@ -571,25 +585,31 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-/* STAMP */
+/* 🔷 PAID STAMP (FIXED POSITION LIKE TRANSPORTER) */
 if((inv.amount_paid||0)>=inv.invoice_amount){
+
+let rectY = bankY + 48
 
 doc.setTextColor(0,150,0)
 doc.setFontSize(28)
-doc.text("PAID",60,bankY+70,{angle:20})
-doc.setTextColor(0,0,0)
+doc.setGState(new doc.GState({opacity:0.25}))
 
+doc.text("PAID",60,rectY,{angle:20})
+
+doc.setGState(new doc.GState({opacity:1}))
+doc.setTextColor(0,0,0)
 }
 
-/* SIGN */
+/* 🔷 SIGNATURE */
 doc.line(130,270,195,270)
 doc.text("Authorized Signatory",162,267,{align:"center"})
 
-/* FOOTER */
+/* 🔷 FOOTER */
 doc.setFontSize(9)
 doc.text("This is a system generated document.",15,285)
+doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
-/* QR */
+/* 🔷 QR */
 let qrDiv=document.createElement("div")
 
 new QRCode(qrDiv,{
@@ -606,7 +626,6 @@ doc.save(inv.invoice_no+".pdf")
 },300)
 
 }
-
 async function loadInvoices(){
 const {data}=await supabaseClient.from("client_invoices").select("*")
 invoices=data||[]

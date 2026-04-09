@@ -104,6 +104,28 @@ html+=`<option value="${c.company}">${c.company}</option>`
 
 clientSelect.innerHTML=html
 }
+
+async function loadTripsByClient(){
+
+let client = document.getElementById("clientSelect").value
+
+const {data} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("client_name", client)
+.eq("status", "Completed")
+
+trips = data || []
+
+document.getElementById("tripList").innerHTML = trips.map(t=>`
+<div>
+<input type="checkbox" value="${t.id}">
+${t.trip_no} | ${t.route || ""}
+</div>
+`).join("")
+
+}
+  
 </script>
 
 </body>

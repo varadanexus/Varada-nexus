@@ -210,6 +210,30 @@ window.location="login.html"
 
 </div>
 
+<div class="card">
+
+<h3>Search & Filters</h3>
+
+<input id="searchRoute" placeholder="Search Route">
+<input id="searchTruck" placeholder="Search Truck Number">
+<input type="date" id="searchDate">
+
+<select id="pageSize" onchange="changePageSize()">
+  <option value="50">50 per page</option>
+  <option value="100">100 per page</option>
+</select>
+
+<button onclick="applyFilters()">Search</button>
+<button onclick="resetFilters()">Reset</button>
+
+</div>
+
+<div style="margin-bottom:10px;">
+<button onclick="prevPage()">⬅ Prev</button>
+<span id="pageInfo"></span>
+<button onclick="nextPage()">Next ➡</button>
+</div>
+    
 <table>
 <thead>
 <tr>
@@ -232,6 +256,10 @@ window.location="login.html"
 <script>
 
 let routes=[], trucks=[], commodities=[], clients=[], trips=[]
+
+let currentPage = 1
+let pageSize = 50
+let filteredTrips = []
 
 init()
 
@@ -702,7 +730,8 @@ trips = data || []
 
 }
 
-await renderTrips()
+filteredTrips = trips
+renderTrips()
 }
 
 function setActiveMenu(){
@@ -728,9 +757,15 @@ async function renderTrips(){
 const canEdit = await checkPermission("trips.html","edit")
 const canDelete = await checkPermission("trips.html","delete")
 
+/* PAGINATION LOGIC */
+let start = (currentPage - 1) * pageSize
+let end = start + pageSize
+
+let pageData = filteredTrips.slice(start, end)
+
 let html=""
 
-trips.forEach(t=>{
+pageData.forEach(t=>{
 html+=`
 <tr id="row_${t.id}">
 <td>${t.trip_no||""}</td>
@@ -751,9 +786,67 @@ ${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete<
 </tr>`
 })
 
-tripTable.innerHTML=html
+tripTable.innerHTML = html
+
+/* PAGE INFO */
+let totalPages = Math.ceil(filteredTrips.length / pageSize)
+document.getElementById("pageInfo").innerText = `Page ${currentPage} / ${totalPages || 1}`
+
 }
 
+function nextPage(){
+let totalPages = Math.ceil(filteredTrips.length / pageSize)
+if(currentPage < totalPages){
+  currentPage++
+  renderTrips()
+}
+}
+
+function prevPage(){
+if(currentPage > 1){
+  currentPage--
+  renderTrips()
+}
+}
+
+function changePageSize(){
+pageSize = parseInt(document.getElementById("pageSize").value)
+currentPage = 1
+renderTrips()
+}
+
+function applyFilters(){
+
+let routeVal = document.getElementById("searchRoute").value.toLowerCase()
+let truckVal = document.getElementById("searchTruck").value.toLowerCase()
+let dateVal = document.getElementById("searchDate").value
+
+filteredTrips = trips.filter(t=>{
+
+let matchRoute = routeVal ? t.route?.toLowerCase().includes(routeVal) : true
+let matchTruck = truckVal ? t.truck?.toLowerCase().includes(truckVal) : true
+let matchDate = dateVal ? t.trip_date === dateVal : true
+
+return matchRoute && matchTruck && matchDate
+
+})
+
+currentPage = 1
+renderTrips()
+}
+
+function resetFilters(){
+
+document.getElementById("searchRoute").value = ""
+document.getElementById("searchTruck").value = ""
+document.getElementById("searchDate").value = ""
+
+filteredTrips = trips
+currentPage = 1
+renderTrips()
+
+}
+    
 /* ================= EDIT ================= */
 
 async function editTrip(id){

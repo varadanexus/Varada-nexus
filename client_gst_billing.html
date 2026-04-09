@@ -87,7 +87,10 @@ cursor:pointer;
 
 <br>
 <button onclick="saveGSTInvoice()">Save GST Invoice</button>
+  
+<button onclick="generatePDF()">Download GST Invoice PDF</button>
 
+<button onclick="loadGSTReport()">GST Report</button>
 </div>
 
 </div>
@@ -101,6 +104,7 @@ const supabaseClient = supabase.createClient(
 let trips=[]
 let selectedTrips=[]
 
+let totalExpenseAll = 0
 let totalContract=0
 let totalFreight=0
 let totalMargin=0
@@ -173,7 +177,10 @@ bd2?.forEach(b=>usedTrips.push(b.trip_no))
 
 /* 3️⃣ FILTER UNUSED TRIPS */
 trips = (data || [])
-.filter(t => !usedTrips.includes(t.trip_no))
+.filter(t => 
+    !usedTrips.includes(t.trip_no) && 
+    t.billing_status !== "Billed"
+)
 
 /* 4️⃣ SORT — LATEST FIRST */
 .sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
@@ -189,12 +196,17 @@ ${t.trip_no} | ${t.route || ""}
 }
 
 async function generateGSTInvoice(){
-
+  
 let gstRate = Number(document.getElementById("gstPercent").value || 18) / 100
 let gstType = document.getElementById("gstType").value
 let gstOn = document.getElementById("gstOn").value
 let checked = document.querySelectorAll("#tripList input:checked")
 
+if(checked.length === 0){
+    alert("Select at least one trip")
+    return
+}
+  
 totalContract = 0
 totalFreight = 0
 totalExpenseAll = 0
@@ -228,9 +240,6 @@ totalExpense += Number(e.amount || 0)
 })
 
 totalExpenseAll += totalExpense
-
-/* 🔥 CLIENT BILL (IMPORTANT) */
-let clientBill = contract - totalExpense
 
 /* 🔥 TRANSPORTER PAYABLE */
 let transporterPayable = freight - totalExpense
@@ -293,7 +302,10 @@ Net Billing: ₹${netBillingTotal.toFixed(2)} <br>
 Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
 
 Your Margin: ₹${totalMargin.toFixed(2)} <br>
-GST (${(gstRate*100).toFixed(0)}%): ₹${totalGST.toFixed(2)} <br>
+${gstType === "excluded" 
+  ? `GST (${(gstRate*100).toFixed(0)}%): ₹${totalGST.toFixed(2)}`
+  : `GST Included: ₹${totalGST.toFixed(2)}`
+} <br>
 
 <hr>
 <b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>
@@ -301,6 +313,178 @@ ${gstType === "included" ? "<br><i>(GST included in total)</i>" : ""}
 `
 }
 
+
+async function saveGSTInvoice(){
+
+if(selectedTrips.length === 0){
+    alert("Generate invoice first")
+    return
+}
+
+let client = document.getElementById("clientSelect").value
+let gstType = document.getElementById("gstType").value
+let gstOn = document.getElementById("gstOn").value
+let gstPercent = Number(document.getElementById("gstPercent").value || 18)
+
+/* 🔥 GENERATE INVOICE NUMBER */
+let invoiceNo = "GST-" + Date.now()
+
+/* 🔥 CALCULATE FINAL VALUES */
+let netBillingTotal = totalContract - totalExpenseAll
+
+let invoiceAmount = (gstType === "excluded")
+    ? netBillingTotal + totalGST
+    : netBillingTotal
+
+/* 🔥 1️⃣ INSERT MAIN INVOICE */
+const { data:inv, error:invError } = await supabaseClient
+.from("client_invoices_gst")
+.insert([{
+    invoice_no: invoiceNo,
+    client_name: client,
+    total_contract_val: totalContract,
+    total_freight: totalFreight,
+    total_margin: totalMargin,
+    gst_total: totalGST,
+    invoice_amount: invoiceAmount,
+    balance_amount: invoiceAmount,
+    gst_type: gstType,
+    gst_on: gstOn,
+    total_expense: totalExpenseAll,
+    net_billing: netBillingTotal,
+    gst_percent: gstPercent
+}])
+.select()
+.single()
+
+if(invError){
+    alert("Error saving invoice")
+    console.log(invError)
+    return
+}
+
+/* ✅ Ledger MUST be here */
+await supabaseClient
+.from("client_ledger")
+.insert([{
+    client_name: client,
+    type: "Invoice",
+    reference_no: invoiceNo,
+    debit: invoiceAmount,
+    credit: 0,
+    balance: invoiceAmount,
+    remarks: "GST Invoice Generated"
+}])
+  
+
+/* 🔥 2️⃣ SAVE TRIP BREAKDOWN */
+
+for(let t of selectedTrips){
+
+let mt = (t.weight_kg || 0) / 1000
+
+let contract = mt * (t.company_rate || 0)
+let freight = mt * (t.transporter_rate || 0)
+
+/* EXPENSE */
+const {data:exp} = await supabaseClient
+.from("expenses")
+.select("amount")
+.eq("trip_id", t.id)
+
+let expense = 0
+exp?.forEach(e=>{
+    expense += Number(e.amount || 0)
+})
+
+let margin = contract - freight
+let gst = 0
+
+let gstRate = gstPercent / 100
+
+if(gstOn === "margin"){
+
+    if(gstType === "excluded"){
+        gst = margin * gstRate
+    }
+
+    if(gstType === "included"){
+        let base = margin / (1 + gstRate)
+        gst = margin - base
+        margin = base
+    }
+}
+
+
+
+if(gstOn === "total"){
+
+    let netBilling = contract - expense
+
+    if(gstType === "excluded"){
+        gst = netBilling * gstRate
+    }
+
+    if(gstType === "included"){
+        let base = netBilling / (1 + gstRate)
+        gst = netBilling - base
+    }
+
+}
+
+/* INSERT BREAKDOWN */
+const { error:bdError } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.insert([...])
+
+if(bdError){
+    console.log("Breakdown error:", bdError)
+}
+
+/* LOCK TRIP */
+await supabaseClient
+.from("trips")
+.update({ billing_status: "Billed" })
+.eq("id", t.id)
+  
+}
+
+alert("GST Invoice Saved ✅")
+
+/* OPTIONAL: REFRESH */
+loadTripsByClient()
+}
+
+
+function generatePDF(){
+
+let cgst = totalGST / 2
+let sgst = totalGST / 2
+
+let content = `
+<h2>VARADA NEXUS PRIVATE LIMITED</h2>
+
+<p><b>Client:</b> ${document.getElementById("clientSelect").value}</p>
+
+<p><b>Total Contract:</b> ₹${totalContract.toFixed(2)}</p>
+<p><b>Expenses:</b> ₹${totalExpenseAll.toFixed(2)}</p>
+<p><b>Net Billing:</b> ₹${(totalInvoice - totalGST).toFixed(2)}</p>
+<p><b>GST Type:</b> ${document.getElementById("gstType").value}</p>
+<p><b>GST On:</b> ${document.getElementById("gstOn").value}</p>
+${document.getElementById("gstType").value === "excluded" 
+? `<p><b>CGST:</b> ₹${cgst.toFixed(2)}</p>
+   <p><b>SGST:</b> ₹${sgst.toFixed(2)}</p>`
+: `<p><b>GST Included (Split):</b> CGST ₹${cgst.toFixed(2)} | SGST ₹${sgst.toFixed(2)}</p>`
+}
+
+<h3>Total Invoice: ₹${totalInvoice.toFixed(2)}</h3>
+`
+
+let win = window.open("", "", "width=800,height=600")
+win.document.write(content)
+win.document.close()
+win.print()
+}
   
 </script>
 

@@ -214,8 +214,8 @@ window.location="login.html"
 
 <h3>Search & Filters</h3>
 
-<input id="searchRoute" placeholder="Search Route">
-<input id="searchTruck" placeholder="Search Truck Number">
+<select id="searchRoute"></select>
+<select id="searchTruck"></select>
 <input type="date" id="searchDate">
 
 <select id="pageSize" onchange="changePageSize()">
@@ -268,7 +268,8 @@ await loadRoutes()
 await loadTrucks()
 await loadCommodities()
 await loadClients()
-
+populateSearchFilters() 
+    
 const canCreate = await checkPermission("trips.html","create")
 if(!canCreate){
 document.getElementById("createCard").style.display="none"
@@ -516,6 +517,22 @@ if(ledgerError){
   
 
 alert("Trip Saved ✅")
+
+function populateSearchFilters(){
+
+/* ROUTES DROPDOWN */
+let routeOptions = '<option value="">All Routes</option>' +
+routes.map(r => `<option value="${r.route_code}">${r.route_code}</option>`).join("")
+
+document.getElementById("searchRoute").innerHTML = routeOptions
+
+/* TRUCKS DROPDOWN */
+let truckOptions = '<option value="">All Trucks</option>' +
+trucks.map(t => `<option value="${t.truck_number}">${t.truck_number}</option>`).join("")
+
+document.getElementById("searchTruck").innerHTML = truckOptions
+
+}
 
 /************** WHATSAPP FULL FLOW **************/
 
@@ -817,14 +834,14 @@ renderTrips()
 
 function applyFilters(){
 
-let routeVal = document.getElementById("searchRoute").value.toLowerCase()
-let truckVal = document.getElementById("searchTruck").value.toLowerCase()
+let routeVal = document.getElementById("searchRoute").value
+let truckVal = document.getElementById("searchTruck").value
 let dateVal = document.getElementById("searchDate").value
 
 filteredTrips = trips.filter(t=>{
 
-let matchRoute = routeVal ? t.route?.toLowerCase().includes(routeVal) : true
-let matchTruck = truckVal ? t.truck?.toLowerCase().includes(truckVal) : true
+let matchRoute = routeVal ? t.route === routeVal : true
+let matchTruck = truckVal ? t.truck === truckVal : true
 let matchDate = dateVal ? t.trip_date === dateVal : true
 
 return matchRoute && matchTruck && matchDate

@@ -30,6 +30,10 @@ border-radius:12px;
 margin-bottom:16px;
 }
 
+#clientSelect{
+min-width:220px;
+}
+  
 select,input{
 padding:10px;
 margin:5px;
@@ -246,7 +250,7 @@ window.location.href="login.html"
 </div>
 
 <script>
-const supabaseClient = supabase.createClient(
+const supabaseClient = window.supabaseClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
@@ -263,8 +267,6 @@ let totalInvoice=0
 
 init()
 
-init()
-
 async function init(){
 await loadClients()
 loadGSTInvoices()
@@ -272,15 +274,22 @@ loadGSTInvoices()
 
 async function loadClients(){
 
-const {data}=await supabaseClient.from("clients").select("*")
+const {data, error} = await supabaseClient
+.from("clients")
+.select("*")
 
-let html='<option>Select Client</option>'
+if(error){
+console.log("Client load error:", error)
+return
+}
 
-data.forEach(c=>{
-html+=`<option value="${c.company}">${c.company}</option>`
+let html = '<option value="">Select Client</option>'
+
+(data || []).forEach(c=>{
+html += `<option value="${c.company}">${c.company}</option>`
 })
 
-clientSelect.innerHTML=html
+document.getElementById("clientSelect").innerHTML = html
 }
 
 async function loadTripsByClient(){

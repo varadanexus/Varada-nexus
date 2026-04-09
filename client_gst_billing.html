@@ -155,7 +155,7 @@ trips = (data || [])
 .filter(t => !usedTrips.includes(t.trip_no))
 
 /* 4️⃣ SORT — LATEST FIRST */
-.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at))
+.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
 
 /* 5️⃣ RENDER */
 document.getElementById("tripList").innerHTML = trips.map(t=>`

@@ -60,6 +60,24 @@ cursor:pointer;
 <div id="tripList"></div>
 
 <br>
+
+<!-- GST CONTROLS -->
+<div style="margin-top:10px;">
+
+<label>GST Type:</label>
+<select id="gstType">
+<option value="excluded">Excluded (GST extra)</option>
+<option value="included">Included (GST inside)</option>
+</select>
+
+<label>GST On:</label>
+<select id="gstOn">
+<option value="margin">On Margin</option>
+<option value="total">On Total</option>
+</select>
+
+</div>  
+  
 <button onclick="generateGSTInvoice()">Generate Invoice</button>
 
 <div id="preview"></div>

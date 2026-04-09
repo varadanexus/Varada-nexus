@@ -81,8 +81,20 @@ text-align:left;
 
 <script>
 
-let supabaseClient = window.supabaseClient
-  
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+
+/* ✅ SAME STRUCTURE AS DASHBOARD */
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -96,22 +108,23 @@ if(sidebar){
 
 setTimeout(async ()=>{
 
-    /* RBAC */
+    /* ✅ RBAC FIRST */
     if(typeof applyMenuRBAC === "function"){
         await applyMenuRBAC()
     }
 
-    /* USER INIT */
+    /* ✅ USER INIT */
     await initSidebar()
 
-    /* ACTIVE MENU */
+    /* ✅ ACTIVE MENU */
     setActiveMenu()
 
-    /* ICON FIX */
+    /* ✅ ICON FIX */
     if(window.lucide){
         lucide.createIcons()
     }
 
+    /* ✅ SHOW SIDEBAR */
     if(sidebar){
         sidebar.style.display = "block"
     }
@@ -120,21 +133,6 @@ setTimeout(async ()=>{
 
 })
 
-function setActiveMenu(){
-
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-
-    let page = link.getAttribute("data-page")
-
-    if(page === currentPage){
-        link.classList.add("active")
-    }
-
-})
-
-}
 
 async function initSidebar(){
 
@@ -174,16 +172,13 @@ document.getElementById("userRole").innerText = role.role_name
 }
 
 /* LOGOUT */
+
 window.logout = async function(){
 await supabaseClient.auth.signOut()
 window.location.href="login.html"
 }
 
 }
-
-window.addEventListener("load", () => {
-    init()
-})
   
 </script>
   

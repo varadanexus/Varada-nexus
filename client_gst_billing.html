@@ -105,6 +105,7 @@ cursor:pointer;
 <th>Client</th>
 <th>Amount</th>
 <th>Status</th>
+<th>Action</th>
 </tr>
 </thead>
 
@@ -555,11 +556,152 @@ rows += `
 <td>${inv.client_name}</td>
 <td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
 <td>${inv.balance_amount == 0 ? "Paid" : "Pending"}</td>
+
+
+<td>
+<button onclick="downloadGSTInvoice('${inv.id}')">PDF</button>
+<button onclick="deleteGSTInvoice('${inv.id}')">Delete</button>
+<button onclick="promptGSTPayment('${inv.id}')">Pay</button>
+</td>
 </tr>
 `
 }
 
 document.getElementById("gstInvoiceTable").innerHTML = rows
+}
+
+async function downloadGSTInvoice(id){
+
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", id)
+.single()
+
+const { data:trips } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("*")
+.eq("invoice_id", id)
+
+let tripHTML = trips.map(t=>`
+<tr>
+<td>${t.trip_no}</td>
+<td>${t.contract_value.toFixed(2)}</td>
+<td>${t.freight_cost.toFixed(2)}</td>
+<td>${t.margin.toFixed(2)}</td>
+<td>${t.gst.toFixed(2)}</td>
+</tr>
+`).join("")
+
+let cgst = inv.gst_total / 2
+let sgst = inv.gst_total / 2
+
+let html = `
+<h2>VARADA NEXUS PRIVATE LIMITED</h2>
+
+<p><b>Invoice No:</b> ${inv.invoice_no}</p>
+<p><b>Client:</b> ${inv.client_name}</p>
+
+<table border="1" cellspacing="0" cellpadding="6">
+<tr>
+<th>Trip</th><th>Contract</th><th>Freight</th><th>Margin</th><th>GST</th>
+</tr>
+${tripHTML}
+</table>
+
+<p><b>Net Billing:</b> ₹${inv.net_billing}</p>
+<p><b>CGST:</b> ₹${cgst}</p>
+<p><b>SGST:</b> ₹${sgst}</p>
+
+<h3>Total: ₹${inv.invoice_amount}</h3>
+`
+
+let win = window.open("", "", "width=900,height=700")
+win.document.write(html)
+win.document.close()
+win.print()
+}
+
+async function deleteGSTInvoice(id){
+
+if(!confirm("Delete this invoice?")) return
+
+/* unlock trips first */
+const { data:trips } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("trip_id")
+.eq("invoice_id", id)
+
+for(let t of trips){
+await supabaseClient
+.from("trips")
+.update({ billing_status: null })
+.eq("id", t.trip_id)
+}
+
+/* delete breakdown */
+await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.delete()
+.eq("invoice_id", id)
+
+/* delete invoice */
+await supabaseClient
+.from("client_invoices_gst")
+.delete()
+.eq("id", id)
+
+alert("Deleted")
+
+loadGSTInvoices()
+}
+
+async function addGSTPayment(invoiceId, amount){
+
+/* get invoice */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", invoiceId)
+.single()
+
+let newBalance = inv.balance_amount - amount
+
+if(newBalance < 0) newBalance = 0
+
+/* update invoice */
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance
+})
+.eq("id", invoiceId)
+
+/* ledger entry */
+await supabaseClient
+.from("client_ledger")
+.insert([{
+client_name: inv.client_name,
+type: "Payment",
+reference_no: inv.invoice_no,
+debit: 0,
+credit: amount,
+balance: newBalance,
+remarks: "GST Payment Received"
+}])
+
+alert("Payment added")
+
+loadGSTInvoices()
+}
+
+function promptGSTPayment(id){
+
+let amt = prompt("Enter payment amount")
+
+if(!amt) return
+
+addGSTPayment(id, Number(amt))
 }
   
 </script>

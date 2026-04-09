@@ -230,34 +230,21 @@ clientSelect.innerHTML=html
 
 async function loadTripsByClient(){
 
-let client=clientSelect.value
+let client = clientSelect.value
 
-const {data}=await supabaseClient
+const {data} = await supabaseClient
 .from("trips")
 .select("*")
-.eq("client_name",client)
-.eq("status","Completed")
+.eq("client_name", client)
+.eq("status", "Completed")
 
-const {data:inv}=await supabaseClient
-.from("client_invoices")
-.select("id")
-.eq("client_name",client)
+/* ❌ REMOVE ALL FILTERING LOGIC */
+/* ✅ SHOW ALL TRIPS */
 
-let used=[]
+trips = (data || [])
+.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
 
-if(inv){
-const {data:bd}=await supabaseClient
-.from("invoice_trip_breakdown")
-.select("trip_no")
-.in("invoice_id",inv.map(i=>i.id))
-
-bd?.forEach(b=>used.push(b.trip_no))
-}
-
-trips=data.filter(t=>!used.includes(t.trip_no))
-.sort((a,b)=>b.trip_no.localeCompare(a.trip_no))
-
-tripList.innerHTML=trips.map(t=>`
+tripList.innerHTML = trips.map(t=>`
 <div>
 <input type="checkbox" value="${t.id}">
 ${t.trip_no} | ${t.route}

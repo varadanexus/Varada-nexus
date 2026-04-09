@@ -620,7 +620,17 @@ width:80,height:80
 setTimeout(()=>{
 let qr=qrDiv.querySelector("canvas")
 if(qr){
-doc.addImage(qr.toDataURL(),"PNG",155,65,35,35)
+/* 🔷 QR POSITION FIX (BOTTOM LEFT LIKE IMAGE) */
+
+let qrX = 20        // left side
+let qrY = bankY + 55   // just below bank box
+
+// safety: don’t go beyond page
+if(qrY > 240){
+    qrY = 240
+}
+
+doc.addImage(qr.toDataURL(),"PNG", qrX, qrY, 45, 45)
 }
 doc.save(inv.invoice_no+".pdf")
 },300)

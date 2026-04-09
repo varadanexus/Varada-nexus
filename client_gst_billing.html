@@ -93,6 +93,27 @@ cursor:pointer;
 <button onclick="loadGSTReport()">GST Report</button>
 </div>
 
+<div class="card">
+
+<h3>GST Invoices</h3>
+
+<table style="width:100%; border-collapse: collapse;">
+<thead>
+<tr style="text-align:left; border-bottom:1px solid #333;">
+<th>Invoice</th>
+<th>Trips</th>
+<th>Client</th>
+<th>Amount</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="gstInvoiceTable"></tbody>
+
+</table>
+
+</div>
+  
 </div>
 
 <script>
@@ -115,6 +136,7 @@ init()
 
 async function init(){
 await loadClients()
+await loadGSTInvoices()
 }
 
 async function loadClients(){
@@ -469,6 +491,7 @@ alert("GST Invoice Saved ✅")
 loadTripsByClient()
 selectedTrips = []
 document.getElementById("preview").innerHTML = ""
+loadGSTInvoices()
 }
 
 
@@ -500,6 +523,43 @@ let win = window.open("", "", "width=800,height=600")
 win.document.write(content)
 win.document.close()
 win.print()
+}
+
+async function loadGSTInvoices(){
+
+const { data, error } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.order("created_at", { ascending: false })
+
+if(error){
+console.log(error)
+return
+}
+
+let rows = ""
+
+for(let inv of data){
+
+const { data:trips } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("trip_no")
+.eq("invoice_id", inv.id)
+
+let tripList = trips?.map(t => t.trip_no).join(", ") || "-"
+
+rows += `
+<tr style="border-bottom:1px solid #222;">
+<td>${inv.invoice_no}</td>
+<td>${tripList}</td>
+<td>${inv.client_name}</td>
+<td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
+<td>${inv.balance_amount == 0 ? "Paid" : "Pending"}</td>
+</tr>
+`
+}
+
+document.getElementById("gstInvoiceTable").innerHTML = rows
 }
   
 </script>

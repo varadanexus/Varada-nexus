@@ -279,12 +279,16 @@ totalGST += gst
 
 let netBillingTotal = totalContract - totalExpenseAll
 
-totalInvoice = netBillingTotal + totalGST
+if(gstType === "excluded"){
+    totalInvoice = netBillingTotal + totalGST
+}else{
+    totalInvoice = netBillingTotal   // ✅ GST already inside
+}
 
 document.getElementById("preview").innerHTML = `
 Total Contract: ₹${totalContract.toFixed(2)} <br>
 Less Expenses (Client Paid): ₹${totalExpenseAll.toFixed(2)} <br>
-Net Billing: ₹${(totalContract - totalExpenseAll).toFixed(2)} <br>
+Net Billing: ₹${netBillingTotal.toFixed(2)} <br>
 
 Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
 
@@ -293,6 +297,7 @@ GST (${(gstRate*100).toFixed(0)}%): ₹${totalGST.toFixed(2)} <br>
 
 <hr>
 <b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>
+${gstType === "included" ? "<br><i>(GST included in total)</i>" : ""}
 `
 }
 

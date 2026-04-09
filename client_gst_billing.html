@@ -202,7 +202,7 @@ let gstType = document.getElementById("gstType").value
 let gstOn = document.getElementById("gstOn").value
 let checked = document.querySelectorAll("#tripList input:checked")
 
-if(checked.length === 0){
+if(!checked || checked.length === 0){
     alert("Select at least one trip")
     return
 }
@@ -372,7 +372,7 @@ await supabaseClient
     reference_no: invoiceNo,
     debit: invoiceAmount,
     credit: 0,
-    balance: invoiceAmount,
+    balance: 0, // TEMP (we'll calculate later)
     remarks: "GST Invoice Generated"
 }])
   
@@ -435,17 +435,31 @@ if(gstOn === "total"){
 /* INSERT BREAKDOWN */
 const { error:bdError } = await supabaseClient
 .from("invoice_trip_breakdown_gst")
-.insert([...])
+.insert([{
+    invoice_id: inv.id,
+    trip_id: t.id,
+    trip_no: t.trip_no,
+    contract_rate: t.company_rate,
+    transporter_rate: t.transporter_rate,
+    contract_value: contract,
+    freight_cost: freight,
+    margin: margin,
+    gst: gst
+}])
 
 if(bdError){
     console.log("Breakdown error:", bdError)
 }
 
 /* LOCK TRIP */
-await supabaseClient
+const { error:lockError } = await supabaseClient
 .from("trips")
 .update({ billing_status: "Billed" })
 .eq("id", t.id)
+
+if(lockError){
+    console.log("Trip lock error:", lockError)
+}
   
 }
 
@@ -453,6 +467,8 @@ alert("GST Invoice Saved ✅")
 
 /* OPTIONAL: REFRESH */
 loadTripsByClient()
+selectedTrips = []
+document.getElementById("preview").innerHTML = ""
 }
 
 
@@ -468,13 +484,13 @@ let content = `
 
 <p><b>Total Contract:</b> ₹${totalContract.toFixed(2)}</p>
 <p><b>Expenses:</b> ₹${totalExpenseAll.toFixed(2)}</p>
-<p><b>Net Billing:</b> ₹${(totalInvoice - totalGST).toFixed(2)}</p>
+<p><b>Net Billing:</b> ₹${(totalContract - totalExpenseAll).toFixed(2)}</p>
 <p><b>GST Type:</b> ${document.getElementById("gstType").value}</p>
 <p><b>GST On:</b> ${document.getElementById("gstOn").value}</p>
 ${document.getElementById("gstType").value === "excluded" 
 ? `<p><b>CGST:</b> ₹${cgst.toFixed(2)}</p>
    <p><b>SGST:</b> ₹${sgst.toFixed(2)}</p>`
-: `<p><b>GST Included (Split):</b> CGST ₹${cgst.toFixed(2)} | SGST ₹${sgst.toFixed(2)}</p>`
+: `<p><b>Included GST:</b> CGST ₹${cgst.toFixed(2)} | SGST ₹${sgst.toFixed(2)}</p>`
 }
 
 <h3>Total Invoice: ₹${totalInvoice.toFixed(2)}</h3>

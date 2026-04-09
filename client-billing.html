@@ -411,6 +411,15 @@ function setActiveMenu(){
     })
 
 }
+
+
+function formatINR(val){
+  return Number(val || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+    
   
 /* 🔥 TRANSPORTER STYLE PDF */
 async function downloadClientInvoice(id,e){
@@ -560,11 +569,11 @@ margin:{left:110},
 tableWidth:85,
 head:[["Summary",""]],
 body:[
-["Total Weight",totalWeight.toFixed(2)+" MT"],
-["Total Amount","₹ "+totalFreight.toFixed(2)],
-["Expenses","₹ "+totalFuel.toFixed(2)],
-["Paid","₹ "+(inv.amount_paid||0)],
-["Balance","₹ "+inv.balance_amount]
+["Total Weight", totalWeight.toFixed(2) + " MT"],
+["Total Amount", "Rs. " + formatINR(totalFreight)],
+["Expenses", "Rs. " + formatINR(totalFuel)],
+["Paid", "Rs. " + formatINR(inv.amount_paid || 0)],
+["Balance", "Rs. " + formatINR(inv.balance_amount)]
 ],
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }

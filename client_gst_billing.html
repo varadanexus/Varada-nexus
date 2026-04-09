@@ -109,14 +109,55 @@ async function loadTripsByClient(){
 
 let client = document.getElementById("clientSelect").value
 
+/* 1️⃣ GET TRIPS */
 const {data} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("client_name", client)
 .eq("status", "Completed")
 
-trips = data || []
+/* 2️⃣ REMOVE ALREADY INVOICED (GST + OLD BOTH) */
 
+// OLD invoices
+const {data:oldInv} = await supabaseClient
+.from("client_invoices")
+.select("id")
+.eq("client_name", client)
+
+let usedTrips = []
+
+if(oldInv?.length){
+const {data:bd} = await supabaseClient
+.from("invoice_trip_breakdown")
+.select("trip_no")
+.in("invoice_id", oldInv.map(i=>i.id))
+
+bd?.forEach(b=>usedTrips.push(b.trip_no))
+}
+
+// NEW GST invoices
+const {data:newInv} = await supabaseClient
+.from("client_invoices_gst")
+.select("id")
+.eq("client_name", client)
+
+if(newInv?.length){
+const {data:bd2} = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("trip_no")
+.in("invoice_id", newInv.map(i=>i.id))
+
+bd2?.forEach(b=>usedTrips.push(b.trip_no))
+}
+
+/* 3️⃣ FILTER UNUSED TRIPS */
+trips = (data || [])
+.filter(t => !usedTrips.includes(t.trip_no))
+
+/* 4️⃣ SORT — LATEST FIRST */
+.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at))
+
+/* 5️⃣ RENDER */
 document.getElementById("tripList").innerHTML = trips.map(t=>`
 <div>
 <input type="checkbox" value="${t.id}">
@@ -126,7 +167,7 @@ ${t.trip_no} | ${t.route || ""}
 
 }
 
-function generateGSTInvoice(){
+async function generateGSTInvoice(){
 
 let checked = document.querySelectorAll("#tripList input:checked")
 
@@ -137,11 +178,10 @@ totalGST = 0
 
 selectedTrips = []
 
-checked.forEach(c=>{
+for(let c of checked){
 
 let t = trips.find(x => x.id == c.value)
-
-if(!t) return
+if(!t) continue
 
 selectedTrips.push(t)
 
@@ -150,21 +190,35 @@ let mt = (t.weight_kg || 0) / 1000
 let contract = mt * (t.company_rate || 0)
 let freight = mt * (t.transporter_rate || 0)
 
-let margin = contract - freight
+/* 🔥 EXPENSE FETCH (CRITICAL FIX) */
+const {data:exp} = await supabaseClient
+.from("expenses")
+.select("amount")
+.eq("trip_id", t.id)
+
+let totalExpense = 0
+exp?.forEach(e=>{
+totalExpense += Number(e.amount || 0)
+})
+
+/* 🔥 CORRECT FREIGHT AFTER EXPENSE */
+let netFreight = freight + totalExpense   // transporter cost includes expenses
+
+let margin = contract - netFreight
 let gst = margin * 0.18
 
 totalContract += contract
-totalFreight += freight
+totalFreight += netFreight
 totalMargin += margin
 totalGST += gst
 
-})
+}
 
 totalInvoice = totalMargin + totalGST
 
 document.getElementById("preview").innerHTML = `
 Contract Value: ₹${totalContract.toFixed(2)} <br>
-Freight: ₹${totalFreight.toFixed(2)} <br>
+Freight (incl expenses): ₹${totalFreight.toFixed(2)} <br>
 Margin: ₹${totalMargin.toFixed(2)} <br>
 GST (18%): ₹${totalGST.toFixed(2)} <br>
 <b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>

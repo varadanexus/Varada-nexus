@@ -170,7 +170,6 @@ bd2?.forEach(b=>usedTrips.push(b.trip_no))
 
 /* 3️⃣ FILTER UNUSED TRIPS */
 trips = (data || [])
-.filter(t => !usedTrips.includes(t.trip_no))
 
 /* 4️⃣ SORT — LATEST FIRST */
 .sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
@@ -222,7 +221,10 @@ exp?.forEach(e=>{
 totalExpense += Number(e.amount || 0)
 })
 
+
 /* 🔥 CORRECT FREIGHT AFTER EXPENSE */
+let netFreight = freight - totalExpense
+
 let margin = contract - netFreight
 
 let gst = 0

@@ -333,7 +333,10 @@ return prefix + seq
 }
 
 async function saveInvoice(){
-
+    
+let invoiceNo = await generateClientInvoiceNo()
+console.log("NEW INVOICE:", invoiceNof
+            
 let invoiceNo = await generateClientInvoiceNo()
 let {data:inv}=await supabaseClient.from("client_invoices").insert({
 invoice_no: invoiceNo,

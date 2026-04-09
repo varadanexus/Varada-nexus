@@ -76,6 +76,9 @@ cursor:pointer;
 <option value="total">On Total</option>
 </select>
 
+<label>GST %:</label>
+<input type="number" id="gstPercent" value="18" style="width:80px;">
+
 </div>  
   
 <button onclick="generateGSTInvoice()">Generate Invoice</button>
@@ -132,7 +135,7 @@ const {data} = await supabaseClient
 .from("trips")
 .select("*")
 .eq("client_name", client)
-.eq("status", "Completed")
+.in("status", ["Completed","Paid"])
 
 /* 2️⃣ REMOVE ALREADY INVOICED (GST + OLD BOTH) */
 
@@ -170,6 +173,7 @@ bd2?.forEach(b=>usedTrips.push(b.trip_no))
 
 /* 3️⃣ FILTER UNUSED TRIPS */
 trips = (data || [])
+.filter(t => !usedTrips.includes(t.trip_no))
 
 /* 4️⃣ SORT — LATEST FIRST */
 .sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
@@ -186,13 +190,14 @@ ${t.trip_no} | ${t.route || ""}
 
 async function generateGSTInvoice(){
 
-
+let gstRate = Number(document.getElementById("gstPercent").value || 18) / 100
 let gstType = document.getElementById("gstType").value
 let gstOn = document.getElementById("gstOn").value
 let checked = document.querySelectorAll("#tripList input:checked")
 
 totalContract = 0
 totalFreight = 0
+totalExpenseAll = 0
 totalMargin = 0
 totalGST = 0
 
@@ -208,9 +213,10 @@ selectedTrips.push(t)
 let mt = (t.weight_kg || 0) / 1000
 
 let contract = mt * (t.company_rate || 0)
+  
 let freight = mt * (t.transporter_rate || 0)
 
-/* 🔥 EXPENSE FETCH (CRITICAL FIX) */
+/* EXPENSES (CLIENT PAID DIRECTLY) */
 const {data:exp} = await supabaseClient
 .from("expenses")
 .select("amount")
@@ -221,24 +227,27 @@ exp?.forEach(e=>{
 totalExpense += Number(e.amount || 0)
 })
 
+totalExpenseAll += totalExpense
 
-/* 🔥 CORRECT FREIGHT AFTER EXPENSE */
-let netFreight = freight - totalExpense
+/* 🔥 CLIENT BILL (IMPORTANT) */
+let clientBill = contract - totalExpense
 
-let margin = contract - netFreight
+/* 🔥 TRANSPORTER PAYABLE */
+let transporterPayable = freight - totalExpense
+
+/* 🔥 YOUR MARGIN (PURE) */
+let margin = contract - freight
 
 let gst = 0
-
-/* 🔥 GST CALCULATION ENGINE */
 
 if(gstOn === "margin"){
 
     if(gstType === "excluded"){
-        gst = margin * 0.18
+        gst = margin * gstRate
     }
 
     if(gstType === "included"){
-        let base = margin / 1.18
+        let base = margin / (1 + gstRate)
         gst = margin - base
         margin = base
     }
@@ -247,35 +256,41 @@ if(gstOn === "margin"){
 
 if(gstOn === "total"){
 
+    let netBilling = contract - totalExpense
+
     if(gstType === "excluded"){
-        gst = contract * 0.18
+        gst = netBilling * gstRate
     }
 
     if(gstType === "included"){
-        let base = contract / 1.18
-        gst = contract - base
+        let base = netBilling / (1 + gstRate)
+        gst = netBilling - base
     }
 
 }
 
+
 /* TOTALS */
 totalContract += contract
-totalFreight += netFreight
+totalFreight += transporterPayable
 totalMargin += margin
 totalGST += gst
 }
 
-if(gstOn === "margin"){
-    totalInvoice = totalMargin + totalGST
-}else{
-    totalInvoice = totalContract + totalGST
-}
+let netBillingTotal = totalContract - totalExpenseAll
+
+totalInvoice = netBillingTotal + totalGST
 
 document.getElementById("preview").innerHTML = `
-Contract Value: ₹${totalContract.toFixed(2)} <br>
-Freight: ₹${totalFreight.toFixed(2)} <br>
-Service Charges (Margin): ₹${totalMargin.toFixed(2)} <br>
-GST (18%): ₹${totalGST.toFixed(2)} <br>
+Total Contract: ₹${totalContract.toFixed(2)} <br>
+Less Expenses (Client Paid): ₹${totalExpenseAll.toFixed(2)} <br>
+Net Billing: ₹${(totalContract - totalExpenseAll).toFixed(2)} <br>
+
+Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
+
+Your Margin: ₹${totalMargin.toFixed(2)} <br>
+GST (${(gstRate*100).toFixed(0)}%): ₹${totalGST.toFixed(2)} <br>
+
 <hr>
 <b>Total Invoice: ₹${totalInvoice.toFixed(2)}</b>
 `

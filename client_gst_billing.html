@@ -588,7 +588,18 @@ await supabaseClient
     balance: invoiceAmount,
     remarks: "GST Invoice Generated"
 }])
-  
+
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    type: "GST Invoice",
+    reference_no: invoiceNo,
+    party: client,
+    debit: invoiceAmount,
+    credit: 0,
+    balance: 0,
+    remarks: "GST Invoice Generated"
+}])
 
 /* 🔥 2️⃣ SAVE TRIP BREAKDOWN */
 

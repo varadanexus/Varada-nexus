@@ -1191,7 +1191,7 @@ return
 
 /* 🔥 UPDATE BALANCE */
 let newInvoiceBalance = inv.balance_amount - amount
-if(newBalance < 0) newBalance = 0
+if(newInvoiceBalance < 0) newInvoiceBalance = 0
 
 await supabaseClient
 .from("client_invoices_gst")

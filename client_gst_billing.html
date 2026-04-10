@@ -851,10 +851,24 @@ Accordingly, only the net consideration retained constitutes the value of taxabl
 doc.text(legalText,15,legalY+6,{maxWidth:180})
 
 /* 🔷 SIGNATURE */
-let signY = 270
+let signY = 255   // move slightly up to make space
 
+/* 🔷 SIGNATURE IMAGE */
+try{
+doc.addImage("images/signature.png","PNG",135,signY-18,40,15)
+}catch(e){}
+
+/* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
+try{
+doc.addImage("images/stamp.png","PNG",155,signY-10,35,35)
+}catch(e){}
+
+/* 🔷 LINE */
 doc.line(130, signY, 195, signY)
-doc.text("Authorized Signatory", 162, signY - 3, { align: "center" })
+
+/* 🔷 TEXT */
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
 /* 🔷 FOOTER */
 doc.setFontSize(9)

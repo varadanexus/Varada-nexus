@@ -977,7 +977,9 @@ ${inv.balance_amount == 0
 <td>
 <button onclick="generatePDF('${inv.id}')">PDF</button>
 <button onclick="deleteGSTInvoice('${inv.id}')">Delete</button>
-<button disabled>Use Payment Section</button>
+<button onclick="document.getElementById('gstInvoiceSelect').value='${inv.id}'">
+Use Payment Section
+</button>
 </td>
 </tr>
 `

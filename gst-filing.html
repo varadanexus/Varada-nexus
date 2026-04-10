@@ -123,16 +123,32 @@ let end = new Date(start)
 end.setMonth(end.getMonth()+1)
 
 /* 🔥 FETCH INVOICES */
-const { data:invoices } = await supabaseClient
+const { data:invoices, error:invError } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .gte("created_at", start.toISOString())
 .lt("created_at", end.toISOString())
 
+if(invError){
+    console.log("Invoice fetch error:", invError)
+    alert("Error loading invoices")
+    return
+}
+
+let invoiceList = invoices || []
+
 /* 🔥 FETCH CLIENTS */
-const { data:clients } = await supabaseClient
+const { data:clients, error:clientError } = await supabaseClient
 .from("clients")
 .select("company,gst_no")
+
+if(clientError){
+    console.log("Client fetch error:", clientError)
+    alert("Error loading clients")
+    return
+}
+
+let clientList = clients || []
 
 let rows = ""
 
@@ -141,9 +157,9 @@ let b2b=0,b2c=0
 
 globalData = []
 
-for(let inv of (invoices || [])){
+for(let inv of (invoiceList)){
 
-let client = clients.find(c=>c.company===inv.client_name)
+let client = clientList.find(c => c.company === inv.client_name)
 
 let gstin = client?.gst_no || ""
 let type = gstin ? "B2B" : "B2C"

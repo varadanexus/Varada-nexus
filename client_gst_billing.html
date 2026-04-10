@@ -1095,7 +1095,7 @@ balance_amount: newBalance
 .eq("id", invoiceId)
 
 /* 🔥 COMPANY LEDGER ENTRY (GST PAYMENT RECEIVED) */
-await supabaseClient
+const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
     type: "GST Payment",
@@ -1103,10 +1103,14 @@ await supabaseClient
     party: inv.client_name,
     debit: amount,
     credit: 0,
-    payment_method: "Manual",
-    payment_date: new Date().toISOString(),
+    balance: 0,
     remarks: "GST Payment Received"
 }])
+
+if(ledgerError){
+    console.log("❌ LEDGER ERROR:", ledgerError)
+    alert("Ledger insert failed")
+}
   
 /* ledger entry */
 await supabaseClient
@@ -1179,20 +1183,22 @@ await supabaseClient
 .eq("id", invoiceId)
 
 /* 🔥 COMPANY LEDGER ENTRY */
-await supabaseClient
+const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST_PAYMENT",
-    reference_id: invoiceId,
+    type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    description: "GST Payment - " + method + " - " + (txnId || "No Ref"),
     debit: amount,
     credit: 0,
-    payment_method: method,
-    payment_date: date,
-    transaction_id: txnId
+    balance: 0,
+    remarks: "GST Payment Received"
 }])
+
+if(ledgerError){
+    console.log("❌ LEDGER ERROR:", ledgerError)
+    alert("Ledger insert failed")
+}
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient

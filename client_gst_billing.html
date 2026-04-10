@@ -1098,19 +1098,31 @@ alert("Amount exceeds pending balance")
 return
 }
 
-let newBalance = inv.balance_amount - amount
+let newInvoiceBalance = inv.balance_amount - amount
 
-if(newBalance < 0) newBalance = 0
+if(newInvoiceBalance < 0) newInvoiceBalance = 0
 
 /* update invoice */
 await supabaseClient
 .from("client_invoices_gst")
 .update({
-balance_amount: newBalance
+balance_amount: newInvoiceBalance
 })
 .eq("id", invoiceId)
 
 /* 🔥 COMPANY LEDGER ENTRY (GST PAYMENT RECEIVED) */
+// 🔥 GET LAST BALANCE
+const { data:lastEntry } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+.single()
+
+let lastBalance = lastEntry?.balance || 0
+
+let newBalance = lastBalance + amount
+
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
@@ -1119,7 +1131,7 @@ const { error:ledgerError } = await supabaseClient
     party: inv.client_name,
     debit: amount,
     credit: 0,
-    balance: 0,
+    balance: newBalance,
     remarks: "GST Payment Received"
 }])
 

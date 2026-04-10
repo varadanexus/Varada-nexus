@@ -551,11 +551,15 @@ alert("Processing invoice...")
 
 let client = document.getElementById("clientSelect").value
 
-const { data:clientData } = await supabaseClient
+const { data:clientData, error:clientErr } = await supabaseClient
 .from("clients")
 .select("gst_no")
 .eq("company", client)
-.single()
+.maybeSingle()
+
+if(clientErr){
+    console.log("Client fetch error:", clientErr)
+}
 
 let clientGST = clientData?.gst_no || ""
   
@@ -602,9 +606,9 @@ const { data:inv, error:invError } = await supabaseClient
 .select()
 .single()
 
-if(invError){
-    alert("Error saving invoice")
-    console.log(invError)
+if(invError || !inv){
+    console.log("❌ Invoice Save Error:", invError)
+    alert("Invoice failed. Check console.")
     return
 }
 
@@ -622,14 +626,13 @@ await supabaseClient
 }])
 
 // 🔥 GET LAST BALANCE
-const { data:lastEntry } = await supabaseClient
+const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
 .select("balance")
 .order("created_at", { ascending:false })
 .limit(1)
-.single()
 
-let lastBalance = lastEntry?.balance || 0
+let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (INVOICE = YOU WILL RECEIVE MONEY)
 let newBalance = lastBalance + invoiceAmount
@@ -1225,14 +1228,13 @@ await supabaseClient
 .eq("id", invoiceId)
 
 // 🔥 GET LAST BALANCE
-const { data:lastEntry } = await supabaseClient
+const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
 .select("balance")
 .order("created_at", { ascending:false })
 .limit(1)
-.single()
 
-let lastBalance = lastEntry?.balance || 0
+let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
 let newBalance = lastBalance - amount

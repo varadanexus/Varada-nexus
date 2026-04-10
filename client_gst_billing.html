@@ -614,13 +614,15 @@ await supabaseClient
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "GST Invoice",
-    reference_no: invoiceNo,
-    party: client,
-    debit: invoiceAmount,
+    type: "GST Payment",
+    reference_no: inv.invoice_no,
+    party: inv.client_name,
+    debit: amount,
     credit: 0,
-    balance: 0,
-    remarks: "GST Invoice Generated"
+    payment_method: method,
+    transaction_id: txnId,
+    payment_date: date,
+    remarks: "GST Payment Received"
 }])
 
 /* 🔥 2️⃣ SAVE TRIP BREAKDOWN */
@@ -968,7 +970,11 @@ rows += `
 <td>${tripList}</td>
 <td>${inv.client_name}</td>
 <td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
-<td>${inv.balance_amount == 0 ? "Paid" : "Pending"}</td>
+<td>
+${inv.balance_amount == 0 
+    ? "Paid" 
+    : `Pending (₹${Number(inv.balance_amount).toFixed(2)})`}
+</td>
 
 
 <td>
@@ -1098,7 +1104,7 @@ await supabaseClient
     entry_type: "GST_PAYMENT",
     reference_id: invoiceId,
     reference_no: inv.invoice_no,
-    party_name: inv.client_name,
+    party: inv.client_name,
     description: "GST Payment Received - " + inv.invoice_no,
     debit: amount,   // 🟢 MONEY COMING IN
     credit: 0,
@@ -1183,7 +1189,7 @@ await supabaseClient
     entry_type: "GST_PAYMENT",
     reference_id: invoiceId,
     reference_no: inv.invoice_no,
-    party_name: inv.client_name,
+    party: inv.client_name,
     description: "GST Payment - " + method + " - " + (txnId || "No Ref"),
     debit: amount,
     credit: 0,
@@ -1214,6 +1220,7 @@ gstTxnId.value=""
 gstPaymentDate.value=""
 
 loadGSTInvoices()
+document.getElementById("gstInvoiceSelect").value = ""
 }
   
 window.addEventListener("load", () => {

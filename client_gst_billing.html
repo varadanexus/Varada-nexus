@@ -740,6 +740,9 @@ doc.setFont("helvetica","normal")
 doc.setFontSize(10)
 doc.text("GST Invoice",40,25)
 doc.text("GST: 37AAKCV7495B1ZV",40,31)
+doc.text("Address: 80-17-28, K B Nagar, A V A Road,",40,37)
+doc.text("Rajahmundry, Andhra Pradesh - 533101",40,43)
+doc.text("CIN: U43121AP2025PTC117741",40,49)
 
 /* 🔷 VERIFIED TAG */
 doc.setTextColor(0,120,0)
@@ -751,18 +754,40 @@ doc.setFontSize(10)
 doc.text("Invoice No: " + inv.invoice_no,140,40)
 doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
 
+/* 🔷 INVOICE INFO */
+doc.setFontSize(10)
+
+doc.text("Invoice No: " + inv.invoice_no,140,40)
+doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
+
+/* 🔥 ADD HERE */
+doc.text("Place of Supply: Andhra Pradesh",140,55)
+doc.text("State Code: 37",140,62)
+doc.text("Invoice Type: B2B",140,69)
+
 /* 🔷 CLIENT BLOCK */
 doc.setFont("helvetica","bold")
 doc.text("Client Details",15,55)
 
 doc.setFont("helvetica","normal")
+/* GET CLIENT DETAILS */
+const { data:client } = await supabaseClient
+.from("clients")
+.select("*")
+.eq("company", inv.client_name)
+.single()
+
 doc.text("Name: " + inv.client_name,15,63)
 
-doc.line(15,68,195,68)
+doc.text("Address: " + (client?.address || "N/A"),15,70)
+
+doc.text("GSTIN: " + (client?.gst_no || "N/A"),15,77)
+
+doc.line(15,85,195,85)
 
 /* 🔷 TABLE */
 doc.autoTable({
-startY:75,
+startY:95,
 head:[["Trip","Contract","Freight","Margin","GST"]],
 body:rows,
 theme:"grid",

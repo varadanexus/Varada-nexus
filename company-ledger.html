@@ -6,7 +6,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
-
+<script src="menu-rbac.js"></script>
+  
 <style>
 
 body{
@@ -17,9 +18,9 @@ color:#e5e7eb;
 }
 
 .main{
-margin-left:240px;
+margin-left:220px;
 padding:24px;
-max-width: calc(100vw - 240px);
+max-width: calc(100vw - 220px);
 overflow-x: auto;
 }
   
@@ -79,6 +80,13 @@ text-align:left;
 
 <script>
 
+const allowed = await checkPermission("company-ledger.html","view")
+
+if(!allowed){
+    alert("Access Denied")
+    window.location.href = "dashboard.html"
+}
+
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -114,26 +122,44 @@ setTimeout(async ()=>{
 async function initSidebar(){
 
 const {data:{session}} = await supabaseClient.auth.getSession()
-
 if(!session) return
 
+const authId = session.user.id
 const email = session.user.email
 
 document.getElementById("userName").innerText = email.split("@")[0]
 
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+document.getElementById("userRole").innerText = role.role_name
 }
 
-function setActiveMenu(){
-
-let currentPage = window.location.pathname.split("/").pop()
-
-document.querySelectorAll("#sidebar a").forEach(link=>{
-    let page = link.getAttribute("data-page")
-    if(page === currentPage){
-        link.classList.add("active")
-    }
-})
-
+/* LOGOUT */
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="login.html"
+}
 }
 
 </script>
@@ -337,6 +363,12 @@ document.getElementById("monthlySummary").innerHTML = html
 loadClientsDropdown()
 loadLedger()
 
+const canView = await checkPermission("company-ledger.html","view")
+
+if(!canView){
+    document.querySelector("button").style.display="none"
+}
+  
 </script>
 
 </body>

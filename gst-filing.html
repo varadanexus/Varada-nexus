@@ -5,9 +5,17 @@
 <title>GST Filing - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+    
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
-
+<script src="rbac.js"></script>
     
 <style>
 body{
@@ -410,8 +418,6 @@ val: r.invoice_value,
 pos: "37", // Andhra Pradesh
 rchrg: "N",
 inv_typ: "R",
-itms: [{
-num: 1,
 itms: [{
 num: 1,
 itm_det: {

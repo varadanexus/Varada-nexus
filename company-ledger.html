@@ -80,13 +80,19 @@ text-align:left;
 
 <script>
 
+
+(async () => {
+
+/* 🔐 PAGE SECURITY */
 const allowed = await checkPermission("company-ledger.html","view")
 
 if(!allowed){
     alert("Access Denied")
     window.location.href = "dashboard.html"
+    return
 }
 
+/* 🔥 LOAD SIDEBAR */
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -118,6 +124,21 @@ setTimeout(async ()=>{
 },200)
 
 })
+
+})()
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+    let page = link.getAttribute("data-page")
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+})
+
+}
 
 async function initSidebar(){
 
@@ -363,11 +384,7 @@ document.getElementById("monthlySummary").innerHTML = html
 loadClientsDropdown()
 loadLedger()
 
-const canView = await checkPermission("company-ledger.html","view")
 
-if(!canView){
-    document.querySelector("button").style.display="none"
-}
   
 </script>
 

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Company Ledger - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+margin-bottom:16px;
+}
+
+input,select{
+padding:8px;
+margin:5px;
+border-radius:8px;
+background:#0f172a;
+color:white;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+text-align:left;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+<h2>Company Ledger</h2>
+
+<div class="card">
+
+<!-- FILTERS -->
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+
+<select id="typeFilter">
+<option value="">All Types</option>
+<option value="GST Invoice">GST Invoice</option>
+<option value="GST Payment">GST Payment</option>
+</select>
+
+<input id="partyFilter" placeholder="Search Client">
+
+<button onclick="loadLedger()">Apply Filter</button>
+
+</div>
+
+<div class="card">
+
+<h3>Ledger Entries</h3>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Reference</th>
+<th>Party</th>
+<th>Debit</th>
+<th>Credit</th>
+<th>Balance</th>
+<th>Method</th>
+<th>Txn ID</th>
+</tr>
+</thead>
+
+<tbody id="ledgerTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h3>Monthly Summary (CA View)</h3>
+
+<div id="monthlySummary"></div>
+
+</div>
+
+</div>
+
+<script>
+
+async function loadLedger(){
+
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+let type = document.getElementById("typeFilter").value
+let party = document.getElementById("partyFilter").value
+
+let query = supabaseClient
+.from("company_ledger")
+.select("*")
+.order("created_at", { ascending:true })
+
+if(fromDate){
+query = query.gte("created_at", fromDate)
+}
+
+if(toDate){
+query = query.lte("created_at", toDate)
+}
+
+if(type){
+query = query.eq("type", type)
+}
+
+if(party){
+query = query.ilike("party", `%${party}%`)
+}
+
+const { data, error } = await query
+
+if(error){
+alert("Error loading ledger")
+console.log(error)
+return
+}
+
+renderTable(data)
+renderMonthly(data)
+}
+
+function renderTable(data){
+
+let rows = ""
+
+data.forEach(r=>{
+
+rows += `
+<tr>
+<td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
+<td>${r.type}</td>
+<td>${r.reference_no}</td>
+<td>${r.party}</td>
+<td style="color:#22c55e;">₹${Number(r.debit || 0).toFixed(2)}</td>
+<td style="color:#ef4444;">₹${Number(r.credit || 0).toFixed(2)}</td>
+<td>₹${Number(r.balance || 0).toFixed(2)}</td>
+<td>${r.payment_method || "-"}</td>
+<td>${r.transaction_id || "-"}</td>
+</tr>
+`
+})
+
+document.getElementById("ledgerTable").innerHTML = rows
+}
+
+function renderMonthly(data){
+
+let map = {}
+
+data.forEach(r=>{
+
+let month = new Date(r.created_at).toLocaleString('en-IN',{month:'short',year:'numeric'})
+
+if(!map[month]){
+map[month] = {
+invoice:0,
+payment:0
+}
+}
+
+if(r.type === "GST Invoice"){
+map[month].invoice += Number(r.debit || 0)
+}
+
+if(r.type === "GST Payment"){
+map[month].payment += Number(r.debit || 0)
+}
+
+})
+
+let html = ""
+
+for(let m in map){
+
+html += `
+<div style="margin-bottom:10px;">
+<b>${m}</b><br>
+GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
+Collections: ₹${map[m].payment.toFixed(2)}
+</div>
+`
+}
+
+document.getElementById("monthlySummary").innerHTML = html
+}
+
+/* AUTO LOAD */
+loadLedger()
+
+</script>
+
+</body>
+</html>

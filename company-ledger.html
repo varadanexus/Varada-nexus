@@ -154,7 +154,9 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 <option value="GST Payment">GST Payment</option>
 </select>
 
-<input id="partyFilter" placeholder="Search Client">
+<select id="partyFilter">
+<option value="">All Clients</option>
+</select>
 
 <button onclick="loadLedger()">Apply Filter</button>
 
@@ -201,6 +203,28 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 
 <script>
 
+async function loadClientsDropdown(){
+
+const { data, error } = await supabaseClient
+.from("clients")
+.select("company")
+
+if(error){
+console.log("Client dropdown error:", error)
+return
+}
+
+let html = `<option value="">All Clients</option>`
+
+data
+.sort((a,b)=>a.company.localeCompare(b.company))
+.forEach(c=>{
+html += `<option value="${c.company}">${c.company}</option>`
+})
+
+document.getElementById("partyFilter").innerHTML = html
+}
+  
 async function loadLedger(){
 
 let fromDate = document.getElementById("fromDate").value
@@ -226,7 +250,7 @@ query = query.eq("type", type)
 }
 
 if(party){
-query = query.ilike("party", `%${party}%`)
+query = query.eq("party", party)
 }
 
 const { data, error } = await query
@@ -310,6 +334,7 @@ document.getElementById("monthlySummary").innerHTML = html
 }
 
 /* AUTO LOAD */
+loadClientsDropdown()
 loadLedger()
 
 </script>

@@ -807,8 +807,12 @@ tableWidth:85,
 head:[["Summary",""]],
 body:[
 ["Net Billing", inv.net_billing.toFixed(2)],
-["CGST", cgst.toFixed(2)],
-["SGST", sgst.toFixed(2)],
+
+["Margin", Number(inv.total_margin || 0).toFixed(2)],
+
+["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
+["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
+
 ["Total Invoice", inv.invoice_amount.toFixed(2)]
 ],
 theme:"grid",

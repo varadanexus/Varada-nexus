@@ -6,6 +6,14 @@
 <title>Role Permissions - Varada Nexus ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+    
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
 
@@ -158,10 +166,6 @@ max-width:400px;
 </head>
 
 <body>
-
-<script>
-const supabaseClient = window.supabaseClient
-</script>
 
 <!-- SIDEBAR -->
 <div id="sidebar-container"></div>
@@ -357,7 +361,7 @@ return
 }
 
 if(!roles || roles.length===0){
-permTable.innerHTML="<tr><td>No Roles Found</td></tr>"
+document.getElementById("permTable").innerHTML="<tr><td>No Roles Found</td></tr>"
 return
 }
 
@@ -473,8 +477,8 @@ onConflict:"role_id,page_name,action_name"
 })
 
 if(error){
-console.error(error)
-alert("Error saving permissions")
+console.error("SAVE ERROR FULL:", error)
+alert(error.message)
 return
 }
 

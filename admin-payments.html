@@ -530,6 +530,21 @@ status
 })
 .eq("id", currentInvoice.id)
 
+/* 🔥 COMPANY LEDGER ENTRY (TRANSPORTER PAYMENT) */
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    entry_type: "TRANSPORTER_PAYMENT",
+    reference_id: currentInvoice.id,
+    reference_no: currentInvoice.invoice_no,
+    party_name: "Transporter",
+    description: "Transporter Payment - " + currentInvoice.invoice_no,
+    debit: 0,
+    credit: amount,   // 🔴 MONEY GOING OUT
+    payment_method: paymentMethod.value,
+    payment_date: paymentDate.value
+}])
+
 /************** WHATSAPP PAYMENT FLOW **************/
 
 try{

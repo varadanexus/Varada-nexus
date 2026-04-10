@@ -550,6 +550,15 @@ if(selectedTrips.length === 0){
 alert("Processing invoice...")
 
 let client = document.getElementById("clientSelect").value
+
+const { data:clientData } = await supabaseClient
+.from("clients")
+.select("gst_no")
+.eq("company", client)
+.single()
+
+let clientGST = clientData?.gst_no || ""
+  
 let gstType = document.getElementById("gstType").value
 let gstOn = document.getElementById("gstOn").value
 let gstPercent = Number(document.getElementById("gstPercent").value || 18)
@@ -577,6 +586,7 @@ const { data:inv, error:invError } = await supabaseClient
 .insert([{
     invoice_no: invoiceNo,
     client_name: client,
+    gst_no: clientGST,
     total_contract_val: totalContract,
     total_freight: totalFreight,
     total_margin: totalMargin,
@@ -813,11 +823,6 @@ doc.text("Invoice No: " + inv.invoice_no,140,40)
 doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
 
 
-/* 🔥 ADD HERE */
-doc.text("Place of Supply: Andhra Pradesh",140,55)
-doc.text("State Code: 37",140,62)
-doc.text("Invoice Type: B2C",140,69)
-
 /* 🔷 CLIENT BLOCK */
 doc.setFont("helvetica","bold")
 doc.text("Client Details",15,55)
@@ -830,14 +835,20 @@ const { data:client } = await supabaseClient
 .eq("company", inv.client_name)
 .single()
 
+let invoiceType = client?.gst_no ? "B2B" : "B2C"
+
 doc.text("Name: " + inv.client_name,15,63)
 
 doc.text("Address: " + (client?.address || "N/A"),15,70)
 
-doc.text("GSTIN: " + (client?.gst_no || "N/A"),15,77)
+doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,77)
 
 doc.line(15,85,195,85)
 
+doc.text("Place of Supply: Andhra Pradesh",140,55)
+doc.text("State Code: 37",140,62)
+doc.text("Invoice Type: " + invoiceType,140,69)
+  
 /* 🔷 TABLE */
 doc.autoTable({
 startY:95,

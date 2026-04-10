@@ -611,6 +611,19 @@ await supabaseClient
     remarks: "GST Invoice Generated"
 }])
 
+// 🔥 GET LAST BALANCE
+const { data:lastEntry } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+.single()
+
+let lastBalance = lastEntry?.balance || 0
+
+// 🔥 CALCULATE NEW BALANCE (INVOICE = YOU WILL RECEIVE MONEY)
+let newBalance = lastBalance + invoiceAmount
+  
 await supabaseClient
 .from("company_ledger")
 .insert([{
@@ -1184,6 +1197,19 @@ await supabaseClient
 .update({ balance_amount: newBalance })
 .eq("id", invoiceId)
 
+// 🔥 GET LAST BALANCE
+const { data:lastEntry } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+.single()
+
+let lastBalance = lastEntry?.balance || 0
+
+// 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
+let newBalance = lastBalance + amount
+  
 /* 🔥 COMPANY LEDGER ENTRY */
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
@@ -1193,7 +1219,7 @@ const { error:ledgerError } = await supabaseClient
     party: inv.client_name,
     debit: amount,
     credit: 0,
-    balance: 0,
+    balance: newBalance,
     remarks: "GST Payment Received"
 }])
 
@@ -1211,7 +1237,7 @@ type: "Payment",
 reference_no: inv.invoice_no,
 debit: 0,
 credit: amount,
-balance: 0,
+balance: newBalance,
 remarks: "GST Payment Received"
 }])
 

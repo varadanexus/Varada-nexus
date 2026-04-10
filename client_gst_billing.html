@@ -846,11 +846,16 @@ doc.setFont("helvetica","normal")
 
 let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
 
-Freight charges included above represent amounts incurred and paid to independent third-party transporters on a back-to-back basis, without any markup.
+Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
 
-Accordingly, only the net consideration retained constitutes the value of taxable supply under GST.`
+Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
 
-doc.text(legalText,15,legalY+6,{maxWidth:180})
+All supporting documents for such expenses are available and can be provided upon request.`
+
+doc.text(legalText,15,legalY+6,{
+maxWidth:180,
+lineHeightFactor:1.4
+})
 
 /* 🔷 SIGNATURE */
 let signY = 255   // move slightly up to make space

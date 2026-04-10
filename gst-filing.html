@@ -27,12 +27,22 @@ border-radius:12px;
 margin-bottom:16px;
 }
 
-select{
+input{
 padding:8px;
 border-radius:8px;
 background:#0f172a;
 color:white;
 border:1px solid rgba(255,255,255,0.1);
+}
+
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin:5px;
 }
 
 table{
@@ -56,50 +66,50 @@ text-align:left;
 
 <div class="main">
 
-<h2>GST Filing (CA View)</h2>
+<h2>GST Filing (CA Ready)</h2>
 
 <div class="card">
 
-<label>Select Month:</label>
 <input type="month" id="monthFilter">
 
-<button onclick="loadGSTFiling()">Load</button>
+<button onclick="loadGST()">Load</button>
+<button onclick="exportExcel()">Export Excel</button>
+<button onclick="exportJSON()">Export JSON</button>
 
 </div>
 
 <div class="card">
-
+<h3>GST Data</h3>
 <table>
 <thead>
 <tr>
-<th>Invoice No</th>
+<th>Invoice</th>
 <th>Client</th>
-<th>Taxable Value</th>
+<th>GSTIN</th>
+<th>Type</th>
+<th>Taxable</th>
 <th>CGST</th>
 <th>SGST</th>
 <th>Total GST</th>
-<th>Invoice Value</th>
+<th>Invoice</th>
 </tr>
 </thead>
-
 <tbody id="gstTable"></tbody>
-
 </table>
-
 </div>
 
 <div class="card">
-
 <h3>Summary</h3>
-<div id="gstSummary"></div>
-
+<div id="summary"></div>
 </div>
 
 </div>
 
 <script>
 
-async function loadGSTFiling(){
+let globalData = []
+
+async function loadGST(){
 
 let month = document.getElementById("monthFilter").value
 
@@ -112,48 +122,64 @@ let start = new Date(month + "-01")
 let end = new Date(start)
 end.setMonth(end.getMonth()+1)
 
-const { data, error } = await supabaseClient
+/* 🔥 FETCH INVOICES */
+const { data:invoices } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .gte("created_at", start.toISOString())
 .lt("created_at", end.toISOString())
 
-if(error){
-alert(error.message)
-return
-}
-
-renderGST(data)
-}
-
-function renderGST(data){
+/* 🔥 FETCH CLIENTS */
+const { data:clients } = await supabaseClient
+.from("clients")
+.select("company,gst_no")
 
 let rows = ""
 
-let totalTaxable = 0
-let totalCGST = 0
-let totalSGST = 0
-let totalGST = 0
-let totalInvoice = 0
+let totalTaxable=0,totalGST=0,totalInvoice=0
+let b2b=0,b2c=0
 
-data.forEach(inv=>{
+globalData = []
+
+for(let inv of (invoices || [])){
+
+let client = clients.find(c=>c.company===inv.client_name)
+
+let gstin = client?.gst_no || ""
+let type = gstin ? "B2B" : "B2C"
 
 let taxable = Number(inv.total_margin || 0)
 let gst = Number(inv.gst_total || 0)
 
-let cgst = gst / 2
-let sgst = gst / 2
+let cgst = gst/2
+let sgst = gst/2
 
 totalTaxable += taxable
-totalCGST += cgst
-totalSGST += sgst
 totalGST += gst
 totalInvoice += Number(inv.invoice_amount || 0)
+
+if(type==="B2B") b2b+=taxable
+else b2c+=taxable
+
+/* STORE FOR EXPORT */
+globalData.push({
+invoice: inv.invoice_no,
+client: inv.client_name,
+gstin,
+type,
+taxable,
+cgst,
+sgst,
+gst,
+invoice_value: inv.invoice_amount
+})
 
 rows += `
 <tr>
 <td>${inv.invoice_no}</td>
 <td>${inv.client_name}</td>
+<td>${gstin || "-"}</td>
+<td>${type}</td>
 <td>₹${taxable.toFixed(2)}</td>
 <td>₹${cgst.toFixed(2)}</td>
 <td>₹${sgst.toFixed(2)}</td>
@@ -161,17 +187,52 @@ rows += `
 <td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
 </tr>
 `
-})
+}
 
 document.getElementById("gstTable").innerHTML = rows
 
-document.getElementById("gstSummary").innerHTML = `
-Taxable Value: ₹${totalTaxable.toFixed(2)} <br>
-CGST: ₹${totalCGST.toFixed(2)} <br>
-SGST: ₹${totalSGST.toFixed(2)} <br>
+document.getElementById("summary").innerHTML = `
+Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
 Total GST: ₹${totalGST.toFixed(2)} <br>
-Total Invoice: ₹${totalInvoice.toFixed(2)}
+Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
+
+B2B Sales: ₹${b2b.toFixed(2)} <br>
+B2C Sales: ₹${b2c.toFixed(2)}
 `
+}
+
+/* 🔥 EXPORT EXCEL */
+function exportExcel(){
+
+let csv = "Invoice,Client,GSTIN,Type,Taxable,CGST,SGST,Total GST,Invoice Value\n"
+
+globalData.forEach(r=>{
+csv += `${r.invoice},${r.client},${r.gstin},${r.type},${r.taxable},${r.cgst},${r.sgst},${r.gst},${r.invoice_value}\n`
+})
+
+let blob = new Blob([csv], {type:"text/csv"})
+let url = URL.createObjectURL(blob)
+
+let a = document.createElement("a")
+a.href = url
+a.download = "GST_Report.csv"
+a.click()
+}
+
+/* 🔥 EXPORT JSON (GSTR-1 STYLE) */
+function exportJSON(){
+
+let json = {
+gst_data: globalData
+}
+
+let blob = new Blob([JSON.stringify(json,null,2)], {type:"application/json"})
+let url = URL.createObjectURL(blob)
+
+let a = document.createElement("a")
+a.href = url
+a.download = "GST_Report.json"
+a.click()
 }
 
 </script>

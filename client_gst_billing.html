@@ -719,12 +719,17 @@ Number(t.gst || 0).toFixed(2)
 /* 4️⃣ PDF START */
 let doc = new jsPDF()
 
+/* 🔷 WATERMARK */
+doc.setGState(new doc.GState({opacity:0.05}))
+try{
+doc.addImage("images/logo.png","PNG",40,80,120,120)
+}catch(e){}
+doc.setGState(new doc.GState({opacity:1}))
+
 /* 🔷 LOGO */
 try{
 doc.addImage("images/logo.png","PNG",15,10,20,20)
-}catch(e){
-console.warn("Logo not loaded")
-}
+}catch(e){}
 
 /* 🔷 HEADER */
 doc.setFont("helvetica","bold")
@@ -734,43 +739,104 @@ doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
 doc.setFont("helvetica","normal")
 doc.setFontSize(10)
 doc.text("GST Invoice",40,25)
+doc.text("GST: 37AAKCV7495B1ZV",40,31)
+
+/* 🔷 VERIFIED TAG */
+doc.setTextColor(0,120,0)
+doc.text("✔ Digitally Verified",150,18)
+doc.setTextColor(0,0,0)
 
 /* 🔷 INVOICE INFO */
 doc.setFontSize(10)
 doc.text("Invoice No: " + inv.invoice_no,140,40)
 doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
 
-/* 🔷 CLIENT */
-doc.text("Client: " + inv.client_name,15,55)
+/* 🔷 CLIENT BLOCK */
+doc.setFont("helvetica","bold")
+doc.text("Client Details",15,55)
+
+doc.setFont("helvetica","normal")
+doc.text("Name: " + inv.client_name,15,63)
+
+doc.line(15,68,195,68)
 
 /* 🔷 TABLE */
 doc.autoTable({
-startY:70,
+startY:75,
 head:[["Trip","Contract","Freight","Margin","GST"]],
 body:rows,
 theme:"grid",
-headStyles:{ fillColor:[22,160,133], textColor:255 },
+headStyles:{ fillColor:[0,102,204], textColor:255 },
 styles:{ fontSize:9 }
 })
 
-/* 🔷 SUMMARY */
+/* 🔷 SUMMARY BOX */
 let cgst = inv.gst_total / 2
 let sgst = inv.gst_total / 2
 
 let y = doc.lastAutoTable.finalY + 10
 
-doc.text("Net Billing: ₹" + inv.net_billing.toFixed(2),15,y)
-doc.text("CGST: ₹" + cgst.toFixed(2),15,y+7)
-doc.text("SGST: ₹" + sgst.toFixed(2),15,y+14)
+doc.autoTable({
+startY:y,
+margin:{left:110},
+tableWidth:85,
+head:[["Summary",""]],
+body:[
+["Net Billing", inv.net_billing.toFixed(2)],
+["CGST", cgst.toFixed(2)],
+["SGST", sgst.toFixed(2)],
+["Total Invoice", inv.invoice_amount.toFixed(2)]
+],
+theme:"grid",
+headStyles:{ fillColor:[0,102,204], textColor:255 }
+})
 
+/* 🔷 BANK BOX */
+let bankY = y + 5
+
+doc.rect(15,bankY,90,40)
+
+doc.setFontSize(10)
+doc.text("Bank Details",20,bankY+7)
+
+doc.setFontSize(9)
+doc.text("Bank: Axis Bank",20,bankY+14)
+doc.text("A/C No: 924020062188598",20,bankY+20)
+doc.text("IFSC: UTIB0000107",20,bankY+26)
+doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+
+/* 🔷 LEGAL DECLARATION (EXACT TEXT) */
+let legalY = bankY + 50
+
+doc.setFontSize(8)
 doc.setFont("helvetica","bold")
-doc.text("Total Invoice: ₹" + inv.invoice_amount.toFixed(2),15,y+25)
+doc.text("Legal Declaration:",15,legalY)
+
+doc.setFont("helvetica","normal")
+
+let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
+
+Freight charges included above represent amounts incurred and paid to independent third-party transporters on a back-to-back basis, without any markup.
+
+Accordingly, only the net consideration retained constitutes the value of taxable supply under GST.`
+
+doc.text(legalText,15,legalY+6,{maxWidth:180})
+
+/* 🔷 SIGNATURE */
+let signY = 270
+
+doc.line(130, signY, 195, signY)
+doc.text("Authorized Signatory", 162, signY - 3, { align: "center" })
+
+/* 🔷 FOOTER */
+doc.setFontSize(9)
+doc.text("This is a system generated GST invoice.",15,285)
+doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
 /* 🔷 SAVE */
 doc.save(inv.invoice_no + ".pdf")
 
 }
-
 async function loadGSTInvoices(){
 
 const { data, error } = await supabaseClient

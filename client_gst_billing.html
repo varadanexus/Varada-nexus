@@ -235,6 +235,28 @@ Download GST Invoice PDF
 </button>
 
 <button onclick="loadGSTReport()">GST Report</button>
+
+<hr>
+
+<h3>Receive Payment</h3>
+
+<select id="gstInvoiceSelect"></select>
+
+<input id="gstPaidAmount" placeholder="Amount">
+
+<input type="date" id="gstPaymentDate">
+
+<select id="gstPaymentMethod">
+<option value="">Select Method</option>
+<option>Bank Transfer</option>
+<option>UPI</option>
+<option>Cash</option>
+</select>
+
+<input id="gstTxnId" placeholder="Transaction ID / UTR">
+
+<button onclick="saveGSTPayment()">Receive Payment</button>
+  
 </div>
 
 <div class="card">
@@ -952,15 +974,29 @@ rows += `
 <td>
 <button onclick="generatePDF('${inv.id}')">PDF</button>
 <button onclick="deleteGSTInvoice('${inv.id}')">Delete</button>
-<button onclick="promptGSTPayment('${inv.id}')">Pay</button>
+<button disabled>Use Payment Section</button>
 </td>
 </tr>
 `
 }
 
 document.getElementById("gstInvoiceTable").innerHTML = rows
+
+/* 🔥 POPULATE GST PAYMENT DROPDOWN */
+let dropdown = '<option value="">Select Invoice</option>'
+
+data?.forEach(inv=>{
+dropdown += `<option value="${inv.id}">
+${inv.invoice_no} | ₹${Number(inv.balance_amount).toFixed(2)}
+</option>`
+})
+
+document.getElementById("gstInvoiceSelect").innerHTML = dropdown
+  
 }
 
+
+  
 async function deleteGSTInvoice(id){
 
 if(!confirm("Delete this invoice?")) return
@@ -1030,6 +1066,21 @@ balance_amount: newBalance
 })
 .eq("id", invoiceId)
 
+/* 🔥 COMPANY LEDGER ENTRY (GST PAYMENT RECEIVED) */
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    entry_type: "GST_PAYMENT",
+    reference_id: invoiceId,
+    reference_no: inv.invoice_no,
+    party_name: inv.client_name,
+    description: "GST Payment Received - " + inv.invoice_no,
+    debit: amount,   // 🟢 MONEY COMING IN
+    credit: 0,
+    payment_method: "Client Payment",
+    payment_date: new Date().toISOString()
+}])
+  
 /* ledger entry */
 await supabaseClient
 .from("client_ledger")
@@ -1043,17 +1094,6 @@ balance: 0, // temporary (ledger calc later)
 remarks: "GST Payment Received"
 }])
 
-await supabaseClient
-.from("company_ledger")
-.insert([{
-    type: "Client Payment",
-    reference_no: inv.invoice_no,
-    party: inv.client_name,
-    debit: amount,   // ✅ money coming IN
-    credit: 0,
-    balance: 0,
-    remarks: "GST Payment Received"
-}])
   
 alert("Payment added")
 
@@ -1072,6 +1112,85 @@ return
 addGSTPayment(id, amt)
 }
 
+async function saveGSTPayment(){
+
+let invoiceId = document.getElementById("gstInvoiceSelect").value
+let amount = Number(document.getElementById("gstPaidAmount").value || 0)
+let method = document.getElementById("gstPaymentMethod").value
+let txnId = document.getElementById("gstTxnId").value
+let date = document.getElementById("gstPaymentDate").value
+
+if(!invoiceId || !amount || !method){
+alert("Fill all details")
+return
+}
+
+/* 🔥 GET INVOICE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", invoiceId)
+.single()
+
+if(!inv){
+alert("Invoice not found")
+return
+}
+
+if(amount > inv.balance_amount){
+alert("Amount exceeds balance")
+return
+}
+
+/* 🔥 UPDATE BALANCE */
+let newBalance = inv.balance_amount - amount
+if(newBalance < 0) newBalance = 0
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({ balance_amount: newBalance })
+.eq("id", invoiceId)
+
+/* 🔥 COMPANY LEDGER ENTRY */
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    entry_type: "GST_PAYMENT",
+    reference_id: invoiceId,
+    reference_no: inv.invoice_no,
+    party_name: inv.client_name,
+    description: "GST Payment - " + method + " - " + (txnId || "No Ref"),
+    debit: amount,
+    credit: 0,
+    payment_method: method,
+    payment_date: date,
+    transaction_id: txnId
+}])
+
+/* 🔥 CLIENT LEDGER */
+await supabaseClient
+.from("client_ledger")
+.insert([{
+client_name: inv.client_name,
+type: "Payment",
+reference_no: inv.invoice_no,
+debit: 0,
+credit: amount,
+balance: 0,
+remarks: "GST Payment Received"
+}])
+
+alert("Payment Recorded ✅")
+
+/* RESET */
+gstPaidAmount.value=""
+gstPaymentMethod.value=""
+gstTxnId.value=""
+gstPaymentDate.value=""
+
+loadGSTInvoices()
+}
+  
 window.addEventListener("load", () => {
     init()
 })

@@ -1022,6 +1022,31 @@ await supabaseClient
 .delete()
 .eq("invoice_id", id)
 
+/* 🔥 GET INVOICE DETAILS FOR LEDGER DELETE */
+const { data:invData } = await supabaseClient
+.from("client_invoices_gst")
+.select("invoice_no, client_name")
+.eq("id", id)
+.single()
+
+if(invData){
+
+/* 🔥 DELETE COMPANY LEDGER */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", invData.invoice_no)
+.eq("party", invData.client_name)
+
+/* 🔥 DELETE CLIENT LEDGER */
+await supabaseClient
+.from("client_ledger")
+.delete()
+.eq("reference_no", invData.invoice_no)
+.eq("client_name", invData.client_name)
+
+}
+  
 /* delete invoice */
 await supabaseClient
 .from("client_invoices_gst")

@@ -1121,7 +1121,7 @@ const { data:lastEntry } = await supabaseClient
 
 let lastBalance = lastEntry?.balance || 0
 
-let newBalance = lastBalance + amount
+let newBalance = lastBalance - amount
 
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
@@ -1129,8 +1129,8 @@ const { error:ledgerError } = await supabaseClient
     type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    debit: amount,
-    credit: 0,
+    debit: 0,
+    credit: amount,
     balance: newBalance,
     payment_method: "Manual",
     transaction_id: "N/A",
@@ -1224,7 +1224,7 @@ const { data:lastEntry } = await supabaseClient
 let lastBalance = lastEntry?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
-let newBalance = lastBalance + amount
+let newBalance = lastBalance - amount
   
 /* 🔥 COMPANY LEDGER ENTRY */
 const { error:ledgerError } = await supabaseClient
@@ -1233,12 +1233,12 @@ const { error:ledgerError } = await supabaseClient
     type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    debit: amount,
-    credit: 0,
+    debit: 0,
+    credit: amount,
     balance: newBalance,
-    payment_method: method,        // ✅ ADD
-    transaction_id: txnId,         // ✅ ADD
-    payment_date: date || new Date().toISOString(), // ✅ ADD
+    payment_method: method || "N/A",
+    transaction_id: txnId || "N/A",        
+    payment_date: date ? new Date(date).toISOString() : new Date().toISOString()
     remarks: "GST Payment Received"
 }])
 
@@ -1263,10 +1263,10 @@ remarks: "GST Payment Received"
 alert("Payment Recorded ✅")
 
 /* RESET */
-gstPaidAmount.value=""
-gstPaymentMethod.value=""
-gstTxnId.value=""
-gstPaymentDate.value=""
+document.getElementById("gstPaidAmount").value=""
+document.getElementById("gstPaymentMethod").value=""
+document.getElementById("gstTxnId").value=""
+document.getElementById("gstPaymentDate").value=""
 
 loadGSTInvoices()
 document.getElementById("gstInvoiceSelect").value = ""

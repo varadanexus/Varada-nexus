@@ -156,8 +156,8 @@ query = query.ilike("party", `%${party}%`)
 const { data, error } = await query
 
 if(error){
-alert("Error loading ledger")
-console.log(error)
+console.log("❌ FULL ERROR:", error)
+alert(error.message)
 return
 }
 

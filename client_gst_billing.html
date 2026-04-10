@@ -738,7 +738,6 @@ doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
 
 doc.setFont("helvetica","normal")
 doc.setFontSize(10)
-doc.text("GST Invoice",40,25)
 doc.text("GST: 37AAKCV7495B1ZV",40,31)
 doc.text("Address: 80-17-28, K B Nagar, A V A Road,",40,37)
 doc.text("Rajahmundry, Andhra Pradesh - 533101",40,43)
@@ -749,16 +748,16 @@ doc.setTextColor(0,120,0)
 doc.text("✔ Digitally Verified",150,18)
 doc.setTextColor(0,0,0)
 
+/* 🔥 BIG GST INVOICE TITLE (RIGHT SIDE) */
+doc.setFont("helvetica","bold")
+doc.setFontSize(16)
+doc.text("GST INVOICE",170,28,{ align: "right" })
+
 /* 🔷 INVOICE INFO */
 doc.setFontSize(10)
 doc.text("Invoice No: " + inv.invoice_no,140,40)
 doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
 
-/* 🔷 INVOICE INFO */
-doc.setFontSize(10)
-
-doc.text("Invoice No: " + inv.invoice_no,140,40)
-doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
 
 /* 🔥 ADD HERE */
 doc.text("Place of Supply: Andhra Pradesh",140,55)

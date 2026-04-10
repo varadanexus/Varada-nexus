@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>GST Filing - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="session-check.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:240px;
+padding:24px;
+}
+
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+margin-bottom:16px;
+}
+
+select{
+padding:8px;
+border-radius:8px;
+background:#0f172a;
+color:white;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+<h2>GST Filing (CA View)</h2>
+
+<div class="card">
+
+<label>Select Month:</label>
+<input type="month" id="monthFilter">
+
+<button onclick="loadGSTFiling()">Load</button>
+
+</div>
+
+<div class="card">
+
+<table>
+<thead>
+<tr>
+<th>Invoice No</th>
+<th>Client</th>
+<th>Taxable Value</th>
+<th>CGST</th>
+<th>SGST</th>
+<th>Total GST</th>
+<th>Invoice Value</th>
+</tr>
+</thead>
+
+<tbody id="gstTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h3>Summary</h3>
+<div id="gstSummary"></div>
+
+</div>
+
+</div>
+
+<script>
+
+async function loadGSTFiling(){
+
+let month = document.getElementById("monthFilter").value
+
+if(!month){
+alert("Select month")
+return
+}
+
+let start = new Date(month + "-01")
+let end = new Date(start)
+end.setMonth(end.getMonth()+1)
+
+const { data, error } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.gte("created_at", start.toISOString())
+.lt("created_at", end.toISOString())
+
+if(error){
+alert(error.message)
+return
+}
+
+renderGST(data)
+}
+
+function renderGST(data){
+
+let rows = ""
+
+let totalTaxable = 0
+let totalCGST = 0
+let totalSGST = 0
+let totalGST = 0
+let totalInvoice = 0
+
+data.forEach(inv=>{
+
+let taxable = Number(inv.total_margin || 0)
+let gst = Number(inv.gst_total || 0)
+
+let cgst = gst / 2
+let sgst = gst / 2
+
+totalTaxable += taxable
+totalCGST += cgst
+totalSGST += sgst
+totalGST += gst
+totalInvoice += Number(inv.invoice_amount || 0)
+
+rows += `
+<tr>
+<td>${inv.invoice_no}</td>
+<td>${inv.client_name}</td>
+<td>₹${taxable.toFixed(2)}</td>
+<td>₹${cgst.toFixed(2)}</td>
+<td>₹${sgst.toFixed(2)}</td>
+<td>₹${gst.toFixed(2)}</td>
+<td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
+</tr>
+`
+})
+
+document.getElementById("gstTable").innerHTML = rows
+
+document.getElementById("gstSummary").innerHTML = `
+Taxable Value: ₹${totalTaxable.toFixed(2)} <br>
+CGST: ₹${totalCGST.toFixed(2)} <br>
+SGST: ₹${totalSGST.toFixed(2)} <br>
+Total GST: ₹${totalGST.toFixed(2)} <br>
+Total Invoice: ₹${totalInvoice.toFixed(2)}
+`
+}
+
+</script>
+
+</body>
+</html>

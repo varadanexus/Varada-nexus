@@ -99,6 +99,26 @@ setTimeout(async()=>{
     /* SHOW */
     if(sidebar) sidebar.style.display="block"
 
+    /* 🔐 PAGE PERMISSION (SAFE) */
+const canView = await checkPermission("gst-filing.html","view")
+
+if(!canView){
+    alert("Access Denied")
+    window.location.href = "dashboard.html"
+    return
+}
+
+/* 🔐 EXPORT PERMISSION */
+const canExport = await checkPermission("gst-filing.html","create")
+
+if(!canExport){
+    document.querySelectorAll("button").forEach(b=>{
+        if(b.innerText.includes("Export")){
+            b.style.display="none"
+        }
+    })
+}
+    
 },200)
 
 })
@@ -209,12 +229,6 @@ window.location.href="login.html"
 
 <script>
 
-const allowed = await checkPermission("gst-filing.html","view")
-
-if(!allowed){
-    alert("Access Denied")
-    window.location.href = "dashboard.html"
-}
     
 let globalData = []
 
@@ -336,6 +350,8 @@ ${gstin || "-"}
 `
 }
 
+document.getElementById("gstTable").innerHTML = rows 
+    
 document.getElementById("summary").innerHTML = `
 <b>Totals</b><br>
 Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
@@ -396,19 +412,15 @@ rchrg: "N",
 inv_typ: "R",
 itms: [{
 num: 1,
+itms: [{
+num: 1,
 itm_det: {
 txval: r.taxable,
 rt: 18,
 camt: r.cgst,
 samt: r.sgst,
 csamt: 0,
-...(r.hsn !== "NA" ? { hsn_sc: r.hsn } : {})   // ✅ ONLY IF AVAILABLE
-}
-txval: r.taxable,
-rt: 18,
-camt: r.cgst,
-samt: r.sgst,
-csamt: 0
+...(r.hsn !== "NA" ? { hsn_sc: r.hsn } : {})
 }
 }]
 })
@@ -451,15 +463,7 @@ a.download = "GSTR1_Final.json"
 a.click()
 }
 
-const canExport = await checkPermission("gst-filing.html","create")
 
-if(!canExport){
-    document.querySelectorAll("button").forEach(b=>{
-        if(b.innerText.includes("Export")){
-            b.style.display="none"
-        }
-    })
-}
     
 </script>
 

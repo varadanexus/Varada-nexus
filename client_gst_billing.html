@@ -1132,6 +1132,9 @@ const { error:ledgerError } = await supabaseClient
     debit: amount,
     credit: 0,
     balance: newBalance,
+    payment_method: "Manual",
+    transaction_id: "N/A",
+    payment_date: new Date().toISOString(),
     remarks: "GST Payment Received"
 }])
 
@@ -1233,6 +1236,9 @@ const { error:ledgerError } = await supabaseClient
     debit: amount,
     credit: 0,
     balance: newBalance,
+    payment_method: method,        // ✅ ADD
+    transaction_id: txnId,         // ✅ ADD
+    payment_date: date || new Date().toISOString(), // ✅ ADD
     remarks: "GST Payment Received"
 }])
 

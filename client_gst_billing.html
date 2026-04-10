@@ -1238,7 +1238,7 @@ const { error:ledgerError } = await supabaseClient
     balance: newBalance,
     payment_method: method || "N/A",
     transaction_id: txnId || "N/A",        
-    payment_date: date ? new Date(date).toISOString() : new Date().toISOString()
+    payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
     remarks: "GST Payment Received"
 }])
 

@@ -709,9 +709,9 @@ let rows = []
 bd.forEach(t=>{
 rows.push([
 t.trip_no,
-Number(t.contract_value || 0).toFixed(2)
-Number(t.freight_cost || 0).toFixed(2)
-Number(t.margin || 0).toFixed(2)
+Number(t.contract_value || 0).toFixed(2),
+Number(t.freight_cost || 0).toFixed(2),
+Number(t.margin || 0).toFixed(2),
 Number(t.gst || 0).toFixed(2)
 ])
 })

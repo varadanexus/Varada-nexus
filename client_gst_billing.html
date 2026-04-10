@@ -7,7 +7,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
-  
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 
@@ -226,7 +230,9 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 <br>
 <button onclick="saveGSTInvoice()">Save GST Invoice</button>
   
-<button onclick="generatePDF()">Download GST Invoice PDF</button>
+<button onclick="alert('Use table PDF after saving invoice')">
+Download GST Invoice PDF
+</button>
 
 <button onclick="loadGSTReport()">GST Report</button>
 </div>
@@ -675,34 +681,94 @@ loadGSTInvoices()
 }
 
 
-function generatePDF(){
+async function generatePDF(invoiceId){
 
-let cgst = totalGST / 2
-let sgst = totalGST / 2
+const { jsPDF } = window.jspdf
 
-let content = `
-<h2>VARADA NEXUS PRIVATE LIMITED</h2>
+/* 1️⃣ GET INVOICE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", invoiceId)
+.single()
 
-<p><b>Client:</b> ${document.getElementById("clientSelect").value}</p>
-
-<p><b>Total Contract:</b> ₹${totalContract.toFixed(2)}</p>
-<p><b>Expenses:</b> ₹${totalExpenseAll.toFixed(2)}</p>
-<p><b>Net Billing:</b> ₹${(totalContract - totalExpenseAll).toFixed(2)}</p>
-<p><b>GST Type:</b> ${document.getElementById("gstType").value}</p>
-<p><b>GST On:</b> ${document.getElementById("gstOn").value}</p>
-${document.getElementById("gstType").value === "excluded" 
-? `<p><b>CGST:</b> ₹${cgst.toFixed(2)}</p>
-   <p><b>SGST:</b> ₹${sgst.toFixed(2)}</p>`
-: `<p><b>Included GST:</b> CGST ₹${cgst.toFixed(2)} | SGST ₹${sgst.toFixed(2)}</p>`
+if(!inv){
+alert("Invoice not found")
+return
 }
 
-<h3>Total Invoice: ₹${totalInvoice.toFixed(2)}</h3>
-`
+/* 2️⃣ GET TRIPS */
+const { data:bd } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("*")
+.eq("invoice_id", invoiceId)
 
-let win = window.open("", "", "width=800,height=600")
-win.document.write(content)
-win.document.close()
-win.print()
+/* 3️⃣ BUILD TABLE */
+let rows = []
+
+bd.forEach(t=>{
+rows.push([
+t.trip_no,
+Number(t.contract_value || 0).toFixed(2)
+Number(t.freight_cost || 0).toFixed(2)
+Number(t.margin || 0).toFixed(2)
+Number(t.gst || 0).toFixed(2)
+])
+})
+
+/* 4️⃣ PDF START */
+let doc = new jsPDF()
+
+/* 🔷 LOGO */
+try{
+doc.addImage("images/logo.png","PNG",15,10,20,20)
+}catch(e){
+console.warn("Logo not loaded")
+}
+
+/* 🔷 HEADER */
+doc.setFont("helvetica","bold")
+doc.setFontSize(14)
+doc.text("VARADA NEXUS PRIVATE LIMITED",40,18)
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(10)
+doc.text("GST Invoice",40,25)
+
+/* 🔷 INVOICE INFO */
+doc.setFontSize(10)
+doc.text("Invoice No: " + inv.invoice_no,140,40)
+doc.text("Date: " + new Date(inv.created_at).toLocaleDateString("en-IN"),140,47)
+
+/* 🔷 CLIENT */
+doc.text("Client: " + inv.client_name,15,55)
+
+/* 🔷 TABLE */
+doc.autoTable({
+startY:70,
+head:[["Trip","Contract","Freight","Margin","GST"]],
+body:rows,
+theme:"grid",
+headStyles:{ fillColor:[22,160,133], textColor:255 },
+styles:{ fontSize:9 }
+})
+
+/* 🔷 SUMMARY */
+let cgst = inv.gst_total / 2
+let sgst = inv.gst_total / 2
+
+let y = doc.lastAutoTable.finalY + 10
+
+doc.text("Net Billing: ₹" + inv.net_billing.toFixed(2),15,y)
+doc.text("CGST: ₹" + cgst.toFixed(2),15,y+7)
+doc.text("SGST: ₹" + sgst.toFixed(2),15,y+14)
+
+doc.setFont("helvetica","bold")
+doc.text("Total Invoice: ₹" + inv.invoice_amount.toFixed(2),15,y+25)
+
+/* 🔷 SAVE */
+doc.save(inv.invoice_no + ".pdf")
+
 }
 
 async function loadGSTInvoices(){
@@ -738,7 +804,7 @@ rows += `
 
 
 <td>
-<button onclick="downloadGSTInvoice('${inv.id}')">PDF</button>
+<button onclick="generatePDF('${inv.id}')">PDF</button>
 <button onclick="deleteGSTInvoice('${inv.id}')">Delete</button>
 <button onclick="promptGSTPayment('${inv.id}')">Pay</button>
 </td>
@@ -747,63 +813,6 @@ rows += `
 }
 
 document.getElementById("gstInvoiceTable").innerHTML = rows
-}
-
-async function downloadGSTInvoice(id){
-
-const { data:inv } = await supabaseClient
-.from("client_invoices_gst")
-.select("*")
-.eq("id", id)
-.single()
-
-if(!inv){
-alert("Invoice not found")
-return
-}
-
-const { data:trips } = await supabaseClient
-.from("invoice_trip_breakdown_gst")
-.select("*")
-.eq("invoice_id", id)
-
-let tripHTML = (trips || []).map(t=>`
-<tr>
-<td>${t.trip_no}</td>
-<td>${t.contract_value.toFixed(2)}</td>
-<td>${t.freight_cost.toFixed(2)}</td>
-<td>${t.margin.toFixed(2)}</td>
-<td>${t.gst.toFixed(2)}</td>
-</tr>
-`).join("")
-
-let cgst = inv.gst_total / 2
-let sgst = inv.gst_total / 2
-
-let html = `
-<h2>VARADA NEXUS PRIVATE LIMITED</h2>
-
-<p><b>Invoice No:</b> ${inv.invoice_no}</p>
-<p><b>Client:</b> ${inv.client_name}</p>
-
-<table border="1" cellspacing="0" cellpadding="6">
-<tr>
-<th>Trip</th><th>Contract</th><th>Freight</th><th>Margin</th><th>GST</th>
-</tr>
-${tripHTML}
-</table>
-
-<p><b>Net Billing:</b> ₹${inv.net_billing}</p>
-<p><b>CGST:</b> ₹${cgst}</p>
-<p><b>SGST:</b> ₹${sgst}</p>
-
-<h3>Total: ₹${inv.invoice_amount}</h3>
-`
-
-let win = window.open("", "", "width=900,height=700")
-win.document.write(html)
-win.document.close()
-win.print()
 }
 
 async function deleteGSTInvoice(id){

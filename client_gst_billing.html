@@ -632,6 +632,7 @@ await supabaseClient
     party: client,
     debit: invoiceAmount,
     credit: 0,
+    balance: newBalance,   // ✅ FIXED
     remarks: "GST Invoice Generated"
 }])
 
@@ -1189,12 +1190,12 @@ return
 }
 
 /* 🔥 UPDATE BALANCE */
-let newBalance = inv.balance_amount - amount
+let newInvoiceBalance = inv.balance_amount - amount
 if(newBalance < 0) newBalance = 0
 
 await supabaseClient
 .from("client_invoices_gst")
-.update({ balance_amount: newBalance })
+.update({ balance_amount: newInvoiceBalance })
 .eq("id", invoiceId)
 
 // 🔥 GET LAST BALANCE
@@ -1237,7 +1238,7 @@ type: "Payment",
 reference_no: inv.invoice_no,
 debit: 0,
 credit: amount,
-balance: newBalance,
+balance: 0,
 remarks: "GST Payment Received"
 }])
 

@@ -285,7 +285,7 @@ map[month].invoice += Number(r.debit || 0)
 }
 
 if(r.type === "GST Payment"){
-map[month].payment += Number(r.debit || 0)
+map[month].payment += Number(r.credit || 0)
 }
 
 })
@@ -294,11 +294,14 @@ let html = ""
 
 for(let m in map){
 
+let outstanding = map[m].invoice - map[m].payment
+  
 html += `
 <div style="margin-bottom:10px;">
 <b>${m}</b><br>
 GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
-Collections: ₹${map[m].payment.toFixed(2)}
+Collections: ₹${map[m].payment.toFixed(2)}<br>
+Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">${outstanding.toFixed(2)}</span>
 </div>
 `
 }

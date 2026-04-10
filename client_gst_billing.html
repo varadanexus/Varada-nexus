@@ -646,6 +646,7 @@ const { error:bdError } = await supabaseClient
     invoice_id: inv.id,
     trip_id: t.id,
     trip_no: t.trip_no,
+    truck_no: t.truck || "",   // ✅ ADD THIS
     contract_rate: t.company_rate,
     transporter_rate: t.transporter_rate,
     contract_value: contract,
@@ -709,6 +710,7 @@ let rows = []
 bd.forEach(t=>{
 rows.push([
 t.trip_no,
+t.truck_no || "-",   // ✅ NEW COLUMN
 Number(t.contract_value || 0).toFixed(2),
 Number(t.freight_cost || 0).toFixed(2),
 Number(t.margin || 0).toFixed(2),
@@ -787,7 +789,7 @@ doc.line(15,85,195,85)
 /* 🔷 TABLE */
 doc.autoTable({
 startY:95,
-head:[["Trip","Contract","Freight","Service Charges","GST"]],
+head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
 body:rows,
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 },

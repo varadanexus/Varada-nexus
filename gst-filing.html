@@ -137,6 +137,16 @@ if(invError){
 
 let invoiceList = invoices || []
 
+if(invoiceList.length === 0){
+    document.getElementById("gstTable").innerHTML =
+        "<tr><td colspan='9'>No data found for selected month</td></tr>"
+
+    document.getElementById("summary").innerHTML =
+        "No GST data available"
+
+    return
+}
+    
 /* 🔥 FETCH CLIENTS */
 const { data:clients, error:clientError } = await supabaseClient
 .from("clients")
@@ -152,6 +162,8 @@ let clientList = clients || []
 
 let rows = ""
 
+let seenInvoices = new Set()
+    
 let totalTaxable=0,totalGST=0,totalInvoice=0
 let b2b=0,b2c=0
 
@@ -159,9 +171,17 @@ globalData = []
 
 for(let inv of (invoiceList)){
 
+if(seenInvoices.has(inv.invoice_no)){
+    console.warn("Duplicate invoice:", inv.invoice_no)
+    continue
+}
+seenInvoices.add(inv.invoice_no)
+    
 let client = clientList.find(c => c.company === inv.client_name)
 
-let gstin = client?.gst_no || ""
+let gstin = (client?.gst_no || "").trim()
+
+let isValidGSTIN = /^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)
 let type = gstin ? "B2B" : "B2C"
 
 let taxable = Number(inv.total_margin || 0)
@@ -194,7 +214,9 @@ rows += `
 <tr>
 <td>${inv.invoice_no}</td>
 <td>${inv.client_name}</td>
-<td>${gstin || "-"}</td>
+<td style="color:${gstin ? (isValidGSTIN ? '#22c55e' : '#ef4444') : '#9ca3af'}">
+${gstin || "-"}
+</td>
 <td>${type}</td>
 <td>₹${taxable.toFixed(2)}</td>
 <td>₹${cgst.toFixed(2)}</td>
@@ -205,15 +227,18 @@ rows += `
 `
 }
 
-document.getElementById("gstTable").innerHTML = rows
-
 document.getElementById("summary").innerHTML = `
+<b>Totals</b><br>
 Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
 Total GST: ₹${totalGST.toFixed(2)} <br>
 Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
 
+<b>Classification</b><br>
 B2B Sales: ₹${b2b.toFixed(2)} <br>
-B2C Sales: ₹${b2c.toFixed(2)}
+B2C Sales: ₹${b2c.toFixed(2)} <br><br>
+
+<b>Compliance Check</b><br>
+Invoices Count: ${globalData.length}
 `
 }
 
@@ -263,6 +288,13 @@ inv_typ: "R",
 itms: [{
 num: 1,
 itm_det: {
+txval: r.taxable,
+rt: 18,
+camt: r.cgst,
+samt: r.sgst,
+csamt: 0,
+...(r.hsn !== "NA" ? { hsn_sc: r.hsn } : {})   // ✅ ONLY IF AVAILABLE
+}
 txval: r.taxable,
 rt: 18,
 camt: r.cgst,

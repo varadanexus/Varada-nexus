@@ -614,15 +614,12 @@ await supabaseClient
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "GST Payment",
-    reference_no: inv.invoice_no,
-    party: inv.client_name,
-    debit: amount,
+    type: "GST Invoice",
+    reference_no: invoiceNo,
+    party: client,
+    debit: invoiceAmount,
     credit: 0,
-    payment_method: method,
-    transaction_id: txnId,
-    payment_date: date,
-    remarks: "GST Payment Received"
+    remarks: "GST Invoice Generated"
 }])
 
 /* 🔥 2️⃣ SAVE TRIP BREAKDOWN */
@@ -1101,15 +1098,14 @@ balance_amount: newBalance
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST_PAYMENT",
-    reference_id: invoiceId,
+    type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    description: "GST Payment Received - " + inv.invoice_no,
-    debit: amount,   // 🟢 MONEY COMING IN
+    debit: amount,
     credit: 0,
-    payment_method: "Client Payment",
-    payment_date: new Date().toISOString()
+    payment_method: "Manual",
+    payment_date: new Date().toISOString(),
+    remarks: "GST Payment Received"
 }])
   
 /* ledger entry */

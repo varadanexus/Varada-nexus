@@ -477,7 +477,7 @@ Net Billing: ₹${netBillingTotal.toFixed(2)} <br>
 
 Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
 
-Your Margin: ₹${totalMargin.toFixed(2)} <br>
+Service Charges: ₹${totalMargin.toFixed(2)} <br>
 ${gstType === "excluded" 
   ? `GST (${(gstRate*100).toFixed(0)}%): ₹${totalGST.toFixed(2)}`
   : `GST Included: ₹${totalGST.toFixed(2)}`
@@ -787,7 +787,7 @@ doc.line(15,85,195,85)
 /* 🔷 TABLE */
 doc.autoTable({
 startY:95,
-head:[["Trip","Contract","Freight","Margin","GST"]],
+head:[["Trip","Contract","Freight","Service Charges","GST"]],
 body:rows,
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 },
@@ -808,7 +808,7 @@ head:[["Summary",""]],
 body:[
 ["Net Billing", inv.net_billing.toFixed(2)],
 
-["Margin", Number(inv.total_margin || 0).toFixed(2)],
+["Service Charges", Number(inv.total_margin || 0).toFixed(2)],
 
 ["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
 ["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],

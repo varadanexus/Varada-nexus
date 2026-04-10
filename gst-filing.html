@@ -209,6 +209,13 @@ window.location.href="login.html"
 
 <script>
 
+const allowed = await checkPermission("gst-filing.html","view")
+
+if(!allowed){
+    alert("Access Denied")
+    window.location.href = "dashboard.html"
+}
+    
 let globalData = []
 
 async function loadGST(){
@@ -444,6 +451,16 @@ a.download = "GSTR1_Final.json"
 a.click()
 }
 
+const canExport = await checkPermission("gst-filing.html","create")
+
+if(!canExport){
+    document.querySelectorAll("button").forEach(b=>{
+        if(b.innerText.includes("Export")){
+            b.style.display="none"
+        }
+    })
+}
+    
 </script>
 
 </body>

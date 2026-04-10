@@ -17,10 +17,19 @@ color:#e5e7eb;
 }
 
 .main{
-margin-left:220px;
+margin-left:240px;
 padding:24px;
+max-width: calc(100vw - 240px);
+overflow-x: auto;
 }
+  
 
+table{
+width:100%;
+border-collapse:collapse;
+min-width:900px;   /* ✅ prevents crush */
+}
+  
 .card{
 background:#111827;
 padding:16px;
@@ -66,6 +75,69 @@ text-align:left;
 
 <body>
 
+<div id="sidebar-container"></div>
+
+<script>
+
+fetch("sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar){
+    sidebar.style.display = "none"
+}
+
+setTimeout(async ()=>{
+
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+    }
+
+    await initSidebar()
+    setActiveMenu()
+
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    if(sidebar){
+        sidebar.style.display = "block"
+    }
+
+},200)
+
+})
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const email = session.user.email
+
+document.getElementById("userName").innerText = email.split("@")[0]
+
+}
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+    let page = link.getAttribute("data-page")
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+})
+
+}
+
+</script>
+  
 <div class="main">
 
 <h2>Company Ledger</h2>
@@ -92,6 +164,8 @@ text-align:left;
 
 <h3>Ledger Entries</h3>
 
+<div style="overflow-x:auto;">
+  
 <table>
 <thead>
 <tr>
@@ -111,6 +185,8 @@ text-align:left;
 
 </table>
 
+</div>
+  
 </div>
 
 <div class="card">

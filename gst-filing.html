@@ -222,16 +222,75 @@ a.click()
 /* 🔥 EXPORT JSON (GSTR-1 STYLE) */
 function exportJSON(){
 
-let json = {
-gst_data: globalData
+let b2bMap = {}
+let b2cTotal = 0
+
+globalData.forEach(r=>{
+
+/* 🔥 B2B */
+if(r.gstin){
+
+if(!b2bMap[r.gstin]){
+b2bMap[r.gstin] = {
+ctin: r.gstin,
+inv: []
+}
 }
 
-let blob = new Blob([JSON.stringify(json,null,2)], {type:"application/json"})
+b2bMap[r.gstin].inv.push({
+inum: r.invoice,
+idt: new Date().toLocaleDateString("en-GB"),
+val: r.invoice_value,
+pos: "37", // Andhra Pradesh
+rchrg: "N",
+inv_typ: "R",
+itms: [{
+num: 1,
+itm_det: {
+txval: r.taxable,
+rt: 18,
+camt: r.cgst,
+samt: r.sgst,
+csamt: 0
+}
+}]
+})
+
+}
+
+/* 🔥 B2C */
+else{
+b2cTotal += r.taxable
+}
+
+})
+
+/* 🔥 FINAL STRUCTURE */
+let finalJSON = {
+gstin: "37AAKCV7495B1ZV",   // YOUR GSTIN
+fp: document.getElementById("monthFilter").value.replace("-", ""),
+version: "GST1.0",
+
+b2b: Object.values(b2bMap),
+
+b2cs: [{
+sply_ty: "INTRA",
+txval: b2cTotal,
+rt: 18,
+camt: b2cTotal * 0.09,
+samt: b2cTotal * 0.09,
+csamt: 0
+}]
+
+}
+
+/* DOWNLOAD */
+let blob = new Blob([JSON.stringify(finalJSON,null,2)], {type:"application/json"})
 let url = URL.createObjectURL(blob)
 
 let a = document.createElement("a")
 a.href = url
-a.download = "GST_Report.json"
+a.download = "GSTR1_Final.json"
 a.click()
 }
 

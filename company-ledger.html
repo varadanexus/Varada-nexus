@@ -80,19 +80,8 @@ text-align:left;
 
 <script>
 
+/* ✅ SAME STRUCTURE AS DASHBOARD */
 
-(async () => {
-
-/* 🔐 PAGE SECURITY */
-const allowed = await checkPermission("company-ledger.html","view")
-
-if(!allowed){
-    alert("Access Denied")
-    window.location.href = "dashboard.html"
-    return
-}
-
-/* 🔥 LOAD SIDEBAR */
 fetch("sidebar.html")
 .then(res=>res.text())
 .then(data=>{
@@ -106,17 +95,23 @@ if(sidebar){
 
 setTimeout(async ()=>{
 
+    /* ✅ RBAC FIRST */
     if(typeof applyMenuRBAC === "function"){
         await applyMenuRBAC()
     }
 
+    /* ✅ USER INIT */
     await initSidebar()
+
+    /* ✅ ACTIVE MENU */
     setActiveMenu()
 
+    /* ✅ ICON FIX */
     if(window.lucide){
         lucide.createIcons()
     }
 
+    /* ✅ SHOW SIDEBAR */
     if(sidebar){
         sidebar.style.display = "block"
     }
@@ -124,8 +119,6 @@ setTimeout(async ()=>{
 },200)
 
 })
-
-})()
 
 function setActiveMenu(){
 

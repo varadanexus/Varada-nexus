@@ -1043,6 +1043,18 @@ balance: 0, // temporary (ledger calc later)
 remarks: "GST Payment Received"
 }])
 
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    type: "Client Payment",
+    reference_no: inv.invoice_no,
+    party: inv.client_name,
+    debit: amount,   // ✅ money coming IN
+    credit: 0,
+    balance: 0,
+    remarks: "GST Payment Received"
+}])
+  
 alert("Payment added")
 
 loadGSTInvoices()

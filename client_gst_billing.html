@@ -515,13 +515,29 @@ async function generateGSTInvoiceNo(){
 
 let today = new Date()
 
-let yy = String(today.getFullYear()).slice(-2)
-let mm = String(today.getMonth()+1).padStart(2,'0')
-let dd = String(today.getDate()).padStart(2,'0')
+let year = today.getFullYear()
+let month = today.getMonth() + 1   // Jan = 1
 
-let prefix = `INVGB${yy}${mm}${dd}`
+/* 🔥 FINANCIAL YEAR LOGIC */
+let startYear, endYear
 
-/* 🔥 GET TODAY'S INVOICES */
+if(month >= 4){
+    // April → December
+    startYear = year
+    endYear = year + 1
+}else{
+    // Jan → March
+    startYear = year - 1
+    endYear = year
+}
+
+/* LAST 2 DIGITS */
+let fy = String(startYear).slice(-2) + "-" + String(endYear).slice(-2)
+
+/* PREFIX */
+let prefix = `INVGB/${fy}/`
+
+/* 🔥 GET EXISTING INVOICES FOR SAME FY */
 const { data } = await supabaseClient
 .from("client_invoices_gst")
 .select("invoice_no")
@@ -530,11 +546,13 @@ const { data } = await supabaseClient
 let max = 0
 
 data?.forEach(i=>{
-let num = parseInt(i.invoice_no.slice(-3)) || 0
-if(num > max) max = num
+    let num = parseInt(i.invoice_no.split("/").pop()) || 0
+    if(num > max) max = num
 })
 
 let next = max + 1
+
+/* SERIAL FORMAT (001, 002...) */
 let seq = String(next).padStart(3,'0')
 
 return prefix + seq

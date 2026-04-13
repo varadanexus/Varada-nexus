@@ -1237,14 +1237,21 @@ alert("Invoice not found")
 return
 }
 
-if(amount > inv.balance_amount){
-alert("Amount exceeds balance")
-return
+let balance = Number(inv.balance_amount || 0).toFixed(2)
+balance = Number(balance)
+
+amount = Number(amount.toFixed(2))
+
+if(amount > balance){
+    alert("Amount exceeds balance")
+    return
 }
 
 /* 🔥 UPDATE BALANCE */
-let newInvoiceBalance = inv.balance_amount - amount
-if(newInvoiceBalance < 0) newInvoiceBalance = 0
+let newInvoiceBalance = balance - amount
+newInvoiceBalance = Number(newInvoiceBalance.toFixed(2))
+
+if(newInvoiceBalance < 0.01) newInvoiceBalance = 0
 
 await supabaseClient
 .from("client_invoices_gst")

@@ -304,8 +304,7 @@ function formatAmount(val){
     
 async function loadLedger(){
 
-let client=document.getElementById("clientSelect").value
-
+let client = document.getElementById("clientSelect").value
 let gstType = document.getElementById("gstType").value
     
 if(!client){
@@ -313,7 +312,9 @@ alert("Select client")
 return
 }
 
-/* INVOICES */
+/* =========================
+   🔥 INVOICES
+========================= */
 
 let inv = []
 
@@ -333,16 +334,17 @@ if(gstType === "gst"){
     inv = data || []
 }
 
-/* PAYMENTS */
+/* =========================
+   🔥 PAYMENTS (FIXED)
+========================= */
 
 let pay = []
 
 if(gstType === "gst"){
     const {data} = await supabaseClient
-    .from("client_payments")
+    .from("gst_payments")
     .select("*")
     .eq("client_name", client)
-    .eq("billing_type", "gst")
 
     pay = data || []
 }else{
@@ -350,44 +352,53 @@ if(gstType === "gst"){
     .from("client_payments")
     .select("*")
     .eq("client_name", client)
-    .in("billing_type", ["non_gst", null])
 
     pay = data || []
 }
 
+/* =========================
+   🔥 MERGE ENTRIES
+========================= */
+
 let entries=[]
 
-;(inv || []).forEach(i=>{
+/* INVOICES */
+inv.forEach(i=>{
 entries.push({
-date:i.invoice_date || i.created_at,
+date: i.created_at,
 type: gstType === "gst" ? "GST Invoice" : "Invoice",
-ref:i.invoice_no,
-debit:Number(i.invoice_amount || 0),
-credit:0
+ref: i.invoice_no,
+debit: Number(i.invoice_amount || 0),
+credit: 0
 })
 })
 
-;(pay || []).forEach(p=>{
+/* PAYMENTS */
+pay.forEach(p=>{
 entries.push({
-date:p.payment_date || p.created_at,
-type:"Payment",
-ref:p.invoice_no,
-debit:0,
-credit:Number(p.amount || 0)
+date: p.payment_date || p.created_at,
+type: "Payment",
+ref: p.invoice_no,
+debit: 0,
+credit: Number(p.amount || 0)
 })
 })
+
+/* =========================
+   🔥 SORT + RUNNING BALANCE
+========================= */
 
 entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
 
-let balance=0
-let html=""
+let balance = 0
+let html = ""
 
 entries.forEach(e=>{
 
 balance += e.debit
 balance -= e.credit
 
-html+=`
+html += `
 <tr>
 <td>${formatDate(e.date)}</td>
 <td>${e.type === "Payment" ? "💰 Payment" : "📄 " + e.type}</td>
@@ -398,7 +409,7 @@ html+=`
 </tr>`
 })
 
-document.getElementById("ledgerTable").innerHTML=html
+document.getElementById("ledgerTable").innerHTML = html
 
 }
 

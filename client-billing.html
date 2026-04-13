@@ -79,12 +79,21 @@ border-radius:8px;
 }
 
 /* TABLE */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+overflow-x:auto;   /* 🔥 ADD THIS */
+}
+
 table{
 width:100%;
 border-collapse:collapse;
 background:#111827;
 border-radius:10px;
-overflow:hidden;
+min-width:700px;   /* 🔥 ADD THIS */
 }
 
 th,td{
@@ -206,8 +215,6 @@ document.getElementById("userName").innerText=session.user.email.split("@")[0]
 
 </table>
 
-</div>
-
 <hr>
 
 <h3>Receive Payment</h3>
@@ -248,8 +255,8 @@ document.getElementById("userName").innerText=session.user.email.split("@")[0]
 
 <tbody id="paymentTable"></tbody>
 </table>
+</div> 
 
-</div>
 
 <script>
 

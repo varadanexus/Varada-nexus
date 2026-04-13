@@ -40,6 +40,20 @@ border:1px solid rgba(255,255,255,0.04);
 margin-bottom:16px;
 }
 
+.trips-cell{
+white-space: normal;
+line-height: 1.4;
+}
+
+.trips-cell div{
+padding:2px 0;
+border-bottom:1px dashed rgba(255,255,255,0.08);
+}
+
+.trips-cell div:last-child{
+border-bottom:none;
+}
+    
 /* INPUTS */
 select,input{
 padding:10px;
@@ -712,7 +726,9 @@ invoices=data||[]
 invoiceTable.innerHTML=invoices.map(i=>`
 <tr>
 <td>${i.invoice_no}</td>
-<td>${i.trip_no}</td>
+<td class="trips-cell">
+  ${i.trip_no.split(",").map(t => `<div>${t}</div>`).join("")}
+</td>
 <td>${i.client_name}</td>
 <td>${i.invoice_amount}</td>
 <td>${i.payment_status}</td>

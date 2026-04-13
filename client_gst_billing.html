@@ -1125,14 +1125,20 @@ alert("Invoice not found")
 return
 }
   
-if(amount > inv.balance_amount){
-alert("Amount exceeds pending balance")
-return
+let balance = Number(inv.balance_amount || 0).toFixed(2)
+balance = Number(balance)
+
+amount = Number(amount.toFixed(2))
+
+if(amount > balance){
+    alert("Amount exceeds balance")
+    return
 }
 
-let newInvoiceBalance = inv.balance_amount - amount
+let newInvoiceBalance = balance - amount
+newInvoiceBalance = Number(newInvoiceBalance.toFixed(2))
 
-if(newInvoiceBalance < 0) newInvoiceBalance = 0
+if(newInvoiceBalance < 0.01) newInvoiceBalance = 0
 
 /* update invoice */
 await supabaseClient

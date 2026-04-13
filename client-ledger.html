@@ -376,31 +376,6 @@ if(gstType === "gst"){
     pay = data || []
 }
 
-/* =========================
-   🔥 MERGE ENTRIES
-========================= */
-
-/* INVOICES */
-inv.forEach(i=>{
-entries.push({
-date: i.created_at,
-type: gstType === "gst" ? "GST Invoice" : "Invoice",
-ref: i.invoice_no,
-debit: Number(i.invoice_amount || 0),
-credit: 0
-})
-})
-
-/* PAYMENTS */
-pay.forEach(p=>{
-entries.push({
-date: p.payment_date || p.created_at,
-type: "Payment",
-ref: p.invoice_no,
-debit: 0,
-credit: Number(p.amount || 0)
-})
-})
 
 /* =========================
    🔥 SORT + RUNNING BALANCE

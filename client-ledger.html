@@ -284,8 +284,24 @@ document.getElementById("clientSelect").innerHTML=html
 
 }
 
-/* LOAD LEDGER */
+function formatDate(date){
+    if(!date) return ""
 
+    let d = new Date(date)
+
+    let day = String(d.getDate()).padStart(2,'0')
+    let month = String(d.getMonth()+1).padStart(2,'0')
+    let year = d.getFullYear()
+
+    return `${day}-${month}-${year}`
+}
+
+function formatAmount(val){
+    return Number(val || 0).toFixed(2)
+}
+    
+/* LOAD LEDGER */
+    
 async function loadLedger(){
 
 let client=document.getElementById("clientSelect").value
@@ -359,12 +375,12 @@ balance -= e.credit
 
 html+=`
 <tr>
-<td>${e.date || ""}</td>
-<td>${e.type}</td>
+<td>${formatDate(e.date)}</td>
+<td>${e.type === "Payment" ? "💰 Payment" : "📄 " + e.type}</td>
 <td>${e.ref}</td>
-<td>${e.debit || ""}</td>
-<td>${e.credit || ""}</td>
-<td>${balance}</td>
+<td>${e.debit ? formatAmount(e.debit) : ""}</td>
+<td>${e.credit ? formatAmount(e.credit) : ""}</td>
+<td>${formatAmount(balance)}</td>
 </tr>`
 })
 

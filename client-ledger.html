@@ -261,27 +261,47 @@ init()
 async function init(){
 await loadClients()
 }
-
+console.log("INIT RUNNING")
 /* LOAD CLIENTS */
 
 async function loadClients(){
 
-const {data}=await supabaseClient
+const clientSelect = document.getElementById("clientSelect")
+
+/* 🔥 GET NON-GST CLIENTS */
+const {data:nonGst} = await supabaseClient
 .from("client_invoices")
 .select("client_name")
 
-let unique=[...new Set((data || []).map(x=>x.client_name))]
+/* 🔥 GET GST CLIENTS */
+const {data:gst} = await supabaseClient
+.from("client_invoices_gst")
+.select("client_name")
 
-clients=unique
+/* 🔥 MERGE */
+let all = [
+...(nonGst || []),
+...(gst || [])
+]
 
-let html='<option value="">Select Client</option>'
+/* 🔥 UNIQUE */
+let unique = [...new Set(all.map(x => x.client_name).filter(Boolean))]
+
+/* 🔥 FALLBACK (VERY IMPORTANT) */
+if(unique.length === 0){
+    clientSelect.innerHTML = `<option value="">No Clients Found</option>`
+    return
+}
+
+/* 🔥 BUILD DROPDOWN */
+let html = `<option value="">Select Client</option>`
 
 unique.forEach(c=>{
-html+=`<option value="${c}">${c}</option>`
+    html += `<option value="${c}">${c}</option>`
 })
 
-document.getElementById("clientSelect").innerHTML=html
-
+clientSelect.innerHTML = html
+console.log("CLIENTS:", unique)
 }
 
 function formatDate(date){
@@ -482,6 +502,12 @@ document.getElementById("ledgerTable").innerHTML = html
 
 }
 
+<script>
+window.addEventListener("load", () => {
+    init()
+})
+</script>
+    
 </script>
 
 <script src="rbac.js"></script>

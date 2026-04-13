@@ -287,6 +287,7 @@ window.location.href="login.html"
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email">
 <input id="clientGST" placeholder="GST Number">
+<input id="clientAadhar" placeholder="Aadhaar Number">
 <input id="clientAddress" placeholder="Address" style="width:300px;">
 
 <button onclick="addClient()">Add Client</button>
@@ -299,6 +300,7 @@ window.location.href="login.html"
 <th>Phone</th>
 <th>Email</th>
 <th>GST</th>
+<th>Aadhaar</th>
 <th>Address</th>
 <th>Action</th>
 </tr>
@@ -493,6 +495,7 @@ contact_person: document.getElementById("clientContact").value,
 phone: clientPhone.value,
 email: clientEmail.value,
 gst_no: document.getElementById("clientGST").value,
+aadhar_no: document.getElementById("clientAadhar").value,
 address: document.getElementById("clientAddress").value
 })
 
@@ -509,7 +512,8 @@ clientEmail.value=""
 document.getElementById("clientContact").value=""
 document.getElementById("clientGST").value=""
 document.getElementById("clientAddress").value=""
-
+document.getElementById("clientAadhar").value = ""
+  
 alert("Client Added ✅")
 
 loadClients()
@@ -689,6 +693,7 @@ html+=`
 <td>${c.phone || ""}</td>
 <td>${c.email || ""}</td>
 <td>${c.gst_no || "-"}</td>
+<td>${c.aadhar_no || "-"}</td>
 <td style="max-width:200px;white-space:normal;">${c.address || "-"}</td>
 <td>
 <button onclick="editClient('${c.id}')">Edit</button>
@@ -1091,6 +1096,7 @@ document.getElementById("ecContact").value = c.contact_person || ""
 document.getElementById("ecPhone").value = c.phone || ""
 document.getElementById("ecEmail").value = c.email || ""
 document.getElementById("ecGST").value = c.gst_no || ""
+document.getElementById("ecAadhar").value = c.aadhar_no || ""
 document.getElementById("ecAddress").value = c.address || ""
 
 document.getElementById("editClientPopup").style.display = "flex"
@@ -1108,6 +1114,7 @@ contact_person: document.getElementById("ecContact").value,
 phone: document.getElementById("ecPhone").value,
 email: document.getElementById("ecEmail").value,
 gst_no: document.getElementById("ecGST").value,
+aadhar_no: document.getElementById("ecAadhar").value,
 address: document.getElementById("ecAddress").value
 })
 .eq("id",editClientId)
@@ -1151,7 +1158,7 @@ await supabaseClient
 .from("transporters")
 .update({
 transporter_name:eName.value,
-phone: phone,
+phone: ePhone.value,
 gst_number:eGST.value,
 address:eAddress.value,
 pan:ePAN.value,
@@ -1260,6 +1267,7 @@ await loadTruckAgents()
     <input id="ecPhone" placeholder="Phone">
     <input id="ecEmail" placeholder="Email">
     <input id="ecGST" placeholder="GST Number">
+    <input id="ecAadhar" placeholder="Aadhaar Number">
     <input id="ecAddress" placeholder="Address">
 
     <br><br>

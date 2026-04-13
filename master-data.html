@@ -287,6 +287,7 @@ window.location.href="login.html"
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email">
 <input id="clientGST" placeholder="GST Number">
+<input id="clientPAN" placeholder="PAN Number">
 <input id="clientAadhar" placeholder="Aadhaar Number">
 <input id="clientAddress" placeholder="Address" style="width:300px;">
 
@@ -300,6 +301,7 @@ window.location.href="login.html"
 <th>Phone</th>
 <th>Email</th>
 <th>GST</th>
+<th>PAN</th>
 <th>Aadhaar</th>
 <th>Address</th>
 <th>Action</th>
@@ -495,6 +497,7 @@ contact_person: document.getElementById("clientContact").value,
 phone: clientPhone.value,
 email: clientEmail.value,
 gst_no: document.getElementById("clientGST").value,
+pan_no: document.getElementById("clientPAN").value,
 aadhar_no: document.getElementById("clientAadhar").value,
 address: document.getElementById("clientAddress").value
 })
@@ -513,6 +516,7 @@ document.getElementById("clientContact").value=""
 document.getElementById("clientGST").value=""
 document.getElementById("clientAddress").value=""
 document.getElementById("clientAadhar").value = ""
+document.getElementById("clientPAN").value = ""
   
 alert("Client Added ✅")
 
@@ -693,6 +697,7 @@ html+=`
 <td>${c.phone || ""}</td>
 <td>${c.email || ""}</td>
 <td>${c.gst_no || "-"}</td>
+<td>${c.pan_no || "-"}</td>
 <td>${c.aadhar_no || "-"}</td>
 <td style="max-width:200px;white-space:normal;">${c.address || "-"}</td>
 <td>
@@ -1096,6 +1101,7 @@ document.getElementById("ecContact").value = c.contact_person || ""
 document.getElementById("ecPhone").value = c.phone || ""
 document.getElementById("ecEmail").value = c.email || ""
 document.getElementById("ecGST").value = c.gst_no || ""
+document.getElementById("ecPAN").value = c.pan_no || ""
 document.getElementById("ecAadhar").value = c.aadhar_no || ""
 document.getElementById("ecAddress").value = c.address || ""
 
@@ -1114,6 +1120,7 @@ contact_person: document.getElementById("ecContact").value,
 phone: document.getElementById("ecPhone").value,
 email: document.getElementById("ecEmail").value,
 gst_no: document.getElementById("ecGST").value,
+pan_no: document.getElementById("ecPAN").value,
 aadhar_no: document.getElementById("ecAadhar").value,
 address: document.getElementById("ecAddress").value
 })
@@ -1267,6 +1274,7 @@ await loadTruckAgents()
     <input id="ecPhone" placeholder="Phone">
     <input id="ecEmail" placeholder="Email">
     <input id="ecGST" placeholder="GST Number">
+    <input id="ecPAN" placeholder="PAN Number">
     <input id="ecAadhar" placeholder="Aadhaar Number">
     <input id="ecAddress" placeholder="Address">
 

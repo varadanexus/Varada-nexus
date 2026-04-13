@@ -280,6 +280,22 @@ Download GST Invoice PDF
 </table>
 
 </div>
+
+<div class="card">
+<h3>Payment History</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Invoice</th>
+<th>Amount</th>
+<th>Method</th>
+<th>Txn</th>
+</tr>
+</thead>
+<tbody id="paymentHistory"></tbody>
+</table>
+</div>
   
 </div>
 
@@ -299,8 +315,33 @@ let totalInvoice=0
 async function init(){
 await loadClients()
 loadGSTInvoices()
+loadPaymentHistory()
 }
 
+async function loadPaymentHistory(){
+
+const { data } = await supabaseClient
+.from("gst_payments")
+.select("*")
+.order("created_at", { ascending:false })
+
+let html = ""
+
+data?.forEach(p=>{
+html += `
+<tr>
+<td>${new Date(p.payment_date).toLocaleDateString()}</td>
+<td>${p.invoice_no}</td>
+<td>₹${Number(p.amount).toFixed(2)}</td>
+<td>${p.payment_method}</td>
+<td>${p.transaction_id || "-"}</td>
+</tr>
+`
+})
+
+document.getElementById("paymentHistory").innerHTML = html
+}
+  
 async function loadClients(){
 
 const {data, error} = await supabaseClient
@@ -1038,7 +1079,7 @@ let dropdown = '<option value="">Select Invoice</option>'
 
 data?.forEach(inv=>{
 dropdown += `<option value="${inv.id}">
-${inv.invoice_no} | ₹${Number(inv.balance_amount).toFixed(2)}
+${inv.invoice_no} | Balance: ₹${Number(inv.balance_amount).toFixed(2)} | ${inv.payment_status || "Pending"}
 </option>`
 })
 
@@ -1247,15 +1288,23 @@ if(amount > balance){
     return
 }
 
-/* 🔥 UPDATE BALANCE */
+/* 🔥 UPDATE BALANCE + STATUS */
 let newInvoiceBalance = balance - amount
 newInvoiceBalance = Number(newInvoiceBalance.toFixed(2))
 
-if(newInvoiceBalance < 0.01) newInvoiceBalance = 0
+let status = "Pending"
+
+if(newInvoiceBalance < 0.01){
+    newInvoiceBalance = 0
+    status = "Paid"
+}
 
 await supabaseClient
 .from("client_invoices_gst")
-.update({ balance_amount: newInvoiceBalance })
+.update({
+    balance_amount: newInvoiceBalance,
+    payment_status: status
+})
 .eq("id", invoiceId)
 
 // 🔥 GET LAST BALANCE
@@ -1269,6 +1318,19 @@ let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
 let newBalance = lastBalance - amount
+
+/* 🔥 SAVE PAYMENT HISTORY */
+await supabaseClient
+.from("gst_payments")
+.insert([{
+    invoice_id: inv.id,
+    invoice_no: inv.invoice_no,
+    client_name: inv.client_name,
+    amount: amount,
+    payment_method: method,
+    transaction_id: txnId,
+    payment_date: date ? new Date(date).toISOString() : new Date().toISOString()
+}])
   
 /* 🔥 COMPANY LEDGER ENTRY */
 const { error:ledgerError } = await supabaseClient
@@ -1313,6 +1375,7 @@ document.getElementById("gstTxnId").value=""
 document.getElementById("gstPaymentDate").value=""
 
 loadGSTInvoices()
+loadPaymentHistory()
 document.getElementById("gstInvoiceSelect").value = ""
 }
   

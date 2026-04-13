@@ -330,7 +330,7 @@ let entries=[]
 ;(inv || []).forEach(i=>{
 entries.push({
 date:i.invoice_date || i.created_at,
-type: i.is_gst ? "Invoice (GST)" : "Invoice (NON-GST)",
+type: gstType === "gst" ? "GST Invoice" : "Invoice",
 ref:i.invoice_no,
 debit:Number(i.invoice_amount || 0),
 credit:0

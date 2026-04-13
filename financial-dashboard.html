@@ -327,19 +327,25 @@ let transporterCost=0,clientGross=0,companyProfit=0
 let agentTotal=0,agentPaid=0
 
 invoices.forEach(i=>{
+
 let amt = +i.invoice_amount || 0
 invoiced += amt
 
-// ✅ USE DB VALUE (CORRECT)
-gstTotal += +i.gst_total || 0
-}) 
+let gst = +i.gst_total || 0
+gstTotal += gst
+
+// ✅ ADD THIS LINE (KEY FIX)
+if(i.payment_status === "Paid"){
+    gstCollected += gst
+}
+
+})
 
 clientPayments.forEach(p=>{
 let amt = +p.amount || 0
 paid += amt
 
 // ✅ PROPORTIONAL GST COLLECTION
-let ratio = invoiced ? (gstTotal / invoiced) : 0
 gstCollected += (p.gst_component || 0)
 }) 
 

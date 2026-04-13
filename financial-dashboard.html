@@ -300,13 +300,20 @@ let agentTotal=0,agentPaid=0
 invoices.forEach(i=>{
 let amt = +i.invoice_amount || 0
 invoiced += amt
-gstTotal += amt * 0.18
-})
+
+// ✅ USE DB VALUE (CORRECT)
+gstTotal += +i.gst_total || 0
+}) 
+
 clientPayments.forEach(p=>{
 let amt = +p.amount || 0
 paid += amt
-gstCollected += amt * (18/118)
-})
+
+// ✅ PROPORTIONAL GST COLLECTION
+let ratio = invoiced ? (gstTotal / invoiced) : 0
+gstCollected += amt * ratio
+}) 
+
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 agentLedger.forEach(a=>{
 agentTotal+=+a.commission_amount||0

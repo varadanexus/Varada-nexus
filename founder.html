@@ -127,7 +127,14 @@ height:100vh;
 z-index:1;  
 overflow:hidden;  
 }  
-  
+
+@media (max-width:768px){
+.founder-hero{
+height:auto;
+padding:80px 0 40px;
+}
+}
+    
 .hero-bg{  
 position:absolute;   /* 🔥 IMPORTANT */  
 top:0;  
@@ -161,10 +168,19 @@ transparent 60%
   
   
 /* TEXT LEFT */  
-.hero-content{  
-max-width:600px;  
-padding-left:80px;  
-}  
+.hero-content{
+max-width:600px;
+padding-left:80px;
+}
+
+@media (max-width:768px){
+
+.hero-content{
+padding:0 20px;
+text-align:left;
+}
+
+}
   
 /* NAME */  
 .founder-name{  
@@ -178,7 +194,21 @@ background:linear-gradient(180deg,#ffffff,#cbd5f5);
   
 text-shadow:0 10px 40px rgba(0,0,0,0.8);  
 }  
-  
+
+@media (max-width:768px){
+
+.founder-name{
+font-size:32px;
+line-height:1.2;
+}
+
+.hero-desc{
+font-size:15px;
+line-height:1.6;
+}
+
+}
+
 /* DESC */  
 .hero-desc{  
 font-size:20px;  
@@ -294,6 +324,15 @@ margin-bottom:10px;
 margin-bottom:10px;  
 color:#cbd5f5;  
 }  
+
+@media (max-width:768px){
+
+.timeline li{
+font-size:14px;
+line-height:1.6;
+}
+
+}
   
 .timeline li::before{  
 content:"";  
@@ -325,10 +364,30 @@ filter:blur(0);
 @media (max-width: 768px){  
   
 /* NAVBAR STACK */  
-.nav-container{  
-flex-direction:column;  
-gap:12px;  
-}  
+.nav-container{
+flex-direction:row;
+justify-content:space-between;
+}
+
+.nav-links{
+display:none;
+}
+
+@media (max-width:768px){
+
+.nav-container{
+padding:12px 16px;
+}
+
+.brand-name{
+font-size:16px;
+}
+
+.brand-sub{
+font-size:9px;
+}
+
+}
   
 /* NAV LINKS */  
 .nav-links{  
@@ -545,8 +604,15 @@ transform:translateY(-6px);
 }  
   
 .content{
-  position:sticky;
-  top:120px;
+position:sticky;
+top:120px;
+}
+
+@media (max-width:768px){
+.content{
+position:relative;
+top:auto;
+}
 }
   
 .content::after{  
@@ -721,6 +787,15 @@ font-weight:600;
   
 transition:0.3s;  
 }  
+
+@media (max-width:768px){
+
+.hero-btn{
+padding:10px 18px;
+font-size:14px;
+}
+
+}
   
 .hero-btn:hover{  
 transform:translateY(-2px);  
@@ -766,9 +841,9 @@ padding:0 20px;
   
 .content{
 max-width:100%;
-margin:20px 16px;
-padding:20px;
-min-height:auto;
+margin:30px 14px;
+padding:22px;
+border-radius:16px;
 }
     
 .hero-desc{  
@@ -988,29 +1063,33 @@ let brightness = 0.9 - (scrollY / 1400);
 // 🔥 PARALLAX (this is the magic)  
 let translateY = scrollY * 0.25;  
   
-bg.style.transform = `translateY(${translateY}px) scale(1.05)`;  
-bg.style.filter = `blur(${blur}px) brightness(${brightness})`;  
+if(window.innerWidth > 768){
+bg.style.transform = `translateY(${translateY}px) scale(1.05)`;
+bg.style.filter = `blur(${blur}px) brightness(${brightness})`;
+}
   
 });  
   
 // 🔥 APPLE STACK EFFECT  
-const cards = document.querySelectorAll(".content");  
-      
-  
-window.addEventListener("scroll", () => {  
-cards.forEach((card, index) => {  
-  
-const rect = card.getBoundingClientRect();  
-  
-// when card reaches top zone → shrink previous  
-if(rect.top < 140){  
-card.classList.add("stacked");  
-}else{  
-card.classList.remove("stacked");  
-}  
-  
-});  
-});  
+if(window.innerWidth > 768){
+
+const cards = document.querySelectorAll(".content");
+
+window.addEventListener("scroll", () => {
+cards.forEach((card, index) => {
+
+const rect = card.getBoundingClientRect();
+
+if(rect.top < 140){
+card.classList.add("stacked");
+}else{
+card.classList.remove("stacked");
+}
+
+});
+});
+
+}
       
 </script>  </body>  
 </html>

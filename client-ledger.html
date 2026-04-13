@@ -217,6 +217,12 @@ window.location.href="login.html"
 
 <select id="clientSelect"></select>
 
+<!-- 🔥 GST TOGGLE -->
+<select id="gstType">
+<option value="non_gst">NON-GST</option>
+<option value="gst">GST</option>
+</select>
+
 <button onclick="loadLedger()">Load Ledger</button>
 
 </div>
@@ -284,6 +290,8 @@ async function loadLedger(){
 
 let client=document.getElementById("clientSelect").value
 
+let gstType = document.getElementById("gstType").value
+    
 if(!client){
 alert("Select client")
 return
@@ -291,10 +299,19 @@ return
 
 /* INVOICES */
 
-const {data:inv}=await supabaseClient
+let query = supabaseClient
 .from("client_invoices")
 .select("*")
 .eq("client_name",client)
+
+/* 🔥 GST FILTER */
+if(gstType === "gst"){
+query = query.eq("is_gst", true)
+}else{
+query = query.or("is_gst.is.null,is_gst.eq.false")
+}
+
+const {data:inv} = await query
 
 /* PAYMENTS */
 
@@ -308,7 +325,7 @@ let entries=[]
 ;(inv || []).forEach(i=>{
 entries.push({
 date:i.invoice_date || i.created_at,
-type:"Invoice",
+type: i.is_gst ? "Invoice (GST)" : "Invoice (NON-GST)",
 ref:i.invoice_no,
 debit:Number(i.invoice_amount || 0),
 credit:0

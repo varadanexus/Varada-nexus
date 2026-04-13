@@ -1137,6 +1137,12 @@ await supabaseClient
 .eq("reference_no", invData.invoice_no)
 .eq("client_name", invData.client_name)
 
+/* 🔥 DELETE GST PAYMENT HISTORY (VERY IMPORTANT) */
+await supabaseClient
+.from("gst_payments")
+.delete()
+.eq("invoice_id", id)
+  
 }
   
 /* delete invoice */

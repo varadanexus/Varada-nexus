@@ -44,7 +44,7 @@ if(!window.supabaseClient){
     )
 }
 
-const supabaseClient = window.supabaseClient
+var supabaseClient = window.supabaseClient
 </script>
 
 <div id="sidebar-container"></div>
@@ -72,7 +72,9 @@ setTimeout(async ()=>{
     }
 
     /* ✅ STEP 2: USER INIT */
+    if(typeof initSidebar === "function"){
     await initSidebar()
+}
     console.log("✅ User initialized")
 
     /* ✅ STEP 3: ACTIVE MENU */
@@ -584,7 +586,6 @@ let profitPerTruckPerDay = adjustedProfitPerTrip * tripsPerDay
 // monthly profit per truck
 let profitPerTruck = profitPerTruckPerDay * totalDays
 
-let profitPerTruck = profitPerTruckPerDay * totalDays 
 
 set("profitPerTruck", profitPerTruck || 0)
 

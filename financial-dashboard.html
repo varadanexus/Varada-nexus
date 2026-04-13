@@ -456,7 +456,7 @@ let outstanding=invoiced-paid
 let gstPending = gstTotal - gstCollected
 let transporterPayable=transporterCost-transporterPaid
 let agentBalance=agentTotal-agentPaid
-let netProfit=companyProfit-agentTotal
+let netProfit = companyProfit - agentTotal - gstTotal
 let toBeBilled=clientGross-invoiced
 
 set("totalTrips",totalTrips)

@@ -291,6 +291,7 @@ Download GST Invoice PDF
 <th>Amount</th>
 <th>Method</th>
 <th>Txn</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody id="paymentHistory"></tbody>
@@ -335,6 +336,12 @@ html += `
 <td>₹${Number(p.amount).toFixed(2)}</td>
 <td>${p.payment_method}</td>
 <td>${p.transaction_id || "-"}</td>
+
+<td>
+<button onclick="editGSTPayment('${p.id}')">Edit</button>
+<button onclick="deleteGSTPayment('${p.id}')">Delete</button>
+</td>
+
 </tr>
 `
 })
@@ -1388,6 +1395,146 @@ document.getElementById("gstInvoiceSelect").value = ""
 window.addEventListener("load", () => {
     init()
 })
+
+async function editGSTPayment(id){
+
+const { data:p } = await supabaseClient
+.from("gst_payments")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!p){
+alert("Payment not found")
+return
+}
+
+/* INPUT NEW VALUES */
+let newAmount = Number(prompt("Edit Amount", p.amount))
+let newMethod = prompt("Edit Method", p.payment_method)
+let newTxn = prompt("Edit Transaction ID", p.transaction_id || "")
+
+if(!newAmount || newAmount <= 0){
+alert("Invalid amount")
+return
+}
+
+/* 🔥 DIFFERENCE CALCULATION */
+let diff = newAmount - p.amount
+
+/* 🔥 UPDATE PAYMENT TABLE */
+await supabaseClient
+.from("gst_payments")
+.update({
+amount: newAmount,
+payment_method: newMethod,
+transaction_id: newTxn
+})
+.eq("id", id)
+
+/* 🔥 UPDATE INVOICE BALANCE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", p.invoice_id)
+.single()
+
+let newBalance = Number(inv.balance_amount) - diff
+
+if(newBalance < 0) newBalance = 0
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance,
+payment_status: newBalance === 0 ? "Paid" : "Pending"
+})
+.eq("id", p.invoice_id)
+
+/* 🔥 LEDGER UPDATE (OPTIONAL SIMPLE WAY) */
+/* easiest: delete old + reinsert new */
+
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", p.invoice_no)
+.eq("credit", p.amount)
+
+await supabaseClient
+.from("company_ledger")
+.insert([{
+type: "GST Payment",
+reference_no: p.invoice_no,
+party: p.client_name,
+debit: 0,
+credit: newAmount,
+remarks: "GST Payment Edited"
+}])
+
+alert("Payment Updated ✅")
+
+loadGSTInvoices()
+loadPaymentHistory()
+}
+
+async function deleteGSTPayment(id){
+
+if(!confirm("Delete this payment?")) return
+
+/* GET PAYMENT */
+const { data:p } = await supabaseClient
+.from("gst_payments")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!p){
+alert("Payment not found")
+return
+}
+
+/* 🔥 UPDATE INVOICE (ADD BACK BALANCE) */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", p.invoice_id)
+.single()
+
+let newBalance = Number(inv.balance_amount) + Number(p.amount)
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance,
+payment_status: "Pending"
+})
+.eq("id", p.invoice_id)
+
+/* 🔥 DELETE PAYMENT */
+await supabaseClient
+.from("gst_payments")
+.delete()
+.eq("id", id)
+
+/* 🔥 DELETE LEDGER ENTRY */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", p.invoice_no)
+.eq("credit", p.amount)
+
+/* 🔥 CLIENT LEDGER */
+await supabaseClient
+.from("client_ledger")
+.delete()
+.eq("reference_no", p.invoice_no)
+.eq("credit", p.amount)
+
+alert("Payment Deleted ✅")
+
+loadGSTInvoices()
+loadPaymentHistory()
+}
   
 </script>
 

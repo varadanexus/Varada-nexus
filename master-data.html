@@ -691,6 +691,7 @@ html+=`
 <td>${c.gst_no || "-"}</td>
 <td style="max-width:200px;white-space:normal;">${c.address || "-"}</td>
 <td>
+<button onclick="editClient('${c.id}')">Edit</button>
 <button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button>
 </td>
 </tr>`
@@ -1067,6 +1068,67 @@ eStatus.value = t.status || "Active"
 document.getElementById("editPopup").style.display="block"
 }
 
+let editClientId = null
+
+async function editClient(id){
+
+editClientId = id
+
+const {data:c,error} = await supabaseClient
+.from("clients")
+.select("*")
+.eq("id",id)
+.single()
+
+if(error || !c){
+console.error(error)
+alert("Error loading client")
+return
+}
+
+document.getElementById("ecCompany").value = c.company || ""
+document.getElementById("ecContact").value = c.contact_person || ""
+document.getElementById("ecPhone").value = c.phone || ""
+document.getElementById("ecEmail").value = c.email || ""
+document.getElementById("ecGST").value = c.gst_no || ""
+document.getElementById("ecAddress").value = c.address || ""
+
+document.getElementById("editClientPopup").style.display = "flex"
+}
+
+async function updateClient(){
+
+if(!editClientId) return
+
+const {error} = await supabaseClient
+.from("clients")
+.update({
+company: document.getElementById("ecCompany").value,
+contact_person: document.getElementById("ecContact").value,
+phone: document.getElementById("ecPhone").value,
+email: document.getElementById("ecEmail").value,
+gst_no: document.getElementById("ecGST").value,
+address: document.getElementById("ecAddress").value
+})
+.eq("id",editClientId)
+
+if(error){
+console.error(error)
+alert("Error updating client ❌")
+return
+}
+
+alert("Client Updated ✅")
+
+closeClientPopup()
+loadClients()
+}
+
+function closeClientPopup(){
+document.getElementById("editClientPopup").style.display = "none"
+editClientId = null
+}
+  
 async function updateTransporter(){
 
 if(!editId) return
@@ -1187,6 +1249,27 @@ await loadTruckAgents()
   </div>
 </div>
 
+<!-- 🔥 EDIT CLIENT POPUP -->
+<div id="editClientPopup" class="popup">
+  <div class="popup-content">
+
+    <h3>Edit Client</h3>
+
+    <input id="ecCompany" placeholder="Company">
+    <input id="ecContact" placeholder="Contact Person">
+    <input id="ecPhone" placeholder="Phone">
+    <input id="ecEmail" placeholder="Email">
+    <input id="ecGST" placeholder="GST Number">
+    <input id="ecAddress" placeholder="Address">
+
+    <br><br>
+
+    <button onclick="updateClient()">Update</button>
+    <button class="deleteBtn" onclick="closeClientPopup()">Cancel</button>
+
+  </div>
+</div>
+  
 </body>
 </html>
   

@@ -388,7 +388,76 @@ credit: Number(p.amount || 0)
    🔥 SORT + RUNNING BALANCE
 ========================= */
 
-entries.sort((a,b)=> new Date(a.date) - new Date(b.date))
+// 🔥 GROUP BY INVOICE
+let grouped = {}
+
+/* ADD INVOICES FIRST */
+inv.forEach(i=>{
+let key = i.invoice_no
+
+if(!grouped[key]){
+    grouped[key] = {
+        invoice: null,
+        payments: []
+    }
+}
+
+grouped[key].invoice = {
+    date: i.created_at,
+    type: gstType === "gst" ? "GST Invoice" : "Invoice",
+    ref: i.invoice_no,
+    debit: Number(i.invoice_amount || 0),
+    credit: 0
+}
+})
+
+/* ADD PAYMENTS */
+pay.forEach(p=>{
+let key = p.invoice_no
+
+if(!grouped[key]){
+    grouped[key] = {
+        invoice: null,
+        payments: []
+    }
+}
+
+grouped[key].payments.push({
+    date: p.payment_date || p.created_at,
+    type: "Payment",
+    ref: p.invoice_no,
+    debit: 0,
+    credit: Number(p.amount || 0)
+})
+})
+
+/* 🔥 SORT INVOICES BY DATE */
+let sortedKeys = Object.keys(grouped).sort((a,b)=>{
+let d1 = new Date(grouped[a].invoice?.date || 0)
+let d2 = new Date(grouped[b].invoice?.date || 0)
+return d1 - d2
+})
+
+/* 🔥 BUILD FINAL ENTRIES */
+let entries = []
+
+sortedKeys.forEach(key=>{
+
+let g = grouped[key]
+
+/* 1️⃣ INVOICE FIRST */
+if(g.invoice){
+    entries.push(g.invoice)
+}
+
+/* 2️⃣ PAYMENTS AFTER */
+g.payments
+.sort((a,b)=> new Date(a.date) - new Date(b.date))
+.forEach(p=>{
+    entries.push(p)
+})
+
+})
 
 let balance = 0
 let html = ""

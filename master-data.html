@@ -283,14 +283,25 @@ window.location.href="login.html"
 <h3>Clients</h3>
 <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
 <input id="clientCompany" placeholder="Company">
+<input id="clientContact" placeholder="Contact Person Name">
 <input id="clientPhone" placeholder="Phone">
 <input id="clientEmail" placeholder="Email">
+<input id="clientGST" placeholder="GST Number">
+<input id="clientAddress" placeholder="Address" style="width:300px;">
 
 <button onclick="addClient()">Add Client</button>
 </div>
 <table>
 <thead>
-<tr><th>Company</th><th>Phone</th><th>Email</th><th>Action</th></tr>
+<tr>
+<th>Company</th>
+<th>Contact</th>
+<th>Phone</th>
+<th>Email</th>
+<th>GST</th>
+<th>Address</th>
+<th>Action</th>
+</tr>
 </thead>
 <tbody id="clientTable"></tbody>
 </table>
@@ -468,16 +479,42 @@ truckId.value = match ? match[0].replace(/([A-Z]{2})(\d{4})/,"$1-$2") : ""
 /* ADD */
 
 async function addClient(){
-await supabaseClient.from("clients").insert({
-company:clientCompany.value,
-phone:clientPhone.value,
-email:clientEmail.value
+
+if(!clientCompany.value){
+alert("Enter company name")
+return
+}
+
+const {error} = await supabaseClient
+.from("clients")
+.insert({
+company: clientCompany.value,
+contact_person: document.getElementById("clientContact").value,
+phone: clientPhone.value,
+email: clientEmail.value,
+gst_no: document.getElementById("clientGST").value,
+address: document.getElementById("clientAddress").value
 })
+
+if(error){
+console.error(error)
+alert("Error saving client")
+return
+}
+
+/* CLEAR */
 clientCompany.value=""
 clientPhone.value=""
 clientEmail.value=""
+document.getElementById("clientContact").value=""
+document.getElementById("clientGST").value=""
+document.getElementById("clientAddress").value=""
+
+alert("Client Added ✅")
+
 loadClients()
 }
+
 
 async function addTransporter(){
 
@@ -641,11 +678,17 @@ let html=""
 
 data?.forEach(c=>{
 html+=`
+html+=`
 <tr>
 <td>${c.company}</td>
-<td>${c.phone||""}</td>
-<td>${c.email||""}</td>
-<td><button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button></td>
+<td>${c.contact_person || "-"}</td>
+<td>${c.phone || ""}</td>
+<td>${c.email || ""}</td>
+<td>${c.gst_no || "-"}</td>
+<td style="max-width:200px;white-space:normal;">${c.address || "-"}</td>
+<td>
+<button class="deleteBtn" onclick="deleteClient('${c.id}')">Delete</button>
+</td>
 </tr>`
 })
 

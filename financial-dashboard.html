@@ -114,6 +114,9 @@ setTimeout(async ()=>{
 <div class="card"><div class="kpi-title">Client Paid</div><div id="paid"></div></div>
 <div class="card"><div class="kpi-title">Outstanding</div><div id="outstanding"></div></div>
 
+<div class="card"><div class="kpi-title">GST Paid</div><div id="gstPaid"></div></div>
+<div class="card"><div class="kpi-title">GST Pending</div><div id="gstPending"></div></div>
+
 <div class="card"><div class="kpi-title">Transporter Cost</div><div id="transporterCost"></div></div>
 <div class="card"><div class="kpi-title">Transporter Paid</div><div id="transporterPaid"></div></div>
 <div class="card"><div class="kpi-title">Transporter Pending</div><div id="transporterPayable"></div></div>
@@ -290,11 +293,20 @@ invoiceMap[b.trip_no]=(invoiceMap[b.trip_no]||0)+(+b.amount||0)
 
 let totalTrips=trips.length,totalMT=0
 let invoiced=0,paid=0,transporterPaid=0
+let gstTotal=0,gstCollected=0
 let transporterCost=0,clientGross=0,companyProfit=0
 let agentTotal=0,agentPaid=0
 
-invoices.forEach(i=>invoiced+=+i.invoice_amount||0)
-clientPayments.forEach(p=>paid+=+p.amount||0)
+invoices.forEach(i=>{
+let amt = +i.invoice_amount || 0
+invoiced += amt
+gstTotal += amt * 0.18
+})
+clientPayments.forEach(p=>{
+let amt = +p.amount || 0
+paid += amt
+gstCollected += amt * (18/118)
+})
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 agentLedger.forEach(a=>{
 agentTotal+=+a.commission_amount||0
@@ -399,6 +411,7 @@ transporterHTML+=`<tr><td>${t.transporter_name}</td><td>₹ ${Math.round(transpo
 document.getElementById("transporterTable").innerHTML=transporterHTML
 
 let outstanding=invoiced-paid
+let gstPending = gstTotal - gstCollected
 let transporterPayable=transporterCost-transporterPaid
 let agentBalance=agentTotal-agentPaid
 let netProfit=companyProfit-agentTotal
@@ -411,6 +424,8 @@ set("invoiced",invoiced)
 set("toBeBilled",toBeBilled)
 set("paid",paid)
 set("outstanding",outstanding)
+set("gstPaid",gstCollected)
+set("gstPending",gstPending)
 set("transporterCost",transporterCost)
 set("transporterPaid",transporterPaid)
 set("transporterPayable",transporterPayable)

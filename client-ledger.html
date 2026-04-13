@@ -335,11 +335,25 @@ if(gstType === "gst"){
 
 /* PAYMENTS */
 
-const {data:pay}=await supabaseClient
-.from("client_payments")
-.select("*")
-.eq("client_name",client)
-.eq("billing_type", gstType)   // 🔥 IMPORTANT
+let pay = []
+
+if(gstType === "gst"){
+    const {data} = await supabaseClient
+    .from("client_payments")
+    .select("*")
+    .eq("client_name", client)
+    .eq("billing_type", "gst")
+
+    pay = data || []
+}else{
+    const {data} = await supabaseClient
+    .from("client_payments")
+    .select("*")
+    .eq("client_name", client)
+    .in("billing_type", ["non_gst", null])
+
+    pay = data || []
+}
 
 let entries=[]
 

@@ -295,7 +295,8 @@ expenses||[],
 
 [...(nonGstBreakdown||[]), ...(gstBreakdown||[])],
 
-[...(clientPayments||[]), ...(gstPayments||[])],
+clientPayments || [],
+gstPayments || [],
 
 transporterPayments||[],
 transporters||[],
@@ -306,7 +307,7 @@ isLoading = false
 
 }
 
-function process(trips,expenses,invoices,breakdown,clientPayments,transporterPayments,transporters,agentLedger){
+function process(trips,expenses,invoices,breakdown,clientPayments,gstPayments,transporterPayments,transporters,agentLedger){
 
 trips.sort((a,b)=> b.trip_no.localeCompare(a.trip_no))
 
@@ -344,10 +345,11 @@ if(i.payment_status === "Paid"){
 clientPayments.forEach(p=>{
 let amt = +p.amount || 0
 paid += amt
+})
 
-// ✅ PROPORTIONAL GST COLLECTION
-gstCollected += (p.gst_component || 0)
-}) 
+gstPayments.forEach(p=>{
+gstCollected += +p.amount || 0
+})
 
 transporterPayments.forEach(p=>transporterPaid+=+p.amount||0)
 agentLedger.forEach(a=>{

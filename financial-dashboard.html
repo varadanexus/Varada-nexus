@@ -138,36 +138,6 @@ setTimeout(async ()=>{
 <div class="chart-box"><canvas id="clientChart"></canvas></div>
 <div class="chart-box"><canvas id="cashflowChart"></canvas></div>
 </div>
-
-<div class="section">
-
-<h3>🚛 Fleet Expansion Model</h3>
-
-<div class="cards">
-
-<div class="card">
-<div class="kpi-title">Profit / Truck</div>
-<div id="profitPerTruck"></div>
-</div>
-
-<div class="card">
-<div class="kpi-title">Enter Trucks</div>
-<input id="truckInput" type="number" value="1" min="1"
-style="width:100%;padding:8px;border-radius:6px;border:none;">
-</div>
-
-<div class="card">
-<div class="kpi-title">Monthly Profit</div>
-<div id="fleetResult"></div>
-</div>
-
-</div>
-
-<div class="chart-box">
-<canvas id="fleetChart"></canvas>
-</div>
-
-</div>
     
 <div class="section">
 <h3>Trips</h3>
@@ -562,55 +532,6 @@ data:[paid,outstanding]
 }]
 }
 })
-
-/* 🚛 FLEET EXPANSION MODEL */
-
-// dynamic trips per day
-let tripsPerDay = totalTrips / 30 || 3
-let totalDays = 30
-
-// avg profit per trip (DEFINE FIRST)
-let avgProfitPerTrip = profitData.length
-    ? profitData.reduce((a,b)=>a+b,0)/profitData.length
-    : 0
-
-// agent cut
-let agentCutPercent = 0.30
-
-// adjusted profit AFTER agent cut
-let adjustedProfitPerTrip = avgProfitPerTrip * (1 - agentCutPercent)
-
-// profit per truck per day
-let profitPerTruckPerDay = adjustedProfitPerTrip * tripsPerDay
-
-// monthly profit per truck
-let profitPerTruck = profitPerTruckPerDay * totalDays
-
-
-set("profitPerTruck", profitPerTruck || 0)
-
-let trucks = Number(document.getElementById("truckInput")?.value || 1)
-
-let fleetResult = profitPerTruck * trucks
-
-set("fleetResult", fleetResult || 0)
-
-/* 📊 FLEET CHART */
-
-if(window.fleetChart && typeof window.fleetChart.destroy === "function"){
-    window.fleetChart.destroy()
-}
-
-window.fleetChart = new Chart(document.getElementById("fleetChart"),{
-type:"bar",
-data:{
-labels:["1 Truck","4 Trucks","20 Trucks"],
-datasets:[{
-label:"Projected Monthly Profit",
-data:[fleet1,fleet4,fleet20]
-}]
-}
-})
     
 }
 
@@ -708,11 +629,6 @@ sidebar.querySelectorAll("[data-toggle]").forEach(toggle=>{
 
 }
 
-document.addEventListener("input", (e)=>{
-    if(e.target.id === "truckInput"){
-        init()
-    }
-})
     
 </script>
 <div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;">

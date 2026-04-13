@@ -299,19 +299,23 @@ return
 
 /* INVOICES */
 
-let query = supabaseClient
-.from("client_invoices")
-.select("*")
-.eq("client_name",client)
+let inv = []
 
-/* 🔥 GST FILTER */
 if(gstType === "gst"){
-query = query.eq("is_gst", true)
-}else{
-query = query.or("is_gst.is.null,is_gst.eq.false")
-}
+    const {data} = await supabaseClient
+    .from("client_invoices_gst")
+    .select("*")
+    .eq("client_name", client)
 
-const {data:inv} = await query
+    inv = data || []
+}else{
+    const {data} = await supabaseClient
+    .from("client_invoices")
+    .select("*")
+    .eq("client_name", client)
+
+    inv = data || []
+}
 
 /* PAYMENTS */
 
@@ -319,6 +323,7 @@ const {data:pay}=await supabaseClient
 .from("client_payments")
 .select("*")
 .eq("client_name",client)
+.eq("billing_type", gstType)   // 🔥 IMPORTANT
 
 let entries=[]
 

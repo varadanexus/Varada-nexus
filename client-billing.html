@@ -208,17 +208,59 @@ document.getElementById("userName").innerText=session.user.email.split("@")[0]
 
 </div>
 
+<hr>
+
+<h3>Receive Payment</h3>
+
+<select id="invoiceSelect"></select>
+
+<input id="amount" placeholder="Amount">
+
+<input type="date" id="paymentDate">
+
+<select id="method">
+<option value="">Select Method</option>
+<option>Bank Transfer</option>
+<option>UPI</option>
+<option>Cash</option>
+</select>
+
+<input id="remarks" placeholder="Remarks">
+
+<button onclick="savePayment()">Receive Payment</button>
+
+<hr>
+
+<h3>Payment History</h3>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Invoice</th>
+<th>Client</th>
+<th>Amount</th>
+<th>Method</th>
+<th>Remarks</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="paymentTable"></tbody>
+</table>
+
 </div>
 
 <script>
 
-let clients=[], trips=[], invoices=[], selectedTrips=[], invoiceAmount=0
+let clients=[], trips=[], invoices=[], payments=[], selectedTrips=[], invoiceAmount=0
 
 init()
 
 async function init(){
 await loadClients()
 await loadInvoices()
+await loadPayments()
 }
 
 async function loadClients(){
@@ -655,9 +697,11 @@ doc.save(inv.invoice_no+".pdf")
 
 }
 async function loadInvoices(){
+
 const {data}=await supabaseClient.from("client_invoices").select("*")
 invoices=data||[]
 
+/* 🔷 TABLE */
 invoiceTable.innerHTML=invoices.map(i=>`
 <tr>
 <td>${i.invoice_no}</td>
@@ -671,6 +715,52 @@ invoiceTable.innerHTML=invoices.map(i=>`
 </td>
 </tr>
 `).join("")
+
+/* 🔥🔥🔥 THIS IS STEP 5 — ADD HERE 🔥🔥🔥 */
+
+/* PAYMENT DROPDOWN */
+let dropdown='<option value="">Select Invoice</option>'
+
+invoices
+.filter(i => Number(i.balance_amount) > 0)
+.forEach(i=>{
+dropdown+=`
+<option value="${i.id}">
+${i.invoice_no} | ${i.client_name} | ₹${i.balance_amount}
+</option>`
+})
+
+document.getElementById("invoiceSelect").innerHTML = dropdown
+
+}
+
+async function loadPayments(){
+
+const {data}=await supabaseClient
+.from("client_payments")
+.select("*")
+.order("created_at",{ascending:false})
+
+payments=data || []
+
+let html=""
+
+payments.forEach(p=>{
+html+=`
+<tr>
+<td>${p.payment_date || ""}</td>
+<td>${p.invoice_no}</td>
+<td>${p.client_name}</td>
+<td>₹${p.amount}</td>
+<td>${p.payment_method}</td>
+<td>${p.remarks || ""}</td>
+<td>
+<button onclick="deletePayment('${p.id}')">Delete</button>
+</td>
+</tr>`
+})
+
+document.getElementById("paymentTable").innerHTML=html
 }
 
 async function deleteInvoice(id){
@@ -683,6 +773,116 @@ function toggleAllTrips(){
 document.querySelectorAll("#tripList input").forEach(c=>c.checked=selectAll.checked)
 }
 
+async function savePayment(){
+
+let invoiceId=document.getElementById("invoiceSelect").value
+let amount=Number(document.getElementById("amount").value)
+let date=document.getElementById("paymentDate").value
+let method=document.getElementById("method").value
+let remarks=document.getElementById("remarks").value
+
+if(!invoiceId || !amount || !method){
+alert("Fill all fields")
+return
+}
+
+let invoice=invoices.find(x=>x.id==invoiceId)
+
+let newPaid=(invoice.amount_paid || 0) + amount
+let balance=invoice.invoice_amount - newPaid
+
+let status="Pending"
+
+if(balance<=0){
+status="Paid"
+balance=0
+}else if(newPaid>0){
+status="Partially Paid"
+}
+
+await supabaseClient.from("client_payments").insert({
+invoice_id:invoiceId,
+invoice_no:invoice.invoice_no,
+client_name:invoice.client_name,
+amount:amount,
+payment_date:date,
+payment_method:method,
+remarks:remarks
+})
+
+await supabaseClient.from("client_invoices").update({
+amount_paid:newPaid,
+balance_amount:balance,
+payment_status:status
+}).eq("id",invoiceId)
+
+alert("Payment Recorded ✅")
+
+document.getElementById("amount").value=""
+document.getElementById("remarks").value=""
+document.getElementById("paymentDate").value=""
+
+await loadInvoices()
+await loadPayments()
+}
+
+async function deletePayment(id){
+
+if(!confirm("Delete this payment?")) return
+
+const {data:payment}=await supabaseClient
+.from("client_payments")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!payment) return
+
+let invoiceId=payment.invoice_id
+
+await supabaseClient.from("client_payments").delete().eq("id",id)
+
+const {data:allPayments}=await supabaseClient
+.from("client_payments")
+.select("amount")
+.eq("invoice_id",invoiceId)
+
+let totalPaid=0
+allPayments?.forEach(p=>totalPaid+=Number(p.amount))
+
+const {data:invoice}=await supabaseClient
+.from("client_invoices")
+.select("*")
+.eq("id",invoiceId)
+.single()
+
+let balance = invoice.invoice_amount - totalPaid
+
+let status="Pending"
+
+if(totalPaid===0){
+balance=invoice.invoice_amount
+}
+else if(balance<=0){
+status="Paid"
+balance=0
+}
+else{
+status="Partially Paid"
+}
+
+await supabaseClient.from("client_invoices").update({
+amount_paid:totalPaid,
+balance_amount:balance,
+payment_status:status
+}).eq("id",invoiceId)
+
+alert("Payment Deleted")
+
+await loadInvoices()
+await loadPayments()
+}
+    
 </script>
 
 </body>

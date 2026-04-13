@@ -669,15 +669,19 @@ loadCommodities()
 
 async function loadClients(){
 
-const {data}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("clients")
 .select("*")
 .range(clientPage*pageSize,(clientPage+1)*pageSize-1)
 
+if(error){
+console.error(error)
+return
+}
+
 let html=""
 
 data?.forEach(c=>{
-html+=`
 html+=`
 <tr>
 <td>${c.company}</td>
@@ -692,7 +696,7 @@ html+=`
 </tr>`
 })
 
-clientTable.innerHTML=html
+document.getElementById("clientTable").innerHTML = html
 }
 
 function nextClient(){clientPage++;loadClients()}

@@ -908,27 +908,19 @@ let invoiceType = client?.gst_no ? "B2B" : "B2C"
 
 doc.text("Name: " + inv.client_name,15,63)
 
-let address = "Address: " + (client?.address || "N/A")
+doc.text("Address: " + (client?.address || "N/A"),15,70)
 
-let splitAddress = doc.splitTextToSize(address, 90)  // 👈 max width control
+doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,77)
 
-doc.text(splitAddress, 15, 70)
-
-let addressHeight = splitAddress.length * 6   // 👈 dynamic height
-
-doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,70 + addressHeight + 2)
-
-doc.line(15,70 + addressHeight + 10,195,70 + addressHeight + 10)
+doc.line(15,85,195,85)
 
 doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
   
 /* 🔷 TABLE */
-let tableStartY = 70 + addressHeight + 18
-
 doc.autoTable({
-startY: tableStartY,
+startY:95,
 head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
 body:rows,
 theme:"grid",
@@ -936,41 +928,26 @@ headStyles:{ fillColor:[0,102,204], textColor:255 },
 styles:{ fontSize:9 }
 })
 
-let afterTableY = doc.lastAutoTable.finalY
-let pageHeight = doc.internal.pageSize.height
-  
-// 🔥 If table too long → move everything else to next page
-let moveToNextPage = false
-
-  
-/* 🔷 SUMMARY BOX (NEW CLEAN FORMAT) */
-
-let contractValue = Number(inv.total_contract_val || 0)
-let totalExpenses = Number(inv.total_expense || 0)
-let netBilling = contractValue - totalExpenses
-
+/* 🔷 SUMMARY BOX */
 let cgst = inv.gst_total / 2
 let sgst = inv.gst_total / 2
 
 let serviceCharges = Number(inv.total_margin || 0)
-let serviceWithGST = serviceCharges + cgst + sgst
 
-let freightCharges = Number(inv.total_freight || 0)
+let subtotalTaxable = serviceCharges + cgst + sgst
 
-let y = afterTableY + 10
+let freightCharges = Number(inv.total_freight || 0)   // pure agent
 
-let summaryBody = [
+let totalInvoiceValue = subtotalTaxable + freightCharges
 
-["Contract Value", contractValue.toFixed(2)],
+let y = doc.lastAutoTable.finalY + 10
 
-["(-) Expenses (Client Paid)", totalExpenses.toFixed(2)],
-
-[
-  {content:"Net Billing", styles:{fontStyle:'bold'}},
-  {content: netBilling.toFixed(2), styles:{fontStyle:'bold'}}
-],
-
-["Split:", ""],
+doc.autoTable({
+startY:y,
+margin:{left:110},
+tableWidth:85,
+head:[["Tax Summary",""]],
+body:[
 
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 
@@ -978,155 +955,78 @@ let summaryBody = [
 
 ["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
 
-["Freight (Pure Agent)", freightCharges.toFixed(2)],
+["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
 
-[
-  {content:"TOTAL", styles:{fontStyle:'bold'}},
-  {content: netBilling.toFixed(2), styles:{fontStyle:'bold'}}
-]
+["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
-]
+[{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
+ {content: totalInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}]
 
-  
-
-
-/* 🔷 BANK BOX */
-/* 🔷 SIDE-BY-SIDE TABLES FIX */
-
-// SAME Y POSITION
-let commonY = y
-
-/* 🔷 BANK TABLE (LEFT) */
-doc.autoTable({
-startY: commonY,
-margin: { left: 15 },
-tableWidth: 85,
-head: [["Bank Details",""]],
-body: [
-["Bank", "Axis Bank"],
-["A/C No", "924020062188598"],
-["IFSC", "UTIB0000107"],
-["Branch", "Rajahmundry, AP"]
 ],
-theme: "grid",
-headStyles: { fillColor: [0,102,204], textColor: 255 }
-})
-
-/* 🔷 TAX SUMMARY (RIGHT) */
-doc.autoTable({
-startY: commonY,
-margin:{left:110},
-tableWidth:85,
-head:[["Tax Summary",""]],
-body: summaryBody,
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
+/* 🔷 BANK BOX */
+let bankY = y + 5
 
-let bankEndY = doc.previousAutoTable.finalY
-let summaryEndY = doc.lastAutoTable.finalY 
+doc.rect(15,bankY,90,40)
 
-let legalStartY = Math.max(bankEndY, summaryEndY) + 8
+doc.setFontSize(10)
+doc.text("Bank Details",20,bankY+7)
 
-let legalText = `Fuel and other operational expenses, if any, are incurred by the client and paid directly to the transporter. These amounts have no bearing on the service charges of Varada Nexus Private Limited and may be adjusted during settlement solely for convenience. Such expenses may be deducted from the contract value while settling payments with the company for administrative convenience. These amounts do not constitute revenue or form part of the value of taxable supply of the company.
+doc.setFontSize(9)
+doc.text("Bank: Axis Bank",20,bankY+14)
+doc.text("A/C No: 924020062188598",20,bankY+20)
+doc.text("IFSC: UTIB0000107",20,bankY+26)
+doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
+/* 🔷 LEGAL DECLARATION (EXACT TEXT) */
+let legalY = bankY + 50
+
+doc.setFontSize(8)
+doc.setFont("helvetica","bold")
+doc.text("Legal Declaration:",15,legalY)
+
+doc.setFont("helvetica","normal")
+
+let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
 
 Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
 
 Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
 
-All supporting documents for such expenses are available and can be provided upon request.
+All supporting documents for such expenses are available and can be provided upon request.`
 
-This is a system generated GST invoice.
+doc.text(legalText,15,legalY+6,{
+maxWidth:180,
+lineHeightFactor:1.4
+})
 
-Thank you for doing business with Varada Nexus.`
-
-
-// 🔥 AUTO COMPRESS ENGINE
-let legalWidth = 90
-let fontSize = 7
-let lineHeight = 3.5
-
-let splitLegal, legalTextHeight
-
-while (true) {
-
-    doc.setFontSize(fontSize)
-
-    splitLegal = doc.splitTextToSize(legalText, legalWidth)
-    legalTextHeight = splitLegal.length * lineHeight
-
-    let requiredHeight =
-        6 +
-        legalTextHeight +
-        20 +
-        20
-
-    let availableSpace = pageHeight - legalStartY - 10
-
-    if (requiredHeight <= availableSpace) break
-
-    fontSize -= 0.3
-    lineHeight -= 0.1
-
-    if (fontSize < 5.5) break
-}
-
-
-// 🔷 PRINT LEGAL
-doc.setFont("helvetica","bold")
-doc.setFontSize(fontSize)
-doc.text("Legal Declaration:",15,legalStartY)
-
-doc.setFont("helvetica","normal")
-doc.setTextColor(90,90,90)
-
-doc.text(splitLegal,15,legalStartY + 5)
-
-
-/* 🔷 SIGNATURE BESIDE LEGAL DECLARATION */
-
-
-// 🔥 RIGHT SIDE BASE POSITION
-let signX = 115
-let signY = legalStartY - 15  // anchor to top of legal
-
-/* 🔥 STAMP (CENTERED) */
-doc.addImage("images/stamp.png","PNG", signX+25, signY+10, 45, 45)
-
-/* 🔥 SIGNATURE (OVERLAP LOWER STAMP AREA — FIXED) */
-doc.addImage("images/signature.png","PNG", signX+8, signY+44, 48, 16)
-
-/* 🔥 LINE (JUST BELOW STAMP) */
-doc.line(signX+10, signY + 58, signX + 70, signY + 58)
-
-/* 🔥 TEXT */
-doc.setFontSize(9)
-doc.text("Authorized Signatory", signX + 40, signY + 65, { align: "center" })
-  
 /* 🔷 SIGNATURE */
-let legalEndY = legalStartY + 6 + legalTextHeight
+let signY = 255   // move slightly up to make space
 
-doc.setFont("helvetica","bold")
-doc.setFontSize(7)
+/* 🔷 SIGNATURE IMAGE */
+try{
+doc.addImage("images/signature.png","PNG",143,signY-13,40,15)
+}catch(e){}
 
+/* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
+try{
+doc.addImage("images/stamp.png","PNG",155,signY-40,35,35)
+}catch(e){}
 
-/* 🔷 FOOTER (FINE PRINT STYLE) */
-doc.setFontSize(7)                         // 👈 same as legal
-doc.setFont("helvetica","bold")            // 👈 bold like heading
-doc.setTextColor(90,90,90)                 // 👈 grey fine print
+/* 🔷 LINE */
+doc.line(130, signY, 195, signY)
 
+/* 🔷 TEXT */
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
-doc.setFontSize(7)
-doc.setFont("helvetica","bold")
-doc.setTextColor(90,90,90)
-
-
-doc.setTextColor(0,0,0)
-
-doc.setTextColor(0,0,0) // reset
+/* 🔷 FOOTER */
+doc.setFontSize(9)
+doc.text("This is a system generated GST invoice.",15,285)
+doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
 /* 🔷 SAVE */
 doc.save(inv.invoice_no + ".pdf")

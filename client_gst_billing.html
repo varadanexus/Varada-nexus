@@ -511,7 +511,7 @@ if(gstOn === "margin"){
 
 if(gstOn === "total"){
 
-    let netBilling = contract   // DO NOT reduce expense for GST
+    let netBilling = contract - totalExpense
 
     if(gstType === "excluded"){
         gst = netBilling * gstRate
@@ -541,9 +541,9 @@ if(gstType === "excluded"){
 }
 
 document.getElementById("preview").innerHTML = `
-Total Contract Value: ₹${totalContract.toFixed(2)} <br>
-Fuel / Expense Adjustment (Client Facilitated): ₹${totalExpenseAll.toFixed(2)} <br>
-Net Payable by Client: ₹${netBillingTotal.toFixed(2)} <br>
+Total Contract: ₹${totalContract.toFixed(2)} <br>
+Less Expenses (Client Paid): ₹${totalExpenseAll.toFixed(2)} <br>
+Net Billing: ₹${netBillingTotal.toFixed(2)} <br>
 
 Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
 
@@ -957,8 +957,6 @@ body:[
 
 ["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
 
-["Less: Fuel / Expense Adjustment (Client Facilitated)", "-" + Number(inv.total_expense || 0).toFixed(2)],
-  
 ["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
 [{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
@@ -983,43 +981,8 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-/* 🔷 ADJUSTMENT / EXPENSE DECLARATION BOX */
-
-if(Number(inv.total_expense || 0) > 0){
-
-let adjBoxX = 15
-let adjBoxY = bankY + 45
-let adjBoxWidth = 180
-let adjBoxHeight = 30
-
-doc.rect(adjBoxX, adjBoxY, adjBoxWidth, adjBoxHeight)
-
-doc.setFont("helvetica","bold")
-doc.setFontSize(9)
-doc.text("Adjustment Note:", adjBoxX + 3, adjBoxY + 6)
-
-doc.setFont("helvetica","normal")
-doc.setFontSize(8)
-
-let adjustmentText = `Fuel / operational support amounting to ₹${Number(inv.total_expense || 0).toFixed(2)} was arranged directly by the client through designated fuel stations for execution of this trip.
-
-Such support has been adjusted against the total agreed contract value and does not constitute:
-(a) revenue of Varada Nexus Private Limited, or
-(b) a direct payment made to the transporter by the Service Provider.
-
-This adjustment is recorded purely for reconciliation and billing transparency purposes.`
-
-doc.text(adjustmentText, adjBoxX + 3, adjBoxY + 11, {
-maxWidth: adjBoxWidth - 6,
-lineHeightFactor: 1.3
-})
-
-}
-  
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = (Number(inv.total_expense || 0) > 0)
-    ? (bankY + 45 + 30 + 10)
-    : (bankY + 50)
+let legalY = bankY + 50
 
 doc.setFontSize(8)
 doc.setFont("helvetica","bold")
@@ -1035,7 +998,6 @@ Accordingly, only the net consideration retained as service charges constitutes 
 
 All supporting documents for such expenses are available and can be provided upon request.`
 
-  
 doc.text(legalText,15,legalY+6,{
 maxWidth:180,
 lineHeightFactor:1.4

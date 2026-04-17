@@ -1097,21 +1097,20 @@ let signY = legalStartY + 10
 
 /* SIGNATURE */
 try{
-doc.addImage("images/signature.png","PNG",signX,signY,40,15)
+doc.addImage("images/stamp.png","PNG",signX+10,signY+8,45,45)
 }catch(e){}
 
 /* STAMP */
 try{
-doc.addImage("images/stamp.png","PNG",signX+5,signY+5,40,37)
+doc.addImage("images/signature.png","PNG",signX+5,signY,50,18)
 }catch(e){}
 
 /* LINE */
-doc.line(signX, signY + 35, signX + 60, signY + 35)
-
+doc.line(signX+5, signY + 48, signX + 65, signY + 48)
 /* TEXT */
 doc.setFontSize(9)
-doc.text("Authorized Signatory", signX + 30, signY + 42, { align: "center" })
-
+doc.text("Authorized Signatory", signX + 35, signY + 55, { align: "center" })
+  
 /* 🔷 SIGNATURE */
 let legalEndY = legalStartY + 6 + legalTextHeight
 

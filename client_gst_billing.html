@@ -982,15 +982,17 @@ doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = bankY + 50
+let legalY = bankY + 95   // 👈 pushes it into your empty box area
 
-doc.setFontSize(8)
+doc.setFontSize(7)   // 👈 smaller = fine print look
 doc.setFont("helvetica","bold")
 doc.text("Legal Declaration:",15,legalY)
 
 doc.setFont("helvetica","normal")
 
-let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
+let legalText = `Fuel / operational support, if any, arranged by the client through designated fuel stations has been adjusted against the agreed contract value and does not constitute revenue or expense of Varada Nexus Private Limited.
+
+Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
 
 Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
 
@@ -998,10 +1000,14 @@ Accordingly, only the net consideration retained as service charges constitutes 
 
 All supporting documents for such expenses are available and can be provided upon request.`
 
+doc.setTextColor(90,90,90)  // 👈 grey fine print
+
 doc.text(legalText,15,legalY+6,{
-maxWidth:180,
-lineHeightFactor:1.4
+maxWidth:85,   // 👈 CRITICAL: keeps it inside left box only
+lineHeightFactor:1.3
 })
+
+doc.setTextColor(0,0,0) // reset
 
 /* 🔷 SIGNATURE */
 let signY = 255   // move slightly up to make space

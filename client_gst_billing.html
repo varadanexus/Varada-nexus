@@ -941,7 +941,9 @@ let afterTableY = doc.lastAutoTable.finalY
 // 🔥 If table too long → move everything else to next page
 let moveToNextPage = false
 
-if (afterTableY > 200) {
+let pageHeight = doc.internal.pageSize.height
+
+if (afterTableY > pageHeight - 80) {
     doc.addPage()
     moveToNextPage = true
 
@@ -1041,7 +1043,6 @@ theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
-let pageHeight = doc.internal.pageSize.height
 
 let bankEndY = doc.previousAutoTable.finalY
 let summaryEndY = doc.lastAutoTable.finalY 
@@ -1065,21 +1066,13 @@ Thank you for doing business with Varada Nexus.`
   
 // 🔥 PRE-CALCULATE HEIGHT
 
-let legalWidth = 90   // left column width
-let splitLegal = doc.splitTextToSize(legalText, legalWidth)
-let legalTextHeight = splitLegal.length * 3.5
-
-let extraLinesHeight = 12   // for 2 bold lines
-let signatureHeight = 35
-
 let marginBottom = 15
 
-// actual required height
 let requiredHeight =
-    6 +                        // title
-    legalTextHeight +          // legal text
-    20 +                       // spacing + signature block
-    15                         // safety buffer
+    6 +                    // "Legal Declaration" title
+    legalTextHeight +      // full legal paragraph
+    20 +                   // spacing
+    20                     // signature + safety buffer
 
 let availableSpace = pageHeight - legalStartY - marginBottom
 

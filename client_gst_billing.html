@@ -913,10 +913,7 @@ doc.text("Address: " + (client?.address || "N/A"),15,70)
 doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,77)
 
 doc.line(15,85,195,85)
-doc.setDrawColor(180)
-doc.line(15,90,195,90)
 
-  
 doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
@@ -927,9 +924,8 @@ startY:95,
 head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
 body:rows,
 theme:"grid",
-headStyles:{ fillColor:[20,40,80], textColor:255 },
-alternateRowStyles:{ fillColor:[245,247,250] },
-styles:{ fontSize:9, cellPadding:3 }
+headStyles:{ fillColor:[0,102,204], textColor:255 },
+styles:{ fontSize:9 }
 })
 
 /* 🔷 SUMMARY BOX */
@@ -942,8 +938,6 @@ let subtotalTaxable = serviceCharges + cgst + sgst
 
 let freightCharges = Number(inv.total_freight || 0)   // pure agent
 
-let fuelAdjustment = Number(inv.total_expense || 0)
-
 let totalInvoiceValue = subtotalTaxable + freightCharges
 
 let y = doc.lastAutoTable.finalY + 10
@@ -954,12 +948,6 @@ margin:{left:110},
 tableWidth:85,
 head:[["Tax Summary",""]],
 body:[
-
-["Total Contract Value", Number(inv.total_contract_val || 0).toFixed(2)],
-
-["Less: Fuel Support Adjustment", fuelAdjustment.toFixed(2)],
-
-["Net Billing Value", Number(inv.net_billing || 0).toFixed(2)],
 
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 
@@ -976,9 +964,7 @@ body:[
 
 ],
 theme:"grid",
-headStyles:{ fillColor:[20,40,80], textColor:255 },
-alternateRowStyles:{ fillColor:[245,247,250] },
-styles:{ fontSize:9, cellPadding:3 }
+headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
 /* 🔷 BANK BOX */
@@ -995,82 +981,57 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-// 🔥 CLEAN PROFESSIONAL BOTTOM SECTION
+/* 🔷 LEGAL DECLARATION (EXACT TEXT) */
+let legalY = bankY + 50
 
-let currentY = doc.lastAutoTable.finalY + 15
-
-// PAGE BREAK SAFETY
-if(currentY > 250){
-    doc.addPage()
-    currentY = 20
-}
-
-/* 🔷 ADJUSTMENT NOTE */
-if(fuelNote){
-
+doc.setFontSize(8)
 doc.setFont("helvetica","bold")
-doc.setFontSize(9)
-doc.text("Adjustment Note:",15,currentY)
-currentY += 6
-
-let splitFuel = doc.splitTextToSize(fuelNote, 180)
+doc.text("Legal Declaration:",15,legalY)
 
 doc.setFont("helvetica","normal")
-doc.setFontSize(8)
-doc.text(splitFuel,15,currentY)
 
-currentY += splitFuel.length * 5 + 5
-}
+let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
 
-/* 🔷 LEGAL DECLARATION */
-doc.setFont("helvetica","bold")
-doc.setFontSize(9)
-doc.text("Legal Declaration:",15,currentY)
-currentY += 6
+Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
 
-let splitLegal = doc.splitTextToSize(legalText, 180)
+Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
 
-doc.setFont("helvetica","normal")
-doc.setFontSize(8)
-doc.text(splitLegal,15,currentY)
+All supporting documents for such expenses are available and can be provided upon request.`
 
-currentY += splitLegal.length * 5 + 10
+doc.text(legalText,15,legalY+6,{
+maxWidth:180,
+lineHeightFactor:1.4
+})
 
 /* 🔷 SIGNATURE */
-let signY = currentY
+let signY = 255   // move slightly up to make space
 
-if(signY > 260){
-    doc.addPage()
-    signY = 30
-}
-
-/* SIGNATURE IMAGE */
+/* 🔷 SIGNATURE IMAGE */
 try{
-doc.addImage("images/signature.png","PNG",143,signY-10,40,15)
+doc.addImage("images/signature.png","PNG",143,signY-13,40,15)
 }catch(e){}
 
-/* STAMP */
+/* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
 try{
-doc.addImage("images/stamp.png","PNG",155,signY-35,35,35)
+doc.addImage("images/stamp.png","PNG",155,signY-40,35,35)
 }catch(e){}
 
-/* LINE */
+/* 🔷 LINE */
 doc.line(130, signY, 195, signY)
 
-/* TEXT */
+/* 🔷 TEXT */
 doc.setFontSize(9)
 doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
 /* 🔷 FOOTER */
-doc.setFontSize(8)
+doc.setFontSize(9)
 doc.text("This is a system generated GST invoice.",15,285)
 doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
-/* SAVE */
+/* 🔷 SAVE */
 doc.save(inv.invoice_no + ".pdf")
 
-} // ✅ CLOSE generatePDF FUNCTION HERE
-  
+}
 async function loadGSTInvoices(){
 
 const { data, error } = await supabaseClient

@@ -937,7 +937,8 @@ styles:{ fontSize:9 }
 })
 
 let afterTableY = doc.lastAutoTable.finalY
-
+let pageHeight = doc.internal.pageSize.height 
+  
 // 🔥 If table too long → move everything else to next page
 let moveToNextPage = false
 

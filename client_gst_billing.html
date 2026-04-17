@@ -990,7 +990,7 @@ doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = bankY + 50
+let legalY = doc.lastAutoTable.finalY + 20
 
 doc.setFontSize(8)
 doc.setFont("helvetica","bold")
@@ -1012,24 +1012,60 @@ if(fuelAdjustment > 0){
 fuelNote = `Fuel support amounting to ₹${fuelAdjustment.toFixed(2)} was arranged by the client through a designated fuel station on behalf of Varada Nexus Private Limited. The same has been adjusted against the total agreed contract value and does not constitute a direct payment to the transporter or an expense of the Service Provider.`
 }
 
+let currentY = doc.lastAutoTable.finalY + 10
+
+
+// ✅ PAGE BREAK CHECK
+if(currentY > 250){
+doc.addPage()
+currentY = 20
+}
+  
 if(fuelNote){
+
 doc.setFont("helvetica","bold")
-doc.text("Adjustment Note:",15,legalY - 8)
+doc.text("Adjustment Note:",15,currentY)
+
+currentY += 6
 
 doc.setFont("helvetica","normal")
-doc.text(fuelNote,15,legalY - 2,{
+doc.text(fuelNote,15,currentY,{
 maxWidth:180,
 lineHeightFactor:1.4
 })
+
+currentY += 18   // spacing after note
+
+// ✅ PAGE BREAK AGAIN (after fuel note)
+if(currentY > 250){
+doc.addPage()
+currentY = 20
 }
 
-doc.text(legalText,15,legalY+6,{
+// ✅ FINAL PAGE CHECK BEFORE LEGAL BLOCK
+if(currentY > 250){
+doc.addPage()
+currentY = 20
+}
+  
+doc.setFont("helvetica","bold")
+doc.text("Legal Declaration:",15,currentY)
+
+currentY += 6
+
+doc.setFont("helvetica","normal")
+doc.text(legalText,15,currentY,{
 maxWidth:180,
 lineHeightFactor:1.4
 })
 
 /* 🔷 SIGNATURE */
-let signY = 255   // move slightly up to make space
+let signY = currentY + 40
+
+if(signY > 270){
+doc.addPage()
+signY = 40
+} // move slightly up to make space
 
 /* 🔷 SIGNATURE IMAGE */
 try{

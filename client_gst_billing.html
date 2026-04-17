@@ -1044,10 +1044,24 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 let pageHeight = doc.internal.pageSize.height
 
 let bankEndY = doc.previousAutoTable.finalY
-let summaryEndY = doc.lastAutoTable.finalY
+let summaryEndY = doc.lastAutoTable.finalY 
 
 let legalStartY = Math.max(bankEndY, summaryEndY) + 10
 
+let legalText = `Fuel and other operational expenses, if any, are incurred by the client and paid directly to the transporter. These amounts have no bearing on the service charges of Varada Nexus Private Limited and may be adjusted during settlement solely for convenience. Such expenses may be deducted from the contract value while settling payments with the company for administrative convenience. These amounts do not constitute revenue or form part of the value of taxable supply of the company.
+
+Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
+
+Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
+
+Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
+
+All supporting documents for such expenses are available and can be provided upon request.
+
+This is a system generated GST invoice.
+
+Thank you for doing business with Varada Nexus.`
+  
 // 🔥 PRE-CALCULATE HEIGHT
 
 let splitLegal = doc.splitTextToSize(legalText, 85)
@@ -1070,20 +1084,6 @@ doc.setFont("helvetica","bold")
 doc.text("Legal Declaration:",15,legalStartY)
 
 doc.setFont("helvetica","normal")
-
-let legalText = `Fuel and other operational expenses, if any, are incurred by the client and paid directly to the transporter. These amounts have no bearing on the service charges of Varada Nexus Private Limited and may be adjusted during settlement solely for convenience. Such expenses may be deducted from the contract value while settling payments with the company for administrative convenience. These amounts do not constitute revenue or form part of the value of taxable supply of the company.
-
-Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
-
-Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
-
-Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
-
-All supporting documents for such expenses are available and can be provided upon request.
-
-This is a system generated GST invoice.
-
-Thank you for doing business with Varada Nexus.`
 
 doc.setTextColor(90,90,90)  // 👈 grey fine print
 

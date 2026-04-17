@@ -944,6 +944,21 @@ let moveToNextPage = false
 if (afterTableY > 200) {
     doc.addPage()
     moveToNextPage = true
+
+    // 🔥 REPEAT HEADER ON PAGE 2
+    doc.setFont("helvetica","bold")
+    doc.setFontSize(14)
+    doc.text("VARADA NEXUS PRIVATE LIMITED",45,18)
+
+    doc.setFont("helvetica","normal")
+    doc.setFontSize(8)
+    doc.text("GST: 37AAKCV7495B1ZV",45,22)
+    doc.text("Address: 80-17-28, K B Nagar, A V A Road,",45,25)
+    doc.text("Rajahmundry, Andhra Pradesh - 533101",45,28)
+
+    doc.setFont("helvetica","bold")
+    doc.setFontSize(14)
+    doc.text("GST INVOICE (Contd.)",180,20,{ align: "right" })
 }
   
 /* 🔷 SUMMARY BOX (NEW CLEAN FORMAT) */
@@ -1003,7 +1018,7 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 
 
 /* 🔷 BANK BOX */
-let bankY = y + 5
+let bankY = doc.lastAutoTable.finalY + 10
 
 doc.rect(15,bankY,90,40)
 

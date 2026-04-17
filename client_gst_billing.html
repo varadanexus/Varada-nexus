@@ -1072,10 +1072,18 @@ let legalTextHeight = splitLegal.length * 3.5
 let extraLinesHeight = 12   // for 2 bold lines
 let signatureHeight = 35
 
-let totalRequiredHeight = 6 + legalTextHeight + extraLinesHeight + signatureHeight
+let marginBottom = 15
 
-// 🔥 ONLY MOVE PAGE IF FULL BLOCK DOESN’T FIT
-if (legalStartY + totalRequiredHeight > pageHeight - 10) {
+// actual required height
+let requiredHeight =
+    6 +                        // title
+    legalTextHeight +          // legal text
+    20 +                       // spacing + signature block
+    15                         // safety buffer
+
+let availableSpace = pageHeight - legalStartY - marginBottom
+
+if (requiredHeight > availableSpace) {
     doc.addPage()
     legalStartY = 20
 }
@@ -1097,7 +1105,7 @@ doc.text(splitLegal,15,legalStartY + 6)
 let signX = 15 + legalWidth + 10
 
 let legalBlockHeight = 6 + (splitLegal.length * 3.5)
-let signY = legalStartY + (legalBlockHeight / 2) - 10
+let signY = legalStartY + legalTextHeight + 10
 
 /* SIGNATURE */
 try{

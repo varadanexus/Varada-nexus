@@ -913,7 +913,10 @@ doc.text("Address: " + (client?.address || "N/A"),15,70)
 doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,77)
 
 doc.line(15,85,195,85)
+doc.setDrawColor(180)
+doc.line(15,90,195,90)
 
+  
 doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
@@ -924,7 +927,9 @@ startY:95,
 head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
 body:rows,
 theme:"grid",
-headStyles:{ fillColor:[0,102,204], textColor:255 },
+headStyles:{ fillColor:[20,40,80], textColor:255 },
+alternateRowStyles:{ fillColor:[245,247,250] },
+styles:{ fontSize:9, cellPadding:3 },
 styles:{ fontSize:9 }
 })
 
@@ -972,7 +977,9 @@ body:[
 
 ],
 theme:"grid",
-headStyles:{ fillColor:[0,102,204], textColor:255 }
+headStyles:{ fillColor:[20,40,80], textColor:255 },
+alternateRowStyles:{ fillColor:[245,247,250] },
+styles:{ fontSize:9, cellPadding:3 }
 })
 
 /* 🔷 BANK BOX */
@@ -990,107 +997,42 @@ doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = doc.lastAutoTable.finalY + 20
+// 🔥 CLEAN PROFESSIONAL BOTTOM SECTION
 
-doc.setFontSize(8)
-doc.setFont("helvetica","bold")
-doc.text("Legal Declaration:",15,legalY)
+let currentY = doc.lastAutoTable.finalY + 15
 
-doc.setFont("helvetica","normal")
-
-let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
-
-Freight charges are incurred by us as a Pure Agent of the client under Rule 33 of CGST Rules, 2017. These are recovered at actuals without any markup and are excluded from the value of supply for GST purposes.
-
-Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
-
-All supporting documents for such expenses are available and can be provided upon request.`
-
-let fuelNote = ""
-
-if(fuelAdjustment > 0){
-fuelNote = `Fuel support amounting to ₹${fuelAdjustment.toFixed(2)} was arranged by the client through a designated fuel station on behalf of Varada Nexus Private Limited. The same has been adjusted against the total agreed contract value and does not constitute a direct payment to the transporter or an expense of the Service Provider.`
-}
-
-let currentY = doc.lastAutoTable.finalY + 10
-
-
-// ✅ PAGE BREAK CHECK
+// PAGE BREAK SAFETY
 if(currentY > 250){
-doc.addPage()
-currentY = 20
+    doc.addPage()
+    currentY = 20
 }
-  
+
+/* 🔷 ADJUSTMENT NOTE */
 if(fuelNote){
 
 doc.setFont("helvetica","bold")
+doc.setFontSize(9)
 doc.text("Adjustment Note:",15,currentY)
-
 currentY += 6
 
+let splitFuel = doc.splitTextToSize(fuelNote, 180)
+
 doc.setFont("helvetica","normal")
-doc.text(fuelNote,15,currentY,{
-maxWidth:180,
-lineHeightFactor:1.4
-})
+doc.setFontSize(8)
+doc.text(splitFuel,15,currentY)
 
-currentY += 18   // spacing after note
-
-// ✅ PAGE BREAK AGAIN (after fuel note)
-if(currentY > 250){
-doc.addPage()
-currentY = 20
+currentY += splitFuel.length * 5 + 5
 }
 
-// ✅ FINAL PAGE CHECK BEFORE LEGAL BLOCK
-if(currentY > 250){
-doc.addPage()
-currentY = 20
-}
-  
+/* 🔷 LEGAL DECLARATION */
 doc.setFont("helvetica","bold")
+doc.setFontSize(9)
 doc.text("Legal Declaration:",15,currentY)
-
 currentY += 6
 
-doc.setFont("helvetica","normal")
-doc.text(legalText,15,currentY,{
-maxWidth:180,
-lineHeightFactor:1.4
-})
+let splitLegal = doc.splitTextToSize(legalText, 180)
 
-/* 🔷 SIGNATURE */
-let signY = currentY + 40
-
-if(signY > 270){
-doc.addPage()
-signY = 40
-} // move slightly up to make space
-
-/* 🔷 SIGNATURE IMAGE */
-try{
-doc.addImage("images/signature.png","PNG",143,signY-13,40,15)
-}catch(e){}
-
-/* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
-try{
-doc.addImage("images/stamp.png","PNG",155,signY-40,35,35)
-}catch(e){}
-
-/* 🔷 LINE */
-doc.line(130, signY, 195, signY)
-
-/* 🔷 TEXT */
-doc.setFontSize(9)
-doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
-
-/* 🔷 FOOTER */
-doc.setFontSize(9)
-doc.text("This is a system generated GST invoice.",15,285)
-doc.text("Thank you for doing business with Varada Nexus.",15,292)
-
-/* 🔷 SAVE */
-doc.save(inv.invoice_no + ".pdf")
+doc.setFont("hel
 }
 }
 

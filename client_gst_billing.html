@@ -1046,14 +1046,6 @@ let pageHeight = doc.internal.pageSize.height
 let bankEndY = doc.previousAutoTable.finalY
 let summaryEndY = doc.lastAutoTable.finalY 
 
-/* 🔥 SIGNATURE POSITION FIX */
-let signStartY = summaryEndY + 10
-let requiredHeight = 40   // space needed for stamp + signature
-
-if (signStartY + requiredHeight > pageHeight - 10) {
-    doc.addPage()
-    signStartY = 20
-}
   
 let legalStartY = Math.max(bankEndY, summaryEndY) + 10
 
@@ -1073,7 +1065,8 @@ Thank you for doing business with Varada Nexus.`
   
 // 🔥 PRE-CALCULATE HEIGHT
 
-let splitLegal = doc.splitTextToSize(legalText, 85)
+let legalWidth = 90   // left column width
+let splitLegal = doc.splitTextToSize(legalText, legalWidth)
 let legalTextHeight = splitLegal.length * 3.5
 
 let extraLinesHeight = 12   // for 2 bold lines
@@ -1098,7 +1091,30 @@ doc.setTextColor(90,90,90)  // 👈 grey fine print
 
 doc.text(splitLegal,15,legalStartY + 6)
 
-doc.setTextColor(0,0,0) // reset
+/* 🔷 SIGNATURE BESIDE LEGAL DECLARATION */
+
+
+let signX = 15 + legalWidth + 10
+
+let legalBlockHeight = 6 + (splitLegal.length * 3.5)
+let signY = legalStartY + (legalBlockHeight / 2) - 10
+
+/* SIGNATURE */
+try{
+doc.addImage("images/signature.png","PNG",signX,signY,40,15)
+}catch(e){}
+
+/* STAMP */
+try{
+doc.addImage("images/stamp.png","PNG",signX+10,signY-20,35,35)
+}catch(e){}
+
+/* LINE */
+doc.line(signX, signY + 12, signX + 60, signY + 12)
+
+/* TEXT */
+doc.setFontSize(9)
+doc.text("Authorized Signatory", signX + 30, signY + 18, { align: "center" })
 
 /* 🔷 SIGNATURE */
 let legalEndY = legalStartY + 6 + legalTextHeight
@@ -1106,32 +1122,12 @@ let legalEndY = legalStartY + 6 + legalTextHeight
 doc.setFont("helvetica","bold")
 doc.setFontSize(7)
 
-  
-/* 🔷 SIGNATURE BELOW TAX SUMMARY */
-
-try{
-doc.addImage("images/signature.png","PNG",143,signStartY,40,15)
-}catch(e){}
-
-try{
-doc.addImage("images/stamp.png","PNG",155,signStartY-20,35,35)
-}catch(e){}
-
-/* LINE */
-doc.line(130, signStartY + 10, 195, signStartY + 10)
-
-/* TEXT */
-doc.setFontSize(9)
-doc.text("Authorized Signatory", 162, signStartY + 15, { align: "center" })
-
 
 /* 🔷 FOOTER (FINE PRINT STYLE) */
 doc.setFontSize(7)                         // 👈 same as legal
 doc.setFont("helvetica","bold")            // 👈 bold like heading
 doc.setTextColor(90,90,90)                 // 👈 grey fine print
 
-/* 🔷 FOOTER — DYNAMIC POSITION */
-let footerY = signStartY + 25  // 👈 always below signature
 
 doc.setFontSize(7)
 doc.setFont("helvetica","bold")

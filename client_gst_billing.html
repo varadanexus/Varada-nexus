@@ -1046,6 +1046,15 @@ let pageHeight = doc.internal.pageSize.height
 let bankEndY = doc.previousAutoTable.finalY
 let summaryEndY = doc.lastAutoTable.finalY 
 
+/* 🔥 SIGNATURE POSITION FIX */
+let signStartY = summaryEndY + 10
+let requiredHeight = 40   // space needed for stamp + signature
+
+if (signStartY + requiredHeight > pageHeight - 10) {
+    doc.addPage()
+    signStartY = 20
+}
+  
 let legalStartY = Math.max(bankEndY, summaryEndY) + 10
 
 let legalText = `Fuel and other operational expenses, if any, are incurred by the client and paid directly to the transporter. These amounts have no bearing on the service charges of Varada Nexus Private Limited and may be adjusted during settlement solely for convenience. Such expenses may be deducted from the contract value while settling payments with the company for administrative convenience. These amounts do not constitute revenue or form part of the value of taxable supply of the company.
@@ -1099,10 +1108,22 @@ doc.setFontSize(7)
 
 let signY = legalStartY + 60   // 🔥 fixed alignment
   
-if (signY > pageHeight - 40) {
-    doc.addPage()
-    signY = 40
-}
+/* 🔷 SIGNATURE BELOW TAX SUMMARY */
+
+try{
+doc.addImage("images/signature.png","PNG",143,signStartY,40,15)
+}catch(e){}
+
+try{
+doc.addImage("images/stamp.png","PNG",155,signStartY-20,35,35)
+}catch(e){}
+
+/* LINE */
+doc.line(130, signStartY + 10, 195, signStartY + 10)
+
+/* TEXT */
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signStartY + 15, { align: "center" })
   
 /* 🔷 SIGNATURE IMAGE */
 try{

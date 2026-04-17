@@ -947,7 +947,7 @@ startY:y,
 margin:{left:110},
 tableWidth:85,
 head:[["Tax Summary",""]],
-body:[
+let summaryBody = [
 
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 
@@ -955,14 +955,22 @@ body:[
 
 ["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
 
-["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
+["Subtotal (Taxable)", subtotalTaxable.toFixed(2)]
 
+]
+
+// 🔥 ONLY ADD IF EXPENSE EXISTS
+if(totalExpenses > 0){
+summaryBody.push(["Less: Expenses (Client Paid)", totalExpenses.toFixed(2)])
+}
+
+summaryBody.push(
 ["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
-
-[{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
- {content: totalInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}]
-
-],
+[
+{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
+{content: totalInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}
+]
+)
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }
 })

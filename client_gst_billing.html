@@ -1020,20 +1020,24 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 /* 🔷 BANK BOX */
 let bankY = doc.lastAutoTable.finalY + 10
 
-doc.rect(15,bankY,90,40)
-
-doc.setFontSize(10)
-doc.text("Bank Details",20,bankY+7)
-
-doc.setFontSize(9)
-doc.text("Bank: Axis Bank",20,bankY+14)
-doc.text("A/C No: 924020062188598",20,bankY+20)
-doc.text("IFSC: UTIB0000107",20,bankY+26)
-doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+doc.autoTable({
+startY: bankY,
+margin: { left: 15 },
+tableWidth: 90,
+head: [["Bank Details",""]],
+body: [
+["Bank", "Axis Bank"],
+["A/C No", "924020062188598"],
+["IFSC", "UTIB0000107"],
+["Branch", "Rajahmundry, AP"]
+],
+theme: "grid",
+headStyles: { fillColor: [0,102,204], textColor: 255 }
+})
 
 let pageHeight = doc.internal.pageSize.height
 
-let legalStartY = bankY + 50
+let legalStartY = doc.lastAutoTable.finalY + 10
 
 if (legalStartY > pageHeight - 80) {
     doc.addPage()

@@ -946,6 +946,8 @@ let totalExpenses = Number(inv.total_expense || 0)
 
 let summaryBody = [
 
+["Total Contract Value", totalContract.toFixed(2)], 
+  
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 
 ["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],

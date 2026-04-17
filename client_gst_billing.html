@@ -1089,27 +1089,22 @@ doc.text(splitLegal,15,legalStartY + 5)
 /* 🔷 SIGNATURE BESIDE LEGAL DECLARATION */
 
 
-// 🔥 RIGHT SIDE ALIGN (FIXED POSITION)
-let signX = 115   // 👈 pushes to right side properly
+// 🔥 RIGHT SIDE BASE POSITION
+let signX = 115
+let signY = legalStartY + 5   // anchor to top of legal
 
-// 🔥 ALIGN TO TOP OF LEGAL BLOCK (NOT BOTTOM)
-let signY = legalStartY + 10
+/* 🔥 STAMP (CENTERED) */
+doc.addImage("images/stamp.png","PNG", signX+10, signY+10, 45, 45)
 
-/* SIGNATURE */
-try{
-doc.addImage("images/stamp.png","PNG",signX+10,signY+8,45,45)
-}catch(e){}
+/* 🔥 SIGNATURE (OVERLAP LOWER STAMP AREA — FIXED) */
+doc.addImage("images/signature.png","PNG", signX+8, signY+32, 48, 16)
 
-/* STAMP */
-try{
-doc.addImage("images/signature.png","PNG",signX+5,signY,50,18)
-}catch(e){}
+/* 🔥 LINE (JUST BELOW STAMP) */
+doc.line(signX+10, signY + 58, signX + 70, signY + 58)
 
-/* LINE */
-doc.line(signX+5, signY + 48, signX + 65, signY + 48)
-/* TEXT */
+/* 🔥 TEXT */
 doc.setFontSize(9)
-doc.text("Authorized Signatory", signX + 35, signY + 55, { align: "center" })
+doc.text("Authorized Signatory", signX + 40, signY + 65, { align: "center" })
   
 /* 🔷 SIGNATURE */
 let legalEndY = legalStartY + 6 + legalTextHeight

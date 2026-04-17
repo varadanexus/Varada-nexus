@@ -917,6 +917,10 @@ doc.line(15,85,195,85)
 doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
+
+let y = doc.lastAutoTable.finalY + 10
+let serviceCharges = Number(inv.total_margin || 0)
+let y = doc.lastAutoTable.finalY + 10
   
 /* 🔷 TABLE */
 doc.autoTable({
@@ -931,6 +935,8 @@ styles:{ fontSize:9 }
 /* 🔷 SUMMARY BOX */
 let cgst = inv.gst_total / 2
 let sgst = inv.gst_total / 2
+
+let serviceCharges = Number(inv.total_margin || 0)
 
 let contractValue = Number(inv.total_contract_val || 0)
 let totalExpenses = Number(inv.total_expense || 0)

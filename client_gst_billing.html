@@ -918,11 +918,7 @@ doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
 
-let y = doc.lastAutoTable.finalY + 10
-let serviceCharges = Number(inv.total_margin || 0)
-let y = doc.lastAutoTable.finalY + 10
-  
-/* 🔷 TABLE */
+// Trips table
 doc.autoTable({
 startY:95,
 head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
@@ -932,6 +928,9 @@ headStyles:{ fillColor:[0,102,204], textColor:255 },
 styles:{ fontSize:9 }
 })
 
+// define y
+let y = doc.lastAutoTable.finalY + 10
+  
 /* 🔷 SUMMARY BOX */
 let cgst = inv.gst_total / 2
 let sgst = inv.gst_total / 2
@@ -970,6 +969,7 @@ let summaryBody = [
 
 ]
   
+/* SUMMARY */
 doc.autoTable({
 startY:y,
 margin:{left:110},
@@ -978,9 +978,10 @@ head:[["Tax Summary",""]],
 body: summaryBody,
 theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }
-}) 
-  
+})
 
+// ✅ UPDATE y (NO let)
+y = doc.lastAutoTable.finalY + 10
 
 /* 🔷 BANK BOX */
 let bankY = y + 5

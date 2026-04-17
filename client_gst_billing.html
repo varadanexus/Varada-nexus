@@ -1005,25 +1005,20 @@ let summaryBody = [
 
 ]
 
-doc.autoTable({
-startY:y,
-margin:{left:110},
-tableWidth:85,
-head:[["Tax Summary",""]],
-body: summaryBody,
-theme:"grid",
-headStyles:{ fillColor:[0,102,204], textColor:255 }
-})
   
 
 
 /* 🔷 BANK BOX */
-let bankY = doc.lastAutoTable.finalY + 10
+/* 🔷 SIDE-BY-SIDE TABLES FIX */
 
+// SAME Y POSITION
+let commonY = y
+
+/* 🔷 BANK TABLE (LEFT) */
 doc.autoTable({
-startY: bankY,
+startY: commonY,
 margin: { left: 15 },
-tableWidth: 90,
+tableWidth: 85,
 head: [["Bank Details",""]],
 body: [
 ["Bank", "Axis Bank"],
@@ -1035,9 +1030,23 @@ theme: "grid",
 headStyles: { fillColor: [0,102,204], textColor: 255 }
 })
 
+/* 🔷 TAX SUMMARY (RIGHT) */
+doc.autoTable({
+startY: commonY,
+margin:{left:110},
+tableWidth:85,
+head:[["Tax Summary",""]],
+body: summaryBody,
+theme:"grid",
+headStyles:{ fillColor:[0,102,204], textColor:255 }
+})
+
 let pageHeight = doc.internal.pageSize.height
 
-let legalStartY = doc.lastAutoTable.finalY + 10
+let bankEndY = doc.previousAutoTable.finalY
+let summaryEndY = doc.lastAutoTable.finalY
+
+let legalStartY = Math.max(bankEndY, summaryEndY) + 10
 
 if (legalStartY > pageHeight - 80) {
     doc.addPage()

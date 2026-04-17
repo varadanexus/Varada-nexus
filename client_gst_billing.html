@@ -955,11 +955,13 @@ let summaryBody = [
   {content: netBilling.toFixed(2), styles:{fontStyle:'bold'}}
 ],
 
-["", ""],
-
 ["Split:", ""],
 
-["Service (Incl GST)", serviceWithGST.toFixed(2)],
+["Logistics Coordination Charges", serviceCharges.toFixed(2)],
+
+["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
+
+["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
 
 ["Freight (Pure Agent)", freightCharges.toFixed(2)],
 

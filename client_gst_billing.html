@@ -1063,6 +1063,10 @@ All supporting documents for such expenses are available and can be provided upo
 This is a system generated GST invoice.
 
 Thank you for doing business with Varada Nexus.`
+
+let legalWidth = 90
+let splitLegal = doc.splitTextToSize(legalText, legalWidth)
+let legalTextHeight = splitLegal.length * 3.5
   
 // 🔥 PRE-CALCULATE HEIGHT
 

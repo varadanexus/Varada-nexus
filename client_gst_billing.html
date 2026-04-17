@@ -937,31 +937,11 @@ styles:{ fontSize:9 }
 })
 
 let afterTableY = doc.lastAutoTable.finalY
-let pageHeight = doc.internal.pageSize.height 
+let pageHeight = doc.internal.pageSize.height
   
 // 🔥 If table too long → move everything else to next page
 let moveToNextPage = false
 
-
-if (afterTableY > pageHeight - 80) {
-    doc.addPage()
-    moveToNextPage = true
-
-    // 🔥 REPEAT HEADER ON PAGE 2
-    doc.setFont("helvetica","bold")
-    doc.setFontSize(14)
-    doc.text("VARADA NEXUS PRIVATE LIMITED",45,18)
-
-    doc.setFont("helvetica","normal")
-    doc.setFontSize(8)
-    doc.text("GST: 37AAKCV7495B1ZV",45,22)
-    doc.text("Address: 80-17-28, K B Nagar, A V A Road,",45,25)
-    doc.text("Rajahmundry, Andhra Pradesh - 533101",45,28)
-
-    doc.setFont("helvetica","bold")
-    doc.setFontSize(14)
-    doc.text("GST INVOICE (Contd.)",180,20,{ align: "right" })
-}
   
 /* 🔷 SUMMARY BOX (NEW CLEAN FORMAT) */
 
@@ -977,7 +957,7 @@ let serviceWithGST = serviceCharges + cgst + sgst
 
 let freightCharges = Number(inv.total_freight || 0)
 
-let y = moveToNextPage ? 20 : afterTableY + 10
+let y = afterTableY + 10
 
 let summaryBody = [
 
@@ -1047,8 +1027,7 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 let bankEndY = doc.previousAutoTable.finalY
 let summaryEndY = doc.lastAutoTable.finalY 
 
-  
-let legalStartY = Math.max(bankEndY, summaryEndY) + 10
+let legalStartY = Math.max(bankEndY, summaryEndY) + 8
 
 let legalText = `Fuel and other operational expenses, if any, are incurred by the client and paid directly to the transporter. These amounts have no bearing on the service charges of Varada Nexus Private Limited and may be adjusted during settlement solely for convenience. Such expenses may be deducted from the contract value while settling payments with the company for administrative convenience. These amounts do not constitute revenue or form part of the value of taxable supply of the company.
 
@@ -1064,38 +1043,48 @@ This is a system generated GST invoice.
 
 Thank you for doing business with Varada Nexus.`
 
-// ✅ FIRST DEFINE TEXT SIZE (VERY IMPORTANT)
+
+// 🔥 AUTO COMPRESS ENGINE
 let legalWidth = 90
-let splitLegal = doc.splitTextToSize(legalText, legalWidth)
-let legalTextHeight = splitLegal.length * 3.5
+let fontSize = 7
+let lineHeight = 3.5
 
-// ✅ NOW PAGE BREAK LOGIC
-let marginBottom = 15
+let splitLegal, legalTextHeight
 
-let requiredHeight =
-    6 +                    // title
-    legalTextHeight +      // full text
-    25 +                   // spacing
-    25                     // signature space
+while (true) {
 
-let availableSpace = pageHeight - legalStartY - marginBottom
+    doc.setFontSize(fontSize)
 
-// 🔥 ONLY MOVE IF REALLY NEEDED
-if (requiredHeight > availableSpace) {
-    doc.addPage()
-    legalStartY = 20
+    splitLegal = doc.splitTextToSize(legalText, legalWidth)
+    legalTextHeight = splitLegal.length * lineHeight
+
+    let requiredHeight =
+        6 +
+        legalTextHeight +
+        20 +
+        20
+
+    let availableSpace = pageHeight - legalStartY - 10
+
+    if (requiredHeight <= availableSpace) break
+
+    fontSize -= 0.3
+    lineHeight -= 0.1
+
+    if (fontSize < 5.5) break
 }
-  
 
-doc.setFontSize(7)   // 👈 smaller = fine print look
+
+// 🔷 PRINT LEGAL
 doc.setFont("helvetica","bold")
+doc.setFontSize(fontSize)
 doc.text("Legal Declaration:",15,legalStartY)
 
 doc.setFont("helvetica","normal")
+doc.setTextColor(90,90,90)
 
-doc.setTextColor(90,90,90)  // 👈 grey fine print
+doc.text(splitLegal,15,legalStartY + 5)
 
-doc.text(splitLegal,15,legalStartY + 6)
 
 /* 🔷 SIGNATURE BESIDE LEGAL DECLARATION */
 
@@ -1103,7 +1092,7 @@ doc.text(splitLegal,15,legalStartY + 6)
 let signX = 15 + legalWidth + 10
 
 let legalBlockHeight = 6 + (splitLegal.length * 3.5)
-let signY = legalStartY + legalTextHeight + 10
+let signY = legalStartY + legalTextHeight + 8
 
 /* SIGNATURE */
 try{

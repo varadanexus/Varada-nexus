@@ -1106,7 +1106,7 @@ let legalEndY = legalStartY + 6 + legalTextHeight
 doc.setFont("helvetica","bold")
 doc.setFontSize(7)
 
-let signY = legalStartY + 60   // 🔥 fixed alignment
+
   
 /* 🔷 SIGNATURE BELOW TAX SUMMARY */
 
@@ -1125,22 +1125,6 @@ doc.line(130, signStartY + 10, 195, signStartY + 10)
 doc.setFontSize(9)
 doc.text("Authorized Signatory", 162, signStartY + 15, { align: "center" })
   
-/* 🔷 SIGNATURE IMAGE */
-try{
-doc.addImage("images/signature.png","PNG",143,signY-13,40,15)
-}catch(e){}
-
-/* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
-try{
-doc.addImage("images/stamp.png","PNG",155,signY-40,35,35)
-}catch(e){}
-
-/* 🔷 LINE */
-doc.line(130, signY, 195, signY)
-
-/* 🔷 TEXT */
-doc.setFontSize(9)
-doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
 /* 🔷 FOOTER (FINE PRINT STYLE) */
 doc.setFontSize(7)                         // 👈 same as legal

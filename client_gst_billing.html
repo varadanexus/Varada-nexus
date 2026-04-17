@@ -941,7 +941,6 @@ let afterTableY = doc.lastAutoTable.finalY
 // 🔥 If table too long → move everything else to next page
 let moveToNextPage = false
 
-let pageHeight = doc.internal.pageSize.height
 
 if (afterTableY > pageHeight - 80) {
     doc.addPage()
@@ -1064,22 +1063,23 @@ This is a system generated GST invoice.
 
 Thank you for doing business with Varada Nexus.`
 
+// ✅ FIRST DEFINE TEXT SIZE (VERY IMPORTANT)
 let legalWidth = 90
 let splitLegal = doc.splitTextToSize(legalText, legalWidth)
 let legalTextHeight = splitLegal.length * 3.5
-  
-// 🔥 PRE-CALCULATE HEIGHT
 
+// ✅ NOW PAGE BREAK LOGIC
 let marginBottom = 15
 
 let requiredHeight =
-    6 +                    // "Legal Declaration" title
-    legalTextHeight +      // full legal paragraph
-    20 +                   // spacing
-    20                     // signature + safety buffer
+    6 +                    // title
+    legalTextHeight +      // full text
+    25 +                   // spacing
+    25                     // signature space
 
 let availableSpace = pageHeight - legalStartY - marginBottom
 
+// 🔥 ONLY MOVE IF REALLY NEEDED
 if (requiredHeight > availableSpace) {
     doc.addPage()
     legalStartY = 20

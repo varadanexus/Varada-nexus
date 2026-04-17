@@ -1051,8 +1051,18 @@ doc.setFontSize(7)                         // 👈 same as legal
 doc.setFont("helvetica","bold")            // 👈 bold like heading
 doc.setTextColor(90,90,90)                 // 👈 grey fine print
 
-doc.text("This is a system generated GST invoice.",15,282)
-doc.text("Thank you for doing business with Varada Nexus.",15,287)
+/* 🔷 FOOTER — DYNAMIC POSITION */
+let footerY = signY + 12   // 👈 always below signature
+
+doc.setFontSize(7)
+doc.setFont("helvetica","bold")
+doc.setTextColor(90,90,90)
+
+/* LEFT SIDE BELOW SIGNATURE */
+doc.text("This is a system generated GST invoice.",15,footerY)
+doc.text("Thank you for doing business with Varada Nexus.",15,footerY + 5)
+
+doc.setTextColor(0,0,0)
 
 doc.setTextColor(0,0,0) // reset
 

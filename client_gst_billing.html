@@ -1097,7 +1097,7 @@ let legalEndY = legalStartY + 6 + legalTextHeight
 doc.setFont("helvetica","bold")
 doc.setFontSize(7)
 
-let signY = legalEndY + 25 
+let signY = legalStartY + 60   // 🔥 fixed alignment
   
 if (signY > pageHeight - 40) {
     doc.addPage()

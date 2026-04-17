@@ -1016,20 +1016,18 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-/* 🔷 LEGAL DECLARATION (EXACT TEXT) */
 let pageHeight = doc.internal.pageSize.height
 
-// 🔥 If already moved to next page → use same page
-if (!moveToNextPage && (bankY + 120 > pageHeight)) {
+let legalStartY = bankY + 50
+
+if (legalStartY > pageHeight - 80) {
     doc.addPage()
-    legalY = 20
-} else {
-    legalY = pageHeight - 60
+    legalStartY = 20
 }
 
 doc.setFontSize(7)   // 👈 smaller = fine print look
 doc.setFont("helvetica","bold")
-doc.text("Legal Declaration:",15,legalY)
+doc.text("Legal Declaration:",15,legalStartY)
 
 doc.setFont("helvetica","normal")
 
@@ -1045,7 +1043,7 @@ All supporting documents for such expenses are available and can be provided upo
 
 doc.setTextColor(90,90,90)  // 👈 grey fine print
 
-doc.text(legalText,15,legalY+6,{
+doc.text(legalText,15,legalStartY + 6,{
 maxWidth:85,   // 👈 CRITICAL: keeps it inside left box only
 lineHeightFactor:1.3
 })
@@ -1053,8 +1051,13 @@ lineHeightFactor:1.3
 doc.setTextColor(0,0,0) // reset
 
 /* 🔷 SIGNATURE */
-let signY = legalY - 20   // 👈 always just above legal block   // move slightly up to make space
+let signY = legalStartY + 55  // 👈 always just above legal block   // move slightly up to make space
 
+if (signY > pageHeight - 40) {
+    doc.addPage()
+    signY = 40
+}
+  
 /* 🔷 SIGNATURE IMAGE */
 try{
 doc.addImage("images/signature.png","PNG",143,signY-13,40,15)

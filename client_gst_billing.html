@@ -929,8 +929,7 @@ body:rows,
 theme:"grid",
 headStyles:{ fillColor:[20,40,80], textColor:255 },
 alternateRowStyles:{ fillColor:[245,247,250] },
-styles:{ fontSize:9, cellPadding:3 },
-styles:{ fontSize:9 }
+styles:{ fontSize:9, cellPadding:3 }
 })
 
 /* 🔷 SUMMARY BOX */
@@ -996,7 +995,6 @@ doc.text("A/C No: 924020062188598",20,bankY+20)
 doc.text("IFSC: UTIB0000107",20,bankY+26)
 doc.text("Branch: Rajahmundry, AP",20,bankY+32)
 
-/* 🔷 LEGAL DECLARATION (EXACT TEXT) */
 // 🔥 CLEAN PROFESSIONAL BOTTOM SECTION
 
 let currentY = doc.lastAutoTable.finalY + 15
@@ -1032,9 +1030,44 @@ currentY += 6
 
 let splitLegal = doc.splitTextToSize(legalText, 180)
 
-doc.setFont("hel
+doc.setFont("helvetica","normal")
+doc.setFontSize(8)
+doc.text(splitLegal,15,currentY)
+
+currentY += splitLegal.length * 5 + 10
+
+/* 🔷 SIGNATURE */
+let signY = currentY
+
+if(signY > 260){
+    doc.addPage()
+    signY = 30
 }
-}
+
+/* SIGNATURE IMAGE */
+try{
+doc.addImage("images/signature.png","PNG",143,signY-10,40,15)
+}catch(e){}
+
+/* STAMP */
+try{
+doc.addImage("images/stamp.png","PNG",155,signY-35,35,35)
+}catch(e){}
+
+/* LINE */
+doc.line(130, signY, 195, signY)
+
+/* TEXT */
+doc.setFontSize(9)
+doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
+
+/* 🔷 FOOTER */
+doc.setFontSize(8)
+doc.text("This is a system generated GST invoice.",15,285)
+doc.text("Thank you for doing business with Varada Nexus.",15,292)
+
+/* SAVE */
+doc.save(inv.invoice_no + ".pdf")
 
 async function loadGSTInvoices(){
 

@@ -938,6 +938,8 @@ let subtotalTaxable = serviceCharges + cgst + sgst
 
 let freightCharges = Number(inv.total_freight || 0)   // pure agent
 
+let fuelAdjustment = Number(inv.total_expense || 0)
+
 let totalInvoiceValue = subtotalTaxable + freightCharges
 
 let y = doc.lastAutoTable.finalY + 10
@@ -948,6 +950,12 @@ margin:{left:110},
 tableWidth:85,
 head:[["Tax Summary",""]],
 body:[
+
+["Total Contract Value", Number(inv.total_contract_val || 0).toFixed(2)],
+
+["Less: Fuel Support Adjustment", fuelAdjustment.toFixed(2)],
+
+["Net Billing Value", Number(inv.net_billing || 0).toFixed(2)],
 
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 
@@ -997,6 +1005,23 @@ Freight charges are incurred by us as a Pure Agent of the client under Rule 33 o
 Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
 
 All supporting documents for such expenses are available and can be provided upon request.`
+
+let fuelNote = ""
+
+if(fuelAdjustment > 0){
+fuelNote = `Fuel support amounting to ₹${fuelAdjustment.toFixed(2)} was arranged by the client through a designated fuel station on behalf of Varada Nexus Private Limited. The same has been adjusted against the total agreed contract value and does not constitute a direct payment to the transporter or an expense of the Service Provider.`
+}
+
+if(fuelNote){
+doc.setFont("helvetica","bold")
+doc.text("Adjustment Note:",15,legalY - 8)
+
+doc.setFont("helvetica","normal")
+doc.text(fuelNote,15,legalY - 2,{
+maxWidth:180,
+lineHeightFactor:1.4
+})
+}
 
 doc.text(legalText,15,legalY+6,{
 maxWidth:180,

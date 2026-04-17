@@ -946,7 +946,7 @@ let totalExpenses = Number(inv.total_expense || 0)
 
 let summaryBody = [
 
-["Total Contract Value", totalContract.toFixed(2)], 
+["Total Contract Value", Number(inv.total_contract_val || 0).toFixed(2)],
   
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 

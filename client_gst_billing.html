@@ -511,7 +511,7 @@ if(gstOn === "margin"){
 
 if(gstOn === "total"){
 
-    let netBilling = contract - totalExpense
+    let netBilling = contract   // DO NOT reduce expense for GST
 
     if(gstType === "excluded"){
         gst = netBilling * gstRate
@@ -541,9 +541,9 @@ if(gstType === "excluded"){
 }
 
 document.getElementById("preview").innerHTML = `
-Total Contract: ₹${totalContract.toFixed(2)} <br>
-Less Expenses (Client Paid): ₹${totalExpenseAll.toFixed(2)} <br>
-Net Billing: ₹${netBillingTotal.toFixed(2)} <br>
+Total Contract Value: ₹${totalContract.toFixed(2)} <br>
+Fuel / Expense Adjustment (Client Facilitated): ₹${totalExpenseAll.toFixed(2)} <br>
+Net Payable by Client: ₹${netBillingTotal.toFixed(2)} <br>
 
 Transporter Payable: ₹${totalFreight.toFixed(2)} <br>
 
@@ -957,6 +957,8 @@ body:[
 
 ["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
 
+["Less: Fuel / Expense Adjustment (Client Facilitated)", "-" + Number(inv.total_expense || 0).toFixed(2)],
+  
 ["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
 [{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
@@ -998,7 +1000,11 @@ Accordingly, only the net consideration retained as service charges constitutes 
 
 All supporting documents for such expenses are available and can be provided upon request.`
 
-doc.text(legalText,15,legalY+6,{
+let fuelNote = `
+Fuel support amounting to ₹${Number(inv.total_expense || 0).toFixed(2)} was arranged by the client through designated fuel stations on behalf of Varada Nexus Private Limited. The same has been adjusted against the total agreed contract value and does not constitute a direct payment to the transporter or an expense of the Service Provider.
+`
+  
+doc.text(fuelNote + "\n\n" + legalText,15,legalY+6,{
 maxWidth:180,
 lineHeightFactor:1.4
 })

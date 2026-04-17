@@ -932,44 +932,37 @@ styles:{ fontSize:9 }
 let cgst = inv.gst_total / 2
 let sgst = inv.gst_total / 2
 
-let serviceCharges = Number(inv.total_margin || 0)
-
-let subtotalTaxable = serviceCharges + cgst + sgst
-
-let freightCharges = Number(inv.total_freight || 0)   // pure agent
-
-let totalInvoiceValue = subtotalTaxable + freightCharges
-
-let y = doc.lastAutoTable.finalY + 10
-
+let contractValue = Number(inv.total_contract_val || 0)
 let totalExpenses = Number(inv.total_expense || 0)
+
+let serviceChargesWithGST = serviceCharges + cgst + sgst
+
+let netBilling = contractValue - totalExpenses
+
+let freightCharges = netBilling - serviceChargesWithGST
+
+let totalInvoiceValue = netBilling
 
 let summaryBody = [
 
-["Total Contract Value", Number(inv.total_contract_val || 0).toFixed(2)],
-  
-["Logistics Coordination Charges", serviceCharges.toFixed(2)],
+["Total Contract Value (Inclusive of Service Charges & GST)", contractValue.toFixed(2)],
 
-["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
+["Less: Expenses (Client Paid)", totalExpenses.toFixed(2)],
 
-["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
+["Net Billing Value", netBilling.toFixed(2)],
 
-["Subtotal (Taxable)", subtotalTaxable.toFixed(2)]
+["", ""],
 
-]
+["Logistics Coordination Charges (Incl GST)", serviceChargesWithGST.toFixed(2)],
 
-// 🔥 ONLY IF EXPENSE EXISTS
-if(totalExpenses > 0){
-summaryBody.push(["Less: Expenses (Client Paid)", totalExpenses.toFixed(2)])
-}
+["Freight Charges (Pure Agent)", freightCharges.toFixed(2)],
 
-summaryBody.push(
-["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 [
 {content:"Total Invoice Value", styles:{fontStyle:'bold'}},
 {content: totalInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}
 ]
-)
+
+]
   
 doc.autoTable({
 startY:y,

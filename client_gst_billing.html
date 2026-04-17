@@ -1027,7 +1027,7 @@ lineHeightFactor:1.3
 doc.setTextColor(0,0,0) // reset
 
 /* 🔷 SIGNATURE */
-let signY = 255   // move slightly up to make space
+let signY = Math.max(250, legalY + 80)   // move slightly up to make space
 
 /* 🔷 SIGNATURE IMAGE */
 try{

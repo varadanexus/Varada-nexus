@@ -659,11 +659,12 @@ status
 const { error: ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "TRANSPORTER_PAYMENT",
+    entry_type: "TRANSPORTER_PAYMENT",   // 🔥 force this
+
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
 
-    party_name: "Transporter", // can improve later
+    party_name: transporter?.transporter_name || "Transporter",
 
     description: "Transporter Payment - " + currentInvoice.invoice_no,
 
@@ -673,11 +674,12 @@ const { error: ledgerError } = await supabaseClient
     payment_method: paymentMethod.value,
     transaction_id: document.getElementById("transactionId").value || null,
 
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString()   // OR entry_date (see below)
 }])
 
 if(ledgerError){
-    console.error("❌ LEDGER ERROR:", ledgerError)
+    console.error("❌ LEDGER INSERT ERROR:", ledgerError)
+    alert("Ledger insert failed")
 }
 
 /************** WHATSAPP PAYMENT FLOW **************/

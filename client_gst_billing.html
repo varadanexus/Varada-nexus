@@ -273,6 +273,25 @@ Download GST Invoice PDF
   
 <div class="card">
 
+<div class="card">
+<h3>Credit Notes Issued</h3>
+
+<table>
+<thead>
+<tr>
+<th>CN No</th>
+<th>Invoice</th>
+<th>Client</th>
+<th>Amount</th>
+<th>Reason</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="creditNotesTable"></tbody>
+</table>
+</div>
+  
 <h3>GST Invoices</h3>
 
 <table>
@@ -329,6 +348,7 @@ async function init(){
 await loadClients()
 loadGSTInvoices()
 loadPaymentHistory()
+loadCreditNotes() 
 }
 
 async function loadPaymentHistory(){
@@ -359,6 +379,162 @@ html += `
 })
 
 document.getElementById("paymentHistory").innerHTML = html
+}
+
+async function loadCreditNotes(){
+
+const { data } = await supabaseClient
+.from("gst_credit_notes")
+.select("*")
+.order("created_at", { ascending:false })
+
+let html = ""
+
+data?.forEach(c=>{
+html += `
+<tr>
+<td>${c.credit_note_no}</td>
+<td>${c.invoice_no}</td>
+<td>${c.client_name}</td>
+<td>₹${Number(c.amount).toFixed(2)}</td>
+<td>${c.reason || "-"}</td>
+
+<td>
+<button onclick="editCreditNote('${c.id}')">Edit</button>
+<button onclick="deleteCreditNote('${c.id}')">Delete</button>
+</td>
+</tr>
+`
+})
+
+document.getElementById("creditNotesTable").innerHTML = html
+}
+
+async function editCreditNote(id){
+
+const { data:c } = await supabaseClient
+.from("gst_credit_notes")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!c){
+alert("Credit note not found")
+return
+}
+
+let newAmount = Number(prompt("Edit Amount", c.amount))
+let newReason = prompt("Edit Reason", c.reason || "")
+
+if(!newAmount || newAmount <= 0){
+alert("Invalid amount")
+return
+}
+
+/* 🔥 GET INVOICE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", c.invoice_id)
+.single()
+
+let diff = newAmount - c.amount
+
+/* 🔥 UPDATE CREDIT NOTE */
+await supabaseClient
+.from("gst_credit_notes")
+.update({
+amount: newAmount,
+reason: newReason
+})
+.eq("id", id)
+
+/* 🔥 FIX INVOICE BALANCE */
+let newBalance = Number(inv.balance_amount) - diff
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance
+})
+.eq("id", c.invoice_id)
+
+/* 🔥 UPDATE COMPANY LEDGER (simple replace) */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", c.credit_note_no)
+
+await supabaseClient
+.from("company_ledger")
+.insert([{
+type: "Credit Note",
+reference_no: c.credit_note_no,
+party: c.client_name,
+debit: 0,
+credit: newAmount,
+remarks: "Credit Note Edited"
+}])
+
+alert("Credit Note Updated ✅")
+
+loadCreditNotes()
+loadGSTInvoices()
+}
+
+async function deleteCreditNote(id){
+
+if(!confirm("Delete this credit note?")) return
+
+const { data:c } = await supabaseClient
+.from("gst_credit_notes")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!c){
+alert("Not found")
+return
+}
+
+/* 🔥 RESTORE INVOICE BALANCE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", c.invoice_id)
+.single()
+
+let newBalance = Number(inv.balance_amount) + Number(c.amount)
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance
+})
+.eq("id", c.invoice_id)
+
+/* 🔥 DELETE CREDIT NOTE */
+await supabaseClient
+.from("gst_credit_notes")
+.delete()
+.eq("id", id)
+
+/* 🔥 DELETE LEDGER */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", c.credit_note_no)
+
+/* 🔥 CLIENT LEDGER */
+await supabaseClient
+.from("client_ledger")
+.delete()
+.eq("reference_no", c.credit_note_no)
+
+alert("Credit Note Deleted ✅")
+
+loadCreditNotes()
+loadGSTInvoices()
 }
   
 async function loadClients(){

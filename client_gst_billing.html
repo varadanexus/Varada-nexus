@@ -920,9 +920,15 @@ let invoiceType = client?.gst_no ? "B2B" : "B2C"
 
 doc.text("Name: " + inv.client_name,15,63)
 
-doc.text("Address: " + (client?.address || "N/A"),15,70)
+let address = "Address: " + (client?.address || "N/A")
 
-doc.text("GSTIN: " + (inv.gst_no || "N/A"),15,77)
+let splitAddress = doc.splitTextToSize(address, 110)  // 👈 controls width
+
+doc.text(splitAddress, 15, 70)
+
+let addressHeight = splitAddress.length * 5
+
+doc.text("GSTIN: " + (inv.gst_no || "N/A"), 15, 70 + addressHeight + 5)
 
 doc.line(15,85,195,85)
 

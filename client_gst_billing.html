@@ -962,23 +962,19 @@ let freightCharges = Number(inv.total_freight || 0)   // pure agent
 
 let totalInvoiceValue = subtotalTaxable + freightCharges
 
-let y = doc.lastAutoTable.finalY + 10
+let summaryStartY = doc.lastAutoTable.finalY + 10
 
 doc.autoTable({
-startY:y,
+startY: summaryStartY,
 margin:{left:110},
 tableWidth:85,
 head:[["Tax Summary",""]],
 body:[
 
 ["Logistics Coordination Charges", serviceCharges.toFixed(2)],
-
 ["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
-
 ["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
-
 ["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
-
 ["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
 [{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
@@ -989,32 +985,31 @@ theme:"grid",
 headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
-/* 🔷 BANK BOX */
-let bankY = y
+/* ✅ STORE THIS */
+let taxSummaryEndY = doc.lastAutoTable.finalY
 
+/* 🔷 BANK BOX */
 doc.autoTable({
-    startY: bankY,
+    startY: summaryStartY,   // ✅ same top alignment
     margin: { left: 15 },
     tableWidth: 90,
     head: [["Bank Details",""]],
     body: [
-
         ["Bank", "Axis Bank"],
-
         ["A/C No", "924020062188598"],
-
         ["IFSC", "UTIB0000107"],
-
         ["Branch", "Rajahmundry, AP"]
-
     ],
     theme: "grid",
     styles: { fontSize: 9 },
     headStyles: { fillColor: [0,102,204], textColor: 255 }
 })
 
+/* OPTIONAL if bank is taller */
+let bankEndY = doc.lastAutoTable.finalY
+
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = doc.lastAutoTable.finalY + 8   // auto align below bank
+let legalY = Math.max(taxSummaryEndY, bankEndY) + 8
 
 doc.setFont("helvetica","bold")
 doc.setFontSize(9)

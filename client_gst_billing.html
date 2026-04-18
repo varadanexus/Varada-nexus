@@ -841,6 +841,17 @@ alert("Invoice not found")
 return
 }
 
+/* 🔥 GET CREDIT NOTES */
+const { data:creditNotes } = await supabaseClient
+.from("gst_credit_notes")
+.select("*")
+.eq("invoice_id", invoiceId)
+
+let totalCredit = 0
+creditNotes?.forEach(c=>{
+    totalCredit += Number(c.amount || 0)
+})
+  
 /* 2️⃣ GET TRIPS */
 const { data:bd } = await supabaseClient
 .from("invoice_trip_breakdown_gst")
@@ -960,7 +971,9 @@ let subtotalTaxable = serviceCharges + cgst + sgst
 
 let freightCharges = Number(inv.total_freight || 0)   // pure agent
 
-let totalInvoiceValue = subtotalTaxable + freightCharges
+let grossInvoiceValue = subtotalTaxable + freightCharges
+
+let totalInvoiceValue = grossInvoiceValue - totalCredit
 
 let summaryStartY = doc.lastAutoTable.finalY + 10
 
@@ -978,7 +991,13 @@ body:[
 ["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
 [{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
+ {content: grossInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}],
+
+...(totalCredit > 0 ? [
+["(-) Credit Notes", totalCredit.toFixed(2)],
+[{content:"Net Payable", styles:{fontStyle:'bold'}},
  {content: totalInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}]
+] : [])
 
 ],
 theme:"grid",
@@ -988,6 +1007,25 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 /* ✅ STORE THIS */
 let taxSummaryEndY = doc.lastAutoTable.finalY
 
+/* 🔥 CREDIT NOTE DETAILS TABLE */
+if(creditNotes && creditNotes.length > 0){
+
+doc.autoTable({
+    startY: taxSummaryEndY + 5,
+    margin:{left:110},
+    tableWidth:85,
+    head:[["Credit Notes",""]],
+    body: creditNotes.map(c => [
+        `${c.credit_note_no} (${c.reason || "Adjustment"})`,
+        Number(c.amount).toFixed(2)
+    ]),
+    theme:"grid",
+    styles:{ fontSize:8 },
+    headStyles:{ fillColor:[200,0,0], textColor:255 }
+})
+
+}
+  
 /* 🔷 BANK BOX */
 doc.autoTable({
     startY: summaryStartY,   // ✅ same top alignment

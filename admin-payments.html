@@ -1050,24 +1050,42 @@ e.stopPropagation()
 
 if(!confirm("Delete full invoice? This cannot be undone")) return
 
-/* 1. DELETE PAYMENTS */
+/* 🔹 GET INVOICE FIRST */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", id)
+.single()
+
+if(!inv){
+alert("Invoice not found")
+return
+}
+
+/* 1️⃣ DELETE PAYMENTS */
 await supabaseClient
 .from("transporter_payments")
 .delete()
-.eq("invoice_id",id)
+.eq("invoice_id", id)
 
-/* 2. DELETE INVOICE */
+/* 2️⃣ DELETE LEDGER ENTRIES 🔥 */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", inv.invoice_no)
+.eq("entry_type", "TRANSPORTER_PAYMENT")
+
+/* 3️⃣ DELETE INVOICE */
 await supabaseClient
 .from("transporter_invoices")
 .delete()
-.eq("id",id)
+.eq("id", id)
 
-alert("Invoice Deleted Completely")
+alert("Invoice + Ledger Cleared ✅")
 
-/* 3. REFRESH */
+/* 4️⃣ REFRESH */
 loadTrips()
 loadInvoices()
-
 }
 
 async function downloadInvoice(id,e){

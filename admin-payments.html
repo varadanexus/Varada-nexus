@@ -674,7 +674,7 @@ const { error: ledgerError } = await supabaseClient
 .insert([{
     entry_type: "TRANSPORTER_PAYMENT",
 
-    reference_id: currentInvoice.id,
+    
     reference_no: currentInvoice.invoice_no,
 
     party: transporterName,

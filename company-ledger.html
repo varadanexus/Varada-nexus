@@ -397,7 +397,8 @@ Object.keys(map)
 .forEach(m=>{
 
 let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
-
+let netPos = map[m].payment - map[m].transporter
+  
 html += `
 <div style="margin-bottom:10px;">
 <b>${m}</b><br>
@@ -406,12 +407,14 @@ Credit Notes: ₹${map[m].creditNote.toFixed(2)}<br>
 Net GST: ₹${(map[m].invoice - map[m].creditNote).toFixed(2)}<br>
 Collections: ₹${map[m].payment.toFixed(2)}<br>
 Transporter Paid: ₹${map[m].transporter.toFixed(2)}<br>
-let netPos = map[m].payment - map[m].transporter
 
 Net Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
 ${netPos.toFixed(2)}
 </span><br>
-Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">${outstanding.toFixed(2)}</span>
+
+Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">
+${outstanding.toFixed(2)}
+</span>
 </div>
 `
 }

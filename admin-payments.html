@@ -387,7 +387,7 @@ data.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
 /* 🔥 CLEAR TRIPS (VERY IMPORTANT) */
 tripTable.innerHTML = ""
 trips = []
-
+selectedTripIds.clear()
 }
     
 function formatCurrency(val){
@@ -642,7 +642,7 @@ renderTrips()
 
 function generateInvoice(){
 
-let checked = Array.from(selectedTripIds) 
+let checked = Array.from(selectedTripIds)
 
 if(!checked.length){
 alert("Select trips")
@@ -653,26 +653,25 @@ selectedTrips=[]
 let total=0, weight=0
 
 checked.forEach(id=>{
-let t=trips.find(x=>x.id==id)
-    
-checked.forEach(c=>{
-let t=trips.find(x=>x.id==c.value)
+
+let t = trips.find(x => x.id == id)
+if(!t) return
+
 selectedTrips.push(t)
 
 const mt = (t.weight_kg || 0) / 1000
-
 const tripAmount = mt * (t.transporter_rate || 0)
 
-// ✅ expenses
+// expenses
 const totalExpenses = (t.expenses || []).reduce(
   (sum, e) => sum + (e.amount || 0),
   0
 )
 
-// ✅ net payable
+// net
 const netAmount = tripAmount - totalExpenses
 
-// 🔥 APPLY ADJUSTMENTS
+// adjustments
 let adjTotal = 0
 
 adjustments?.forEach(a=>{
@@ -685,10 +684,11 @@ adjustments?.forEach(a=>{
 let finalAmount = netAmount + adjTotal
 
 total += round2(finalAmount)
-weight += Number(t.weight_kg||0)
+weight += Number(t.weight_kg || 0)
+
 })
 
-invoiceAmount=total
+invoiceAmount = total
 totalAmount.value = total.toFixed(2)
 
 invoicePreview.innerHTML=`
@@ -697,7 +697,7 @@ Total Weight: ${weight} KG<br>
 <b>Amount: ₹${formatCurrency(total)}</b>
 `
 }
-
+    
 async function generateTransporterInvoiceNo(){
 
 let today = new Date()

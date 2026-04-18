@@ -1014,13 +1014,7 @@ doc.autoTable({
 })
 
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
-let legalY = bankY + 50
-
-doc.setFontSize(8)
-doc.setFont("helvetica","bold")
-doc.text("Legal Declaration:",15,legalY)
-
-doc.setFont("helvetica","normal")
+let legalY = bankY + 45   // adjust spacing
 
 let legalText = `Varada Nexus Private Limited is engaged solely in providing logistics execution and coordination services on a sub-contract basis. The company does not act as a Goods Transport Agency (GTA) and does not issue consignment notes.
 
@@ -1030,9 +1024,35 @@ Accordingly, only the net consideration retained as service charges constitutes 
 
 All supporting documents for such expenses are available and can be provided upon request.`
 
-doc.text(legalText,15,legalY+6,{
-maxWidth:180,
-lineHeightFactor:1.4
+doc.autoTable({
+    startY: legalY,
+    margin: { left: 15 },
+    tableWidth: 90,
+    
+    head: [["Legal Declaration"]],
+    
+    body: [
+        [legalText]
+    ],
+
+    theme: "grid",
+
+    styles: {
+        fontSize: 7,              // 🔥 fine print
+        cellPadding: 3,
+        lineColor: [200,200,200],
+        lineWidth: 0.1
+    },
+
+    headStyles: {
+        fillColor: [0,102,204],
+        textColor: 255,
+        fontSize: 9
+    },
+
+    columnStyles: {
+        0: { cellWidth: 90 }
+    }
 })
 
 /* 🔷 SIGNATURE */

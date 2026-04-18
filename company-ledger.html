@@ -398,6 +398,17 @@ Object.keys(map)
 let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
 let netPos = map[m].payment - map[m].transporter
 
+let gstTotal = map[m].invoice - map[m].creditNote
+let monthData = data.filter(r=>{
+    let rm = new Date(r.created_at).toLocaleString('en-IN',{
+        month:'short',
+        year:'numeric'
+    })
+    return rm === m
+})
+
+let reconciliation = reconcileGST(monthData, gstTotal)
+  
 html += `
 <div style="
 margin-bottom:20px;
@@ -428,13 +439,22 @@ Transporter Paid: ₹${map[m].transporter.toFixed(2)}
 
 <div>
 <b>Position</b><br>
+
 Bank Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
 ${netPos.toFixed(2)}
 </span><br>
 
 Client Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">
 ${outstanding.toFixed(2)}
+</span><br><br>
+
+<b>GST Reconciliation</b><br>
+Ledger GST Paid: ₹${reconciliation.ledgerGST.toFixed(2)}<br>
+Difference: ₹${reconciliation.diff.toFixed(2)}<br>
+Status: <span style="color:${reconciliation.status === "MATCHED" ? "#22c55e" : "#ef4444"}">
+${reconciliation.status}
 </span>
+
 </div>
 
 </div>
@@ -448,6 +468,25 @@ document.getElementById("monthlySummary").innerHTML = "No data"
 }
 }
 
+function reconcileGST(ledgerData, gstTotal){
+
+let ledgerGST = 0
+
+ledgerData.forEach(r=>{
+    if(r.entry_type === "GST Payment"){
+        ledgerGST += Number(r.credit || 0)
+    }
+})
+
+let diff = gstTotal - ledgerGST
+
+return {
+    ledgerGST,
+    diff,
+    status: Math.abs(diff) < 1 ? "MATCHED" : "MISMATCH"
+}
+}
+  
 /* AUTO LOAD */
 loadClientsDropdown()
 loadLedger()

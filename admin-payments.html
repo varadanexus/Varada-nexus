@@ -260,7 +260,7 @@ window.location.href="login.html"
 <h3>Payment</h3>
 
 Invoice Amount:
-<select id="invoiceSelect" onchange="selectInvoiceFromDropdown()">
+<select id="invoiceSelect" onchange="selectInvoiceFromDropdown(); loadTrips();">
 <option value="">Select Invoice</option>
 </select>
 
@@ -535,29 +535,59 @@ data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 
 async function loadTrips(){
 
-let id=transporterSelect.value
-if(!id) return
+let transporterId = transporterSelect.value
+let invoiceId = invoiceSelect.value
+
+if(!transporterId) return
+
+/* 🔴 IF INVOICE SELECTED → SHOW ONLY THAT INVOICE TRIPS */
+if(invoiceId){
+
+    let invoice = invoices.find(i => i.id == invoiceId)
+    if(!invoice) return
+
+    let tripIds = invoice.trip_ids.split(",")
+
+    const { data: tripData } = await supabaseClient
+    .from('trips')
+    .select(`
+        id,
+        trip_no,
+        transporter_rate,
+        weight_kg,
+        created_at,
+        expenses ( amount )
+    `)
+    .in("id", tripIds)
+
+    trips = tripData || []
+
+    renderTrips()
+    return
+}
+
+/* 🟢 NORMAL FLOW (NO INVOICE SELECTED) */
 
 const { data: tripData } = await supabaseClient
-  .from('trips')
-  .select(`
+.from('trips')
+.select(`
     id,
     trip_no,
     transporter_rate,
     weight_kg,
-    truck_id,
     created_at,
     expenses ( amount )
-  `)
-  .eq("transporter_id", id)
+`)
+.eq("transporter_id", transporterId)
 
+/* REMOVE USED TRIPS */
 const {data:inv}=await supabaseClient
 .from("transporter_invoices")
 .select("trip_ids")
 
 let usedTrips=[]
 inv?.forEach(i=>{
-i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
+    i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
 })
 
 trips = (tripData || [])

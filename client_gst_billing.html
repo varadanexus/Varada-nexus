@@ -990,18 +990,28 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
 
 /* 🔷 BANK BOX */
-let bankY = y + 5
+let bankY = y
 
-doc.rect(15,bankY,90,40)
+doc.autoTable({
+    startY: bankY,
+    margin: { left: 15 },
+    tableWidth: 90,
+    head: [["Bank Details",""]],
+    body: [
 
-doc.setFontSize(10)
-doc.text("Bank Details",20,bankY+7)
+        ["Bank", "Axis Bank"],
 
-doc.setFontSize(9)
-doc.text("Bank: Axis Bank",20,bankY+14)
-doc.text("A/C No: 924020062188598",20,bankY+20)
-doc.text("IFSC: UTIB0000107",20,bankY+26)
-doc.text("Branch: Rajahmundry, AP",20,bankY+32)
+        ["A/C No", "924020062188598"],
+
+        ["IFSC", "UTIB0000107"],
+
+        ["Branch", "Rajahmundry, AP"]
+
+    ],
+    theme: "grid",
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [0,102,204], textColor: 255 }
+})
 
 /* 🔷 LEGAL DECLARATION (EXACT TEXT) */
 let legalY = bankY + 50

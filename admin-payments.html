@@ -663,8 +663,7 @@ const { error: ledgerError } = await supabaseClient
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
 
-    // 🔥 FIX: real transporter name
-    party_name: await getTransporterName(currentInvoice.transporter_id),
+    party_name: "Transporter", // can improve later
 
     description: "Transporter Payment - " + currentInvoice.invoice_no,
 
@@ -674,7 +673,7 @@ const { error: ledgerError } = await supabaseClient
     payment_method: paymentMethod.value,
     transaction_id: document.getElementById("transactionId").value || null,
 
-    created_at: new Date().toISOString()   // ✅ CRITICAL FIX
+    created_at: new Date().toISOString()
 }])
 
 if(ledgerError){

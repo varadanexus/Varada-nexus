@@ -928,9 +928,13 @@ doc.text(splitAddress, 15, 70)
 
 let addressHeight = splitAddress.length * 5
 
-doc.text("GSTIN: " + (inv.gst_no || "N/A"), 15, 70 + addressHeight + 5)
+/* 🔥 GST EXACT POSITION */
+let gstY = 70 + addressHeight + 3
+doc.text("GSTIN: " + (inv.gst_no || "N/A"), 15, gstY)
 
-doc.line(15,85,195,85)
+/* 🔥 LINE JUST BELOW GST */
+let lineY = gstY + 6
+doc.line(15, lineY, 195, lineY)
 
 doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)

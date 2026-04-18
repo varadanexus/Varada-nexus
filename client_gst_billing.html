@@ -1083,7 +1083,7 @@ let signY = Math.max(
     creditEndY || 0,
     taxSummaryEndY || 0,
     bankEndY || 0
-) + 25
+) + 35
 
 /* 🔷 SIGNATURE IMAGE */
 try{
@@ -1092,7 +1092,7 @@ doc.addImage("images/signature.png","PNG",143,signY-13,40,15)
 
 /* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
 try{
-doc.addImage("images/stamp.png","PNG",155,signY-40,35,35)
+doc.addImage("images/stamp.png","PNG",155,signY-20,30,30)
 }catch(e){}
 
 /* 🔷 LINE */

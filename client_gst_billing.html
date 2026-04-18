@@ -1008,6 +1008,9 @@ headStyles:{ fillColor:[0,102,204], textColor:255 }
 let taxSummaryEndY = doc.lastAutoTable.finalY
 
 /* 🔥 CREDIT NOTE DETAILS TABLE */
+/* 🔥 CREDIT NOTE DETAILS TABLE */
+let creditEndY = 0   // ✅ ADD HERE (BEFORE IF)
+
 if(creditNotes && creditNotes.length > 0){
 
 doc.autoTable({
@@ -1024,7 +1027,10 @@ doc.autoTable({
     headStyles:{ fillColor:[200,0,0], textColor:255 }
 })
 
+creditEndY = doc.lastAutoTable.finalY   // ✅ MOVE INSIDE IF
 }
+
+
   
 /* 🔷 BANK BOX */
 doc.autoTable({
@@ -1073,7 +1079,11 @@ doc.text(splitLegal, 15, legalY + 5, {
 })
 
 /* 🔷 SIGNATURE */
-let signY = 255   // move slightly up to make space
+let signY = Math.max(
+    creditEndY || 0,
+    taxSummaryEndY || 0,
+    bankEndY || 0
+) + 25
 
 /* 🔷 SIGNATURE IMAGE */
 try{

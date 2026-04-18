@@ -259,6 +259,18 @@ Download GST Invoice PDF
   
 </div>
 
+<hr>
+
+<h3>Issue Credit Note</h3>
+
+<select id="creditInvoiceSelect"></select>
+
+<input id="creditAmount" placeholder="Amount">
+
+<input id="creditReason" placeholder="Reason">
+
+<button onclick="createCreditNote()">Issue Credit Note</button>
+  
 <div class="card">
 
 <h3>GST Invoices</h3>
@@ -1091,10 +1103,137 @@ ${inv.invoice_no} | Balance: ₹${Number(inv.balance_amount).toFixed(2)} | ${inv
 })
 
 document.getElementById("gstInvoiceSelect").innerHTML = dropdown
+
+let creditDropdown = '<option value="">Select Invoice</option>'
+
+data?.forEach(inv=>{
+creditDropdown += `<option value="${inv.id}">
+${inv.invoice_no} | Balance: ₹${Number(inv.balance_amount).toFixed(2)}
+</option>`
+})
+
+document.getElementById("creditInvoiceSelect").innerHTML = creditDropdown
   
 }
 
+async function generateCreditNoteNo(){
 
+let prefix = "CN/"
+
+const { data } = await supabaseClient
+.from("gst_credit_notes")
+.select("credit_note_no")
+.ilike("credit_note_no", prefix + "%")
+
+let max = 0
+
+data?.forEach(i=>{
+    let num = parseInt(i.credit_note_no.replace(prefix,"")) || 0
+    if(num > max) max = num
+})
+
+return prefix + String(max + 1).padStart(3,'0')
+}
+
+async function createCreditNote(){
+
+let invoiceId = document.getElementById("creditInvoiceSelect").value
+let amount = Number(document.getElementById("creditAmount").value || 0)
+let reason = document.getElementById("creditReason").value
+
+if(!invoiceId || !amount){
+    alert("Fill all details")
+    return
+}
+
+/* 🔥 GET INVOICE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", invoiceId)
+.single()
+
+if(!inv){
+    alert("Invoice not found")
+    return
+}
+
+if(amount > inv.balance_amount){
+    alert("Credit exceeds balance")
+    return
+}
+
+/* 🔥 GENERATE CN NO */
+let cnNo = await generateCreditNoteNo()
+
+/* 🔥 SAVE CREDIT NOTE */
+await supabaseClient
+.from("gst_credit_notes")
+.insert([{
+    invoice_id: inv.id,
+    invoice_no: inv.invoice_no,
+    credit_note_no: cnNo,
+    client_name: inv.client_name,
+    amount: amount,
+    reason: reason
+}])
+
+/* 🔥 UPDATE INVOICE */
+let newBalance = Number(inv.balance_amount) - amount
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+    balance_amount: newBalance
+})
+.eq("id", invoiceId)
+
+/* 🔥 COMPANY LEDGER (REVERSAL) */
+// GET LAST BALANCE
+const { data:lastEntryArr } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+
+let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+let newLedgerBalance = lastBalance - amount
+
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    type: "Credit Note",
+    reference_no: cnNo,
+    party: inv.client_name,
+    debit: 0,
+    credit: amount,
+    balance: newLedgerBalance,
+    remarks: "GST Credit Note Issued"
+}])
+
+/* 🔥 CLIENT LEDGER */
+await supabaseClient
+.from("client_ledger")
+.insert([{
+client_name: inv.client_name,
+type: "Credit Note",
+reference_no: cnNo,
+debit: 0,
+credit: amount,
+balance: 0,
+remarks: reason || "Credit Note"
+}])
+
+alert("Credit Note Issued ✅")
+
+/* RESET */
+document.getElementById("creditAmount").value=""
+document.getElementById("creditReason").value=""
+document.getElementById("creditInvoiceSelect").value=""
+
+loadGSTInvoices()
+}
   
 async function deleteGSTInvoice(id){
 

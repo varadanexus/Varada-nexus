@@ -876,6 +876,9 @@ await supabaseClient
 .from("transporter_adjustments")
 .insert(inserts)
 
+await recalculateInvoice(invoiceId)
+loadInvoices()
+    
 /* RESET */
 adjAmount.value=""
 adjReason.value=""
@@ -891,12 +894,28 @@ async function deleteAdjustment(id){
 
 if(!confirm("Delete adjustment?")) return
 
+/* GET INVOICE ID */
+const {data} = await supabaseClient
+.from("transporter_adjustments")
+.select("invoice_id")
+.eq("id",id)
+.single()
+
+let invoiceId = data?.invoice_id
+
+/* DELETE */
 await supabaseClient
 .from("transporter_adjustments")
 .delete()
 .eq("id",id)
 
+/* 🔥 RECALCULATE */
+if(invoiceId){
+await recalculateInvoice(invoiceId)
+}
+
 loadAdjustments()
+loadInvoices()
 }
     
 /* 🔥 FIXED PART */
@@ -1368,6 +1387,77 @@ return
 
 function round2(num){
 return Math.round((num + Number.EPSILON) * 100) / 100
+}
+
+async function recalculateInvoice(invoiceId){
+
+/* GET INVOICE */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("trip_ids, paid_amount")
+.eq("id", invoiceId)
+.single()
+
+if(!inv) return
+
+let tripIds = inv.trip_ids.split(",")
+
+/* GET TRIPS */
+const {data:tripData} = await supabaseClient
+.from("trips")
+.select(`
+weight_kg,
+transporter_rate,
+expenses ( amount )
+`)
+.in("id", tripIds)
+
+/* BASE TOTAL */
+let total = 0
+
+tripData.forEach(t=>{
+
+let mt = (t.weight_kg || 0) / 1000
+let gross = mt * (t.transporter_rate || 0)
+
+let exp = (t.expenses || []).reduce((s,e)=>s+(e.amount||0),0)
+
+let net = gross - exp
+
+total += round2(net)
+})
+
+/* GET ADJUSTMENTS */
+const {data:adj} = await supabaseClient
+.from("transporter_adjustments")
+.select("amount,type")
+.eq("invoice_id", invoiceId)
+
+/* APPLY ADJUSTMENTS */
+let adjTotal = 0
+
+adj?.forEach(a=>{
+if(a.type === "Penalty"){
+adjTotal -= Number(a.amount || 0)
+}else{
+adjTotal += Number(a.amount || 0)
+}
+})
+
+let finalAmount = round2(total + adjTotal)
+
+let paid = inv.paid_amount || 0
+let balance = round2(finalAmount - paid)
+
+/* UPDATE INVOICE */
+await supabaseClient
+.from("transporter_invoices")
+.update({
+total_amount: finalAmount,
+balance_amount: balance
+})
+.eq("id", invoiceId)
+
 }
     
 </script>

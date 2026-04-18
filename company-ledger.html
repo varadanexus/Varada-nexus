@@ -355,7 +355,6 @@ let map = {}
 
 data.forEach(r=>{
 
-// 🔥 FIX: support both columns
 let entryType = r.entry_type || r.type || ""
 
 let month = new Date(r.created_at).toLocaleString('en-IN',{
@@ -372,27 +371,32 @@ creditNote:0
 }
 }
 
-// ✅ GST INVOICE
 if(entryType === "GST Invoice"){
 map[month].invoice += Number(r.debit || 0)
 }
 
-// ✅ GST PAYMENT
 if(entryType === "GST Payment"){
 map[month].payment += Number(r.credit || 0)
 }
 
-// ✅ CREDIT NOTE
 if(entryType === "Credit Note"){
 map[month].creditNote += Number(r.credit || 0)
 }
-  
-// ✅ TRANSPORTER PAYMENT
+
 if(entryType === "TRANSPORTER_PAYMENT"){
 map[month].transporter += Number(r.credit || 0)
 }
 
 })
+
+let html = ""
+
+Object.keys(map)
+.sort((a,b)=> new Date("1 " + a) - new Date("1 " + b))
+.forEach(m=>{
+
+let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
+let netPos = map[m].payment - map[m].transporter
 
 html += `
 <div style="

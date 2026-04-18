@@ -210,8 +210,12 @@ window.location.href="login.html"
 <div class="card">
 <h3>Transporter Adjustments</h3>
 
-<select id="adjTransporter"></select>
+<select id="adjTransporter" onchange="loadAdjustmentInvoices(); loadAdjustmentTrips()"></select>
 
+<select id="adjInvoice">
+<option value="">Select Invoice (Optional)</option>
+</select>
+    
 <select id="adjTrip">
 <option value="">Select Trip (Optional)</option>
 </select>
@@ -230,6 +234,7 @@ window.location.href="login.html"
 <table>
 <thead>
 <tr>
+<th>Invoice</th>
 <th>Trip</th>
 <th>Type</th>
 <th>Amount</th>
@@ -345,6 +350,7 @@ init()
 async function init(){
 await loadTransporters()
 await loadInvoices()
+await loadAdjustments()   // 🔥 ADD THIS
 }
 
 async function loadAdjustments(){
@@ -359,6 +365,7 @@ let html=""
 data?.forEach(a=>{
 html+=`
 <tr>
+<td>${a.invoice_id || "-"}</td>
 <td>${a.trip_id || "-"}</td>
 <td>${a.type}</td>
 <td>₹${formatCurrency(a.amount)}</td>
@@ -381,7 +388,8 @@ let trip = adjTrip.value
 let amount = Number(adjAmount.value || 0)
 let type = adjType.value
 let reason = adjReason.value
-
+let invoiceId = adjInvoice.value
+    
 if(!transporter || !amount){
 alert("Fill details")
 return
@@ -392,6 +400,7 @@ await supabaseClient
 .insert([{
 transporter_id: transporter,
 trip_id: trip || null,
+invoice_id: invoiceId || null,   // 🔥 ADD THIS
 type,
 amount,
 reason
@@ -404,11 +413,53 @@ adjReason.value=""
 
 loadAdjustments()
 }
+
+async function loadAdjustmentInvoices(){
+
+let transporterId = adjTransporter.value
+
+if(!transporterId){
+adjInvoice.innerHTML = '<option value="">Select Invoice</option>'
+return
+}
+
+const {data} = await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.eq("transporter_id", transporterId)
+
+}
+
+async function loadAdjustmentTrips(){
+
+let transporterId = adjTransporter.value
+
+if(!transporterId){
+adjTrip.innerHTML = '<option value="">Select Trip</option>'
+return
+}
+
+const {data} = await supabaseClient
+.from("trips")
+.select("id, trip_no")
+.eq("transporter_id", transporterId)
+
+adjTrip.innerHTML = '<option value="">Select Trip</option>' +
+data.map(t => `<option value="${t.id}">${t.trip_no}</option>`).join("")
+}
     
 async function loadTransporters(){
+
 const {data}=await supabaseClient.from("transporters").select("*")
+
+/* EXISTING */
 transporterSelect.innerHTML='<option value="">Select</option>'+
 data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
+
+/* 🔥 ADD THIS (YOU MISSED THIS) */
+adjTransporter.innerHTML='<option value="">Select Transporter</option>'+
+data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
+
 }
 
 async function loadTrips(){
@@ -759,7 +810,12 @@ const {data}=await supabaseClient
 
 invoices=data||[]
 
+/* 🔥 EXISTING */
 invoiceSelect.innerHTML = '<option value="">Select Invoice</option>' +
+invoices.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
+
+/* 🔥 NEW FOR ADJUSTMENTS */
+adjInvoice.innerHTML = '<option value="">Select Invoice</option>' +
 invoices.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
 
 await renderInvoices(invoices)

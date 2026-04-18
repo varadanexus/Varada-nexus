@@ -318,6 +318,8 @@ let type = isValidGSTIN ? "B2B" : "B2C"
 let taxable = Number(inv.total_margin || 0)
 let gst = Number(inv.gst_total || 0)
 
+let rate = Number(inv.gst_rate || 18)
+    
 // ✅ DEFINE CREDIT NOTES FIRST
 let creditNoteGST = Number(inv.credit_note_gst || 0)
 let creditNoteTaxable = Number(inv.credit_note_amount || 0)
@@ -326,9 +328,12 @@ let creditNoteTaxable = Number(inv.credit_note_amount || 0)
 taxable -= creditNoteTaxable
 gst -= creditNoteGST
 
+if(taxable < 0) taxable = 0
+if(gst < 0) gst = 0
+    
 // ✅ RECALCULATE GST SPLIT
-let cgst = gst / 2
-let sgst = gst / 2
+let cgst = Math.round((gst / 2) * 100) / 100
+let sgst = Math.round((gst / 2) * 100) / 100
 
 totalTaxable += taxable
 totalGST += gst
@@ -373,9 +378,19 @@ document.getElementById("gstTable").innerHTML = rows
 let gstLiability = totalGST
 let gstCollected = totalGST   // same unless credit notes added
 
-let matchStatus = gstLiability === gstCollected
+let diff = Math.abs(gstLiability - gstCollected)
+
+let matchStatus = diff < 1
     ? "✅ Matched"
     : "❌ Mismatch"
+
+if(totalGST > 0 && gstCollected === 0){
+    matchStatus = "⚠️ Not Paid"
+}
+
+if(diff > 100){
+    matchStatus = "🚨 Major Mismatch"
+}
 
 document.getElementById("summary").innerHTML = `
 
@@ -384,6 +399,7 @@ document.getElementById("summary").innerHTML = `
 <b>GST Overview</b><br>
 Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
 Total GST: ₹${totalGST.toFixed(2)} <br>
+Net GST After Credit Notes: ₹${totalGST.toFixed(2)} <br>
 Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
 
 <b>Classification</b><br>
@@ -394,6 +410,7 @@ B2C Sales: ₹${b2c.toFixed(2)} <br><br>
 GST Payable: ₹${gstLiability.toFixed(2)} <br>
 GST Collected: ₹${gstCollected.toFixed(2)} <br>
 Status: <span style="color:${matchStatus.includes("Matched") ? "#22c55e" : "#ef4444"}">
+Difference: ₹${diff.toFixed(2)}<br>
 ${matchStatus}
 </span><br><br>
 
@@ -431,7 +448,7 @@ let b2cTotal = 0
 globalData.forEach(r=>{
 
 /* 🔥 B2B */
-if(r.gstin){
+if(r.gstin && r.gstin.length >= 15){
 
 if(!b2bMap[r.gstin]){
 b2bMap[r.gstin] = {
@@ -442,7 +459,7 @@ inv: []
 
 b2bMap[r.gstin].inv.push({
 inum: r.invoice,
-idt: new Date(r.date).toLocaleDateString("en-GB"),
+idt: new Date(r.date).toISOString().split('T')[0],
 val: r.invoice_value,
 pos: "37", // Andhra Pradesh
 rchrg: "N",
@@ -451,7 +468,7 @@ itms: [{
 num: 1,
 itm_det: {
 txval: r.taxable,
-rt: 18,
+rt: rate,
 camt: r.cgst,
 samt: r.sgst,
 csamt: 0,
@@ -480,7 +497,7 @@ b2b: Object.values(b2bMap),
 b2cs: [{
 sply_ty: "INTRA",
 txval: b2cTotal,
-rt: 18,
+rt: rate,
 camt: b2cTotal * 0.09,
 samt: b2cTotal * 0.09,
 csamt: 0

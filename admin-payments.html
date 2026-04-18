@@ -538,7 +538,8 @@ async function loadTrips(){
 let transporterId = transporterSelect.value
 let invoiceId = String(invoiceSelect.value || "")
 
-if(!transporterId) return
+/* 🔥 ALLOW INVOICE FLOW WITHOUT TRANSPORTER */
+if(!transporterId && !invoiceId) return
 
 /* 🔴 IF INVOICE SELECTED → SHOW ONLY THAT INVOICE TRIPS */
 if(invoiceId){

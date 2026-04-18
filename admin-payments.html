@@ -216,9 +216,7 @@ window.location.href="login.html"
 <option value="">Select Invoice</option>
 </select>
 
-<select id="adjTrip">
-<option value="">Select Trip</option>
-</select>
+<div id="adjTripContainer"></div>
 
 <input id="adjAmount" placeholder="Amount">
 
@@ -385,7 +383,7 @@ async function loadAdjustmentTrips(){
 let invoiceId = adjInvoice.value
 
 if(!invoiceId){
-adjTrip.innerHTML = '<option value="">Select Trip</option>'
+adjTripContainer.innerHTML = ""
 return
 }
 
@@ -406,13 +404,32 @@ const {data:tripData} = await supabaseClient
 .select("id, trip_no")
 .in("id", tripIds)
 
-/* 🔥 SORT DESCENDING BY trip_no */
+/* 🔥 SORT DESCENDING */
 let sorted = (tripData || []).sort((a,b)=>{
 return b.trip_no.localeCompare(a.trip_no)
 })
 
-adjTrip.innerHTML = '<option value="">Select Trip</option>' +
-sorted.map(t => `<option value="${t.id}">${t.trip_no}</option>`).join("")
+/* 🔥 RENDER CHECKBOX TABLE */
+adjTripContainer.innerHTML = `
+<label><input type="checkbox" onclick="toggleAllAdj(this)"> Select All</label>
+
+<table>
+<tr>
+<th>Select</th>
+<th>Trip</th>
+</tr>
+${sorted.map(t=>`
+<tr>
+<td><input type="checkbox" class="adjTripCheck" value="${t.id}"></td>
+<td>${t.trip_no}</td>
+</tr>
+`).join("")}
+</table>
+`
+}
+
+function toggleAllAdj(cb){
+document.querySelectorAll(".adjTripCheck").forEach(c=>c.checked=cb.checked)
 }
     
 async function loadTrips(){
@@ -802,31 +819,42 @@ async function addAdjustment(){
 
 let transporter = adjTransporter.value
 let invoiceId = adjInvoice.value
-let trip = adjTrip.value
 let amount = Number(adjAmount.value || 0)
 let type = adjType.value
 let reason = adjReason.value
 
-if(!transporter || !invoiceId || !trip || !amount){
-alert("Fill all fields")
+let checked = document.querySelectorAll(".adjTripCheck:checked")
+
+if(!transporter || !invoiceId || !checked.length || !amount){
+alert("Select trips + fill all fields")
 return
 }
 
-await supabaseClient
-.from("transporter_adjustments")
-.insert([{
+/* 🔥 LOOP INSERT */
+let inserts = []
+
+checked.forEach(c=>{
+inserts.push({
 transporter_id: transporter,
 invoice_id: invoiceId,
-trip_id: trip,
+trip_id: c.value,
 type,
 amount,
 reason
-}])
+})
+})
 
+await supabaseClient
+.from("transporter_adjustments")
+.insert(inserts)
+
+/* RESET */
 adjAmount.value=""
 adjReason.value=""
 
-alert("Adjustment Added")
+document.querySelectorAll(".adjTripCheck").forEach(c=>c.checked=false)
+
+alert("Adjustments Added")
 
 loadAdjustments()
 }

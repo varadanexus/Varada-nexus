@@ -193,6 +193,7 @@ window.location.href="login.html"
 <option value="GST Invoice">GST Invoice</option>
 <option value="GST Payment">GST Payment</option>
 <option value="TRANSPORTER_PAYMENT">Transporter Payment</option>
+<option value="Credit Note">Credit Note</option>
 </select>
 
 <select id="partyFilter">
@@ -283,7 +284,7 @@ query = query.gte("created_at", fromDate)
 }
 
 if(toDate){
-query = query.lte("created_at", toDate)
+query = query.lte("created_at", toDate + "T23:59:59")
 }
 
 if(type){
@@ -291,7 +292,7 @@ query = query.eq("entry_type", type)
 }
 
 if(party){
-query = query.or(`party.eq.${party},party_name.eq.${party}`)
+query = query.or(`party.eq."${party}",party_name.eq."${party}"`)
 }
 
 const { data, error } = await query
@@ -336,6 +337,12 @@ rows += `
 })
 
 document.getElementById("ledgerTable").innerHTML = rows
+
+if(!data || data.length === 0){
+document.getElementById("ledgerTable").innerHTML = `
+<tr><td colspan="9" style="text-align:center;">No data found</td></tr>
+`
+}
 }
 
 function renderMonthly(data){
@@ -356,7 +363,8 @@ if(!map[month]){
 map[month] = {
 invoice:0,
 payment:0,
-transporter:0
+transporter:0,
+creditNote:0
 }
 }
 
@@ -370,6 +378,11 @@ if(entryType === "GST Payment"){
 map[month].payment += Number(r.credit || 0)
 }
 
+// ✅ CREDIT NOTE
+if(entryType === "Credit Note"){
+map[month].creditNote += Number(r.credit || 0)
+}
+  
 // ✅ TRANSPORTER PAYMENT
 if(entryType === "TRANSPORTER_PAYMENT"){
 map[month].transporter += Number(r.credit || 0)
@@ -379,22 +392,35 @@ map[month].transporter += Number(r.credit || 0)
 
 let html = ""
 
-for(let m in map){
+Object.keys(map)
+.sort((a,b)=> new Date("1 " + a) - new Date("1 " + b))
+.forEach(m=>{
 
-let outstanding = map[m].invoice - map[m].payment
+let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
 
 html += `
 <div style="margin-bottom:10px;">
 <b>${m}</b><br>
 GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
+Credit Notes: ₹${map[m].creditNote.toFixed(2)}<br>
+Net GST: ₹${(map[m].invoice - map[m].creditNote).toFixed(2)}<br>
 Collections: ₹${map[m].payment.toFixed(2)}<br>
 Transporter Paid: ₹${map[m].transporter.toFixed(2)}<br>
+let netPos = map[m].payment - map[m].transporter
+
+Net Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
+${netPos.toFixed(2)}
+</span><br>
 Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">${outstanding.toFixed(2)}</span>
 </div>
 `
 }
 
 document.getElementById("monthlySummary").innerHTML = html
+
+if(Object.keys(map).length === 0){
+document.getElementById("monthlySummary").innerHTML = "No data"
+}
 }
 
 /* AUTO LOAD */

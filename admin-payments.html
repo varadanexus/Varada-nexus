@@ -260,7 +260,7 @@ window.location.href="login.html"
 <h3>Payment</h3>
 
 Invoice Amount:
-<select id="invoiceSelect" onchange="selectInvoiceFromDropdown(); loadTrips();">
+<select id="invoiceSelect" onchange="selectInvoiceFromDropdown()">
 <option value="">Select Invoice</option>
 </select>
 
@@ -325,6 +325,9 @@ async function selectInvoiceFromDropdown(){
 let id = invoiceSelect.value
 currentInvoice = invoices.find(i=>i.id==id)
 
+transporterSelect.value = currentInvoice.transporter_id
+await loadTrips()
+    
 if(!currentInvoice) return
 
 totalAmount.value = currentInvoice.total_amount
@@ -571,6 +574,7 @@ if(invoiceId){
 
     trips = tripData || []
 
+    console.log("FINAL TRIPS:", trips.map(t=>t.trip_no))
     renderTrips()
     return
 }
@@ -608,6 +612,8 @@ renderTrips()
 
 function renderTrips(){
 
+tripTable.innerHTML = ""
+    
 tripTable.innerHTML = trips.map(t=>{
 
 const mt = (t.weight_kg || 0) / 1000

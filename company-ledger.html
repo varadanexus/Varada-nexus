@@ -56,6 +56,10 @@ border-radius:8px;
 cursor:pointer;
 }
 
+.card b {
+color: #93c5fd;
+}
+  
 table{
 width:100%;
 border-collapse:collapse;
@@ -390,31 +394,45 @@ map[month].transporter += Number(r.credit || 0)
 
 })
 
-let html = ""
-
-Object.keys(map)
-.sort((a,b)=> new Date("1 " + a) - new Date("1 " + b))
-.forEach(m=>{
-
-let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
-let netPos = map[m].payment - map[m].transporter
-  
 html += `
-<div style="margin-bottom:10px;">
-<b>${m}</b><br>
+<div style="
+margin-bottom:20px;
+padding:15px;
+background:#0f172a;
+border-radius:10px;
+line-height:1.6;
+">
+
+<b style="font-size:16px;">${m}</b><br><br>
+
+<div>
+<b>GST</b><br>
 GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
 Credit Notes: ₹${map[m].creditNote.toFixed(2)}<br>
-Net GST: ₹${(map[m].invoice - map[m].creditNote).toFixed(2)}<br>
-Collections: ₹${map[m].payment.toFixed(2)}<br>
-Transporter Paid: ₹${map[m].transporter.toFixed(2)}<br>
+Net GST: ₹${(map[m].invoice - map[m].creditNote).toFixed(2)}
+</div>
 
-Net Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
+<br>
+
+<div>
+<b>Cash Flow</b><br>
+Collections: ₹${map[m].payment.toFixed(2)}<br>
+Transporter Paid: ₹${map[m].transporter.toFixed(2)}
+</div>
+
+<br>
+
+<div>
+<b>Position</b><br>
+Bank Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
 ${netPos.toFixed(2)}
 </span><br>
 
-Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">
+Client Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">
 ${outstanding.toFixed(2)}
 </span>
+</div>
+
 </div>
 `
 })

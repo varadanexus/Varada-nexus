@@ -1220,7 +1220,7 @@ doc.setDrawColor(200)
 doc.line(15, startY + 15, 195, startY + 15)
   
 /* TABLE HEADER */
-startY = startY + 18
+startY = startY + 12
 
 doc.autoTable({
 startY: startY,
@@ -1235,8 +1235,8 @@ fontStyle: "bold"
 },
 
 styles: {
-fontSize: 9,
-cellPadding: 3
+fontSize: 8,
+cellPadding: 2
 },
 
 alternateRowStyles: {
@@ -1248,7 +1248,7 @@ fillColor: [245, 245, 245]
 if(adjustmentRows.length){
 
 doc.autoTable({
-startY: doc.lastAutoTable.finalY + 5,
+startY: doc.lastAutoTable.finalY + 3,
 head: [["Type","Amount","Reason"]],
 body: adjustmentRows,
 theme: "grid",
@@ -1260,14 +1260,14 @@ fontStyle: "bold"
 },
 
 styles: {
-fontSize: 9
+fontSize: 8
 }
 })
 
 }
     
 /* TOTALS */
-let summaryY = doc.lastAutoTable.finalY + 10
+let summaryY = doc.lastAutoTable.finalY + 6
 let summaryEndY = doc.lastAutoTable.finalY 
 
 let tableStartX = 15
@@ -1302,8 +1302,8 @@ fontStyle: "bold"
 },
 
 styles: {
-fontSize: 10,
-cellPadding: 4
+fontSize: 9,
+cellPadding: 3
 },
 
 columnStyles: {
@@ -1370,35 +1370,9 @@ doc.setFont("helvetica","normal")
 doc.setFontSize(10)
 doc.setFontSize(9)
 doc.text("This is a system generated document. No signature required.",15,285)
-doc.text("Payment has been processed successfully.",15,292)
 
-// 🔷 QR CODE (Payment Proof)
-let qrData = `INV:${inv.invoice_no} | AMT:${inv.total_amount} | PAID:${inv.paid_amount || 0} | STATUS:${inv.status}`
 
-let qrDiv = document.createElement("div")
-
-new QRCode(qrDiv, {
-text: qrData,
-width: 80,
-height: 80
-})
-
-// ⏳ Wait for QR to render
-setTimeout(() => {
-
-let qrCanvas = qrDiv.querySelector("canvas")
-
-if(qrCanvas){
-let qrImg = qrCanvas.toDataURL()
-doc.addImage(qrImg, "PNG", 155, 65, 35, 35)
-}
-
-// ✅ SAVE ONLY AFTER QR IS READY
 doc.save(inv.invoice_no + ".pdf")
-
-}, 300)
-
-// 🚫 STOP function here
 return
 }
 

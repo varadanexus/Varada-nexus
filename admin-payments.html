@@ -315,6 +315,16 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
+async function getTransporterName(id){
+const { data } = await supabaseClient
+.from("transporters")
+.select("transporter_name")
+.eq("id", id)
+.single()
+
+return data?.transporter_name || "Transporter"
+}
+    
 function selectInvoiceFromDropdown(){
 let id = invoiceSelect.value
 currentInvoice = invoices.find(i=>i.id==id)
@@ -646,20 +656,30 @@ status
 .eq("id", currentInvoice.id)
 
 /* 🔥 COMPANY LEDGER ENTRY (TRANSPORTER PAYMENT) */
-await supabaseClient
+const { error: ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
     entry_type: "TRANSPORTER_PAYMENT",
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
-    party_name: "Transporter",
+
+    // 🔥 FIX: real transporter name
+    party_name: await getTransporterName(currentInvoice.transporter_id),
+
     description: "Transporter Payment - " + currentInvoice.invoice_no,
+
     debit: 0,
     credit: amount,
+
     payment_method: paymentMethod.value,
-    payment_date: paymentDate.value,
-    transaction_id: document.getElementById("transactionId").value || null
+    transaction_id: document.getElementById("transactionId").value || null,
+
+    created_at: new Date().toISOString()   // ✅ CRITICAL FIX
 }])
+
+if(ledgerError){
+    console.error("❌ LEDGER ERROR:", ledgerError)
+}
 
 /************** WHATSAPP PAYMENT FLOW **************/
 

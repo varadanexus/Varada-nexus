@@ -323,7 +323,7 @@ runningBalance -= credit
 rows += `
 <tr>
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
-<td>${r.entry_type}</td>
+<td>${r.entry_type || r.type || "-"}</td>
 <td>${r.reference_no || "-"}</td>
 <td>${r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
@@ -344,7 +344,13 @@ let map = {}
 
 data.forEach(r=>{
 
-let month = new Date(r.created_at).toLocaleString('en-IN',{month:'short',year:'numeric'})
+// 🔥 FIX: support both columns
+let entryType = r.entry_type || r.type || ""
+
+let month = new Date(r.created_at).toLocaleString('en-IN',{
+month:'short',
+year:'numeric'
+})
 
 if(!map[month]){
 map[month] = {
@@ -354,16 +360,19 @@ transporter:0
 }
 }
 
-if(r.entry_type === "TRANSPORTER_PAYMENT"){
-map[month].transporter += Number(r.credit || 0)
-}
-  
-if(r.entry_type === "GST Invoice"){
+// ✅ GST INVOICE
+if(entryType === "GST Invoice"){
 map[month].invoice += Number(r.debit || 0)
 }
 
-if(r.entry_type === "GST Payment"){
+// ✅ GST PAYMENT
+if(entryType === "GST Payment"){
 map[month].payment += Number(r.credit || 0)
+}
+
+// ✅ TRANSPORTER PAYMENT
+if(entryType === "TRANSPORTER_PAYMENT"){
+map[month].transporter += Number(r.credit || 0)
 }
 
 })

@@ -677,7 +677,7 @@ const { error: ledgerError } = await supabaseClient
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
 
-    party_name: transporterName,
+    party: transporterName,
 
     debit: 0,
     credit: amount,

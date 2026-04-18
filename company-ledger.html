@@ -291,7 +291,7 @@ query = query.eq("entry_type", type)
 }
 
 if(party){
-query = query.eq("party", party)
+query = query.or(`party.eq.${party},party_name.eq.${party}`)
 }
 
 const { data, error } = await query
@@ -325,7 +325,7 @@ rows += `
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
 <td>${r.entry_type || r.type || "-"}</td>
 <td>${r.reference_no || "-"}</td>
-<td>${r.party_name || "-"}</td>
+<td>${r.party_name || r.party || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
 <td>₹${runningBalance.toFixed(2)}</td>

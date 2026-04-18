@@ -279,7 +279,9 @@ Enter Payment:
 <input id="totalAmount" readonly placeholder="Invoice Amount">
 
 <p id="invoiceInfo"></p>
-  
+
+<div id="invoiceTrips" style="margin-top:10px;"></div>
+    
 <button onclick="savePayment()">Save Payment</button>
 </div>
 
@@ -318,11 +320,13 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 )
 
-function selectInvoiceFromDropdown(){
+async function selectInvoiceFromDropdown(){
+
 let id = invoiceSelect.value
 currentInvoice = invoices.find(i=>i.id==id)
 
-if(currentInvoice){
+if(!currentInvoice) return
+
 totalAmount.value = currentInvoice.total_amount
 
 invoiceInfo.innerHTML = `
@@ -330,7 +334,68 @@ Total: ₹${currentInvoice.total_amount} <br>
 Paid: ₹${currentInvoice.paid_amount || 0} <br>
 Balance: ₹${currentInvoice.balance_amount}
 `
+
+/* 🔥 LOAD TRIPS OF THIS INVOICE */
+let tripIds = currentInvoice.trip_ids.split(",")
+
+const {data:tripData} = await supabaseClient
+.from("trips")
+.select(`
+id,
+trip_no,
+weight_kg,
+transporter_rate,
+expenses ( amount )
+`)
+.in("id", tripIds)
+
+/* 🔥 BUILD UI */
+let html = `
+<table>
+<tr>
+<th>Trip</th>
+<th>Net</th>
+<th>Adjustments</th>
+<th>Final</th>
+</tr>
+`
+
+tripData.forEach(t=>{
+
+const mt = (t.weight_kg || 0) / 1000
+const gross = mt * (t.transporter_rate || 0)
+
+const expenses = (t.expenses || []).reduce(
+(sum,e)=>sum+(e.amount||0),0
+)
+
+let net = gross - expenses
+
+/* 🔥 APPLY ADJUSTMENTS */
+let adjTotal = 0
+
+adjustments.forEach(a=>{
+if(a.trip_id == t.id && (!a.invoice_id || a.invoice_id == currentInvoice.id)){
+    if(a.type === "Penalty") adjTotal -= Number(a.amount || 0)
+    else adjTotal += Number(a.amount || 0)
 }
+})
+
+let final = net + adjTotal
+
+html += `
+<tr>
+<td>${t.trip_no}</td>
+<td>₹${formatCurrency(net)}</td>
+<td>₹${formatCurrency(adjTotal)}</td>
+<td><b>₹${formatCurrency(final)}</b></td>
+</tr>
+`
+})
+
+html += `</table>`
+
+invoiceTrips.innerHTML = html
 }
   
 function formatCurrency(val){
@@ -569,7 +634,7 @@ const netAmount = tripAmount - totalExpenses
 let adjTotal = 0
 
 adjustments?.forEach(a=>{
-    if(a.trip_id == t.id){
+    if(a.trip_id == t.id && (!a.invoice_id || a.invoice_id == currentInvoice?.id)){
         if(a.type === "Penalty") adjTotal -= Number(a.amount || 0)
         else adjTotal += Number(a.amount || 0)
     }
@@ -1008,7 +1073,7 @@ let netAmount = round2(tripAmount - totalExpenses)
 let adjTotal = 0
 
 adjustments?.forEach(a=>{
-    if(a.trip_id == t.id){
+    if(a.trip_id == t.id && (!a.invoice_id || a.invoice_id == currentInvoice?.id)){
         if(a.type === "Penalty") adjTotal -= Number(a.amount || 0)
         else adjTotal += Number(a.amount || 0)
     }

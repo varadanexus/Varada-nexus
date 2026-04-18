@@ -309,8 +309,16 @@ renderMonthly(data)
 function renderTable(data){
 
 let rows = ""
+let runningBalance = 0   // 🔥 KEY FIX
 
 data.forEach(r=>{
+
+let debit = Number(r.debit || 0)
+let credit = Number(r.credit || 0)
+
+// 🔥 CALCULATE LIVE BALANCE
+runningBalance += debit
+runningBalance -= credit
 
 rows += `
 <tr>
@@ -318,9 +326,9 @@ rows += `
 <td>${r.entry_type}</td>
 <td>${r.reference_no || "-"}</td>
 <td>${r.party_name || "-"}</td>
-<td style="color:#22c55e;">₹${Number(r.debit || 0).toFixed(2)}</td>
-<td style="color:#ef4444;">₹${Number(r.credit || 0).toFixed(2)}</td>
-<td>₹${Number(r.balance || 0).toFixed(2)}</td>
+<td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
+<td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
+<td>₹${runningBalance.toFixed(2)}</td>
 <td>${r.payment_method || "-"}</td>
 <td>${r.transaction_id || "-"}</td>
 </tr>
@@ -350,11 +358,11 @@ if(r.entry_type === "TRANSPORTER_PAYMENT"){
 map[month].transporter += Number(r.credit || 0)
 }
   
-if(r.type === "GST Invoice"){
+if(r.entry_type === "GST Invoice"){
 map[month].invoice += Number(r.debit || 0)
 }
 
-if(r.type === "GST Payment"){
+if(r.entry_type === "GST Payment"){
 map[month].payment += Number(r.credit || 0)
 }
 

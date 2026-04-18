@@ -208,6 +208,41 @@ window.location.href="login.html"
 </div>
 
 <div class="card">
+<h3>Transporter Adjustments</h3>
+
+<select id="adjTransporter"></select>
+
+<select id="adjTrip">
+<option value="">Select Trip (Optional)</option>
+</select>
+
+<input id="adjAmount" placeholder="Amount">
+
+<select id="adjType">
+<option value="Penalty">Penalty</option>
+<option value="Bonus">Bonus</option>
+</select>
+
+<input id="adjReason" placeholder="Reason">
+
+<button onclick="addAdjustment()">Add Adjustment</button>
+
+<table>
+<thead>
+<tr>
+<th>Trip</th>
+<th>Type</th>
+<th>Amount</th>
+<th>Reason</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="adjustmentTable"></tbody>
+</table>
+
+</div>
+    
+<div class="card">
 <h3>Create Invoice</h3>
 
 <button onclick="generateInvoice()">Generate Invoice</button>
@@ -312,6 +347,64 @@ await loadTransporters()
 await loadInvoices()
 }
 
+async function loadAdjustments(){
+
+const {data} = await supabaseClient
+.from("transporter_adjustments")
+.select("*")
+.order("created_at",{ascending:false})
+
+let html=""
+
+data?.forEach(a=>{
+html+=`
+<tr>
+<td>${a.trip_id || "-"}</td>
+<td>${a.type}</td>
+<td>₹${formatCurrency(a.amount)}</td>
+<td>${a.reason || ""}</td>
+<td>
+<button onclick="editAdjustment('${a.id}')">Edit</button>
+<button onclick="deleteAdjustment('${a.id}')">Delete</button>
+</td>
+</tr>
+`
+})
+
+adjustmentTable.innerHTML = html
+}
+
+async function addAdjustment(){
+
+let transporter = adjTransporter.value
+let trip = adjTrip.value
+let amount = Number(adjAmount.value || 0)
+let type = adjType.value
+let reason = adjReason.value
+
+if(!transporter || !amount){
+alert("Fill details")
+return
+}
+
+await supabaseClient
+.from("transporter_adjustments")
+.insert([{
+transporter_id: transporter,
+trip_id: trip || null,
+type,
+amount,
+reason
+}])
+
+alert("Adjustment Added")
+
+adjAmount.value=""
+adjReason.value=""
+
+loadAdjustments()
+}
+    
 async function loadTransporters(){
 const {data}=await supabaseClient.from("transporters").select("*")
 transporterSelect.innerHTML='<option value="">Select</option>'+

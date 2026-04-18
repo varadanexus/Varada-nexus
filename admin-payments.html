@@ -1081,8 +1081,6 @@ let totalAdjustment = 0
 
 adjustmentsData?.forEach(a=>{
 
-let sign = a.type === "Penalty" ? "-" : "+"
-
 if(a.type === "Penalty"){
 totalAdjustment -= Number(a.amount || 0)
 }else{
@@ -1091,7 +1089,7 @@ totalAdjustment += Number(a.amount || 0)
 
 adjustmentRows.push([
 a.type,
-sign + " ₹" + formatCurrency(a.amount),
+(a.type === "Penalty" ? "- Rs. " : "+ Rs. ") + formatCurrency(a.amount),
 a.reason || "-"
 ])
 })

@@ -273,7 +273,7 @@ Enter Payment:
 <option>UPI</option>
 </select>
 
-<input id="totalAmount" readonly placeholder="Invoice Amount">
+<input id="transactionId" placeholder="Transaction ID">
 
 <p id="invoiceInfo"></p>
   
@@ -320,7 +320,7 @@ let id = invoiceSelect.value
 currentInvoice = invoices.find(i=>i.id==id)
 
 if(currentInvoice){
-totalAmount.value = currentInvoice.total_amount
+
 
 invoiceInfo.innerHTML = `
 Total: ₹${currentInvoice.total_amount} <br>
@@ -534,7 +534,7 @@ weight += Number(t.weight_kg||0)
 })
 
 invoiceAmount=total
-totalAmount.value = total.toFixed(2)
+
 
 invoicePreview.innerHTML=`
 Trips: ${selectedTrips.map(t=>t.trip_no).join(", ")}<br>
@@ -615,7 +615,8 @@ const {data:payment} = await supabaseClient
 invoice_id: currentInvoice.id,
 amount,
 payment_date: paymentDate.value,
-payment_method: paymentMethod.value
+payment_method: paymentMethod.value,
+transaction_id: document.getElementById("transactionId").value || null
 })
 .select()
 .single()
@@ -654,9 +655,10 @@ await supabaseClient
     party_name: "Transporter",
     description: "Transporter Payment - " + currentInvoice.invoice_no,
     debit: 0,
-    credit: amount,   // 🔴 MONEY GOING OUT
+    credit: amount,
     payment_method: paymentMethod.value,
-    payment_date: paymentDate.value
+    payment_date: paymentDate.value,
+    transaction_id: document.getElementById("transactionId").value || null
 }])
 
 /************** WHATSAPP PAYMENT FLOW **************/
@@ -765,7 +767,8 @@ console.error("Payment WhatsApp error:", err)
 paidAmount.value=""
 paymentDate.value=""
 paymentMethod.value=""
-
+transactionId.value="" 
+    
 alert("Payment Saved ✅")
 
 loadInvoices()

@@ -657,42 +657,34 @@ status
 
 /* 🔥 COMPANY LEDGER ENTRY (TRANSPORTER PAYMENT) */
 
-const transporterData = await supabaseClient
+/* 🔥 COMPANY LEDGER ENTRY (TRANSPORTER PAYMENT) */
+
+// ✅ get transporter name correctly
+const { data: transporterData } = await supabaseClient
 .from("transporters")
 .select("transporter_name")
 .eq("id", currentInvoice.transporter_id)
 .single()
 
-await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "TRANSPORTER_PAYMENT",
+const transporterName = transporterData?.transporter_name || "Transporter"
 
-    reference_id: currentInvoice.id,
-    reference_no: currentInvoice.invoice_no,
-
-    party_name: transporterName,   // ✅ FIXED
-
-    debit: 0,
-    credit: amount,
-
-    payment_method: paymentMethod.value,
-    transaction_id: document.getElementById("transactionId").value || null,
-
-    created_at: new Date().toISOString()
-}])
-
+// ✅ single clean insert
 const { error: ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
     entry_type: "TRANSPORTER_PAYMENT",
+
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
+
     party_name: transporterName,
+
     debit: 0,
     credit: amount,
+
     payment_method: paymentMethod.value,
     transaction_id: document.getElementById("transactionId").value || null,
+
     created_at: new Date().toISOString()
 }])
 

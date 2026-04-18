@@ -797,11 +797,39 @@ adjustments = data || []
 
 let html=""
 
-data?.forEach(a=>{
+for(let a of adjustments){
+
+/* 🔥 GET INVOICE NUMBER */
+let invoiceNo = "-"
+
+if(a.invoice_id){
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", a.invoice_id)
+.single()
+
+invoiceNo = inv?.invoice_no || "-"
+}
+
+/* 🔥 GET TRIP NUMBER */
+let tripNo = "-"
+
+if(a.trip_id){
+const {data:trip} = await supabaseClient
+.from("trips")
+.select("trip_no")
+.eq("id", a.trip_id)
+.single()
+
+tripNo = trip?.trip_no || "-"
+}
+
+/* 🔥 BUILD ROW */
 html+=`
 <tr>
-<td>${a.invoice_id || "-"}</td>
-<td>${a.trip_id || "-"}</td>
+<td>${invoiceNo}</td>
+<td>${tripNo}</td>
 <td>${a.type}</td>
 <td>₹${formatCurrency(a.amount)}</td>
 <td>${a.reason || ""}</td>
@@ -810,7 +838,7 @@ html+=`
 </td>
 </tr>
 `
-})
+}
 
 adjustmentTable.innerHTML = html
 }

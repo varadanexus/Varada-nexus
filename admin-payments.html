@@ -400,6 +400,7 @@ maximumFractionDigits: 2
 let transporters=[], trips=[], invoices=[]
 let adjustments = []
 let selectedTrips=[]
+let selectedTripIds = new Set() 
 let invoiceAmount=0
 let currentInvoice=null
 
@@ -561,6 +562,7 @@ const { data: tripData } = await supabaseClient
 .select(`
     id,
     trip_no,
+    trip_date, 
     transporter_rate,
     weight_kg,
     expenses ( amount )
@@ -568,34 +570,40 @@ const { data: tripData } = await supabaseClient
 .in("id", tripIds)
 
 /* 🔥 STRICT ASSIGN */
-trips = tripData || []
+trips = (tripData || []).sort((a, b) => {
+    return new Date(b.trip_date || 0) - new Date(a.trip_date || 0)
+})
 
 console.log("✅ INVOICE TRIPS ONLY:", trips.map(t=>t.trip_no))
 
 renderTrips()
 }
+    
 function renderTrips(){
 
-tripTable.innerHTML = ""
-    
 tripTable.innerHTML = trips.map(t=>{
 
 const mt = (t.weight_kg || 0) / 1000
-
 const tripAmount = mt * (t.transporter_rate || 0)
 
-// ✅ calculate expenses
 const totalExpenses = (t.expenses || []).reduce(
   (sum, e) => sum + (e.amount || 0),
   0
 )
 
-// ✅ FINAL amount after deduction
 const netAmount = tripAmount - totalExpenses
 
+let isChecked = selectedTripIds.has(t.id)
+
 return `
-<tr>
-<td><input type="checkbox" class="tripCheck" value="${t.id}"></td>
+<tr onclick="toggleRow('${t.id}')" style="cursor:pointer; ${isChecked ? 'background:#1f2937;' : ''}">
+<td>
+<input type="checkbox" 
+class="tripCheck" 
+value="${t.id}" 
+${isChecked ? 'checked' : ''} 
+onclick="event.stopPropagation(); toggleCheckbox('${t.id}', this)">
+</td>
 <td>${t.trip_no}</td>
 <td>${t.weight_kg}</td>
 <td>₹${formatCurrency(tripAmount)}</td>
@@ -606,13 +614,35 @@ return `
 }).join("")
 }
 
+function toggleRow(id){
+if(selectedTripIds.has(id)){
+    selectedTripIds.delete(id)
+}else{
+    selectedTripIds.add(id)
+}
+renderTrips()
+}
+
+function toggleCheckbox(id, cb){
+if(cb.checked){
+    selectedTripIds.add(id)
+}else{
+    selectedTripIds.delete(id)
+}
+}
+    
 function toggleAll(cb){
-document.querySelectorAll(".tripCheck").forEach(c=>c.checked=cb.checked)
+if(cb.checked){
+    trips.forEach(t => selectedTripIds.add(t.id))
+}else{
+    selectedTripIds.clear()
+}
+renderTrips()
 }
 
 function generateInvoice(){
 
-let checked=document.querySelectorAll(".tripCheck:checked")
+let checked = Array.from(selectedTripIds) 
 
 if(!checked.length){
 alert("Select trips")
@@ -622,6 +652,9 @@ return
 selectedTrips=[]
 let total=0, weight=0
 
+checked.forEach(id=>{
+let t=trips.find(x=>x.id==id)
+    
 checked.forEach(c=>{
 let t=trips.find(x=>x.id==c.value)
 selectedTrips.push(t)

@@ -192,6 +192,7 @@ window.location.href="login.html"
 <option value="">All Types</option>
 <option value="GST Invoice">GST Invoice</option>
 <option value="GST Payment">GST Payment</option>
+<option value="TRANSPORTER_PAYMENT">Transporter Payment</option>
 </select>
 
 <select id="partyFilter">
@@ -286,7 +287,7 @@ query = query.lte("created_at", toDate)
 }
 
 if(type){
-query = query.eq("type", type)
+query = query.eq("entry_type", type)
 }
 
 if(party){
@@ -314,9 +315,9 @@ data.forEach(r=>{
 rows += `
 <tr>
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
-<td>${r.type}</td>
-<td>${r.reference_no}</td>
-<td>${r.party}</td>
+<td>${r.entry_type}</td>
+<td>${r.reference_no || "-"}</td>
+<td>${r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${Number(r.debit || 0).toFixed(2)}</td>
 <td style="color:#ef4444;">₹${Number(r.credit || 0).toFixed(2)}</td>
 <td>₹${Number(r.balance || 0).toFixed(2)}</td>
@@ -340,10 +341,15 @@ let month = new Date(r.created_at).toLocaleString('en-IN',{month:'short',year:'n
 if(!map[month]){
 map[month] = {
 invoice:0,
-payment:0
+payment:0,
+transporter:0
 }
 }
 
+if(r.entry_type === "TRANSPORTER_PAYMENT"){
+map[month].transporter += Number(r.credit || 0)
+}
+  
 if(r.type === "GST Invoice"){
 map[month].invoice += Number(r.debit || 0)
 }
@@ -359,12 +365,13 @@ let html = ""
 for(let m in map){
 
 let outstanding = map[m].invoice - map[m].payment
-  
+
 html += `
 <div style="margin-bottom:10px;">
 <b>${m}</b><br>
 GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
 Collections: ₹${map[m].payment.toFixed(2)}<br>
+Transporter Paid: ₹${map[m].transporter.toFixed(2)}<br>
 Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">${outstanding.toFixed(2)}</span>
 </div>
 `

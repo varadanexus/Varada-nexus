@@ -468,7 +468,7 @@ await supabaseClient
 await supabaseClient
 .from("company_ledger")
 .insert([{
-type: "Credit Note",
+entry_type: "Credit Note",
 reference_no: c.credit_note_no,
 party: c.client_name,
 debit: 0,
@@ -894,7 +894,7 @@ let newBalance = lastBalance + invoiceAmount
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "GST Invoice",
+    entry_type: "GST Invoice",
     reference_no: invoiceNo,
     party: client,
     debit: invoiceAmount,
@@ -1446,7 +1446,7 @@ let newLedgerBalance = lastBalance - amount
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "Credit Note",
+    entry_type: "Credit Note",
     reference_no: cnNo,
     party: inv.client_name,
     debit: 0,
@@ -1600,7 +1600,7 @@ let newBalance = lastBalance - amount
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "GST Payment",
+    entry_type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1731,7 +1731,7 @@ await supabaseClient
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    type: "GST Payment",
+    entry_type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1840,7 +1840,7 @@ await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
-.eq("credit", p.amount)
+.eq("entry_type", "GST Payment")
 
 await supabaseClient
 .from("company_ledger")
@@ -1903,7 +1903,7 @@ await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
-.eq("credit", p.amount)
+.eq("entry_type", "GST Payment")
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient

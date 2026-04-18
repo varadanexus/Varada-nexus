@@ -318,10 +318,17 @@ let type = isValidGSTIN ? "B2B" : "B2C"
 let taxable = Number(inv.total_margin || 0)
 let gst = Number(inv.gst_total || 0)
 
-// 🔥 APPLY CREDIT NOTE ADJUSTMENT
+// ✅ DEFINE CREDIT NOTES FIRST
+let creditNoteGST = Number(inv.credit_note_gst || 0)
+let creditNoteTaxable = Number(inv.credit_note_amount || 0)
+
+// ✅ APPLY CREDIT NOTE
 taxable -= creditNoteTaxable
 gst -= creditNoteGST
 
+// ✅ RECALCULATE GST SPLIT
+let cgst = gst / 2
+let sgst = gst / 2
 
 totalTaxable += taxable
 totalGST += gst

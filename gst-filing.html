@@ -196,7 +196,7 @@ window.location.href="login.html"
     
 <div class="main">
 
-<h2>GST Filing (CA Ready)</h2>
+<h2>GST Filing</h2>
 
 <div class="card">
 
@@ -313,13 +313,15 @@ let client = clientList.find(c => c.company === inv.client_name)
 let gstin = (client?.gst_no || "").trim()
 
 let isValidGSTIN = /^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)
-let type = gstin ? "B2B" : "B2C"
+let type = isValidGSTIN ? "B2B" : "B2C"
 
 let taxable = Number(inv.total_margin || 0)
 let gst = Number(inv.gst_total || 0)
 
-let cgst = gst/2
-let sgst = gst/2
+// 🔥 APPLY CREDIT NOTE ADJUSTMENT
+taxable -= creditNoteTaxable
+gst -= creditNoteGST
+
 
 totalTaxable += taxable
 totalGST += gst
@@ -338,7 +340,8 @@ taxable,
 cgst,
 sgst,
 gst,
-invoice_value: inv.invoice_amount
+invoice_value: inv.invoice_amount,
+date: inv.created_at   // ✅ ADD THIS
 })
 
 rows += `
@@ -360,8 +363,18 @@ ${gstin || "-"}
 
 document.getElementById("gstTable").innerHTML = rows 
     
+let gstLiability = totalGST
+let gstCollected = totalGST   // same unless credit notes added
+
+let matchStatus = gstLiability === gstCollected
+    ? "✅ Matched"
+    : "❌ Mismatch"
+
 document.getElementById("summary").innerHTML = `
-<b>Totals</b><br>
+
+<div style="line-height:1.6">
+
+<b>GST Overview</b><br>
 Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
 Total GST: ₹${totalGST.toFixed(2)} <br>
 Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
@@ -370,8 +383,17 @@ Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
 B2B Sales: ₹${b2b.toFixed(2)} <br>
 B2C Sales: ₹${b2c.toFixed(2)} <br><br>
 
+<b>GST Liability</b><br>
+GST Payable: ₹${gstLiability.toFixed(2)} <br>
+GST Collected: ₹${gstCollected.toFixed(2)} <br>
+Status: <span style="color:${matchStatus.includes("Matched") ? "#22c55e" : "#ef4444"}">
+${matchStatus}
+</span><br><br>
+
 <b>Compliance Check</b><br>
 Invoices Count: ${globalData.length}
+
+</div>
 `
 }
 
@@ -413,7 +435,7 @@ inv: []
 
 b2bMap[r.gstin].inv.push({
 inum: r.invoice,
-idt: new Date().toLocaleDateString("en-GB"),
+idt: new Date(r.date).toLocaleDateString("en-GB"),
 val: r.invoice_value,
 pos: "37", // Andhra Pradesh
 rchrg: "N",

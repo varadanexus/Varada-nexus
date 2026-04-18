@@ -536,17 +536,25 @@ data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 async function loadTrips(){
 
 let transporterId = transporterSelect.value
-let invoiceId = invoiceSelect.value
+let invoiceId = String(invoiceSelect.value || "")
 
 if(!transporterId) return
 
 /* 🔴 IF INVOICE SELECTED → SHOW ONLY THAT INVOICE TRIPS */
 if(invoiceId){
 
-    let invoice = invoices.find(i => i.id == invoiceId)
+    const { data: invoice } = await supabaseClient
+    .from("transporter_invoices")
+    .select("trip_ids")
+    .eq("id", invoiceId)
+    .single()
+
     if(!invoice) return
 
-    let tripIds = invoice.trip_ids.split(",")
+    let tripIds = (invoice.trip_ids || "")
+        .split(",")
+        .map(id => id.trim())
+        .filter(Boolean)
 
     const { data: tripData } = await supabaseClient
     .from('trips')

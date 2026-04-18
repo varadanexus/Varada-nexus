@@ -183,7 +183,7 @@ window.location.href="login.html"
 
 <div class="card">
 <h3>Select Transporter</h3>
-<select id="transporterSelect" onchange="loadTrips()"></select>
+<select id="transporterSelect" onchange="loadInvoicesByTransporter()"></select>
 </div>
 
 <div class="card">
@@ -260,7 +260,7 @@ window.location.href="login.html"
 <h3>Payment</h3>
 
 Invoice Amount:
-<select id="invoiceSelect" onchange="selectInvoiceFromDropdown()">
+<select id="invoiceSelect" onchange="handleInvoiceChange()">
 <option value="">Select Invoice</option>
 </select>
 
@@ -326,7 +326,7 @@ let id = invoiceSelect.value
 currentInvoice = invoices.find(i=>i.id==id)
 
 transporterSelect.value = currentInvoice.transporter_id
-await loadTrips()
+
     
 if(!currentInvoice) return
 
@@ -400,7 +400,50 @@ html += `</table>`
 
 invoiceTrips.innerHTML = html
 }
-  
+
+async function handleInvoiceChange(){
+
+if(!invoiceSelect.value){
+    tripTable.innerHTML = ""
+    trips = []
+    return
+}
+
+/* 🔥 STEP 1: set current invoice */
+await selectInvoiceFromDropdown()
+
+/* 🔥 STEP 2: load ONLY its trips */
+await loadTrips()
+
+}
+    
+async function loadInvoicesByTransporter(){
+
+let transporterId = transporterSelect.value
+
+if(!transporterId){
+    invoiceSelect.innerHTML = '<option value="">Select Invoice</option>'
+    tripTable.innerHTML = ""
+    return
+}
+
+/* 🔥 LOAD ONLY THIS TRANSPORTER INVOICES */
+const {data} = await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.eq("transporter_id", transporterId)
+.order("created_at",{ascending:false})
+
+/* 🔥 FILL DROPDOWN */
+invoiceSelect.innerHTML = '<option value="">Select Invoice</option>' +
+data.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
+
+/* 🔥 CLEAR TRIPS (VERY IMPORTANT) */
+tripTable.innerHTML = ""
+trips = []
+
+}
+    
 function formatCurrency(val){
 return Number(val || 0).toLocaleString("en-IN", {
 minimumFractionDigits: 2,
@@ -538,48 +581,28 @@ data.map(t=>`<option value="${t.id}">${t.transporter_name}</option>`).join("")
 
 async function loadTrips(){
 
-let transporterId = transporterSelect.value
-let invoiceId = String(invoiceSelect.value || "")
+let invoiceId = invoiceSelect.value
 
-/* 🔥 ALLOW INVOICE FLOW WITHOUT TRANSPORTER */
-if(!transporterId && !invoiceId) return
-
-/* 🔴 IF INVOICE SELECTED → SHOW ONLY THAT INVOICE TRIPS */
-if(invoiceId){
-
-    const { data: invoice } = await supabaseClient
-    .from("transporter_invoices")
-    .select("trip_ids")
-    .eq("id", invoiceId)
-    .single()
-
-    if(!invoice) return
-
-    let tripIds = (invoice.trip_ids || "")
-        .split(",")
-        .map(id => id.trim())
-        .filter(Boolean)
-
-    const { data: tripData } = await supabaseClient
-    .from('trips')
-    .select(`
-        id,
-        trip_no,
-        transporter_rate,
-        weight_kg,
-        created_at,
-        expenses ( amount )
-    `)
-    .in("id", tripIds)
-
-    trips = tripData || []
-
-    console.log("FINAL TRIPS:", trips.map(t=>t.trip_no))
-    renderTrips()
+/* ❌ HARD STOP */
+if(!invoiceId){
+    tripTable.innerHTML = ""
+    trips = []
     return
 }
 
-/* 🟢 NORMAL FLOW (NO INVOICE SELECTED) */
+/* ✅ ONLY INVOICE MODE */
+const { data: invoice } = await supabaseClient
+.from("transporter_invoices")
+.select("trip_ids")
+.eq("id", invoiceId)
+.single()
+
+if(!invoice) return
+
+let tripIds = (invoice.trip_ids || "")
+    .split(",")
+    .map(id => id.trim())
+    .filter(Boolean)
 
 const { data: tripData } = await supabaseClient
 .from('trips')
@@ -588,28 +611,17 @@ const { data: tripData } = await supabaseClient
     trip_no,
     transporter_rate,
     weight_kg,
-    created_at,
     expenses ( amount )
 `)
-.eq("transporter_id", transporterId)
+.in("id", tripIds)
 
-/* REMOVE USED TRIPS */
-const {data:inv}=await supabaseClient
-.from("transporter_invoices")
-.select("trip_ids")
+/* 🔥 STRICT ASSIGN */
+trips = tripData || []
 
-let usedTrips=[]
-inv?.forEach(i=>{
-    i.trip_ids?.split(",").forEach(t=>usedTrips.push(t.trim()))
-})
-
-trips = (tripData || [])
-.filter(t=>!usedTrips.includes(String(t.id)))
-.sort((a,b)=> new Date(b.created_at)-new Date(a.created_at))
+console.log("✅ INVOICE TRIPS ONLY:", trips.map(t=>t.trip_no))
 
 renderTrips()
 }
-
 function renderTrips(){
 
 tripTable.innerHTML = ""

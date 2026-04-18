@@ -656,25 +656,15 @@ status
 .eq("id", currentInvoice.id)
 
 /* 🔥 COMPANY LEDGER ENTRY (TRANSPORTER PAYMENT) */
-const { data: transporter } = await supabaseClient
-.from("transporters")
-.select("transporter_name")
-.eq("id", currentInvoice.transporter_id)
-.single()
-
-const { error: ledgerError } = await supabaseClient
+await supabaseClient
 .from("company_ledger")
 .insert([{
-    // ✅ SEND BOTH (important for compatibility)
     entry_type: "TRANSPORTER_PAYMENT",
-    type: "TRANSPORTER_PAYMENT",
 
     reference_id: currentInvoice.id,
     reference_no: currentInvoice.invoice_no,
 
     party_name: transporter?.transporter_name || "Transporter",
-
-    description: "Transporter Payment - " + currentInvoice.invoice_no,
 
     debit: 0,
     credit: amount,

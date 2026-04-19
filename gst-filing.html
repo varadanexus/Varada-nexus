@@ -406,17 +406,7 @@ if(Math.abs(diff) > 100){
     matchStatus = "🚨 Major Mismatch"
 }
 
-let matchStatus = diff < 1
-    ? "✅ Matched"
-    : "❌ Mismatch"
 
-if(totalGST > 0 && gstCollected === 0){
-    matchStatus = "⚠️ Not Paid"
-}
-
-if(diff > 100){
-    matchStatus = "🚨 Major Mismatch"
-}
 
 document.getElementById("summary").innerHTML = `
 
@@ -442,10 +432,6 @@ Status: <span style="color:${
     matchStatus.includes("Not Paid") ? "#f59e0b" :
     "#ef4444"
 }">
-${matchStatus}
-</span><br><br>
-Status: <span style="color:${matchStatus.includes("Matched") ? "#22c55e" : "#ef4444"}">
-Difference: ₹${diff.toFixed(2)}<br>
 ${matchStatus}
 </span><br><br>
 
@@ -503,7 +489,7 @@ itms: [{
 num: 1,
 itm_det: {
 txval: r.taxable,
-rt: 18
+rt: 18,
 camt: r.cgst,
 samt: r.sgst,
 csamt: 0,
@@ -532,7 +518,7 @@ b2b: Object.values(b2bMap),
 b2cs: [{
 sply_ty: "INTRA",
 txval: b2cTotal,
-rt: rate,
+rt: 18,
 camt: b2cTotal * 0.09,
 samt: b2cTotal * 0.09,
 csamt: 0

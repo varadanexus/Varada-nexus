@@ -253,6 +253,14 @@ let start = new Date(month + "-01")
 let end = new Date(start)
 end.setMonth(end.getMonth()+1)
 
+// 🔥 FETCH GST PAYMENTS FROM LEDGER
+const { data:ledgerData, error:ledgerError } = await supabaseClient
+.from("company_ledger")
+.select("*")
+.eq("entry_type", "GST Payment")
+.gte("created_at", start.toISOString())
+.lt("created_at", end.toISOString())
+    
 /* 🔥 FETCH INVOICES */
 const { data:invoices, error:invError } = await supabaseClient
 .from("client_invoices_gst")
@@ -374,11 +382,29 @@ ${gstin || "-"}
 }
 
 document.getElementById("gstTable").innerHTML = rows 
+
+let ledgerGSTPaid = 0
+
+if(ledgerData){
+    ledgerData.forEach(r=>{
+        ledgerGSTPaid += Number(r.credit || 0)
+    })
+}
     
 let gstLiability = totalGST
-let gstCollected = totalGST   // same unless credit notes added
+let diff = gstLiability - ledgerGSTPaid
 
-let diff = Math.abs(gstLiability - gstCollected)
+let matchStatus = Math.abs(diff) < 1
+    ? "✅ Matched"
+    : "❌ Mismatch"
+
+if(gstLiability > 0 && ledgerGSTPaid === 0){
+    matchStatus = "⚠️ Not Paid"
+}
+
+if(Math.abs(diff) > 100){
+    matchStatus = "🚨 Major Mismatch"
+}
 
 let matchStatus = diff < 1
     ? "✅ Matched"
@@ -406,9 +432,18 @@ Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
 B2B Sales: ₹${b2b.toFixed(2)} <br>
 B2C Sales: ₹${b2c.toFixed(2)} <br><br>
 
-<b>GST Liability</b><br>
-GST Payable: ₹${gstLiability.toFixed(2)} <br>
-GST Collected: ₹${gstCollected.toFixed(2)} <br>
+<b>GST Reconciliation</b><br>
+GST Liability: ₹${gstLiability.toFixed(2)} <br>
+Ledger GST Paid: ₹${ledgerGSTPaid.toFixed(2)} <br>
+Difference: ₹${diff.toFixed(2)} <br>
+
+Status: <span style="color:${
+    matchStatus.includes("Matched") ? "#22c55e" :
+    matchStatus.includes("Not Paid") ? "#f59e0b" :
+    "#ef4444"
+}">
+${matchStatus}
+</span><br><br>
 Status: <span style="color:${matchStatus.includes("Matched") ? "#22c55e" : "#ef4444"}">
 Difference: ₹${diff.toFixed(2)}<br>
 ${matchStatus}
@@ -468,7 +503,7 @@ itms: [{
 num: 1,
 itm_det: {
 txval: r.taxable,
-rt: rate,
+rt: 18
 camt: r.cgst,
 samt: r.sgst,
 csamt: 0,

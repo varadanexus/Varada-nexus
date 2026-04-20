@@ -228,7 +228,7 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 <div id="preview"></div>
 
 <br>
-<button onclick="saveGSTInvoice()">Save GST Invoice</button>
+<button id="saveBtn" onclick="saveGSTInvoice()">Save GST Invoice</button>
   
 <button onclick="alert('Use table PDF after saving invoice')">
 Download GST Invoice PDF
@@ -452,6 +452,8 @@ reason: newReason
 /* 🔥 FIX INVOICE BALANCE */
 let newBalance = Number(inv.balance_amount) - diff
 
+if(newBalance < 0) newBalance = 0
+
 await supabaseClient
 .from("client_invoices_gst")
 .update({
@@ -460,10 +462,38 @@ balance_amount: newBalance
 .eq("id", c.invoice_id)
 
 /* 🔥 UPDATE COMPANY LEDGER (simple replace) */
+// 🔥 DELETE OLD ENTRY (SAFE)
 await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", c.credit_note_no)
+.eq("entry_type", "Credit Note")
+.eq("credit", c.amount)
+
+// 🔥 GET LAST BALANCE AGAIN
+const { data:lastEntryArr } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+
+let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+// 🔥 NEW BALANCE (credit note reduces balance)
+let newLedgerBalance = lastBalance - newAmount
+
+// 🔥 INSERT UPDATED ENTRY
+await supabaseClient
+.from("company_ledger")
+.insert([{
+entry_type: "Credit Note",
+reference_no: c.credit_note_no,
+party: c.client_name,
+debit: 0,
+credit: newAmount,
+balance: newLedgerBalance,
+remarks: "Credit Note Edited"
+}])
 
 await supabaseClient
 .from("company_ledger")
@@ -796,8 +826,11 @@ return prefix + seq
   
 async function saveGSTInvoice(){
 
+document.getElementById("saveBtn").disabled = true
+  
 if(selectedTrips.length === 0){
     alert("Generate invoice first")
+    document.getElementById("saveBtn").disabled = false
     return
 }
 
@@ -830,13 +863,7 @@ let netBillingTotal = totalContract - totalExpenseAll
 
 let serviceCharges = totalMargin
 
-let subtotalTaxable = serviceCharges + totalGST
-
-let freightCharges = totalFreight
-
-let totalInvoiceValue = subtotalTaxable + freightCharges
-
-let invoiceAmount = totalInvoiceValue
+let invoiceAmount = netBillingTotal + totalGST
 
 /* 🔥 1️⃣ INSERT MAIN INVOICE */
 const { data:inv, error:invError } = await supabaseClient
@@ -863,6 +890,7 @@ const { data:inv, error:invError } = await supabaseClient
 if(invError || !inv){
     console.log("❌ Invoice Save Error:", invError)
     alert("Invoice failed. Check console.")
+    document.getElementById("saveBtn").disabled = false
     return
 }
 
@@ -991,12 +1019,15 @@ if(lockError){
 }
 
 alert("GST Invoice Saved ✅")
-document.getElementById("clientSelect").value = "Select Client"
-  
+document.getElementById("clientSelect").value = ""
+
 /* OPTIONAL: REFRESH */
 loadTripsByClient()
 selectedTrips = []
 document.getElementById("preview").innerHTML = ""
+
+document.getElementById("saveBtn").disabled = false
+  
 loadGSTInvoices()
 }
 
@@ -1595,7 +1626,7 @@ const { data:lastEntry } = await supabaseClient
 
 let lastBalance = lastEntry?.balance || 0
 
-let newBalance = lastBalance - amount
+let newBalance = lastBalance + amount
 
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
@@ -1712,7 +1743,7 @@ const { data:lastEntryArr } = await supabaseClient
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
-let newBalance = lastBalance - amount
+let newBalance = lastBalance + amount
 
 /* 🔥 SAVE PAYMENT HISTORY */
 await supabaseClient
@@ -1841,15 +1872,28 @@ await supabaseClient
 .delete()
 .eq("reference_no", p.invoice_no)
 .eq("entry_type", "GST Payment")
+.eq("credit", p.amount)
+
+// GET LAST BALANCE AGAIN
+const { data:lastEntryArr } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+
+let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+let updatedBalance = lastBalance + newAmount
 
 await supabaseClient
 .from("company_ledger")
 .insert([{
-type: "GST Payment",
+entry_type: "GST Payment",
 reference_no: p.invoice_no,
 party: p.client_name,
 debit: 0,
 credit: newAmount,
+balance: updatedBalance,
 remarks: "GST Payment Edited"
 }])
 
@@ -1888,7 +1932,7 @@ await supabaseClient
 .from("client_invoices_gst")
 .update({
 balance_amount: newBalance,
-payment_status: "Pending"
+payment_status: newBalance === 0 ? "Paid" : "Pending"
 })
 .eq("id", p.invoice_id)
 
@@ -1904,6 +1948,7 @@ await supabaseClient
 .delete()
 .eq("reference_no", p.invoice_no)
 .eq("entry_type", "GST Payment")
+.eq("credit", p.amount)
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient

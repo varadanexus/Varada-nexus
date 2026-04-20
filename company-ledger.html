@@ -455,9 +455,6 @@ let type = (r.entry_type || "").toUpperCase()
 // NET POSITION (all entries)
 netBalance += debit - credit
 
-// BANK BALANCE (cash only)
-let type = (r.entry_type || "").toUpperCase()
-
 if(type === "CLIENT PAYMENT"){
     bankBalance += credit
 }

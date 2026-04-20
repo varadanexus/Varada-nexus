@@ -422,7 +422,9 @@ query = query.eq("entry_type", type)
 }
 
 if(party){
-query = query.or(`party.ilike.*${party}*,party_name.ilike.*${party}*`)
+query = query.or(
+`party.ilike.*${party.replace(/,/g,"")}*,party_name.ilike.*${party.replace(/,/g,"")}*`
+)
 }
 
 const { data, error } = await query
@@ -448,12 +450,7 @@ let debit = Number(r.debit || 0)
 let credit = Number(r.credit || 0)
 let type = (r.entry_type || "").toUpperCase()
 
-if(type === "CLIENT PAYMENT"){
-    runningBalance += credit
-}
-else if(type === "TRANSPORTER_PAYMENT"){
-    runningBalance -= debit
-}
+runningBalance += debit - credit
 
 rows += `
 <tr>

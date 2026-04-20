@@ -407,6 +407,7 @@ let query = supabaseClient
 .from("company_ledger")
 .select("*")
 .order("created_at", { ascending:true })
+.order("id", { ascending:true })
 
 if(fromDate){
 query = query.gte("created_at", fromDate + "T00:00:00")
@@ -421,7 +422,7 @@ query = query.eq("entry_type", type)
 }
 
 if(party){
-query = query.or(`party.ilike.%${party}%,party_name.ilike.%${party}%`)
+query = query.or(`party.ilike.*${party}*,party_name.ilike.*${party}*`)
 }
 
 const { data, error } = await query
@@ -439,9 +440,8 @@ renderMonthly(data)
 function renderTable(data){
 
 let rows = ""
-let runningBalance = 0
-let runningBalance = openingBalance
-  
+let runningBalance = 0   // ✅ ONLY THIS LINE
+
 data.forEach(r=>{
 
 let debit = Number(r.debit || 0)
@@ -530,33 +530,34 @@ Object.keys(map)
 
     let netPos = map[m].payment - map[m].transporter
 
-    html += `
-    <div style="
-    margin-bottom:20px;
-    padding:15px;
-    background:#0f172a;
-    border-radius:10px;
-    line-height:1.6;
-    ">
+html += `
+<div style="
+margin-bottom:20px;
+padding:15px;
+background:#0f172a;
+border-radius:10px;
+line-height:1.6;
+">
 
-    <b style="font-size:16px;">${m}</b><br><br>
+<b style="font-size:16px;">${m}</b><br><br>
 
-    <div>
-    <b>Cash Flow</b><br>
-    Collections: ₹${map[m].payment.toFixed(2)}<br>
-    Transporter Paid: ₹${map[m].transporter.toFixed(2)}
-    </div>
+<div>
+<b>Cash Flow</b><br>
+Collections: ₹${map[m].payment.toFixed(2)}<br>
+Transporter Paid: ₹${map[m].transporter.toFixed(2)}
+</div>
 
-    <br>
+<br>
 
-    <div>
-    <b>Bank Position</b><br>
-    ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
-    ${netPos.toFixed(2)}
-    </span>
-    </div>
+<div>
+<b>Bank Position</b><br>
+₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
+${netPos.toFixed(2)}
+</span>
+</div>
 
-    `
+</div>
+`
 })
 
 document.getElementById("monthlySummary").innerHTML = html

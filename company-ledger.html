@@ -359,26 +359,20 @@ month:'short',
 year:'numeric'
 })
 
-if(!map[month]){
 map[month] = {
-invoice:0,
-payment:0,
-transporter:0,
-creditNote:0
+    payment:0,
+    transporter:0
 }
+  
 }
 
-if(entryType === "GST Invoice" || entryType === "Client Invoice"){
-    map[month].invoice += Number(r.debit || 0)
-}
+// ❌ REMOVE invoice from ledger calculation
 
 if(entryType === "Client Payment"){
 map[month].payment += Number(r.credit || 0)
 }
 
-if(entryType === "Credit Note"){
-map[month].creditNote += Number(r.credit || 0)
-}
+// ❌ REMOVE credit note from ledger
 
 if(entryType === "TRANSPORTER_PAYMENT"){
 map[month].transporter += Number(r.debit || 0)
@@ -403,7 +397,6 @@ Object.keys(map)
   
 .forEach(m=>{
 
-let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
 let netPos = map[m].payment - map[m].transporter
 
 let gstTotal = map[m].invoice - map[m].creditNote
@@ -429,15 +422,6 @@ line-height:1.6;
 <b style="font-size:16px;">${m}</b><br><br>
 
 <div>
-<b>GST</b><br>
-GST Sales: ₹${map[m].invoice.toFixed(2)}<br>
-Credit Notes: ₹${map[m].creditNote.toFixed(2)}<br>
-Net GST: ₹${(map[m].invoice - map[m].creditNote).toFixed(2)}
-</div>
-
-<br>
-
-<div>
 <b>Cash Flow</b><br>
 Collections: ₹${map[m].payment.toFixed(2)}<br>
 Transporter Paid: ₹${map[m].transporter.toFixed(2)}
@@ -446,23 +430,10 @@ Transporter Paid: ₹${map[m].transporter.toFixed(2)}
 <br>
 
 <div>
-<b>Position</b><br>
-
-Bank Position: ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
+<b>Bank Position</b><br>
+₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
 ${netPos.toFixed(2)}
-</span><br>
-
-Client Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c55e'}">
-${outstanding.toFixed(2)}
-</span><br><br>
-
-<b>Collection vs Billing Check</b><br>
-Collections (Ledger): ₹${reconciliation.ledgerGST.toFixed(2)}<br>
-Difference: ₹${reconciliation.absDiff.toFixed(2)}<br>
-Status: <span style="color:${reconciliation.status === "MATCHED" ? "#22c55e" : "#ef4444"}">
-${reconciliation.status}
 </span>
-
 </div>
 
 </div>

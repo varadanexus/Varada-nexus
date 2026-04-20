@@ -240,8 +240,6 @@ Download GST Invoice PDF
 
 <h3>Receive Payment</h3>
 
-<button onclick="payGSTToGovernment()">Pay GST to Government</button>
-  
 <select id="gstInvoiceSelect"></select>
 
 <input id="gstPaidAmount" placeholder="Amount">
@@ -467,17 +465,6 @@ await supabaseClient
 .delete()
 .eq("reference_no", c.credit_note_no)
 
-// 🔥 GET LAST BALANCE
-const { data:lastEntryArr } = await supabaseClient
-.from("company_ledger")
-.select("balance")
-.order("created_at", { ascending:false })
-.limit(1)
-
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-let newLedgerBalance = lastBalance - newAmount
-
 await supabaseClient
 .from("company_ledger")
 .insert([{
@@ -486,7 +473,6 @@ reference_no: c.credit_note_no,
 party: c.client_name,
 debit: 0,
 credit: newAmount,
-balance: newLedgerBalance,
 remarks: "Credit Note Edited"
 }])
 
@@ -1609,12 +1595,12 @@ const { data:lastEntry } = await supabaseClient
 
 let lastBalance = lastEntry?.balance || 0
 
-let newBalance = lastBalance + amount
+let newBalance = lastBalance - amount
 
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "CLIENT_PAYMENT",
+    entry_type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1726,7 +1712,7 @@ const { data:lastEntryArr } = await supabaseClient
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
-let newBalance = lastBalance + amount
+let newBalance = lastBalance - amount
 
 /* 🔥 SAVE PAYMENT HISTORY */
 await supabaseClient
@@ -1745,7 +1731,7 @@ await supabaseClient
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "CLIENT_PAYMENT",
+    entry_type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1754,7 +1740,7 @@ const { error:ledgerError } = await supabaseClient
     payment_method: method || "N/A",
     transaction_id: txnId || "N/A",        
     payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
-    remarks: "Client Payment Received"
+    remarks: "GST Payment Received"
 }])
 
 if(ledgerError){
@@ -1792,77 +1778,6 @@ window.addEventListener("load", () => {
     init()
 })
 
-
-/* 🔥 AUTO GST CALCULATION */
-async function getPendingGST(){
-
-// TOTAL GST COLLECTED
-const { data:invoices } = await supabaseClient
-.from("client_invoices_gst")
-.select("gst_total")
-.eq("payment_status", "Paid")
-
-let totalGSTCollected = 0
-invoices?.forEach(i=>{
-    totalGSTCollected += Number(i.gst_total || 0)
-})
-
-// TOTAL GST PAID TO GOVT
-const { data:payments } = await supabaseClient
-.from("company_ledger")
-.select("credit")
-.eq("entry_type", "GST_PAYMENT")
-
-let totalGSTPaid = 0
-payments?.forEach(p=>{
-    totalGSTPaid += Number(p.credit || 0)
-})
-
-let pendingGST = totalGSTCollected - totalGSTPaid
-
-return pendingGST > 0 ? pendingGST : 0
-}
-
-async function payGSTToGovernment(){
-
-let pendingGST = await getPendingGST()
-
-if(pendingGST <= 0){
-    alert("No GST pending ✅")
-    return
-}
-
-// AUTO SPLIT
-let cgst = pendingGST / 2
-let sgst = pendingGST / 2
-
-// GET LAST BALANCE
-const { data:lastEntryArr } = await supabaseClient
-.from("company_ledger")
-.select("balance")
-.order("created_at", { ascending:false })
-.limit(1)
-
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-let newBalance = lastBalance - pendingGST
-
-// 🔥 SINGLE ENTRY (clean accounting)
-await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "GST_PAYMENT",
-    reference_no: "GST-" + Date.now(),
-    party: "Government",
-    debit: 0,
-    credit: pendingGST,
-    balance: newBalance,
-    remarks: `GST Paid (CGST: ${cgst.toFixed(2)}, SGST: ${sgst.toFixed(2)})`
-}])
-
-alert(`GST Paid ✅\nTotal: ₹${pendingGST.toFixed(2)}\nCGST: ₹${cgst.toFixed(2)}\nSGST: ₹${sgst.toFixed(2)}`)
-}
-  
 async function editGSTPayment(id){
 
 const { data:p } = await supabaseClient
@@ -1925,29 +1840,17 @@ await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
-.eq("entry_type", "CLIENT_PAYMENT")
-
-// 🔥 GET LAST BALANCE
-const { data:lastEntryArr } = await supabaseClient
-.from("company_ledger")
-.select("balance")
-.order("created_at", { ascending:false })
-.limit(1)
-
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-let newBalance = lastBalance + newAmount
+.eq("entry_type", "GST Payment")
 
 await supabaseClient
 .from("company_ledger")
 .insert([{
-entry_type: "CLIENT_PAYMENT",
+type: "GST Payment",
 reference_no: p.invoice_no,
 party: p.client_name,
 debit: 0,
 credit: newAmount,
-balance: newBalance,
-remarks: "Payment Edited"
+remarks: "GST Payment Edited"
 }])
 
 alert("Payment Updated ✅")
@@ -2000,7 +1903,7 @@ await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
-.eq("entry_type", "CLIENT_PAYMENT")
+.eq("entry_type", "GST Payment")
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient
@@ -2018,6 +1921,7 @@ loadPaymentHistory()
 </script>
 
 <script src="rbac.js"></script>
+<script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>
   
 </body>

@@ -467,7 +467,6 @@ await supabaseClient
 .delete()
 .eq("reference_no", c.credit_note_no)
 
-await supabaseClient
 // 🔥 GET LAST BALANCE
 const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
@@ -477,7 +476,7 @@ const { data:lastEntryArr } = await supabaseClient
 
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
-let newBalance = lastBalance - newAmount
+let newLedgerBalance = lastBalance - newAmount
 
 await supabaseClient
 .from("company_ledger")
@@ -487,7 +486,7 @@ reference_no: c.credit_note_no,
 party: c.client_name,
 debit: 0,
 credit: newAmount,
-balance: newBalance,
+balance: newLedgerBalance,
 remarks: "Credit Note Edited"
 }])
 

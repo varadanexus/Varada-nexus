@@ -1928,20 +1928,21 @@ alert("Payment not found")
 return
 }
 
-/* 🔥 UPDATE INVOICE (ADD BACK BALANCE) */
+/* 🔥 GET INVOICE */
 const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", p.invoice_id)
 .single()
 
-let newBalance = Number(inv.balance_amount) + Number(p.amount)
+/* 🔥 RESTORE INVOICE BALANCE */
+let restoredBalance = Number(inv.balance_amount) + Number(p.amount)
 
 await supabaseClient
 .from("client_invoices_gst")
 .update({
-balance_amount: newBalance,
-payment_status: "Pending"
+    balance_amount: restoredBalance,
+    payment_status: "Pending"
 })
 .eq("id", p.invoice_id)
 
@@ -1950,7 +1951,6 @@ await supabaseClient
 .from("gst_payments")
 .delete()
 .eq("id", id)
-
 
 /* 🔥 DELETE LEDGER ENTRY */
 await supabaseClient
@@ -1961,9 +1961,7 @@ await supabaseClient
 .eq("party", p.client_name)
 .eq("entry_type", "Client Payment")
 
-// ✅ 🔥 ADD THIS RIGHT HERE
-
-// 🔥 REVERSE COMPANY BALANCE
+/* 🔥 GET LAST BALANCE */
 const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
 .select("balance")
@@ -1972,9 +1970,10 @@ const { data:lastEntryArr } = await supabaseClient
 
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
+/* 🔥 CALCULATE REVERSAL */
 let newLedgerBalance = lastBalance - Number(p.amount)
 
-// 🔥 INSERT REVERSAL ENTRY (AUDIT SAFE)
+/* 🔥 INSERT REVERSAL ENTRY */
 await supabaseClient
 .from("company_ledger")
 .insert([{
@@ -1986,8 +1985,8 @@ await supabaseClient
     balance: newLedgerBalance,
     remarks: "Deleted Payment Reversal"
 }])
-  
-/* 🔥 CLIENT LEDGER */
+
+/* 🔥 CLIENT LEDGER CLEANUP */
 await supabaseClient
 .from("client_ledger")
 .delete()

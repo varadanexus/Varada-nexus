@@ -352,8 +352,9 @@ taxable,
 cgst,
 sgst,
 gst,
+rate: rate,   // ✅ ADD THIS LINE
 invoice_value: inv.invoice_amount,
-date: inv.created_at   // ✅ ADD THIS
+date: inv.created_at
 })
 
 rows += `
@@ -468,7 +469,7 @@ itms: [{
 num: 1,
 itm_det: {
 txval: r.taxable,
-rt: rate,
+rt: r.rate,
 camt: r.cgst,
 samt: r.sgst,
 csamt: 0,
@@ -497,7 +498,7 @@ b2b: Object.values(b2bMap),
 b2cs: [{
 sply_ty: "INTRA",
 txval: b2cTotal,
-rt: rate,
+rt: r.rate,
 camt: b2cTotal * 0.09,
 samt: b2cTotal * 0.09,
 csamt: 0

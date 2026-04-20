@@ -1887,7 +1887,7 @@ const { data:lastEntryArr } = await supabaseClient
 
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
-let newBalance = lastBalance + newAmount
+let newLedgerBalance = lastBalance + newAmount
 
 
 // 🔥 INSERT UPDATED ENTRY
@@ -1899,7 +1899,7 @@ reference_no: p.invoice_no,
 party: p.client_name,
 debit: 0,
 credit: newAmount,
-balance: newBalance,
+balance: newLedgerBalance,
 payment_method: newMethod || "N/A",
 transaction_id: newTxn,
 payment_date: new Date().toISOString(),

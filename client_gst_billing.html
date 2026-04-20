@@ -894,7 +894,7 @@ let newBalance = lastBalance + invoiceAmount
 await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST Invoice",
+    entry_type: "Client Invoice",
     reference_no: invoiceNo,
     party: client,
     debit: invoiceAmount,
@@ -1595,21 +1595,21 @@ const { data:lastEntry } = await supabaseClient
 
 let lastBalance = lastEntry?.balance || 0
 
-let newBalance = lastBalance - amount
+let newBalance = lastBalance + amount
 
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST Payment",
+    entry_type: "Client Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
     credit: amount,
     balance: newBalance,
     payment_method: "Manual",
-    transaction_id: "N/A",
+    transaction_id: "MANUAL-" + inv.invoice_no + "-" + Date.now(),
     payment_date: new Date().toISOString(),
-    remarks: "GST Payment Received"
+    remarks: "Client Payment Received"
 }])
 
 if(ledgerError){
@@ -1627,7 +1627,7 @@ reference_no: inv.invoice_no,
 debit: 0,
 credit: amount,
 balance: 0, // temporary (ledger calc later)
-remarks: "GST Payment Received"
+remarks: "Client Payment Received"
 }])
 
   
@@ -1661,6 +1661,22 @@ alert("Fill all details")
 return
 }
 
+if(!txnId || txnId.trim() === ""){
+    alert("Transaction ID / UTR is mandatory")
+    return
+}
+
+const { data:existing } = await supabaseClient
+.from("gst_payments")
+.select("id")
+.eq("transaction_id", txnId)
+.maybeSingle()
+
+if(existing){
+    alert("Duplicate Transaction ID detected")
+    return
+}
+  
 /* 🔥 GET INVOICE */
 const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
@@ -1712,7 +1728,7 @@ const { data:lastEntryArr } = await supabaseClient
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 // 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
-let newBalance = lastBalance - amount
+let newBalance = lastBalance + amount
 
 /* 🔥 SAVE PAYMENT HISTORY */
 await supabaseClient
@@ -1731,7 +1747,7 @@ await supabaseClient
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST Payment",
+    entry_type: "Client Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1740,7 +1756,7 @@ const { error:ledgerError } = await supabaseClient
     payment_method: method || "N/A",
     transaction_id: txnId || "N/A",        
     payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
-    remarks: "GST Payment Received"
+    remarks: "Payment received from client"
 }])
 
 if(ledgerError){
@@ -1758,7 +1774,7 @@ reference_no: inv.invoice_no,
 debit: 0,
 credit: amount,
 balance: 0,
-remarks: "GST Payment Received"
+remarks: "Client Payment Received"
 }])
 
 alert("Payment Recorded ✅")
@@ -1795,7 +1811,25 @@ return
 let newAmount = Number(prompt("Edit Amount", p.amount))
 let newMethod = prompt("Edit Method", p.payment_method)
 let newTxn = prompt("Edit Transaction ID", p.transaction_id || "")
+let oldTxn = p.transaction_id
 
+if(!newTxn || newTxn.trim() === ""){
+    alert("Transaction ID is mandatory")
+    return
+}
+
+const { data:dup } = await supabaseClient
+.from("gst_payments")
+.select("id")
+.eq("transaction_id", newTxn)
+.neq("id", id)
+.maybeSingle()
+
+if(dup){
+    alert("Duplicate Transaction ID detected")
+    return
+}
+  
 if(!newAmount || newAmount <= 0){
 alert("Invalid amount")
 return
@@ -1836,21 +1870,40 @@ payment_status: newBalance === 0 ? "Paid" : "Pending"
 /* 🔥 LEDGER UPDATE (OPTIONAL SIMPLE WAY) */
 /* easiest: delete old + reinsert new */
 
+// 🔥 DELETE ONLY THIS PAYMENT (NOT ALL)
 await supabaseClient
 .from("company_ledger")
 .delete()
+.eq("transaction_id", oldTxn)
 .eq("reference_no", p.invoice_no)
-.eq("entry_type", "GST Payment")
+.eq("party", p.client_name)
 
+// 🔥 GET LAST BALANCE
+const { data:lastEntryArr } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+
+let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+let newBalance = lastBalance + newAmount
+
+
+// 🔥 INSERT UPDATED ENTRY
 await supabaseClient
 .from("company_ledger")
 .insert([{
-type: "GST Payment",
+entry_type: "Client Payment",
 reference_no: p.invoice_no,
 party: p.client_name,
 debit: 0,
 credit: newAmount,
-remarks: "GST Payment Edited"
+balance: newBalance,
+payment_method: newMethod || "N/A",
+transaction_id: newTxn,
+payment_date: new Date().toISOString(),
+remarks: "Client Payment Edited"
 }])
 
 alert("Payment Updated ✅")
@@ -1902,15 +1955,50 @@ await supabaseClient
 await supabaseClient
 .from("company_ledger")
 .delete()
-.eq("reference_no", p.invoice_no)
-.eq("entry_type", "GST Payment")
+.eq("transaction_id", p.transaction_id)
 
+/* 🔥 DELETE LEDGER ENTRY */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("transaction_id", p.transaction_id)
+.eq("reference_no", p.invoice_no)
+.eq("party", p.client_name)
+.eq("entry_type", "Client Payment")
+
+// ✅ 🔥 ADD THIS RIGHT HERE
+
+// 🔥 REVERSE COMPANY BALANCE
+const { data:lastEntryArr } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at", { ascending:false })
+.limit(1)
+
+let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+let newBalance = lastBalance - Number(p.amount)
+
+// 🔥 INSERT REVERSAL ENTRY (AUDIT SAFE)
+await supabaseClient
+.from("company_ledger")
+.insert([{
+    entry_type: "Payment Reversal",
+    reference_no: p.invoice_no,
+    party: p.client_name,
+    debit: p.amount,
+    credit: 0,
+    balance: newBalance,
+    remarks: "Deleted Payment Reversal"
+}])
+  
 /* 🔥 CLIENT LEDGER */
 await supabaseClient
 .from("client_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
 .eq("credit", p.amount)
+.eq("remarks", "Client Payment Received")
 
 alert("Payment Deleted ✅")
 

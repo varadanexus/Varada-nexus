@@ -327,10 +327,10 @@ rows += `
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
 <td>${r.entry_type || r.type || "-"}</td>
 <td>${r.reference_no || "-"}</td>
-<td>${r.party || "-"}</td>
+<td>${r.party || r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
-<td>₹${(parseFloat(r.balance) || 0).toFixed(2)}</td>
+<td>₹${(Number(r.balance) || 0).toFixed(2)}</td>
 <td>${r.payment_method || "-"}</td>
 <td>${r.transaction_id || "-"}</td>
 </tr>
@@ -458,7 +458,7 @@ ${outstanding.toFixed(2)}
 
 <b>Collection vs Billing Check</b><br>
 Collections (Ledger): ₹${reconciliation.ledgerGST.toFixed(2)}<br>
-Difference: ₹${reconciliation.diff.toFixed(2)}<br>
+Difference: ₹${reconciliation.absDiff.toFixed(2)}<br>
 Status: <span style="color:${reconciliation.status === "MATCHED" ? "#22c55e" : "#ef4444"}">
 ${reconciliation.status}
 </span>
@@ -479,19 +479,27 @@ document.getElementById("monthlySummary").innerHTML = "No data"
 function reconcileGST(ledgerData, gstTotal){
 
 let ledgerGST = 0
-
+  
 ledgerData.forEach(r=>{
     if(r.entry_type === "Client Payment"){
         ledgerGST += Number(r.credit || 0)
     }
 })
 
-let diff = gstTotal - ledgerGST
+let diff = ledgerGST - gstTotal
+let absDiff = Math.abs(diff)
+
+let status = "MATCHED"
+
+if(absDiff >= 1){
+    status = diff > 0 ? "OVER COLLECTED" : "UNDER COLLECTED"
+}
 
 return {
     ledgerGST,
     diff,
-    status: Math.abs(diff) < 1 ? "MATCHED" : "MISMATCH"
+    absDiff,
+    status
 }
 }
   

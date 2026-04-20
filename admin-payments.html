@@ -679,8 +679,8 @@ const { error: ledgerError } = await supabaseClient
 
     party: transporterName,
 
-    debit: 0,
-    credit: amount,
+    debit: amount,
+    credit: 0,
 
     payment_method: paymentMethod.value,
     transaction_id: document.getElementById("transactionId").value || null,

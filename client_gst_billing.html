@@ -1731,7 +1731,7 @@ await supabaseClient
 const { error:ledgerError } = await supabaseClient
 .from("company_ledger")
 .insert([{
-    entry_type: "GST Payment",
+    entry_type: "CLIENT_PAYMENT",
     reference_no: inv.invoice_no,
     party: inv.client_name,
     debit: 0,
@@ -1740,7 +1740,7 @@ const { error:ledgerError } = await supabaseClient
     payment_method: method || "N/A",
     transaction_id: txnId || "N/A",        
     payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
-    remarks: "GST Payment Received"
+    remarks: "Client Payment Received"
 }])
 
 if(ledgerError){

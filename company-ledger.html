@@ -368,8 +368,8 @@ creditNote:0
 }
 }
 
-if(entryType === "GST Invoice"){
-map[month].invoice += Number(r.debit || 0)
+if(entryType === "GST Invoice" || entryType === "Client Invoice"){
+    map[month].invoice += Number(r.debit || 0)
 }
 
 if(entryType === "Client Payment"){

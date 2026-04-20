@@ -463,14 +463,19 @@ balance_amount: newBalance
 
 /* 🔥 UPDATE COMPANY LEDGER (simple replace) */
 // 🔥 DELETE OLD ENTRY (SAFE)
+// 🔥 STEP 1: REVERSE OLD ENTRY
 await supabaseClient
 .from("company_ledger")
-.delete()
-.eq("reference_no", c.credit_note_no)
-.eq("entry_type", "Credit Note")
-.eq("credit", c.amount)
+.insert([{
+entry_type: "Credit Note Reversal",
+reference_no: c.credit_note_no,
+party: c.client_name,
+debit: c.amount,   // 👈 reverse effect
+credit: 0,
+remarks: "Reversal of old credit note"
+}])
 
-// 🔥 GET LAST BALANCE AGAIN
+// 🔥 STEP 2: INSERT NEW ENTRY
 const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
 .select("balance")
@@ -479,10 +484,8 @@ const { data:lastEntryArr } = await supabaseClient
 
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
-// 🔥 NEW BALANCE (credit note reduces balance)
 let newLedgerBalance = lastBalance - newAmount
 
-// 🔥 INSERT UPDATED ENTRY
 await supabaseClient
 .from("company_ledger")
 .insert([{
@@ -495,16 +498,8 @@ balance: newLedgerBalance,
 remarks: "Credit Note Edited"
 }])
 
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "Credit Note",
-reference_no: c.credit_note_no,
-party: c.client_name,
-debit: 0,
-credit: newAmount,
-remarks: "Credit Note Edited"
-}])
+
+
 
 alert("Credit Note Updated ✅")
 
@@ -1844,14 +1839,19 @@ payment_status: newBalance === 0 ? "Paid" : "Pending"
 /* 🔥 LEDGER UPDATE (OPTIONAL SIMPLE WAY) */
 /* easiest: delete old + reinsert new */
 
+// STEP 1: REVERSE OLD
 await supabaseClient
 .from("company_ledger")
-.delete()
-.eq("reference_no", p.invoice_no)
-.eq("entry_type", "GST Payment")
-.eq("credit", p.amount)
+.insert([{
+entry_type: "GST Payment Reversal",
+reference_no: p.invoice_no,
+party: p.client_name,
+debit: p.amount,
+credit: 0,
+remarks: "Old Payment Reversed"
+}])
 
-// GET LAST BALANCE AGAIN
+// STEP 2: ADD NEW
 const { data:lastEntryArr } = await supabaseClient
 .from("company_ledger")
 .select("balance")
@@ -1924,7 +1924,6 @@ await supabaseClient
 .from("company_ledger")
 .delete()
 .eq("reference_no", p.invoice_no)
-.eq("entry_type", "GST Payment")
 .eq("credit", p.amount)
 
 /* 🔥 CLIENT LEDGER */

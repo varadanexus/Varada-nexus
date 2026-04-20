@@ -195,7 +195,7 @@ window.location.href="login.html"
 <select id="typeFilter">
 <option value="">All Types</option>
 <option value="GST Invoice">GST Invoice</option>
-<option value="GST Payment">GST Payment</option>
+<option value="Client Payment">Client Payment</option>
 <option value="TRANSPORTER_PAYMENT">Transporter Payment</option>
 <option value="Credit Note">Credit Note</option>
 </select>
@@ -284,11 +284,11 @@ let query = supabaseClient
 .order("created_at", { ascending:true })
 
 if(fromDate){
-query = query.gte("created_at", fromDate)
+query = query.gte("created_at", fromDate + "T00:00:00")
 }
 
 if(toDate){
-query = query.lte("created_at", toDate + "T23:59:59")
+query = query.lte("created_at", toDate + "T23:59:59.999")
 }
 
 if(type){
@@ -314,26 +314,23 @@ renderMonthly(data)
 function renderTable(data){
 
 let rows = ""
-let runningBalance = 0   // 🔥 KEY FIX
+
 
 data.forEach(r=>{
 
 let debit = Number(r.debit || 0)
 let credit = Number(r.credit || 0)
 
-// 🔥 CALCULATE LIVE BALANCE
-runningBalance += debit
-runningBalance -= credit
 
 rows += `
 <tr>
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
 <td>${r.entry_type || r.type || "-"}</td>
 <td>${r.reference_no || "-"}</td>
-<td>${r.party_name || r.party || "-"}</td>
+<td>${r.party || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
-<td>₹${runningBalance.toFixed(2)}</td>
+<td>₹${(parseFloat(r.balance) || 0).toFixed(2)}</td>
 <td>${r.payment_method || "-"}</td>
 <td>${r.transaction_id || "-"}</td>
 </tr>
@@ -375,7 +372,7 @@ if(entryType === "GST Invoice"){
 map[month].invoice += Number(r.debit || 0)
 }
 
-if(entryType === "GST Payment"){
+if(entryType === "Client Payment"){
 map[month].payment += Number(r.credit || 0)
 }
 
@@ -392,7 +389,18 @@ map[month].transporter += Number(r.credit || 0)
 let html = ""
 
 Object.keys(map)
-.sort((a,b)=> new Date("1 " + a) - new Date("1 " + b))
+.sort((a,b)=>{
+    const [ma, ya] = a.split(" ")
+    const [mb, yb] = b.split(" ")
+
+    const monthMap = {
+        Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5,
+        Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11
+    }
+
+    return (ya - yb) || (monthMap[ma] - monthMap[mb])
+})
+  
 .forEach(m=>{
 
 let outstanding = map[m].invoice - map[m].creditNote - map[m].payment
@@ -448,8 +456,8 @@ Client Outstanding: ₹<span style="color:${outstanding > 0 ? '#ef4444' : '#22c5
 ${outstanding.toFixed(2)}
 </span><br><br>
 
-<b>GST Reconciliation</b><br>
-Ledger GST Paid: ₹${reconciliation.ledgerGST.toFixed(2)}<br>
+<b>Collection vs Billing Check</b><br>
+Collections (Ledger): ₹${reconciliation.ledgerGST.toFixed(2)}<br>
 Difference: ₹${reconciliation.diff.toFixed(2)}<br>
 Status: <span style="color:${reconciliation.status === "MATCHED" ? "#22c55e" : "#ef4444"}">
 ${reconciliation.status}
@@ -473,7 +481,7 @@ function reconcileGST(ledgerData, gstTotal){
 let ledgerGST = 0
 
 ledgerData.forEach(r=>{
-    if(r.entry_type === "GST Payment"){
+    if(r.entry_type === "Client Payment"){
         ledgerGST += Number(r.credit || 0)
     }
 })

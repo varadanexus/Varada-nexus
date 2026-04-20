@@ -314,13 +314,13 @@ renderMonthly(data)
 function renderTable(data){
 
 let rows = ""
-
+let runningBalance = 0
 
 data.forEach(r=>{
 
 let debit = Number(r.debit || 0)
 let credit = Number(r.credit || 0)
-
+runningBalance += debit - credit
 
 rows += `
 <tr>
@@ -330,7 +330,7 @@ rows += `
 <td>${r.party || r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
-<td>₹${(Number(r.balance) || 0).toFixed(2)}</td>
+<td>₹${runningBalance.toFixed(2)}</td>
 <td>${r.payment_method || "-"}</td>
 <td>${r.transaction_id || "-"}</td>
 </tr>
@@ -352,7 +352,7 @@ let map = {}
 
 data.forEach(r=>{
 
-let entryType = r.entry_type || r.type || ""
+let entryType = (r.entry_type || r.type || "").toUpperCase()
 
 let month = new Date(r.created_at).toLocaleString('en-IN',{
 month:'short',
@@ -381,7 +381,7 @@ map[month].creditNote += Number(r.credit || 0)
 }
 
 if(entryType === "TRANSPORTER_PAYMENT"){
-map[month].transporter += Number(r.credit || 0)
+map[month].transporter += Number(r.debit || 0)
 }
 
 })
@@ -481,7 +481,7 @@ function reconcileGST(ledgerData, gstTotal){
 let ledgerGST = 0
   
 ledgerData.forEach(r=>{
-    if(r.entry_type === "Client Payment"){
+    if((r.entry_type || "").toUpperCase() === "CLIENT PAYMENT"){
         ledgerGST += Number(r.credit || 0)
     }
 })

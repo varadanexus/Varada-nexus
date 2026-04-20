@@ -1951,11 +1951,6 @@ await supabaseClient
 .delete()
 .eq("id", id)
 
-/* 🔥 DELETE LEDGER ENTRY */
-await supabaseClient
-.from("company_ledger")
-.delete()
-.eq("transaction_id", p.transaction_id)
 
 /* 🔥 DELETE LEDGER ENTRY */
 await supabaseClient
@@ -1977,7 +1972,7 @@ const { data:lastEntryArr } = await supabaseClient
 
 let lastBalance = lastEntryArr?.[0]?.balance || 0
 
-let newBalance = lastBalance - Number(p.amount)
+let newLedgerBalance = lastBalance - Number(p.amount)
 
 // 🔥 INSERT REVERSAL ENTRY (AUDIT SAFE)
 await supabaseClient
@@ -1988,7 +1983,7 @@ await supabaseClient
     party: p.client_name,
     debit: p.amount,
     credit: 0,
-    balance: newBalance,
+    balance: newLedgerBalance,
     remarks: "Deleted Payment Reversal"
 }])
   

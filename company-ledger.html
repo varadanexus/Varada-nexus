@@ -231,7 +231,8 @@ window.location.href="login.html"
 <th>Party</th>
 <th>Debit</th>
 <th>Credit</th>
-<th>Net Position</th>
+<th>Net Position (Business)</th>
+<th>Bank Balance (Cash)</th>
 <th>Method</th>
 <th>Txn ID</th>
 </tr>
@@ -442,7 +443,8 @@ renderMonthly(data)
 function renderTable(data){
 
 let rows = ""
-let runningBalance = 0   // ✅ ONLY THIS LINE
+let netBalance = 0
+let bankBalance = 0  // ✅ ONLY THIS LINE
 
 data.forEach(r=>{
 
@@ -450,7 +452,18 @@ let debit = Number(r.debit || 0)
 let credit = Number(r.credit || 0)
 let type = (r.entry_type || "").toUpperCase()
 
-runningBalance += debit - credit
+// NET POSITION (all entries)
+netBalance += debit - credit
+
+// BANK BALANCE (cash only)
+let type = (r.entry_type || "").toUpperCase()
+
+if(type === "CLIENT PAYMENT"){
+    bankBalance += credit
+}
+else if(type === "TRANSPORTER_PAYMENT"){
+    bankBalance -= debit
+}
 
 rows += `
 <tr>
@@ -460,7 +473,10 @@ rows += `
 <td>${r.party || r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
-<td>₹${runningBalance.toFixed(2)}</td>
+<td>₹${netBalance.toFixed(2)}</td>
+<td style="color:${bankBalance >= 0 ? '#22c55e' : '#ef4444'}">
+₹${bankBalance.toFixed(2)}
+</td>
 <td>${r.payment_method || "-"}</td>
 <td>${r.transaction_id || "-"}</td>
 </tr>
@@ -471,7 +487,7 @@ document.getElementById("ledgerTable").innerHTML = rows
 
 if(!data || data.length === 0){
 document.getElementById("ledgerTable").innerHTML = `
-<tr><td colspan="9" style="text-align:center;">No data found</td></tr>
+<tr><td colspan="10" style="text-align:center;">No data found</td></tr>
 `
 }
 }

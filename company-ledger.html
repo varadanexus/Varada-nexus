@@ -352,31 +352,30 @@ let map = {}
 
 data.forEach(r=>{
 
-let entryType = (r.entry_type || r.type || "").toUpperCase()
+    let entryType = (r.entry_type || r.type || "").toUpperCase()
 
-let month = new Date(r.created_at).toLocaleString('en-IN',{
-month:'short',
-year:'numeric'
-})
+    let month = new Date(r.created_at).toLocaleString('en-IN',{
+        month:'short',
+        year:'numeric'
+    })
 
-map[month] = {
-    payment:0,
-    transporter:0
-}
-  
-}
+    // ✅ INIT ONLY ONCE
+    if(!map[month]){
+        map[month] = {
+            payment:0,
+            transporter:0
+        }
+    }
 
-// ❌ REMOVE invoice from ledger calculation
+    // ✅ CLIENT PAYMENT
+    if(entryType === "CLIENT PAYMENT"){
+        map[month].payment += Number(r.credit || 0)
+    }
 
-if(entryType === "Client Payment"){
-map[month].payment += Number(r.credit || 0)
-}
-
-// ❌ REMOVE credit note from ledger
-
-if(entryType === "TRANSPORTER_PAYMENT"){
-map[month].transporter += Number(r.debit || 0)
-}
+    // ✅ TRANSPORTER PAYMENT
+    if(entryType === "TRANSPORTER_PAYMENT"){
+        map[month].transporter += Number(r.debit || 0)
+    }
 
 })
 
@@ -394,57 +393,46 @@ Object.keys(map)
 
     return (ya - yb) || (monthMap[ma] - monthMap[mb])
 })
-  
 .forEach(m=>{
 
-let netPos = map[m].payment - map[m].transporter
+    let netPos = map[m].payment - map[m].transporter
 
-let gstTotal = map[m].invoice - map[m].creditNote
-let monthData = data.filter(r=>{
-    let rm = new Date(r.created_at).toLocaleString('en-IN',{
-        month:'short',
-        year:'numeric'
-    })
-    return rm === m
-})
+    html += `
+    <div style="
+    margin-bottom:20px;
+    padding:15px;
+    background:#0f172a;
+    border-radius:10px;
+    line-height:1.6;
+    ">
 
-let reconciliation = reconcileGST(monthData, gstTotal)
-  
-html += `
-<div style="
-margin-bottom:20px;
-padding:15px;
-background:#0f172a;
-border-radius:10px;
-line-height:1.6;
-">
+    <b style="font-size:16px;">${m}</b><br><br>
 
-<b style="font-size:16px;">${m}</b><br><br>
+    <div>
+    <b>Cash Flow</b><br>
+    Collections: ₹${map[m].payment.toFixed(2)}<br>
+    Transporter Paid: ₹${map[m].transporter.toFixed(2)}
+    </div>
 
-<div>
-<b>Cash Flow</b><br>
-Collections: ₹${map[m].payment.toFixed(2)}<br>
-Transporter Paid: ₹${map[m].transporter.toFixed(2)}
-</div>
+    <br>
 
-<br>
+    <div>
+    <b>Bank Position</b><br>
+    ₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
+    ${netPos.toFixed(2)}
+    </span>
+    </div>
 
-<div>
-<b>Bank Position</b><br>
-₹<span style="color:${netPos >= 0 ? '#22c55e' : '#ef4444'}">
-${netPos.toFixed(2)}
-</span>
-</div>
-
-</div>
-`
+    </div>
+    `
 })
 
 document.getElementById("monthlySummary").innerHTML = html
 
 if(Object.keys(map).length === 0){
-document.getElementById("monthlySummary").innerHTML = "No data"
+    document.getElementById("monthlySummary").innerHTML = "No data"
 }
+
 }
 
 function reconcileGST(ledgerData, gstTotal){

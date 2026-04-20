@@ -184,6 +184,14 @@ window.location.href="login.html"
   
 <div class="main">
 
+<div id="bankView">
+
+<div style="margin-bottom:15px;">
+<button onclick="switchView('bank')">Bank</button>
+<button onclick="switchView('client')">Client</button>
+<button onclick="switchView('transporter')">Transporter</button>
+</div>
+  
 <h2>Company Ledger</h2>
 
 <div class="card">
@@ -232,23 +240,140 @@ window.location.href="login.html"
 <tbody id="ledgerTable"></tbody>
 
 </table>
+</div>
+</div> <!-- CLOSE Ledger Entries CARD -->
 
+<div class="card">
+<h3>Monthly Summary</h3>
+<div id="monthlySummary"></div>
+</div>
+  
+</div> <!-- END BANK VIEW -->
+
+<div id="clientView" style="display:none;">
+<h3>Client Ledger</h3>
+<div id="clientLedger"></div>
+</div>
+
+<div id="transporterView" style="display:none;">
+<h3>Transporter Ledger</h3>
+<div id="transporterLedger"></div>
 </div>
   
 </div>
 
-<div class="card">
-
-<h3>Monthly Summary</h3>
-
-<div id="monthlySummary"></div>
-
-</div>
 
 </div>
 
 <script>
 
+function switchView(type){
+
+document.getElementById("bankView").style.display = "none"
+document.getElementById("clientView").style.display = "none"
+document.getElementById("transporterView").style.display = "none"
+
+if(type === "bank"){
+    document.getElementById("bankView").style.display = "block"
+}
+if(type === "client"){
+    document.getElementById("clientView").style.display = "block"
+    loadClientLedger()
+}
+if(type === "transporter"){
+    document.getElementById("transporterView").style.display = "block"
+    loadTransporterLedger()
+}
+
+}
+
+
+
+async function loadClientLedger(){
+
+const {data:invoices} = await supabaseClient
+.from("client_invoices")
+.select("client_name,total_amount")
+
+const {data:payments} = await supabaseClient
+.from("client_payments")
+.select("client_name,amount")
+
+let map = {}
+
+/* INVOICES */
+invoices?.forEach(i=>{
+if(!map[i.client_name]) map[i.client_name] = 0
+map[i.client_name] += Number(i.total_amount || 0)
+})
+
+/* PAYMENTS */
+payments?.forEach(p=>{
+if(!map[p.client_name]) map[p.client_name] = 0
+map[p.client_name] -= Number(p.amount || 0)
+})
+
+let html = `<table>
+<tr><th>Client</th><th>Outstanding</th></tr>`
+
+Object.keys(map).forEach(c=>{
+html += `
+<tr>
+<td>${c}</td>
+<td style="color:${map[c]>0?'#ef4444':'#22c55e'}">
+₹${map[c].toFixed(2)}
+</td>
+</tr>`
+})
+
+html += `</table>`
+
+document.getElementById("clientLedger").innerHTML = html
+}
+
+async function loadTransporterLedger(){
+
+const {data:invoices} = await supabaseClient
+.from("transporter_invoices")
+.select("transporter_id,total_amount,paid_amount")
+
+const {data:transporters} = await supabaseClient
+.from("transporters")
+.select("id, transporter_name")
+
+let nameMap = {}
+transporters?.forEach(t=>{
+nameMap[t.id] = t.transporter_name
+})
+
+let map = {}
+
+invoices?.forEach(i=>{
+if(!map[i.transporter_id]) map[i.transporter_id] = 0
+
+let payable = Number(i.total_amount || 0) - Number(i.paid_amount || 0)
+
+map[i.transporter_id] += payable
+})
+
+let html = `<table>
+<tr><th>Transporter</th><th>Payable</th></tr>`
+
+Object.keys(map).forEach(t=>{
+html += `
+<tr>
+<td>${nameMap[t] || "Transporter"}</td>
+<td style="color:${map[t]>0?'#ef4444':'#22c55e'}">
+₹${map[t].toFixed(2)}
+</td>
+</tr>`
+})
+
+html += `</table>`
+
+document.getElementById("transporterLedger").innerHTML = html
+}
+  
 async function loadClientsDropdown(){
 
 const { data, error } = await supabaseClient
@@ -296,7 +421,7 @@ query = query.eq("entry_type", type)
 }
 
 if(party){
-query = query.or(`party.eq."${party}",party_name.eq."${party}"`)
+query = query.or(`party.ilike.%${party}%,party_name.ilike.%${party}%`)
 }
 
 const { data, error } = await query
@@ -315,12 +440,20 @@ function renderTable(data){
 
 let rows = ""
 let runningBalance = 0
-
+let runningBalance = openingBalance
+  
 data.forEach(r=>{
 
 let debit = Number(r.debit || 0)
 let credit = Number(r.credit || 0)
-runningBalance += debit - credit
+let type = (r.entry_type || "").toUpperCase()
+
+if(type === "CLIENT PAYMENT"){
+    runningBalance += credit
+}
+else if(type === "TRANSPORTER_PAYMENT"){
+    runningBalance -= debit
+}
 
 rows += `
 <tr>
@@ -423,7 +556,6 @@ Object.keys(map)
     </span>
     </div>
 
-    </div>
     `
 })
 

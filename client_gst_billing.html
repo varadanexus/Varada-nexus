@@ -907,29 +907,6 @@ await supabaseClient
     remarks: "GST Invoice Generated"
 }])
 
-// 🔥 GET LAST BALANCE
-const { data:lastEntryArr } = await supabaseClient
-.from("company_ledger")
-.select("balance")
-.order("created_at", { ascending:false })
-.limit(1)
-
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-// 🔥 CALCULATE NEW BALANCE (INVOICE = YOU WILL RECEIVE MONEY)
-let newBalance = lastBalance + invoiceAmount
-  
-await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "GST Invoice",
-    reference_no: invoiceNo,
-    party: client,
-    debit: invoiceAmount,
-    credit: 0,
-    balance: newBalance,   // ✅ FIXED
-    remarks: "GST Invoice Generated"
-}])
 
 /* 🔥 2️⃣ SAVE TRIP BREAKDOWN */
 

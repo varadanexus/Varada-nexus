@@ -464,16 +464,13 @@ balance_amount: newBalance
 /* 🔥 UPDATE COMPANY LEDGER (simple replace) */
 // 🔥 DELETE OLD ENTRY (SAFE)
 // 🔥 STEP 1: REVERSE OLD ENTRY
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "Credit Note Reversal",
-reference_no: c.credit_note_no,
-party: c.client_name,
-debit: c.amount,   // 👈 reverse effect
-credit: 0,
-remarks: "Reversal of old credit note"
-}])
+await addLedgerEntry({
+    type: "Credit Note Reversal",
+    reference_no: c.credit_note_no,
+    party: c.client_name,
+    debit: c.amount,
+    remarks: "Reversal of old credit note"
+})
 
 // 🔥 STEP 2: INSERT NEW ENTRY
 const { data:lastEntryArr } = await supabaseClient
@@ -482,23 +479,14 @@ const { data:lastEntryArr } = await supabaseClient
 .order("created_at", { ascending:false })
 .limit(1)
 
-let lastBalance = lastEntryArr?.[0]?.balance || 0
 
-let newLedgerBalance = lastBalance - newAmount
-
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "Credit Note",
-reference_no: c.credit_note_no,
-party: c.client_name,
-debit: 0,
-credit: newAmount,
-balance: newLedgerBalance,
-remarks: "Credit Note Edited"
-}])
-
-
+await addLedgerEntry({
+    type: "Credit Note",
+    reference_no: c.credit_note_no,
+    party: c.client_name,
+    credit: newAmount,
+    remarks: "Credit Note Edited"
+})
 
 
 alert("Credit Note Updated ✅")
@@ -545,10 +533,13 @@ await supabaseClient
 .eq("id", id)
 
 /* 🔥 DELETE LEDGER */
-await supabaseClient
-.from("company_ledger")
-.delete()
-.eq("reference_no", c.credit_note_no)
+await addLedgerEntry({
+    type: "Credit Note Reversal",
+    reference_no: c.credit_note_no,
+    party: c.client_name,
+    debit: c.amount,
+    remarks: "Credit Note Deleted"
+})
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient
@@ -1442,21 +1433,13 @@ const { data:lastEntryArr } = await supabaseClient
 .order("created_at", { ascending:false })
 .limit(1)
 
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-let newLedgerBalance = lastBalance - amount
-
-await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "Credit Note",
+await addLedgerEntry({
+    type: "Credit Note",
     reference_no: cnNo,
     party: inv.client_name,
-    debit: 0,
     credit: amount,
-    balance: newLedgerBalance,
     remarks: "GST Credit Note Issued"
-}])
+})
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient
@@ -1516,11 +1499,13 @@ const { data:invData } = await supabaseClient
 if(invData){
 
 /* 🔥 DELETE COMPANY LEDGER */
-await supabaseClient
-.from("company_ledger")
-.delete()
-.eq("reference_no", invData.invoice_no)
-.eq("party", invData.client_name)
+await addLedgerEntry({
+    type: "Invoice Reversal",
+    reference_no: invData.invoice_no,
+    party: invData.client_name,
+    credit: invData.invoice_amount || 0,
+    remarks: "Invoice Deleted"
+})
 
 /* 🔥 DELETE CLIENT LEDGER */
 await supabaseClient
@@ -1596,29 +1581,14 @@ const { data:lastEntry } = await supabaseClient
 .limit(1)
 .single()
 
-let lastBalance = lastEntry?.balance || 0
-
-let newBalance = lastBalance + amount
-
-const { error:ledgerError } = await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "GST Payment",
+await addLedgerEntry({
+    type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    debit: 0,
     credit: amount,
-    balance: newBalance,
-    payment_method: "Manual",
-    transaction_id: "N/A",
-    payment_date: new Date().toISOString(),
     remarks: "GST Payment Received"
-}])
+})
 
-if(ledgerError){
-    console.log("❌ LEDGER ERROR:", ledgerError)
-    alert("Ledger insert failed")
-}
   
 /* ledger entry */
 await supabaseClient
@@ -1712,39 +1682,18 @@ const { data:lastEntryArr } = await supabaseClient
 .order("created_at", { ascending:false })
 .limit(1)
 
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-// 🔥 CALCULATE NEW BALANCE (PAYMENT = MONEY IN)
-let newBalance = lastBalance + amount
-
-/* 🔥 SAVE PAYMENT HISTORY */
-await supabaseClient
-.from("gst_payments")
-.insert([{
-    invoice_id: inv.id,
-    invoice_no: inv.invoice_no,
-    client_name: inv.client_name,
-    amount: amount,
-    payment_method: method,
-    transaction_id: txnId,
-    payment_date: date ? new Date(date).toISOString() : new Date().toISOString()
-}])
-  
-/* 🔥 COMPANY LEDGER ENTRY */
-const { error:ledgerError } = await supabaseClient
-.from("company_ledger")
-.insert([{
-    entry_type: "GST Payment",
+await addLedgerEntry({
+    type: "GST Payment",
     reference_no: inv.invoice_no,
     party: inv.client_name,
-    debit: 0,
     credit: amount,
-    balance: newBalance,
-    payment_method: method || "N/A",
-    transaction_id: txnId || "N/A",        
-    payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
-    remarks: "GST Payment Received"
-}])
+    remarks: "GST Payment Received",
+    payment_method: method,
+    transaction_id: txnId,
+    payment_date: date
+})
+  
+/* 🔥 COMPANY LEDGER ENTRY */
 
 if(ledgerError){
     console.log("❌ LEDGER ERROR:", ledgerError)
@@ -1840,16 +1789,13 @@ payment_status: newBalance === 0 ? "Paid" : "Pending"
 /* easiest: delete old + reinsert new */
 
 // STEP 1: REVERSE OLD
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "GST Payment Reversal",
-reference_no: p.invoice_no,
-party: p.client_name,
-debit: p.amount,
-credit: 0,
-remarks: "Old Payment Reversed"
-}])
+await addLedgerEntry({
+    type: "GST Payment Reversal",
+    reference_no: p.invoice_no,
+    party: p.client_name,
+    debit: p.amount,
+    remarks: "Old Payment Reversed"
+})
 
 // STEP 2: ADD NEW
 const { data:lastEntryArr } = await supabaseClient
@@ -1862,18 +1808,15 @@ let lastBalance = lastEntryArr?.[0]?.balance || 0
 
 let updatedBalance = lastBalance + newAmount
 
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "GST Payment",
-reference_no: p.invoice_no,
-party: p.client_name,
-debit: 0,
-credit: newAmount,
-balance: updatedBalance,
-remarks: "GST Payment Edited"
-}])
-
+// add new
+await addLedgerEntry({
+    type: "GST Payment",
+    reference_no: p.invoice_no,
+    party: p.client_name,
+    credit: newAmount,
+    remarks: "GST Payment Edited"
+})
+  
 alert("Payment Updated ✅")
 
 loadGSTInvoices()
@@ -1920,11 +1863,13 @@ await supabaseClient
 .eq("id", id)
 
 /* 🔥 DELETE LEDGER ENTRY */
-await supabaseClient
-.from("company_ledger")
-.delete()
-.eq("reference_no", p.invoice_no)
-.eq("credit", p.amount)
+await addLedgerEntry({
+    type: "GST Payment Reversal",
+    reference_no: p.invoice_no,
+    party: p.client_name,
+    debit: p.amount,
+    remarks: "Payment Deleted"
+})
 
 /* 🔥 CLIENT LEDGER */
 await supabaseClient
@@ -1937,6 +1882,48 @@ alert("Payment Deleted ✅")
 
 loadGSTInvoices()
 loadPaymentHistory()
+}
+
+async function addLedgerEntry({
+    type,
+    reference_no,
+    party,
+    debit = 0,
+    credit = 0,
+    remarks = "",
+    payment_method = null,
+    transaction_id = null,
+    payment_date = null
+}){
+
+    // 🔥 GET LAST BALANCE
+    const { data:lastEntryArr } = await supabaseClient
+    .from("company_ledger")
+    .select("balance")
+    .order("created_at", { ascending:false })
+    .limit(1)
+
+    let lastBalance = lastEntryArr?.[0]?.balance || 0
+
+    // 🔥 CALCULATE NEW BALANCE
+    let newBalance = lastBalance + credit - debit
+
+    // 🔥 INSERT ENTRY
+    await supabaseClient
+    .from("company_ledger")
+    .insert([{
+        entry_type: type,
+        reference_no,
+        party,
+        debit,
+        credit,
+        balance: newBalance,
+        payment_method,
+        transaction_id,
+        payment_date: payment_date || new Date().toISOString(),
+        remarks
+    }])
+
 }
   
 </script>

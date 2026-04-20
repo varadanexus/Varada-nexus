@@ -5,13 +5,6 @@
 <title>GST Filing - Varada Nexus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
-</script>
     
 <script src="session-check.js"></script>
 <script src="menu-rbac.js"></script>
@@ -352,7 +345,7 @@ taxable,
 cgst,
 sgst,
 gst,
-rate: rate,   // ✅ ADD THIS LINE
+rate: rate,   // ✅ ADD THIS
 invoice_value: inv.invoice_amount,
 date: inv.created_at
 })
@@ -498,7 +491,7 @@ b2b: Object.values(b2bMap),
 b2cs: [{
 sply_ty: "INTRA",
 txval: b2cTotal,
-rt: r.rate,
+rt: globalData[0]?.rate || 18,
 camt: b2cTotal * 0.09,
 samt: b2cTotal * 0.09,
 csamt: 0

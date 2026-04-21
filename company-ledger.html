@@ -473,7 +473,14 @@ rows += `
 <tr>
 <td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
 <td>${r.entry_type || r.type || "-"}</td>
-<td>${r.reference_no || "-"}</td>
+<td>
+${r.reference_no ? `
+<a href="#" onclick="openInvoiceModal('${r.reference_no}','${r.entry_type}')"
+style="color:#60a5fa; text-decoration:underline; cursor:pointer;">
+${r.reference_no}
+</a>
+` : "-"}
+</td>
 <td>${r.party || r.party_name || "-"}</td>
 <td style="color:#22c55e;">₹${debit.toFixed(2)}</td>
 <td style="color:#ef4444;">₹${credit.toFixed(2)}</td>
@@ -616,9 +623,103 @@ return {
 loadClientsDropdown()
 loadLedger()
 
+let currentInvoiceId = null
 
+async function openInvoiceModal(ref, type){
+
+type = (type || "").toUpperCase()
+
+if(type !== "CLIENT INVOICE"){
+    alert("Preview only available for invoices")
+    return
+}
+
+/* 🔥 GET INVOICE ID */
+const { data } = await supabaseClient
+.from("client_invoices_gst")
+.select("id")
+.eq("invoice_no", ref)
+.single()
+
+if(!data){
+    alert("Invoice not found")
+    return
+}
+
+currentInvoiceId = data.id
+
+/* 🔥 GENERATE PDF BLOB */
+const blobUrl = await generateInvoiceBlob(data.id)
+
+/* 🔥 SHOW MODAL */
+document.getElementById("invoiceFrame").src = blobUrl
+document.getElementById("invoiceModal").style.display = "flex"
+
+}
+
+function closeInvoiceModal(){
+document.getElementById("invoiceModal").style.display = "none"
+document.getElementById("invoiceFrame").src = ""
+}
+
+/* DOWNLOAD BUTTON */
+function downloadInvoicePDF(){
+if(currentInvoiceId){
+    generatePDF(currentInvoiceId)
+}
+}
   
 </script>
 
+<!-- 🔥 INVOICE MODAL -->
+<div id="invoiceModal" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:9999;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#111827;
+width:90%;
+max-width:900px;
+height:90%;
+border-radius:12px;
+overflow:hidden;
+position:relative;
+display:flex;
+flex-direction:column;
+">
+
+<!-- HEADER -->
+<div style="
+padding:10px 15px;
+background:#0f172a;
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+
+<b>Invoice Preview</b>
+
+<div>
+<button onclick="downloadInvoicePDF()">Download PDF</button>
+<button onclick="closeInvoiceModal()">Close</button>
+</div>
+
+</div>
+
+<!-- CONTENT -->
+<iframe id="invoiceFrame" style="flex:1; border:none;"></iframe>
+
+</div>
+</div>
+  
 </body>
 </html>

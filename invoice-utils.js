@@ -287,8 +287,9 @@ doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
 
 /* 🔥 RETURN BLOB */
-let blob = doc.output("blob")
-return URL.createObjectURL(blob)
+return doc.output("bloburl")
+
+    
 }
 
 

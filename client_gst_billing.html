@@ -1283,10 +1283,38 @@ doc.setFontSize(9)
 doc.text("This is a system generated GST invoice.",15,285)
 doc.text("Thank you for doing business with Varada Nexus.",15,292)
 
-/* 🔷 SAVE */
-doc.save(inv.invoice_no + ".pdf")
 
 }
+
+async function generateInvoiceBlob(invoiceId){
+
+const { jsPDF } = window.jspdf
+
+/* 🔥 SAME CODE AS generatePDF BUT WITHOUT doc.save() */
+
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", invoiceId)
+.single()
+
+const { data:bd } = await supabaseClient
+.from("invoice_trip_breakdown_gst")
+.select("*")
+.eq("invoice_id", invoiceId)
+
+/* BUILD PDF */
+let doc = new jsPDF()
+
+/* 👉 KEEP YOUR EXISTING PDF DESIGN CODE HERE */
+/* COPY everything from generatePDF EXCEPT doc.save() */
+
+/* 🔥 RETURN BLOB */
+let blob = doc.output("blob")
+return URL.createObjectURL(blob)
+
+}
+  
 async function loadGSTInvoices(){
 
 const { data, error } = await supabaseClient

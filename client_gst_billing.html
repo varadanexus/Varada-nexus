@@ -992,6 +992,9 @@ if(lockError){
 }
 
 alert("GST Invoice Saved ✅")
+
+generatePDF(inv.id)
+  
 document.getElementById("clientSelect").value = "Select Client"
   
 /* OPTIONAL: REFRESH */

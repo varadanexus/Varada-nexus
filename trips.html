@@ -806,7 +806,7 @@ let html=""
 
 trips.forEach(t=>{
 html+=`
-<tr>
+<tr id="row_${t.id}">
 <td>${t.trip_no||""}</td>
 <td>${t.route}</td>
 <td>${t.truck}</td>

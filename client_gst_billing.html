@@ -1004,7 +1004,12 @@ loadGSTInvoices()
 
 async function generatePDF(invoiceId){
 
-const { jsPDF } = window.jspdf
+if (!window.jspdf) {
+    alert("PDF library not loaded");
+    return;
+}
+
+const { jsPDF } = window.jspdf;
 
 /* 1️⃣ GET INVOICE */
 const { data:inv } = await supabaseClient

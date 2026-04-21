@@ -20,6 +20,7 @@ if(!inv){
 }
 
 /* 🔥 CREATE PDF */
+const { jsPDF } = window.jspdf
 let doc = new jsPDF()
 
 

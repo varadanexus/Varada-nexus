@@ -1003,7 +1003,8 @@ async function handleFileUpload(event, tripNo) {
 
   } catch (err) {
     console.error(err);
-    alert("Upload failed ❌");
+    alert("Error: " + err);
+console.error("FULL ERROR:", err);
   }
 }
 

@@ -1033,7 +1033,10 @@ async function uploadToDrive(file, tripId) {
       const data = await response.json();
 
       if (data.success) resolve(data);
-      else reject(data.error);
+      else {
+  console.error("Backend error:", data);
+  reject(data.error);
+}
     };
 
     reader.readAsDataURL(file);

@@ -1024,16 +1024,15 @@ async function uploadToDrive(file, tripId) {
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json"
+            "Content-Type": "text/plain"   // 🔥 FIX
             },
             body: JSON.stringify({
-              trip_id: tripId,
-              file_name: file.name,
-              file_base64: base64
-            })
-          }
+            trip_id: tripId,
+            file_name: file.name,
+            file_base64: base64
+               })
+            }
         );
-
         const data = await response.json();
 
         console.log("UPLOAD RESPONSE:", data);

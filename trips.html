@@ -1012,32 +1012,43 @@ async function uploadToDrive(file, tripId) {
   const reader = new FileReader();
 
   return new Promise((resolve, reject) => {
+
     reader.onload = async () => {
+
       const base64 = reader.result.split(",")[1];
 
-      const response = await fetch(
- "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-to-drive", 
-{
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-  },
-          body: JSON.stringify({
-            trip_id: tripId,
-            file_name: file.name,
-            file_base64: base64,
-          }),
+      try {
+
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbwAe6EWWan6AcfzhPkZppzhAV-F5Hme5MUHk_ZRVlGXB4NLwucZQdykAb3HVA4QO1caIw/exec",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              trip_id: tripId,
+              file_name: file.name,
+              file_base64: base64
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        console.log("UPLOAD RESPONSE:", data);
+
+        if (data.success) {
+          resolve(data);
+        } else {
+          reject(data.error || "Upload failed");
         }
-      );
 
-      const data = await response.json();
+      } catch (err) {
+        console.error("UPLOAD ERROR:", err);
+        reject(err);
+      }
 
-      if (data.success) resolve(data);
-      else {
-  console.error("Backend error:", data);
-  reject(data.error);
-}
     };
 
     reader.readAsDataURL(file);

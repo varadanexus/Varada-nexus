@@ -247,6 +247,33 @@ function setActiveMenu(){
 
 </div>
 
+<div class="card">
+
+<h3>Upload Documents</h3>
+
+<div class="form-grid">
+
+<select id="uploadTrip">
+  <option value="">Select Trip</option>
+</select>
+
+<select id="uploadDocType">
+  <option value="">Select Type</option>
+  <option value="Weight Bill">Weight Bill</option>
+  <option value="Trip Sheet">Trip Sheet</option>
+  <option value="Expense">Expense</option>
+</select>
+
+<input type="file" id="uploadFiles" multiple>
+
+</div>
+
+<br>
+
+<button onclick="uploadFromPanel(this)">Upload</button>
+
+</div>
+    
 <div style="margin-bottom:10px;">
 <button onclick="prevPage()">⬅ Prev</button>
 <span id="pageInfo"></span>
@@ -279,6 +306,15 @@ let routes=[], trucks=[], commodities=[], clients=[], trips=[]
 function getTripIdByNo(tripNo){
   let t = trips.find(x => x.trip_no == tripNo)
   return t?.id || null
+}
+
+function populateUploadTrips(){
+
+let options = '<option value="">Select Trip</option>' +
+trips.map(t => `<option value="${t.trip_no}">${t.trip_no}</option>`).join("")
+
+document.getElementById("uploadTrip").innerHTML = options
+
 }
     
 let currentPage = 1
@@ -800,6 +836,8 @@ return
 trips = data || []
 totalCount = count || 0
 
+populateUploadTrips()   // 🔥 ADD THIS LINE
+
 renderTrips()
 }
 
@@ -834,7 +872,6 @@ html+=`
   <option value="Expense">Expense</option>
 </select>
 
-<input type="file" multiple onchange="handleBulkUpload(event, '${t.trip_no}')" style="margin-bottom:4px;" />
 
 <br>
 
@@ -1078,6 +1115,68 @@ if(!tripId){
 }
 
 alert(`${files.length} files uploaded ✅`);
+}
+
+async function uploadFromPanel(btn){
+
+const tripNo = document.getElementById("uploadTrip").value
+const docType = document.getElementById("uploadDocType").value
+const files = document.getElementById("uploadFiles").files
+
+if(!tripNo){
+  alert("Select trip")
+  return
+}
+
+if(!docType){
+  alert("Select document type")
+  return
+}
+
+if(!files.length){
+  alert("Select files")
+  return
+}
+
+const tripId = getTripIdByNo(tripNo)
+
+if(!tripId){
+  alert("Trip not found ❌")
+  return
+}
+
+/* 🔥 LOADING */
+btn.innerText = "Uploading..."
+btn.disabled = true
+
+for(let file of files){
+
+  try{
+
+    const result = await uploadToDrive(file, tripNo)
+
+    await supabaseClient.from("trip_documents").insert({
+      trip_id: tripId,
+      trip_no: tripNo,
+      file_name: `${docType} - ${file.name}`,
+      doc_type: docType,
+      file_type: file.type,
+      file_url: result.fileUrl,
+      file_id: result.fileId
+    })
+
+  }catch(err){
+    console.error("Upload error:", err)
+  }
+}
+
+/* RESET */
+btn.innerText = "Upload"
+btn.disabled = false
+document.getElementById("uploadFiles").value = ""
+
+alert("Upload completed ✅")
+
 }
     
 async function uploadToDrive(file, tripNo) {

@@ -121,7 +121,9 @@ setTimeout(async ()=>{
     console.log("✅ User initialized")
 
     /* ✅ STEP 3: ACTIVE MENU */
-    setActiveMenu()
+    if(typeof setActiveMenu === "function"){
+  setActiveMenu()
+}
     console.log("✅ Active menu applied")
 
     /* ✅ STEP 4: ICONS */
@@ -173,6 +175,23 @@ await supabaseClient.auth.signOut()
 window.location="login.html"
 }
 }
+
+function setActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+
+        let page = link.getAttribute("data-page")
+
+        if(page === currentPage){
+            link.classList.add("active")
+        }
+
+    })
+
+}
+    
 </script>
 
 <div class="main">
@@ -784,21 +803,7 @@ totalCount = count || 0
 renderTrips()
 }
 
-function setActiveMenu(){
 
-    let currentPage = window.location.pathname.split("/").pop()
-
-    document.querySelectorAll("#sidebar a").forEach(link=>{
-
-        let page = link.getAttribute("data-page")
-
-        if(page === currentPage){
-            link.classList.add("active")
-        }
-
-    })
-
-}
     
 /* 🔥 NO FLICKER RBAC */
 

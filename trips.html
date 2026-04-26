@@ -1226,14 +1226,19 @@ if(!newName) return;
 try{
 
 // 🔥 RENAME IN DRIVE
+const { data: { session } } = await supabaseClient.auth.getSession();
+
 await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/rename-drive", {
   method: "POST",
-  const { data: { session } } = await supabaseClient.auth.getSession();
-
-headers: {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${session.access_token}`
-},
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${session.access_token}`
+  },
+  body: JSON.stringify({
+    file_id: fileId,
+    new_name: newName
+  })
+});
   body: JSON.stringify({
     file_id: fileId,
     new_name: newName
@@ -1262,14 +1267,18 @@ if(!confirm("Delete this file?")) return;
 try{
 
 // 🔥 DELETE FROM DRIVE
+const { data: { session } } = await supabaseClient.auth.getSession();
+
 await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-drive", {
   method: "POST",
-  const { data: { session } } = await supabaseClient.auth.getSession();
-
-headers: {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${session.access_token}`
-},
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${session.access_token}`
+  },
+  body: JSON.stringify({
+    file_id: fileId
+  })
+});
   body: JSON.stringify({ file_id: fileId })
 });
 

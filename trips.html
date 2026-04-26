@@ -1239,11 +1239,7 @@ await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/rename-drive"
     new_name: newName
   })
 });
-  body: JSON.stringify({
-    file_id: fileId,
-    new_name: newName
-  })
-});
+
 
 // 🔥 UPDATE DB
 await supabaseClient
@@ -1279,8 +1275,7 @@ await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-drive"
     file_id: fileId
   })
 });
-  body: JSON.stringify({ file_id: fileId })
-});
+
 
 // 🔥 DELETE FROM DB
 await supabaseClient

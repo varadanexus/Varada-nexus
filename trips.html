@@ -817,7 +817,7 @@ html+=`
 <td>${t.status||""}</td>
 <td>
 
-<input type="file" onchange="handleFileUpload(event, '${t.id}')" style="margin-bottom:4px;" />
+<input type="file" onchange="handleFileUpload(event, '${t.trip_no}')" style="margin-bottom:4px;" />
 
 <br>
 
@@ -993,13 +993,13 @@ async function handleFileUpload(event, tripNo) {
     alert("Uploaded to Drive ✅");
 
     // SAVE IN DATABASE
-    await supabaseClient.from("trip_documents").insert({
-      trip_id: tripNo,
-      file_name: file.name,
-      file_type: "trip_doc",
-      file_url: result.fileUrl,
-      file_id: result.fileId
-    });
+  await supabaseClient.from("trip_documents").insert({
+  trip_no: tripNo,
+  file_name: file.name,
+  file_type: file.type,   // ✅ THIS IS THE CHANGE
+  file_url: result.fileUrl,
+  file_id: result.fileId
+});
 
   } catch (err) {
     console.error(err);
@@ -1028,11 +1028,11 @@ const response = await fetch(
   "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 },
-    body: JSON.stringify({
-      trip_id: tripId,
-      file_name: file.name,
-      file_base64: base64
-    })
+  body: JSON.stringify({
+  trip_no: tripId,   // 🔥 THIS IS THE KEY CHANGE
+  file_name: file.name,
+  file_base64: base64
+})
   }
 );
 
@@ -1041,19 +1041,13 @@ const data = await response.json();
 console.log("UPLOAD RESULT:", data);
 
 
+console.log("UPLOAD RESPONSE:", data);
+
 if (data.success) {
   resolve(data);
 } else {
   reject(data.error || "Upload failed");
 }
-
-        console.log("UPLOAD RESPONSE:", data);
-
-        if (data.success) {
-          resolve(data);
-        } else {
-          reject(data.error || "Upload failed");
-        }
 
       } catch (err) {
         console.error("UPLOAD ERROR:", err);
@@ -1071,7 +1065,7 @@ async function viewDocs(tripNo){
 const {data} = await supabaseClient
 .from("trip_documents")
 .select("*")
-.eq("trip_id", tripNo)
+.eq("trip_no", tripNo)
 
 if(!data || data.length === 0){
   alert("No documents")

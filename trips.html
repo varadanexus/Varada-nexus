@@ -865,18 +865,6 @@ html+=`
 <td>${t.status||""}</td>
 <td>
 
-<td>
-
-<button onclick="viewDocs('${t.trip_no}')">Docs</button>
-
-<br>
-
-${canEdit ? `<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>` : ""}
-
-${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>` : ""}
-
-</td>
-
 <br>
 
 <button onclick="viewDocs('${t.trip_no}')">Docs</button>

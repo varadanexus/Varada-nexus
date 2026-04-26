@@ -257,6 +257,11 @@ window.location="login.html"
 
 let routes=[], trucks=[], commodities=[], clients=[], trips=[]
 
+function getTripIdByNo(tripNo){
+  let t = trips.find(x => x.trip_no == tripNo)
+  return t?.id || null
+}
+    
 let currentPage = 1
 let pageSize = 50
 let totalCount = 0
@@ -993,10 +998,11 @@ async function handleFileUpload(event, tripNo) {
     alert("Uploaded to Drive ✅");
 
     // SAVE IN DATABASE
-  await supabaseClient.from("trip_documents").insert({
-  trip_no: tripNo,
+await supabaseClient.from("trip_documents").insert({
+  trip_id: getTripIdByNo(tripNo),  // ✅ ADD THIS
+  trip_no: tripNo,                 // keep this
   file_name: file.name,
-  file_type: file.type,   // ✅ THIS IS THE CHANGE
+  file_type: file.type,
   file_url: result.fileUrl,
   file_id: result.fileId
 });

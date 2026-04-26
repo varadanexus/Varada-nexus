@@ -865,21 +865,43 @@ html+=`
 <td>${t.status||""}</td>
 <td>
 
-<br>
+<td>
 
-<button onclick="viewDocs('${t.trip_no}')">Docs</button>
+<div style="display:flex;flex-direction:column;gap:6px;">
 
-<br>
+  <!-- 📁 DOCUMENT BUTTON -->
+  <button onclick="viewDocs('${t.trip_no}')" 
+  style="display:flex;align-items:center;gap:6px;background:#1d4ed8;">
+    📁 Docs 
+    <span id="docCount_${t.trip_no}" 
+    style="background:#0ea5e9;padding:2px 6px;border-radius:6px;font-size:11px;">
+    0
+    </span>
+  </button>
 
-${canEdit ? `<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>` : ""}
+  <!-- ✏️ EDIT -->
+  ${canEdit ? `
+  <button class="editBtn" 
+  style="display:flex;align-items:center;gap:6px;">
+  ✏️ Edit
+  </button>` : ""}
 
-${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>` : ""}
+  <!-- 🗑 DELETE -->
+  ${canDelete ? `
+  <button class="deleteBtn" 
+  style="display:flex;align-items:center;gap:6px;">
+  🗑 Delete
+  </button>` : ""}
+
+</div>
 
 </td>
+
 </tr>`
 })
 
 tripTable.innerHTML = html
+loadDocCounts()
 
 /* 📊 PAGE INFO */
 let totalPages = Math.ceil(totalCount / pageSize)
@@ -1237,7 +1259,12 @@ background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:cente
 
 <div style="background:#111827;padding:20px;border-radius:12px;width:800px;max-height:85%;overflow:auto;">
 
-<h3 style="margin-bottom:10px;">Documents - ${tripNo}</h3>
+<h3 style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+  📁 ${tripNo} Documents
+  <span style="font-size:12px;color:#9ca3af;">
+    ${data.length} files
+  </span>
+</h3>
 
 <table style="width:100%;">
 <tr>
@@ -1255,15 +1282,24 @@ if(d.file_type?.includes("pdf")) icon="📕"
 
 html += `
 <tr>
-<td>${icon} ${d.file_name}</td>
+<td style="display:flex;align-items:center;gap:10px;">
+  <div style="font-size:18px;">${icon}</div>
+  <div>
+    <div style="font-weight:500;">${d.file_name}</div>
+    <div style="font-size:11px;color:#9ca3af;">${d.doc_type || ""}</div>
+  </div>
+</td>
 <td>${d.doc_type || ""}</td>
-<td>
+<td style="display:flex;gap:6px;">
 
-<button onclick="previewDoc('${d.file_url}','${d.file_type}')">View</button>
+<button onclick="previewDoc('${d.file_url}','${d.file_type}')"
+style="background:#1e293b;">👁</button>
 
-<button onclick="renameDoc('${d.id}','${d.file_id}','${d.file_name}','${tripNo}')">Rename</button>
+<button onclick="renameDoc('${d.id}','${d.file_id}','${d.file_name}','${tripNo}')"
+style="background:#0ea5e9;">✏️</button>
 
-<button onclick="deleteDoc('${d.id}','${d.file_id}','${tripNo}')">Delete</button>
+<button onclick="deleteDoc('${d.id}','${d.file_id}','${tripNo}')"
+style="background:#ef4444;">🗑</button>
 
 </td>
 </tr>
@@ -1382,6 +1418,29 @@ viewDocs(tripNo);
 console.error(err);
 alert("Delete failed ❌");
 }
+}
+
+async function loadDocCounts(){
+
+const {data} = await supabaseClient
+.from("trip_documents")
+.select("trip_no")
+
+if(!data) return
+
+let map = {}
+
+data.forEach(d=>{
+  map[d.trip_no] = (map[d.trip_no] || 0) + 1
+})
+
+Object.keys(map).forEach(tripNo=>{
+  let el = document.getElementById(`docCount_${tripNo}`)
+  if(el){
+    el.innerText = map[tripNo]
+  }
+})
+
 }
     
 </script>

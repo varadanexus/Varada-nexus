@@ -865,13 +865,17 @@ html+=`
 <td>${t.status||""}</td>
 <td>
 
-<select id="docType_${t.trip_no}" style="margin-bottom:4px;">
-  <option value="">Select Type</option>
-  <option value="Weight Bill">Weight Bill</option>
-  <option value="Trip Sheet">Trip Sheet</option>
-  <option value="Expense">Expense</option>
-</select>
+<td>
 
+<button onclick="viewDocs('${t.trip_no}')">Docs</button>
+
+<br>
+
+${canEdit ? `<button class="editBtn" onclick="editTrip('${t.id}')">Edit</button>` : ""}
+
+${canDelete ? `<button class="deleteBtn" onclick="deleteTrip('${t.id}')">Delete</button>` : ""}
+
+</td>
 
 <br>
 

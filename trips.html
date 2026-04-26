@@ -1024,8 +1024,10 @@ const response = await fetch(
   {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
-    },
+  "Content-Type": "application/json",
+  "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+},
     body: JSON.stringify({
       trip_id: tripId,
       file_name: file.name,
@@ -1038,11 +1040,6 @@ const data = await response.json();
 
 console.log("UPLOAD RESULT:", data);
 
-if (data.success) {
-  resolve(data);
-} else {
-  reject(data.error || "Upload failed");
-}
 
 if (data.success) {
   resolve(data);

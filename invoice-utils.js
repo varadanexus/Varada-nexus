@@ -252,18 +252,41 @@ This is a system generated GST invoice.
 
 Thank you for doing business with Varada Nexus.`
 
-let splitLegal = doc.splitTextToSize(legalText, 90)
+let maxWidth = 180
+let splitLegal = doc.splitTextToSize(legalText, maxWidth)
 
 doc.text(splitLegal, 15, legalY + 5, {
-    lineHeightFactor: 1.3
+    lineHeightFactor: 1.2
 })
 
+let availableHeight = 270 - legalY   // space till bottom
+let lineHeight = 4.5
+
+let requiredHeight = splitLegal.length * lineHeight
+
+// 🔥 AUTO SHRINK IF OVERFLOW
+if(requiredHeight > availableHeight){
+    
+    let scale = availableHeight / requiredHeight
+
+    let newFontSize = Math.max(5.5, 7 * scale)
+
+    doc.setFontSize(newFontSize)
+
+    splitLegal = doc.splitTextToSize(legalText, maxWidth)
+
+    lineHeight = newFontSize * 0.6
+}
+    
 /* 🔷 SIGNATURE */
-let signY = Math.max(
-    creditEndY || 0,
-    taxSummaryEndY || 0,
-    bankEndY || 0
-) + 35
+let legalEndY = legalY + (splitLegal.length * lineHeight)
+
+let signY = legalEndY + 10
+
+// 🔥 PROTECT FROM OVERFLOW
+if(signY > 260){
+    signY = 260
+}
 
 /* 🔷 SIGNATURE IMAGE */
 try{

@@ -321,23 +321,31 @@ async function uploadInvoiceToDrive(data){
 
     const base64 = await blobToBase64(data.blob)
 
-    const res = await fetch(
-      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-invoice",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          file_base64: base64,
-          invoice_no: data.invoiceNo,
-          client_name: data.clientName,
-          invoice_date: data.createdAt
-        })
-      }
-    )
+    const { data: { session } } = await supabaseClient.auth.getSession()
 
-    const result = await res.json()
+if(!session){
+  console.error("❌ No session found")
+  return
+}
+      
+const res = await fetch(
+  "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-invoice",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      file_base64: base64,
+      invoice_no: data.invoiceNo,
+      client_name: data.clientName,
+      invoice_date: data.createdAt
+    })
+  }
+)
+
+const result = await res.json()
 
     if(result.success){
 

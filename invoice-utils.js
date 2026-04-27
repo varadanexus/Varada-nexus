@@ -43,10 +43,10 @@ bd.forEach(t=>{
 rows.push([
 t.trip_no,
 t.truck_no || "-",   // ✅ NEW COLUMN
-Math.round(t.contract_value || 0),
-Math.round(t.freight_cost || 0),
-Math.round(t.margin || 0),
-Math.round(t.gst || 0)
+Number(t.contract_value || 0).toFixed(2),
+Number(t.freight_cost || 0).toFixed(2),
+Number(t.margin || 0).toFixed(2),
+Number(t.gst || 0).toFixed(2)
 ])
 })
 
@@ -127,57 +127,14 @@ doc.text("Place of Supply: Andhra Pradesh",140,55)
 doc.text("State Code: 37",140,62)
 doc.text("Invoice Type: " + invoiceType,140,69)
   
-/* 🔥 ULTRA COMPACT TABLE ENGINE */
-
-let baseFontSize = 8
-let minFontSize = 5.2
-
-let pageHeight = 297
-let reservedBottom = 70   // tighter reservation
-
-let availableTableHeight = pageHeight - 95 - reservedBottom
-
-let estimatedRowHeight = baseFontSize * 1.6
-
-let requiredTableHeight = rows.length * estimatedRowHeight
-
-// 🔥 HARD SHRINK
-if(requiredTableHeight > availableTableHeight){
-
-    let scale = availableTableHeight / requiredTableHeight
-
-    baseFontSize = Math.max(minFontSize, baseFontSize * scale)
-}
-
-/* ✅ DRAW ULTRA TABLE */
+/* 🔷 TABLE */
 doc.autoTable({
-    startY:95,
-    head:[["Trip","Truck","Ctr","Frt","Srv","GST"]],
-    body:rows,
-    theme:"grid",
-
-    styles:{ 
-        fontSize: baseFontSize,
-        cellPadding: 1,          // 🔥 ultra tight
-        lineWidth: 0.1,
-        valign: 'middle'
-    },
-
-    headStyles:{
-        fillColor:[0,102,204],
-        textColor:255,
-        fontSize: baseFontSize,
-        cellPadding: 1
-    },
-
-    columnStyles:{
-        0:{cellWidth:25},   // Trip
-        1:{cellWidth:30},   // Truck
-        2:{cellWidth:20},   // Contract
-        3:{cellWidth:20},   // Freight
-        4:{cellWidth:25},   // Service
-        5:{cellWidth:20}    // GST
-    }
+startY:95,
+head:[["Trip","Truck","Contract","Freight","Service Charges","GST"]],
+body:rows,
+theme:"grid",
+headStyles:{ fillColor:[0,102,204], textColor:255 },
+styles:{ fontSize:9 }
 })
 
 /* 🔷 SUMMARY BOX */
@@ -194,7 +151,7 @@ let grossInvoiceValue = subtotalTaxable + freightCharges
 
 let totalInvoiceValue = grossInvoiceValue - totalCredit
 
-let summaryStartY = doc.lastAutoTable.finalY + 6
+let summaryStartY = doc.lastAutoTable.finalY + 10
 
 doc.autoTable({
 startY: summaryStartY,
@@ -203,11 +160,11 @@ tableWidth:85,
 head:[["Tax Summary",""]],
 body:[
 
-["Service Charges", Math.round(serviceCharges)],
+["Logistics Coordination Charges", serviceCharges.toFixed(2)],
 ["CGST (" + (inv.gst_percent/2).toFixed(1) + "%)", cgst.toFixed(2)],
 ["SGST (" + (inv.gst_percent/2).toFixed(1) + "%)", sgst.toFixed(2)],
 ["Subtotal (Taxable)", subtotalTaxable.toFixed(2)],
-["Freight (Pure Agent)", Math.round(freightCharges)],
+["Freight Charges (No GST - Pure Agent)", freightCharges.toFixed(2)],
 
 [{content:"Total Invoice Value", styles:{fontStyle:'bold'}},
  {content: grossInvoiceValue.toFixed(2), styles:{fontStyle:'bold'}}],
@@ -220,18 +177,9 @@ body:[
 
 ],
 theme:"grid",
-
-styles:{
-    fontSize: 7.5,
-    cellPadding: 1.5
-},
-
-headStyles:{
-    fillColor:[0,102,204],
-    textColor:255,
-    fontSize: 8
-}
+headStyles:{ fillColor:[0,102,204], textColor:255 }
 })
+
 /* ✅ STORE THIS */
 let taxSummaryEndY = doc.lastAutoTable.finalY
 
@@ -273,7 +221,7 @@ doc.autoTable({
         ["Branch", "Rajahmundry, AP"]
     ],
     theme: "grid",
-    styles: { fontSize: 8, cellPadding: 2 },
+    styles: { fontSize: 9 },
     headStyles: { fillColor: [0,102,204], textColor: 255 }
 })
 
@@ -304,47 +252,18 @@ This is a system generated GST invoice.
 
 Thank you for doing business with Varada Nexus.`
 
-let maxWidth = 180  
+let splitLegal = doc.splitTextToSize(legalText, 90)
 
-let fontSize = 7
-let lineHeight = 4.5
-
-doc.setFontSize(fontSize)
-
-let splitLegal = doc.splitTextToSize(legalText, maxWidth)
-
-let signatureReserve = 35
-let availableHeight = 270 - legalY - signatureReserve  
-let requiredHeight = splitLegal.length * lineHeight  
-
-// 🔥 SHRINK BEFORE DRAWING
-if(requiredHeight > availableHeight){
-
-    let scale = availableHeight / requiredHeight
-
-    fontSize = Math.max(5.5, 7 * scale)
-
-    doc.setFontSize(fontSize)
-
-    lineHeight = fontSize * 0.6
-
-    splitLegal = doc.splitTextToSize(legalText, maxWidth)
-}
-
-// ✅ NOW DRAW (after final sizing)
 doc.text(splitLegal, 15, legalY + 5, {
-    lineHeightFactor: 1.2
+    lineHeightFactor: 1.3
 })
-    
+
 /* 🔷 SIGNATURE */
-let legalEndY = legalY + (splitLegal.length * lineHeight)
-
-let signY = legalEndY + 10
-
-// 🔥 PROTECT FROM OVERFLOW
-if(signY > 250){
-    signY = 250
-}
+let signY = Math.max(
+    creditEndY || 0,
+    taxSummaryEndY || 0,
+    bankEndY || 0
+) + 35
 
 /* 🔷 SIGNATURE IMAGE */
 try{
@@ -353,7 +272,7 @@ doc.addImage("images/signature.png","PNG",136,signY-13,40,15)
 
 /* 🔷 STAMP IMAGE (OVERLAP EFFECT) */
 try{
-doc.addImage("images/stamp.png","PNG",165,signY-10,25,25)
+doc.addImage("images/stamp.png","PNG",165,signY-20,30,30)
 }catch(e){}
 
 /* 🔷 LINE */

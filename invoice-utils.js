@@ -361,7 +361,7 @@ const result = await res.json()
       console.log("✅ Invoice uploaded to Drive")
 
     }else{
-      console.error("❌ Drive upload failed:", result.error)
+      console.error("❌ FULL ERROR:", result)
     }
 
   }catch(err){

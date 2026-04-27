@@ -284,7 +284,10 @@ doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
 
 /* 🔥 RETURN BLOB */
-return doc.output("bloburl")
+return {
+    url: doc.output("bloburl"),
+    invoiceNo: inv.invoice_no
+}
 
     
 }
@@ -293,11 +296,11 @@ return doc.output("bloburl")
 /* DOWNLOAD FUNCTION */
 async function generatePDF(invoiceId){
 
-const blobUrl = await generateInvoiceBlob(invoiceId)
+const result = await generateInvoiceBlob(invoiceId)
 
 let a = document.createElement("a")
-a.href = blobUrl
-a.download = "Invoice.pdf"
+a.href = result.url
+a.download = result.invoiceNo + ".pdf"
 a.click()
 
 }

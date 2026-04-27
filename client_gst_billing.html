@@ -256,7 +256,7 @@ Download GST Invoice PDF
 
 <input id="gstTxnId" placeholder="Transaction ID / UTR">
 
-<button onclick="saveGSTPayment()">Receive Payment</button>
+<button onclick="saveGSTPayment(this)">Receive Payment</button>
   
 </div>
 
@@ -479,10 +479,8 @@ remarks: "Credit Note Edited"
 
 alert("Credit Note Updated ✅")
 
-await regenerateAndReplaceInvoice(c.invoice_id)
-  
-loadCreditNotes()
-loadGSTInvoices()
+await syncInvoiceWithUI(c.invoice_id)
+
 }
 
 async function deleteCreditNote(id){
@@ -536,10 +534,8 @@ await supabaseClient
 
 alert("Credit Note Deleted ✅")
 
-await regenerateAndReplaceInvoice(c.invoice_id)
+await syncInvoiceWithUI(c.invoice_id)
   
-loadCreditNotes()
-loadGSTInvoices()
 }
   
 async function loadClients(){
@@ -1195,14 +1191,13 @@ remarks: reason || "Credit Note"
 
 alert("Credit Note Issued ✅")
 
-await regenerateAndReplaceInvoice(invoiceId)
+await syncInvoiceWithUI(invoiceId)
   
 /* RESET */
 document.getElementById("creditAmount").value=""
 document.getElementById("creditReason").value=""
 document.getElementById("creditInvoiceSelect").value=""
 
-loadGSTInvoices()
 }
   
 async function deleteGSTInvoice(id){
@@ -1413,7 +1408,7 @@ return
 addGSTPayment(id, amt)
 }
 
-async function saveGSTPayment(){
+async function saveGSTPayment(btn){
 
 let invoiceId = document.getElementById("gstInvoiceSelect").value
 let amount = Number(document.getElementById("gstPaidAmount").value || 0)
@@ -1544,7 +1539,7 @@ remarks: "Client Payment Received"
 
 alert("Payment Recorded ✅")
 
-await regenerateAndReplaceInvoice(invoiceId)
+await syncInvoiceWithUI(invoiceId)
   
 /* RESET */
 document.getElementById("gstPaidAmount").value=""
@@ -1552,8 +1547,6 @@ document.getElementById("gstPaymentMethod").value=""
 document.getElementById("gstTxnId").value=""
 document.getElementById("gstPaymentDate").value=""
 
-loadGSTInvoices()
-loadPaymentHistory()
 document.getElementById("gstInvoiceSelect").value = ""
 }
   
@@ -1675,10 +1668,8 @@ remarks: "Client Payment Edited"
 
 alert("Payment Updated ✅")
 
-await regenerateAndReplaceInvoice(p.invoice_id)
+await syncInvoiceWithUI(p.invoice_id)
   
-loadGSTInvoices()
-loadPaymentHistory()
 }
 
 async function deleteGSTPayment(id){
@@ -1765,10 +1756,8 @@ await supabaseClient
 
 alert("Payment Deleted ✅")
 
-await regenerateAndReplaceInvoice(p.invoice_id)
+await syncInvoiceWithUI(p.invoice_id)
   
-loadGSTInvoices()
-loadPaymentHistory()
 }
 
 async function regenerateAndReplaceInvoice(invoiceId){
@@ -1811,6 +1800,49 @@ async function regenerateAndReplaceInvoice(invoiceId){
   await generatePDF(invoiceId)
 
   console.log("✅ Invoice synced with Drive")
+}
+
+async function syncInvoiceWithUI(invoiceId, btn=null){
+
+  try{
+
+    if(btn){
+      btn.disabled = true
+      btn.innerText = "Syncing..."
+    }
+
+    await regenerateAndReplaceInvoice(invoiceId)
+
+    // 🔥 SMART REFRESH (no full reload)
+    await loadGSTInvoices()
+    await loadPaymentHistory()
+    await loadCreditNotes()
+
+    console.log("✅ UI Synced")
+
+  }catch(err){
+
+    console.error("❌ Sync failed:", err)
+
+    // 🔁 retry once
+    try{
+      await regenerateAndReplaceInvoice(invoiceId)
+    }catch(e){
+      alert("Sync failed. Retry manually.")
+    }
+
+  }finally{
+
+    if(btn){
+      btn.disabled = false
+      btn.innerText = "Done ✓"
+
+      setTimeout(()=>{
+        btn.innerText = "Receive Payment"
+      },1500)
+    }
+
+  }
 }
   
 </script>

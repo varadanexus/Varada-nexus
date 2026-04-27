@@ -1227,7 +1227,7 @@ await supabaseClient
 /* 🔥 GET INVOICE DETAILS FOR LEDGER DELETE */
 const { data:invData } = await supabaseClient
 .from("client_invoices_gst")
-.select("invoice_no, client_name, drive_file_id") // 🔥 ADD THIS
+.select("invoice_no,client_name,drive_file_id") // 🔥 ADD THIS
 .eq("id", id)
 .single()
 

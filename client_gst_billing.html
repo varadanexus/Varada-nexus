@@ -479,6 +479,8 @@ remarks: "Credit Note Edited"
 
 alert("Credit Note Updated ✅")
 
+await regenerateAndReplaceInvoice(c.invoice_id)
+  
 loadCreditNotes()
 loadGSTInvoices()
 }
@@ -534,6 +536,8 @@ await supabaseClient
 
 alert("Credit Note Deleted ✅")
 
+await regenerateAndReplaceInvoice(c.invoice_id)
+  
 loadCreditNotes()
 loadGSTInvoices()
 }
@@ -1191,6 +1195,8 @@ remarks: reason || "Credit Note"
 
 alert("Credit Note Issued ✅")
 
+await regenerateAndReplaceInvoice(invoiceId)
+  
 /* RESET */
 document.getElementById("creditAmount").value=""
 document.getElementById("creditReason").value=""
@@ -1538,6 +1544,8 @@ remarks: "Client Payment Received"
 
 alert("Payment Recorded ✅")
 
+await regenerateAndReplaceInvoice(invoiceId)
+  
 /* RESET */
 document.getElementById("gstPaidAmount").value=""
 document.getElementById("gstPaymentMethod").value=""
@@ -1667,6 +1675,8 @@ remarks: "Client Payment Edited"
 
 alert("Payment Updated ✅")
 
+await regenerateAndReplaceInvoice(p.invoice_id)
+  
 loadGSTInvoices()
 loadPaymentHistory()
 }
@@ -1755,8 +1765,52 @@ await supabaseClient
 
 alert("Payment Deleted ✅")
 
+await regenerateAndReplaceInvoice(p.invoice_id)
+  
 loadGSTInvoices()
 loadPaymentHistory()
+}
+
+async function regenerateAndReplaceInvoice(invoiceId){
+
+  console.log("🔄 Regenerating invoice:", invoiceId)
+
+  // 1️⃣ GET INVOICE
+  const { data:inv } = await supabaseClient
+  .from("client_invoices_gst")
+  .select("*")
+  .eq("id", invoiceId)
+  .single()
+
+  if(!inv){
+    console.error("Invoice not found")
+    return
+  }
+
+  // 2️⃣ DELETE OLD DRIVE FILE (if exists)
+  if(inv.drive_file_id){
+
+    const { data:{ session } } = await supabaseClient.auth.getSession()
+
+    await fetch(
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          fileId: inv.drive_file_id
+        })
+      }
+    )
+  }
+
+  // 3️⃣ REGENERATE PDF (this should upload + update DB)
+  await generatePDF(invoiceId)
+
+  console.log("✅ Invoice synced with Drive")
 }
   
 </script>

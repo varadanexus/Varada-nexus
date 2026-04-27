@@ -284,9 +284,15 @@ doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
 
 /* 🔥 RETURN BLOB */
+const blob = doc.output("blob")
+
 return {
-    url: doc.output("bloburl"),
-    invoiceNo: inv.invoice_no
+    url: URL.createObjectURL(blob),
+    blob: blob,
+    invoiceNo: inv.invoice_no,
+    clientName: inv.client_name,
+    createdAt: inv.created_at,
+    id: inv.id
 }
 
     
@@ -298,9 +304,70 @@ async function generatePDF(invoiceId){
 
 const result = await generateInvoiceBlob(invoiceId)
 
+/* 🔽 DOWNLOAD */
 let a = document.createElement("a")
 a.href = result.url
 a.download = result.invoiceNo + ".pdf"
 a.click()
 
+/* 🔥 BACKGROUND DRIVE UPLOAD */
+uploadInvoiceToDrive(result)
+
+}
+
+async function uploadInvoiceToDrive(data){
+
+  try{
+
+    const base64 = await blobToBase64(data.blob)
+
+    const res = await fetch(
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-invoice",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          file_base64: base64,
+          invoice_no: data.invoiceNo,
+          client_name: data.clientName,
+          invoice_date: data.createdAt
+        })
+      }
+    )
+
+    const result = await res.json()
+
+    if(result.success){
+
+      /* 🔥 SAVE DRIVE LINK */
+      await supabaseClient
+      .from("client_invoices_gst")
+      .update({
+        drive_file_id: result.fileId,
+        drive_link: result.fileUrl
+      })
+      .eq("id", data.id)
+
+      console.log("✅ Invoice uploaded to Drive")
+
+    }else{
+      console.error("❌ Drive upload failed:", result.error)
+    }
+
+  }catch(err){
+    console.error("❌ Upload error:", err)
+  }
+}
+
+
+/* 🔧 HELPER */
+function blobToBase64(blob){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result.split(",")[1])
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }

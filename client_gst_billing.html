@@ -1227,11 +1227,31 @@ await supabaseClient
 /* 🔥 GET INVOICE DETAILS FOR LEDGER DELETE */
 const { data:invData } = await supabaseClient
 .from("client_invoices_gst")
-.select("invoice_no, client_name")
+.select("invoice_no, client_name, drive_file_id") // 🔥 ADD THIS
 .eq("id", id)
 .single()
 
 if(invData){
+
+/* 🔥 DELETE FROM GOOGLE DRIVE */
+if(invData.drive_file_id){
+
+  const { data: { session } } = await supabaseClient.auth.getSession()
+
+  if(session){
+    await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        fileId: invData.drive_file_id
+      })
+    })
+  }
+
+}
 
 /* 🔥 DELETE COMPANY LEDGER */
 await supabaseClient

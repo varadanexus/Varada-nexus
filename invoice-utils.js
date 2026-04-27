@@ -246,7 +246,11 @@ Freight charges are incurred by us as a Pure Agent of the client under Rule 33 o
 
 Accordingly, only the net consideration retained as service charges constitutes the value of taxable supply under GST.
 
-All supporting documents for such expenses are available and can be provided upon request.`
+All supporting documents for such expenses are available and can be provided upon request.
+
+This is a system generated GST invoice.
+
+Thank you for doing business with Varada Nexus.`
 
 let splitLegal = doc.splitTextToSize(legalText, 90)
 
@@ -277,37 +281,6 @@ doc.line(130, signY, 195, signY)
 /* 🔷 TEXT */
 doc.setFontSize(9)
 doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
-
-/* 🔷 FOOTER (DYNAMIC FIX) */
-
-/* 🔥 GET LOWEST CONTENT POINT */
-let finalContentY = Math.max(
-    creditEndY || 0,
-    taxSummaryEndY || 0,
-    bankEndY || 0,
-    signY || 0
-);
-
-/* 🔥 START FOOTER BELOW CONTENT */
-let footerY = finalContentY + 15;
-
-/* 🔥 PAGE BREAK SAFETY */
-if (footerY > 270) {
-    doc.addPage();
-    footerY = 20;
-}
-
-/* 🔥 FOOTER TEXT */
-doc.setFontSize(9);
-doc.setTextColor(0,0,0);
-
-doc.text("This is a system generated GST invoice.", 15, footerY);
-
-footerY += 6;
-
-doc.text("Thank you for doing business with Varada Nexus.", 15, footerY);
-
-
 
 
 /* 🔥 RETURN BLOB */

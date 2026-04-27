@@ -1236,23 +1236,41 @@ if(invData){
 /* 🔥 DELETE FROM GOOGLE DRIVE */
 if(invData.drive_file_id){
 
+  console.log("🗑️ Deleting Drive file:", invData.drive_file_id)
+
   const { data: { session } } = await supabaseClient.auth.getSession()
 
-  if(session){
-    await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({
-        fileId: invData.drive_file_id
-      })
-    })
+  if(!session){
+    console.error("❌ No session for delete")
+  }else{
+
+    const res = await fetch(
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          fileId: invData.drive_file_id
+        })
+      }
+    )
+
+    const result = await res.json()
+
+    console.log("🧾 DELETE RESPONSE:", result)
+
+    if(!result.success){
+      console.error("❌ Drive delete failed:", result.error)
+      alert("Drive delete failed: " + result.error)
+    }else{
+      console.log("✅ Drive file deleted")
+    }
+
   }
-
 }
-
 /* 🔥 DELETE COMPANY LEDGER */
 await supabaseClient
 .from("company_ledger")

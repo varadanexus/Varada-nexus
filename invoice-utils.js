@@ -278,10 +278,34 @@ doc.line(130, signY, 195, signY)
 doc.setFontSize(9)
 doc.text("Authorized Signatory", 162, signY + 5, { align: "center" })
 
-/* 🔷 FOOTER */
-doc.setFontSize(9)
-doc.text("This is a system generated GST invoice.",15,285)
-doc.text("Thank you for doing business with Varada Nexus.",15,292)
+/* 🔷 FOOTER (DYNAMIC FIX) */
+
+/* 🔥 GET LOWEST CONTENT POINT */
+let finalContentY = Math.max(
+    creditEndY || 0,
+    taxSummaryEndY || 0,
+    bankEndY || 0,
+    signY || 0
+);
+
+/* 🔥 START FOOTER BELOW CONTENT */
+let footerY = finalContentY + 15;
+
+/* 🔥 PAGE BREAK SAFETY */
+if (footerY > 270) {
+    doc.addPage();
+    footerY = 20;
+}
+
+/* 🔥 FOOTER TEXT */
+doc.setFontSize(9);
+doc.setTextColor(0,0,0);
+
+doc.text("This is a system generated GST invoice.", 15, footerY);
+
+footerY += 6;
+
+doc.text("Thank you for doing business with Varada Nexus.", 15, footerY);
 
 
 

@@ -319,7 +319,11 @@ async function uploadInvoiceToDrive(data){
 
   try{
 
-    const base64 = await blobToBase64(data.blob)
+    const formData = new FormData()
+formData.append("file", data.blob, data.invoiceNo + ".pdf")
+formData.append("invoice_no", data.invoiceNo)
+formData.append("client_name", data.clientName)
+formData.append("invoice_date", data.createdAt)
 
     const { data: { session } } = await supabaseClient.auth.getSession()
 
@@ -333,15 +337,9 @@ const res = await fetch(
   {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.access_token}`
-    },
-    body: JSON.stringify({
-      file_base64: base64,
-      invoice_no: data.invoiceNo,
-      client_name: data.clientName,
-      invoice_date: data.createdAt
-    })
+  "Authorization": `Bearer ${session.access_token}`
+},
+body: formData
   }
 )
 
@@ -370,12 +368,4 @@ const result = await res.json()
 }
 
 
-/* 🔧 HELPER */
-function blobToBase64(blob){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result.split(",")[1])
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
+

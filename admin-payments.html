@@ -1534,8 +1534,6 @@ async function uploadTransporterStatement(data){
 
   try{
 
-    const base64 = await blobToBase64(data.blob)
-
     const { data: { session } } = await supabaseClient.auth.getSession()
 
     if(!session){
@@ -1543,20 +1541,22 @@ async function uploadTransporterStatement(data){
       return
     }
 
+    /* ✅ FORM DATA (NO BASE64) */
+    const formData = new FormData()
+
+    formData.append("file", data.blob)
+    formData.append("file_name", data.fileName)
+    formData.append("transporter_name", data.transporterName)
+    formData.append("statement_date", data.statementDate)
+
     const res = await fetch(
       "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-transporter-statement",
       {
         method:"POST",
         headers:{
-          "Content-Type":"application/json",
           Authorization:`Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          file_base64: base64,
-          file_name: data.fileName,
-          transporter_name: data.transporterName,
-          statement_date: data.statementDate
-        })
+        body: formData
       }
     )
 
@@ -1564,7 +1564,6 @@ async function uploadTransporterStatement(data){
 
     if(result.success){
 
-      /* 🔥 SAVE DRIVE LINK */
       await supabaseClient
       .from("transporter_invoices")
       .update({
@@ -1577,6 +1576,7 @@ async function uploadTransporterStatement(data){
 
     }else{
       console.error("❌ FULL ERROR:", result)
+      alert("Upload failed: " + result.error)
     }
 
   }catch(err){
@@ -1584,14 +1584,7 @@ async function uploadTransporterStatement(data){
   }
 }
 
-function blobToBase64(blob){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result.split(",")[1])
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
+
     
 </script>
 

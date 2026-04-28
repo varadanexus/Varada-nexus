@@ -30,6 +30,61 @@ export async function generateTransporterPDFBlob(invoiceId, supabaseClient){
   .in("id",tripIds)
 
   const {data:adjustmentsData} = await supabaseClient
+.from("transporter_adjustments")
+.select("amount,type,reason,trip_id")
+.eq("invoice_id", invoiceId)
+
+/* 🔥 CALCULATIONS (MISSING FIX) */
+
+let totalWeight = 0
+let tableRows = []
+let totalExpensesAll = 0
+
+let adjustmentRows = []
+let totalAdjustment = 0
+
+adjustmentsData?.forEach(a=>{
+
+  if(a.type === "Penalty"){
+    totalAdjustment -= Number(a.amount || 0)
+  }else{
+    totalAdjustment += Number(a.amount || 0)
+  }
+
+  adjustmentRows.push([
+    a.type,
+    (a.type === "Penalty" ? "- Rs. " : "+ Rs. ") + Number(a.amount || 0).toLocaleString("en-IN"),
+    a.reason || "-"
+  ])
+})
+
+tripData?.forEach(t=>{
+
+  let mt = (t.weight_kg || 0) / 1000
+  let gross = mt * (t.transporter_rate || 0)
+
+  let exp = (t.expenses || []).reduce(
+    (s,e)=>s+(e.amount||0),
+    0
+  )
+
+  let net = gross - exp
+
+  totalWeight += mt
+  totalExpensesAll += exp
+
+  tableRows.push([
+    t.trip_no,
+    t.route || "-",
+    t.truck || "-",
+    t.trip_date || "-",
+    mt.toFixed(2),
+    gross.toLocaleString("en-IN"),
+    exp.toLocaleString("en-IN"),
+    net.toLocaleString("en-IN")
+  ])
+})
+    
   .from("transporter_adjustments")
   .select("amount,type,reason,trip_id")
   .eq("invoice_id", invoiceId)
@@ -197,12 +252,12 @@ tableWidth: 85,
 head: [["Summary", ""]],
 body: [
 ["Total Weight", totalWeight.toFixed(2) + " MT"],
-["Trip Amount", "Rs. " + formatCurrency(inv.total_amount - totalAdjustment)],
-["Adjustments", "Rs. " + formatCurrency(totalAdjustment)],
-["Final Amount", "Rs. " + formatCurrency(inv.total_amount)],
-["Expenses", "Rs. " + formatCurrency(totalExpensesAll)],
-["Paid", "Rs. " + formatCurrency(inv.paid_amount || 0)],
-["Balance", "Rs. " + formatCurrency(inv.balance_amount)]
+["Trip Amount", "Rs. " + Number(inv.total_amount - totalAdjustment).toLocaleString("en-IN")],
+["Adjustments", "Rs. " + Number(totalAdjustment).toLocaleString("en-IN")],
+["Final Amount", "Rs. " + Number(inv.total_amount).toLocaleString("en-IN")],
+["Expenses", "Rs. " + Number(totalExpensesAll).toLocaleString("en-IN")],
+["Paid", "Rs. " + Number(inv.paid_amount || 0).toLocaleString("en-IN")],
+["Balance", "Rs. " + Number(inv.balance_amount).toLocaleString("en-IN")]
 ],
 
 theme: "grid",

@@ -349,6 +349,7 @@ maximumFractionDigits: 2
   
 let transporters=[], trips=[], invoices=[]
 let __AUTO_SYNC_RUNNING = false
+let __UPLOAD_IN_PROGRESS = false
 let adjustments=[]
 let selectedTrips=[]
 let invoiceAmount=0
@@ -1470,17 +1471,13 @@ a.download = inv.invoice_no + ".pdf"
 a.click()
 
 /* 🔥 BACKGROUND UPLOAD */
-if(!__AUTO_SYNC_RUNNING){
-
-  uploadTransporterStatement({
-    blob: blob,
-    transporterName: transporter?.transporter_name || "Transporter",
-    statementDate: new Date(),
-    fileName: inv.invoice_no + ".pdf",
-    invoiceId: inv.id
-  })
-
-}
+uploadTransporterStatement({
+  blob: blob,
+  transporterName: transporter?.transporter_name || "Transporter",
+  statementDate: new Date(),
+  fileName: inv.invoice_no + ".pdf",
+  invoiceId: inv.id
+})
 
 return
 }
@@ -1638,6 +1635,13 @@ __AUTO_SYNC_RUNNING = false
 
 async function uploadTransporterStatement(data){
 
+  if(__UPLOAD_IN_PROGRESS){
+    console.log("⛔ Upload already running, skipping duplicate")
+    return
+  }
+
+  __UPLOAD_IN_PROGRESS = true
+
   try{
 
     const { data: { session } } = await supabaseClient.auth.getSession()
@@ -1647,7 +1651,6 @@ async function uploadTransporterStatement(data){
       return
     }
 
-    /* ✅ FORM DATA (NO BASE64) */
     const formData = new FormData()
 
     formData.append("file", data.blob)
@@ -1666,7 +1669,15 @@ async function uploadTransporterStatement(data){
       }
     )
 
-    const result = await res.json()
+    let result
+
+try {
+  result = await res.json()
+} catch (e) {
+  const text = await res.text()
+  console.error("❌ RAW RESPONSE:", text)
+  throw new Error("Invalid JSON from server")
+}
 
     if(result.success){
 
@@ -1687,10 +1698,10 @@ async function uploadTransporterStatement(data){
 
   }catch(err){
     console.error("❌ Upload error:", err)
+  }finally{
+    __UPLOAD_IN_PROGRESS = false
   }
 }
-
-
     
 </script>
 

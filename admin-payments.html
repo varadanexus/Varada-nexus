@@ -308,7 +308,9 @@ Enter Payment:
 
 </div>
 
-<script>
+<script type="module">
+
+import { generateTransporterPDFBlob } from './statement-utils.js'
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
@@ -1129,120 +1131,22 @@ loadInvoices()
 
 async function downloadInvoice(id,e){
 
-e.stopPropagation()
+  e.stopPropagation()
 
-const { jsPDF } = window.jspdf
-const { data: inv } = await supabaseClient
-.from("transporter_invoices")
-.select("*")
-.eq("id", id)
-.single()
+  const blob = await generateTransporterPDFBlob(id, supabaseClient)
 
-if(!inv){
-  console.error("❌ Invoice not found")
-  return
-}
+  const { data: inv } = await supabaseClient
+  .from("transporter_invoices")
+  .select("invoice_no")
+  .eq("id", id)
+  .single()
 
-const {data:transporter} = await supabaseClient
-.from("transporters")
-.select("transporter_name,gst_number,phone,address")
-.eq("id", inv.transporter_id)
-.single()
+  let url = URL.createObjectURL(blob)
 
-/* 🔥 GET TRIP DETAILS */
-let tripIds = inv.trip_ids.split(",")
-
-const {data:tripData}=await supabaseClient
-.from("trips")
-.select(`
-trip_no,
-route,
-truck,
-trip_date,
-weight_kg,
-transporter_rate,
-expenses ( amount )
-`)
-.in("id",tripIds)
-
-/* 🔥 GET ADJUSTMENTS */
-const {data:adjustmentsData} = await supabaseClient
-.from("transporter_adjustments")
-.select("amount,type,reason,trip_id")
-.eq("invoice_id", id)
-    
-/* CALCULATIONS */
-let totalWeight = 0
-let tableRows = []
-let totalExpensesAll = 0
-
-let adjustmentRows = []
-let totalAdjustment = 0
-
-adjustmentsData?.forEach(a=>{
-
-if(a.type === "Penalty"){
-totalAdjustment -= Number(a.amount || 0)
-}else{
-totalAdjustment += Number(a.amount || 0)
-}
-
-adjustmentRows.push([
-a.type,
-(a.type === "Penalty" ? "- Rs. " : "+ Rs. ") + formatCurrency(a.amount),
-a.reason || "-"
-])
-})
-    
-tripData.forEach(t=>{
-
-let mt = (t.weight_kg||0)/1000
-
-let tripAmount = mt * (t.transporter_rate||0)
-
-const totalExpenses = (t.expenses || []).reduce(
-  (sum, e) => sum + (e.amount || 0),
-  0
-)
-
-let netAmount = round2(tripAmount - totalExpenses)
-
-totalWeight += mt
-totalExpensesAll += totalExpenses
-
-tableRows.push([
-t.trip_no,
-t.route || "-",
-t.truck || "-",
-t.trip_date || "-",
-(mt.toFixed(2)),
-formatCurrency(tripAmount),
-formatCurrency(totalExpenses),
-formatCurrency(netAmount)
-])
-})
-
-
-
-const blob = doc.output("blob")
-
-/* 🔽 DOWNLOAD */
-let url = URL.createObjectURL(blob)
-let a = document.createElement("a")
-a.href = url
-a.download = inv.invoice_no + ".pdf"
-a.click()
-
-/* 🔥 BACKGROUND UPLOAD */
-uploadTransporterStatement({
-  blob: blob,
-  transporterName: transporter?.transporter_name || "Transporter",
-  statementDate: new Date(),
-  fileName: inv.invoice_no + ".pdf",
-  invoiceId: inv.id
-})
-
-return
+  let a = document.createElement("a")
+  a.href = url
+  a.download = inv.invoice_no + ".pdf"
+  a.click()
 }
 
 function round2(num){
@@ -1360,7 +1264,27 @@ async function regenerateTransporterStatement(invoiceId){
   }
 
   /* REGENERATE PDF (THIS WILL AUTO UPLOAD) */
-  await downloadInvoice(invoiceId, { stopPropagation:()=>{} })
+  const blob = await generateTransporterPDFBlob(invoiceId, supabaseClient)
+
+const { data: inv } = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no, transporter_id")
+.eq("id", invoiceId)
+.single()
+
+const { data: transporter } = await supabaseClient
+.from("transporters")
+.select("transporter_name")
+.eq("id", inv.transporter_id)
+.single()
+
+await uploadTransporterStatement({
+  blob,
+  transporterName: transporter?.transporter_name || "Transporter",
+  statementDate: new Date(),
+  fileName: inv.invoice_no + ".pdf",
+  invoiceId
+})
 
 }
 

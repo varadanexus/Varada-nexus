@@ -1105,6 +1105,7 @@ await supabaseClient
 .eq("entry_type", "TRANSPORTER_PAYMENT")
 
 if(inv.drive_file_id){
+  try{
 
   const { data:{ session } } = await supabaseClient.auth.getSession()
 
@@ -1121,6 +1122,9 @@ if(inv.drive_file_id){
       })
     }
   )
+  }catch(e){
+    console.warn("⚠️ Delete failed, continuing...")
+  }
 }
     
 /* 3️⃣ DELETE INVOICE */
@@ -1140,7 +1144,7 @@ async function downloadInvoice(id,e){
 
   e.stopPropagation()
 
-  const blob = await generateTransporterPDFBlob(id, supabaseClient)
+  const blob = await generateTransporterPDFBlob(id)
 
   const { data: inv } = await supabaseClient
   .from("transporter_invoices")
@@ -1251,7 +1255,8 @@ async function regenerateTransporterStatement(invoiceId){
   }
 
   /* DELETE OLD FILE */
-  if(inv.drive_file_id){
+if(inv.drive_file_id){
+  try{
 
     const { data:{ session } } = await supabaseClient.auth.getSession()
 
@@ -1268,10 +1273,14 @@ async function regenerateTransporterStatement(invoiceId){
         })
       }
     )
+
+  }catch(e){
+    console.warn("⚠️ Delete failed, continuing...")
   }
+}
 
   /* REGENERATE PDF (THIS WILL AUTO UPLOAD) */
-  const blob = await generateTransporterPDFBlob(invoiceId, supabaseClient)
+  const blob = await generateTransporterPDFBlob(invoiceId)
 
 const { data: inv2 } = await supabaseClient
 .from("transporter_invoices")

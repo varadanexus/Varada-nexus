@@ -815,7 +815,9 @@ paymentMethod.value=""
 transactionId.value="" 
     
 alert("Payment Saved ✅")
-    
+
+
+await loadInvoices()
 await syncTransporterStatement(currentInvoice.id)
     
 loadInvoices()
@@ -1130,7 +1132,16 @@ async function downloadInvoice(id,e){
 e.stopPropagation()
 
 const { jsPDF } = window.jspdf
-let inv=invoices.find(i=>i.id==id)
+const { data: inv } = await supabaseClient
+.from("transporter_invoices")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!inv){
+  console.error("❌ Invoice not found")
+  return
+}
 
 const {data:transporter} = await supabaseClient
 .from("transporters")

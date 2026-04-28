@@ -4,7 +4,15 @@
 <head>
 <title>Transporter Payments - Varada Nexus</title>
 
+<link rel="icon" href="images/logo.png">
+    
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -131,10 +139,7 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 
 async function initSidebar(){
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+const supabaseClient = window.supabaseClient
     
 const {data:{session}} = await supabaseClient.auth.getSession()
 
@@ -317,10 +322,7 @@ Enter Payment:
 
 import { generateTransporterPDFBlob } from './statement-utils.js'
 
-const supabaseClient = supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
-)
+const supabaseClient = window.supabaseClient
 
 async function getTransporterName(id){
 const { data } = await supabaseClient
@@ -1394,6 +1396,21 @@ try {
     __UPLOAD_IN_PROGRESS = false
   }
 }
+
+// 🔥 MAKE FUNCTIONS GLOBAL (VERY IMPORTANT)
+window.editPayment = editPayment
+window.deletePayment = deletePayment
+window.downloadInvoice = downloadInvoice
+window.selectInvoiceFromDropdown = selectInvoiceFromDropdown
+window.savePayment = savePayment
+window.generateInvoice = generateInvoice
+window.saveInvoice = saveInvoice
+window.addAdjustment = addAdjustment
+window.deleteAdjustment = deleteAdjustment
+window.toggleAll = toggleAll
+window.toggleAllAdj = toggleAllAdj
+window.loadTrips = loadTrips
+window.searchInvoices = searchInvoices
     
 </script>
 

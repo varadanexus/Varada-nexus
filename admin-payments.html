@@ -1082,7 +1082,7 @@ if(!confirm("Delete full invoice? This cannot be undone")) return
 /* 🔹 GET INVOICE FIRST */
 const {data:inv} = await supabaseClient
 .from("transporter_invoices")
-.select("invoice_no")
+.select("invoice_no, drive_file_id")
 .eq("id", id)
 .single()
 

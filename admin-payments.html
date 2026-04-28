@@ -1424,7 +1424,24 @@ doc.setFontSize(9)
 doc.text("This is a system generated document. No signature required.",15,285)
 
 
-doc.save(inv.invoice_no + ".pdf")
+const blob = doc.output("blob")
+
+/* 🔽 DOWNLOAD */
+let url = URL.createObjectURL(blob)
+let a = document.createElement("a")
+a.href = url
+a.download = inv.invoice_no + ".pdf"
+a.click()
+
+/* 🔥 BACKGROUND UPLOAD */
+uploadTransporterStatement({
+  blob: blob,
+  transporterName: transporter?.transporter_name || "Transporter",
+  statementDate: new Date(),
+  fileName: inv.invoice_no + ".pdf",
+  invoiceId: inv.id
+})
+
 return
 }
 
@@ -1501,6 +1518,69 @@ balance_amount: balance
 })
 .eq("id", invoiceId)
 
+}
+
+async function uploadTransporterStatement(data){
+
+  try{
+
+    const base64 = await blobToBase64(data.blob)
+
+    const { data: { session } } = await supabaseClient.auth.getSession()
+
+    if(!session){
+      console.error("❌ No session")
+      return
+    }
+
+    const res = await fetch(
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-transporter-statement",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          file_base64: base64,
+          file_name: data.fileName,
+          transporter_name: data.transporterName,
+          statement_date: data.statementDate
+        })
+      }
+    )
+
+    const result = await res.json()
+
+    if(result.success){
+
+      /* 🔥 SAVE DRIVE LINK */
+      await supabaseClient
+      .from("transporter_invoices")
+      .update({
+        drive_file_id: result.fileId,
+        drive_link: result.fileUrl
+      })
+      .eq("id", data.invoiceId)
+
+      console.log("✅ Transporter statement uploaded")
+
+    }else{
+      console.error("❌ Upload failed:", result.error)
+    }
+
+  }catch(err){
+    console.error("❌ Upload error:", err)
+  }
+}
+
+function blobToBase64(blob){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result.split(",")[1])
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }
     
 </script>

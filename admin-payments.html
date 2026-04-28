@@ -1141,6 +1141,15 @@ if(inv.drive_file_id){
     console.log("✅ Drive file deleted")
   }
 }
+
+
+await supabaseClient
+.from("transporter_invoices")
+.update({
+  drive_file_id: null,
+  drive_link: null
+})
+.eq("id", id)
     
 /* 3️⃣ DELETE INVOICE */
 await supabaseClient
@@ -1150,6 +1159,7 @@ await supabaseClient
 
 alert("Invoice + Ledger Cleared ✅")
 
+    
 /* 4️⃣ REFRESH */
 loadTrips()
 loadInvoices()
@@ -1271,26 +1281,40 @@ async function regenerateTransporterStatement(invoiceId){
 
   /* DELETE OLD FILE */
 if(inv.drive_file_id){
+
+  console.log("🗑️ Deleting old Drive file (sync):", inv.drive_file_id)
+
+  const { data:{ session } } = await supabaseClient.auth.getSession()
+
+  const res = await fetch(
+    "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        fileId: inv.drive_file_id
+      })
+    }
+  )
+
+  let result
+
   try{
-
-    const { data:{ session } } = await supabaseClient.auth.getSession()
-
-    await fetch(
-      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:`Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          fileId: inv.drive_file_id
-        })
-      }
-    )
-
+    result = await res.json()
   }catch(e){
-    console.warn("⚠️ Delete failed, continuing...")
+    const text = await res.text()
+    console.error("❌ RAW DELETE RESPONSE (sync):", text)
+    throw new Error("Invalid JSON from delete function")
+  }
+
+  if(!result.success){
+  console.error("❌ DELETE FAILED (sync):", result)
+  throw new Error("Drive delete failed during sync")
+  }else{
+    console.log("✅ Old file deleted before regeneration")
   }
 }
 

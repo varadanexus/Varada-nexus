@@ -348,6 +348,7 @@ maximumFractionDigits: 2
 }
   
 let transporters=[], trips=[], invoices=[]
+let __AUTO_SYNC_RUNNING = false
 let adjustments=[]
 let selectedTrips=[]
 let invoiceAmount=0
@@ -600,6 +601,8 @@ currentInvoice=data
 
 alert("Invoice Created")
 
+await syncTransporterStatement(data.id)
+    
 loadTrips()
 loadInvoices()
 }
@@ -811,7 +814,9 @@ paymentMethod.value=""
 transactionId.value="" 
     
 alert("Payment Saved ✅")
-
+    
+await syncTransporterStatement(currentInvoice.id)
+    
 loadInvoices()
 }
 
@@ -955,7 +960,7 @@ await supabaseClient
 
 /* 🔥 RECALCULATE */
 if(invoiceId){
-await recalculateInvoice(invoiceId)
+  await syncTransporterStatement(invoiceId)
 }
 
 loadAdjustments()
@@ -1051,6 +1056,8 @@ status
 
 alert("Updated")
 
+await syncTransporterStatement(id)
+
 loadInvoices()
 }
 
@@ -1085,6 +1092,25 @@ await supabaseClient
 .eq("reference_no", inv.invoice_no)
 .eq("entry_type", "TRANSPORTER_PAYMENT")
 
+if(inv.drive_file_id){
+
+  const { data:{ session } } = await supabaseClient.auth.getSession()
+
+  await fetch(
+    "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        fileId: inv.drive_file_id
+      })
+    }
+  )
+}
+    
 /* 3️⃣ DELETE INVOICE */
 await supabaseClient
 .from("transporter_invoices")
@@ -1444,13 +1470,17 @@ a.download = inv.invoice_no + ".pdf"
 a.click()
 
 /* 🔥 BACKGROUND UPLOAD */
-uploadTransporterStatement({
-  blob: blob,
-  transporterName: transporter?.transporter_name || "Transporter",
-  statementDate: new Date(),
-  fileName: inv.invoice_no + ".pdf",
-  invoiceId: inv.id
-})
+if(!__AUTO_SYNC_RUNNING){
+
+  uploadTransporterStatement({
+    blob: blob,
+    transporterName: transporter?.transporter_name || "Transporter",
+    statementDate: new Date(),
+    fileName: inv.invoice_no + ".pdf",
+    invoiceId: inv.id
+  })
+
+}
 
 return
 }
@@ -1527,6 +1557,82 @@ total_amount: finalAmount,
 balance_amount: balance
 })
 .eq("id", invoiceId)
+    
+await syncTransporterStatement(invoiceId)
+
+}
+
+/* 🔥 AUTO SYNC ENGINE */
+
+async function regenerateTransporterStatement(invoiceId){
+
+  console.log("🔄 Regenerating transporter statement:", invoiceId)
+
+  const { data:inv } = await supabaseClient
+  .from("transporter_invoices")
+  .select("*")
+  .eq("id", invoiceId)
+  .single()
+
+  if(!inv){
+    console.error("❌ Invoice not found")
+    return
+  }
+
+  /* DELETE OLD FILE */
+  if(inv.drive_file_id){
+
+    const { data:{ session } } = await supabaseClient.auth.getSession()
+
+    await fetch(
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          fileId: inv.drive_file_id
+        })
+      }
+    )
+  }
+
+  /* REGENERATE PDF (THIS WILL AUTO UPLOAD) */
+  await downloadInvoice(invoiceId, { stopPropagation:()=>{} })
+
+}
+
+
+async function syncTransporterStatement(invoiceId){
+
+  try{
+
+    console.log("⚡ Syncing transporter statement:", invoiceId)
+
+    __AUTO_SYNC_RUNNING = true
+
+await regenerateTransporterStatement(invoiceId)
+
+__AUTO_SYNC_RUNNING = false
+
+    await loadInvoices()
+
+    console.log("✅ Sync complete")
+
+  }catch(err){
+
+    console.error("❌ Sync failed:", err)
+
+    // retry once
+    try{
+      await regenerateTransporterStatement(invoiceId)
+    }catch(e){
+      alert("Sync failed. Retry manually.")
+    }
+
+  }
 
 }
 
@@ -1547,7 +1653,7 @@ async function uploadTransporterStatement(data){
     formData.append("file", data.blob)
     formData.append("file_name", data.fileName)
     formData.append("transporter_name", data.transporterName)
-    formData.append("statement_date", data.statementDate)
+    formData.append("statement_date", new Date(data.statementDate).toISOString())
 
     const res = await fetch(
       "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-transporter-statement",

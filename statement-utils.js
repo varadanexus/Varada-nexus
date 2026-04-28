@@ -85,7 +85,7 @@ tripData?.forEach(t=>{
     exp.toLocaleString("en-IN"),
     net.toLocaleString("en-IN")
   ])
-
+})
 
 /* PDF START */
 let doc=new jsPDF()

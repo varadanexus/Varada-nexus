@@ -131,6 +131,11 @@ document.querySelectorAll("#sidebar a").forEach(link=>{
 
 async function initSidebar(){
 
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+    
 const {data:{session}} = await supabaseClient.auth.getSession()
 
 if(!session) return
@@ -1266,7 +1271,7 @@ async function regenerateTransporterStatement(invoiceId){
   /* REGENERATE PDF (THIS WILL AUTO UPLOAD) */
   const blob = await generateTransporterPDFBlob(invoiceId, supabaseClient)
 
-const { data: inv } = await supabaseClient
+const { data: inv2 } = await supabaseClient
 .from("transporter_invoices")
 .select("invoice_no, transporter_id")
 .eq("id", invoiceId)
@@ -1275,14 +1280,14 @@ const { data: inv } = await supabaseClient
 const { data: transporter } = await supabaseClient
 .from("transporters")
 .select("transporter_name")
-.eq("id", inv.transporter_id)
+.eq("id", inv2.transporter_id)
 .single()
 
 await uploadTransporterStatement({
   blob,
   transporterName: transporter?.transporter_name || "Transporter",
   statementDate: new Date(),
-  fileName: inv.invoice_no + ".pdf",
+  fileName: inv2.invoice_no + ".pdf",
   invoiceId
 })
 

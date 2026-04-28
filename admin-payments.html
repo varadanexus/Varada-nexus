@@ -1105,11 +1105,12 @@ await supabaseClient
 .eq("entry_type", "TRANSPORTER_PAYMENT")
 
 if(inv.drive_file_id){
-  try{
+
+  console.log("🗑️ Deleting Drive file:", inv.drive_file_id)
 
   const { data:{ session } } = await supabaseClient.auth.getSession()
 
-  await fetch(
+  const res = await fetch(
     "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/delete-invoice",
     {
       method:"POST",
@@ -1122,8 +1123,22 @@ if(inv.drive_file_id){
       })
     }
   )
+
+  let result
+
+  try{
+    result = await res.json()
   }catch(e){
-    console.warn("⚠️ Delete failed, continuing...")
+    const text = await res.text()
+    console.error("❌ RAW DELETE RESPONSE:", text)
+    throw new Error("Invalid JSON from delete function")
+  }
+
+  if(!result.success){
+    console.error("❌ DELETE FAILED:", result)
+    alert("Drive delete failed: " + result.error)
+  }else{
+    console.log("✅ Drive file deleted")
   }
 }
     

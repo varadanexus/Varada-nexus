@@ -1,5 +1,7 @@
-export async function generateTransporterPDFBlob(invoiceId, supabaseClient){
+export async function generateTransporterPDFBlob(invoiceId){
 
+const supabaseClient = window.supabaseClient
+  
   const { jsPDF } = window.jspdf
 
   const { data: inv } = await supabaseClient
@@ -83,11 +85,7 @@ tripData?.forEach(t=>{
     exp.toLocaleString("en-IN"),
     net.toLocaleString("en-IN")
   ])
-})
-    
-  .from("transporter_adjustments")
-  .select("amount,type,reason,trip_id")
-  .eq("invoice_id", invoiceId)
+
 
 /* PDF START */
 let doc=new jsPDF()

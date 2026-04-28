@@ -785,7 +785,17 @@ String(status)
 })
 })
 
-const result = await res.json()
+let result
+
+try {
+  result = await res.json()
+} catch (e) {
+  const text = await res.text()
+  console.error("❌ RAW RESPONSE:", text)
+  throw new Error("Invalid JSON from server")
+}
+
+console.log("📦 FULL RESPONSE:", result)
 console.log("📩 Payment WA Response:", result)
 
 }
@@ -1566,7 +1576,7 @@ async function uploadTransporterStatement(data){
       console.log("✅ Transporter statement uploaded")
 
     }else{
-      console.error("❌ Upload failed:", result.error)
+      console.error("❌ FULL ERROR:", result)
     }
 
   }catch(err){

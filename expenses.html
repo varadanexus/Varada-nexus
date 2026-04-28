@@ -474,6 +474,38 @@ document.getElementById("amount").value=""
 
 loadExpenses()
 
+/* 🔥 AUTO SYNC TRANSPORTER STATEMENT */
+
+try {
+
+  // 🔹 FIND INVOICE CONTAINING THIS TRIP
+  const { data: invoices } = await supabaseClient
+    .from("transporter_invoices")
+    .select("id, trip_ids")
+
+  let invoiceId = null
+
+  invoices?.forEach(inv => {
+    if(inv.trip_ids?.split(",").includes(tripId)){
+      invoiceId = inv.id
+    }
+  })
+
+  if(invoiceId){
+    console.log("🔄 Expense → syncing invoice:", invoiceId)
+
+    // 🔥 CALL GLOBAL FUNCTION (FROM ADMIN PAGE)
+    if(window.syncTransporterStatement){
+      await window.syncTransporterStatement(invoiceId)
+    } else {
+      console.warn("syncTransporterStatement not found")
+    }
+  }
+
+} catch(err){
+  console.error("❌ Expense sync failed:", err)
+}
+    
 alert("Expense Added ✅")
 }
 

@@ -1347,6 +1347,8 @@ await uploadTransporterStatement({
 
 async function syncTransporterStatement(invoiceId){
 
+window.syncTransporterStatement = syncTransporterStatement
+    
   try{
 
     console.log("⚡ Syncing transporter statement:", invoiceId)

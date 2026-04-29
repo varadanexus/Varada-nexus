@@ -99,6 +99,7 @@ text-align:left;
 <th>Username</th>
 <th>Password</th>
 <th>Role</th>
+<th>Status</th>
 <th>Action</th>
 </tr>
 </table>
@@ -170,13 +171,33 @@ let row = table.insertRow();
 
 row.innerHTML = `
 <td>${username}</td>
-<td>${password}</td>
+<td id="pass-${username}">${password}</td>
 <td>${role}</td>
+
+<td id="status-${username}" style="color:#22c55e;">Active</td>
+
 <td>
-  <button onclick="deleteCredential('${username}', this)"
-    style="background:#ef4444;padding:6px 10px;border-radius:6px;">
-    Delete
-  </button>
+
+<button onclick="copyCredential('${username}','${password}')"
+style="background:#22c55e;padding:5px 8px;border-radius:6px;margin:2px;">
+Copy
+</button>
+
+<button onclick="regeneratePassword('${username}')"
+style="background:#3b82f6;padding:5px 8px;border-radius:6px;margin:2px;">
+Reset
+</button>
+
+<button onclick="toggleActive('${username}', this)"
+style="background:#f59e0b;padding:5px 8px;border-radius:6px;margin:2px;">
+Disable
+</button>
+
+<button onclick="deleteCredential('${username}', this)"
+style="background:#ef4444;padding:5px 8px;border-radius:6px;margin:2px;">
+Delete
+</button>
+
 </td>
 `;
 
@@ -200,6 +221,66 @@ if(error){
 /* REMOVE ROW FROM UI */
 let row = btn.parentElement.parentElement;
 row.remove();
+
+}
+
+function copyCredential(username, password){
+navigator.clipboard.writeText(
+`Username: ${username} | Password: ${password}`
+);
+alert("Copied to clipboard");
+}
+
+async function regeneratePassword(username){
+
+let newPass = Math.random().toString(36).substring(2,8);
+
+const { error } = await supabaseClient
+.from("credentials")
+.update({ password: newPass })
+.eq("username", username);
+
+if(error){
+alert("Error updating password");
+console.error(error);
+return;
+}
+
+/* update UI */
+document.getElementById("pass-"+username).innerText = newPass;
+
+alert("Password updated");
+}
+
+async function toggleActive(username, btn){
+
+let isCurrentlyDisable = btn.innerText === "Disable";
+
+const { error } = await supabaseClient
+.from("credentials")
+.update({ is_active: !isCurrentlyDisable })
+.eq("username", username);
+
+if(error){
+alert("Error updating status");
+console.error(error);
+return;
+}
+
+/* UI update */
+let statusCell = document.getElementById("status-"+username);
+
+if(isCurrentlyDisable){
+btn.innerText = "Enable";
+btn.style.background = "#22c55e";
+statusCell.innerText = "Inactive";
+statusCell.style.color = "#ef4444";
+}else{
+btn.innerText = "Disable";
+btn.style.background = "#f59e0b";
+statusCell.innerText = "Active";
+statusCell.style.color = "#22c55e";
+}
 
 }
   

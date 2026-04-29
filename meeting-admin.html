@@ -178,7 +178,7 @@ const { data } = await supabaseClient
 .insert([{ 
   title, 
   room_name: room,
-  status: "active"
+  status: "waiting"
 }])
 .select()
 .single();

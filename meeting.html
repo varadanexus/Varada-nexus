@@ -56,33 +56,44 @@ const valid = await validateMeeting();
 if(!valid) return;
 
 /* START JITSI */
-let api = null;
-
 if(role === "admin"){
 
-api = new JitsiMeetExternalAPI("meet.jit.si", {
-roomName: room,
-width: "100%",
-height: "100%",
-parentNode: document.querySelector("#meet"),
+  const api = new JitsiMeetExternalAPI("meet.jit.si", {
+    roomName: room,
+    width: "100%",
+    height: "100%",
+    parentNode: document.querySelector("#meet"),
 
-configOverwrite: {
-startWithAudioMuted: false,
-startWithVideoMuted: false,
-disableDeepLinking: true,
-prejoinPageEnabled: false,
-enableWelcomePage: false
-},
+    configOverwrite: {
+      startWithAudioMuted: false,
+      startWithVideoMuted: false,
+      disableDeepLinking: true,
+      prejoinPageEnabled: false,
+      enableWelcomePage: false
+    },
 
-interfaceConfigOverwrite: {
-SHOW_JITSI_WATERMARK: false,
-SHOW_BRAND_WATERMARK: false,
-SHOW_POWERED_BY: false,
-DEFAULT_BACKGROUND: "#020617"
+    interfaceConfigOverwrite: {
+      SHOW_JITSI_WATERMARK: false,
+      SHOW_BRAND_WATERMARK: false,
+      SHOW_POWERED_BY: false,
+      DEFAULT_BACKGROUND: "#020617"
+    }
+  });
+
+  api.executeCommand("displayName", user);
+
+  api.addEventListener("videoConferenceJoined", async () => {
+
+    console.log("Admin joined → marking meeting live");
+
+    await supabaseClient
+      .from("meetings")
+      .update({ status: "live" })
+      .eq("room_name", room);
+
+  });
+
 }
-});
-
-api.executeCommand("displayName", user);
 
 api.addEventListener("videoConferenceJoined", async () => {
 

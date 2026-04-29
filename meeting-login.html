@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Join Meeting - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+/* SAME STYLE AS YOUR LOGIN */
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+height:100vh;
+background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
+background-size:400% 400%;
+animation:bg 12s ease infinite;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+@keyframes bg{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+.card{
+background:rgba(15,23,42,0.75);
+backdrop-filter:blur(18px);
+padding:40px 30px;
+border-radius:16px;
+width:350px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:12px;
+border-radius:8px;
+border:none;
+background:rgba(255,255,255,0.12);
+color:white;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:15px;
+border:none;
+border-radius:8px;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+
+.error{
+color:#f87171;
+margin-top:10px;
+font-size:13px;
+}
+
+.back{
+margin-top:15px;
+font-size:12px;
+color:#94a3b8;
+cursor:pointer;
+}
+
+.back:hover{
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>Join Meeting</h2>
+<p style="font-size:13px;color:#cbd5f5;">Enter your meeting credentials</p>
+
+<input id="username" placeholder="Meeting ID">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="loginMeeting()">Join Meeting</button>
+
+<div id="error" class="error"></div>
+
+<div class="back" onclick="window.location.href='login.html'">
+← Back to Login
+</div>
+
+</div>
+
+<script>
+
+const supabase = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+);
+
+async function loginMeeting(){
+
+let username = document.getElementById("username").value;
+let password = document.getElementById("password").value;
+
+if(!username || !password){
+document.getElementById("error").innerText="Enter credentials";
+return;
+}
+
+const { data, error } = await supabase
+.from("credentials")
+.select("*, meetings(room_name, status)")
+.eq("username", username)
+.eq("password", password)
+.eq("is_active", true)
+.single();
+
+if(!data){
+document.getElementById("error").innerText="Invalid credentials";
+return;
+}
+
+if(data.meetings.status !== "active"){
+document.getElementById("error").innerText="Meeting has ended";
+return;
+}
+
+/* REDIRECT TO VIDEO */
+window.location.href =
+"meeting.html?room=" + data.meetings.room_name +
+"&role=" + data.role;
+
+}
+
+</script>
+
+</body>
+</html>

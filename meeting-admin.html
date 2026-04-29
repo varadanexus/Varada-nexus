@@ -85,6 +85,10 @@ text-align:left;
 <div class="card">
 <h3>Generate Credentials</h3>
 
+<select id="meetingSelect" onchange="selectMeeting()">
+<option value="">Select Meeting</option>
+</select>
+  
 <input id="meetingId" placeholder="Meeting ID" readonly>
 <input id="customUsername" placeholder="Enter Meeting ID / Username">
 <select id="role">
@@ -119,6 +123,8 @@ let currentMeetingId = null;
 
 window.onload = async function(){
 
+await loadMeetings();
+
 let savedId = localStorage.getItem("meeting_id");
 
 if(savedId){
@@ -126,6 +132,11 @@ currentMeetingId = savedId;
 
 document.getElementById("meetingId").value = savedId;
 document.getElementById("genBtn").disabled = false;
+
+localStorage.setItem("meeting_id", data.id);
+await loadMeetings();
+  
+document.getElementById("meetingSelect").value = savedId;
 
 await loadCredentials();
 }
@@ -183,38 +194,6 @@ role
 let table = document.getElementById("userTable");
 
 await loadCredentials();
-
-row.innerHTML = `
-<td>${username}</td>
-<td id="pass-${username}">${password}</td>
-<td>${role}</td>
-
-<td id="status-${username}" style="color:#22c55e;">Active</td>
-
-<td>
-
-<button onclick="copyCredential('${username}','${password}')"
-style="background:#22c55e;padding:5px 8px;border-radius:6px;margin:2px;">
-Copy
-</button>
-
-<button onclick="regeneratePassword('${username}')"
-style="background:#3b82f6;padding:5px 8px;border-radius:6px;margin:2px;">
-Reset
-</button>
-
-<button onclick="toggleActive('${username}', this)"
-style="background:#f59e0b;padding:5px 8px;border-radius:6px;margin:2px;">
-Disable
-</button>
-
-<button onclick="deleteCredential('${username}', this)"
-style="background:#ef4444;padding:5px 8px;border-radius:6px;margin:2px;">
-Delete
-</button>
-
-</td>
-`;
 
 }
 
@@ -299,6 +278,49 @@ statusCell.style.color = "#22c55e";
 
 }
 
+async function loadMeetings(){
+
+const { data, error } = await supabaseClient
+.from("meetings")
+.select("*")
+.order("created_at", { ascending: false });
+
+if(error){
+console.error(error);
+return;
+}
+
+let dropdown = document.getElementById("meetingSelect");
+
+dropdown.innerHTML = `<option value="">Select Meeting</option>`;
+
+data.forEach(m => {
+dropdown.innerHTML += `
+<option value="${m.id}">
+${m.title} (${m.status})
+</option>
+`;
+});
+
+}
+
+function selectMeeting(){
+
+let selectedId = document.getElementById("meetingSelect").value;
+
+if(!selectedId) return;
+
+currentMeetingId = selectedId;
+
+document.getElementById("meetingId").value = selectedId;
+document.getElementById("genBtn").disabled = false;
+
+localStorage.setItem("meeting_id", selectedId);
+
+loadCredentials();
+
+}
+  
 async function loadCredentials(){
 
 if(!currentMeetingId) return;

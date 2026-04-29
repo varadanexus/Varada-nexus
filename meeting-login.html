@@ -136,8 +136,8 @@ document.getElementById("error").innerText="Invalid credentials";
 return;
 }
 
-if(data.meetings.status !== "active"){
-document.getElementById("error").innerText="Meeting has ended";
+if(data.meetings.status !== "live"){
+document.getElementById("error").innerText="Waiting for admin to start meeting";
 return;
 }
 

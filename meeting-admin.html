@@ -92,7 +92,7 @@ text-align:left;
 <option value="admin">Admin</option>
 </select>
 
-<button onclick="generateUser()">Generate Credential</button>
+<button id="genBtn" onclick="generateUser()" disabled>Generate Credential</button>
 
 <table class="table" id="userTable">
 <tr>
@@ -135,6 +135,7 @@ document.getElementById("meetingInfo").innerText =
 "Meeting Created | ID: " + data.id + " | Room: " + room;
 
 document.getElementById("meetingId").value = data.id;
+document.getElementById("genBtn").disabled = false;
 }
 
 /* GENERATE USER */

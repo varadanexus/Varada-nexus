@@ -66,9 +66,12 @@ configOverwrite: {
 startWithAudioMuted: false,
 startWithVideoMuted: false,
 disableDeepLinking: true,
+
+prejoinPageEnabled: false,
 enableLobby: false,
-lobbyModeEnabled: false,
-requireDisplayName: false
+lobby: {
+autoKnock: false
+}
 },
 
 interfaceConfigOverwrite: {
@@ -79,12 +82,35 @@ DEFAULT_BACKGROUND: "#020617"
 }
 });
 
+
+
 /* SET USER NAME */
 api.executeCommand("displayName", user);
 
 /* ADMIN CONTROL */
-if(role !== "admin"){
+/* ADMIN CONTROL */
+if(role === "admin"){
+
+api.addEventListener("videoConferenceJoined", () => {
+console.log("Admin joined → setting moderator");
+
+// FORCE moderator by setting password
+api.executeCommand("password", "VN_LOCK");
+});
+
+api.addEventListener("participantRoleChanged", (event) => {
+if(event.role === "moderator"){
+console.log("Moderator confirmed → unlocking room");
+
+// REMOVE password so users can join
+api.executeCommand("password", "");
+}
+});
+
+}else{
+
 alert("Waiting for admin to start meeting...");
+
 }
 
 })();

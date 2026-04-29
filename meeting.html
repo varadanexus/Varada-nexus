@@ -68,10 +68,11 @@ startWithVideoMuted: false,
 disableDeepLinking: true,
 
 prejoinPageEnabled: false,
-enableLobby: false,
-lobby: {
-autoKnock: false
-}
+
+
+
+/* 🔥 CRITICAL */
+enableWelcomePage: false
 },
 
 interfaceConfigOverwrite: {
@@ -95,14 +96,6 @@ api.addEventListener("videoConferenceJoined", () => {
 
 console.log("Admin joined → forcing moderator");
 
-/* FORCE LOCK → MAKES ADMIN MODERATOR */
-api.executeCommand("password", "VN_LOCK");
-
-/* UNLOCK AFTER 2 SEC */
-setTimeout(() => {
-api.executeCommand("password", "");
-console.log("Room unlocked");
-}, 2000);
 
 });
 
@@ -110,11 +103,29 @@ console.log("Room unlocked");
 
 }else{
 
-alert("Waiting for admin to start meeting...");
+document.body.innerHTML = `
+<div style="display:flex;height:100vh;justify-content:center;align-items:center;background:#020617;color:white;font-family:sans-serif;">
+<div style="text-align:center">
+<h2>Waiting for Admin...</h2>
+<p>The meeting will start once the host joins</p>
+</div>
+</div>
+`;
 
-/* WAIT 3 SECONDS BEFORE JOIN */
-setTimeout(() => {
+/* CHECK EVERY 3 SEC IF ADMIN STARTED */
+setInterval(async () => {
+
+const { data } = await supabaseClient
+.from("meetings")
+.select("status")
+.eq("room_name", room)
+.single();
+
+/* When meeting is active → reload */
+if(data && data.status === "active"){
 location.reload();
+}
+
 }, 3000);
 
 }

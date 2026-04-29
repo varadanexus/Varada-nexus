@@ -48,10 +48,25 @@ if(!meeting){
 
 const room = meeting.room_name;
 
-/* 🔐 JWT (TEMP - replace later with dynamic) */
-const JWT = "eyJraWQiOiJ2cGFhcy1tYWdpYy1jb29raWUtZjMwNDEwMDVmZjExNDcxYmE1ZGQyN2EwYWZiNjI5ZDUvZjJmZmRmLVNBTVBMRV9BUFAiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJqaXRzaSIsImlzcyI6ImNoYXQiLCJpYXQiOjE3Nzc0NTc4OTUsImV4cCI6MTc3NzQ2NTA5NSwibmJmIjoxNzc3NDU3ODkwLCJzdWIiOiJ2cGFhcy1tYWdpYy1jb29raWUtZjMwNDEwMDVmZjExNDcxYmE1ZGQyN2EwYWZiNjI5ZDUiLCJjb250ZXh0Ijp7ImZlYXR1cmVzIjp7ImxpdmVzdHJlYW1pbmciOnRydWUsImZpbGUtdXBsb2FkIjp0cnVlLCJvdXRib3VuZC1jYWxsIjp0cnVlLCJzaXAtb3V0Ym91bmQtY2FsbCI6dHJ1ZSwidHJhbnNjcmlwdGlvbiI6dHJ1ZSwibGlzdC12aXNpdG9ycyI6dHJ1ZSwicmVjb3JkaW5nIjp0cnVlLCJmbGlwIjpmYWxzZX0sInVzZXIiOnsiaGlkZGVuLWZyb20tcmVjb3JkZXIiOnRydWUsIm1vZGVyYXRvciI6dHJ1ZSwibmFtZSI6ImFkbWluIiwiaWQiOiJhdXRoMHw2OWYxYzk2Zjg5MWFhNWNmN2VjMzE5NTciLCJhdmF0YXIiOiIiLCJlbWFpbCI6ImFkbWluQHZhcmFkYW5leHVzLmNvbSJ9fSwicm9vbSI6IioifQ.BQqwQSdpxvFd5j7P_B4mHbb_Vi_EcIWOAp_BNSmyfWnnMub0hwC80WLmIWLmsB0B8Du7dkkRMp93iAjmvqXc-HEPOCrB09LoZ69MQl1-qjLIhA5cce95aoLWdnw-pCcTj7Cph1Pj00CQMMAQWbet4ynidkCrtblhabj3I9dbiZVSpZmkgepyPoPycX7h7hXozc3_jc73HHPil8lcSysqwjqeW0IKYNohc8noomxb5_8aoPo7uyF_sgWK9dtJC6QvkXft4lW6sgSsHjkongdAKJgzA4Q1ajhpGCAmeRfM_7iUQn2gKX3O-J3paJOeSGJHQFLH6prg_KuwieQ7yXAFYw";
+async function getJWT(){
+  const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/generate-jwt", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      role: role,
+      name: user
+    })
+  });
 
+  const data = await res.json();
+  return data.token;
+}
+  
 /* 🎥 START JITSI */
+const JWT = await getJWT();
+
 const api = new JitsiMeetExternalAPI("8x8.vc", {
   roomName: "vpaas-magic-cookie-f3041005ff11471ba5dd27a0afb629d5/" + room,
   parentNode: document.querySelector("#meet"),

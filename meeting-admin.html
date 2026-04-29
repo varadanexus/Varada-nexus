@@ -439,10 +439,13 @@ return;
 }
 
 /* 2. UPDATE MEETING STATUS */
-const { error: updateError } = await supabaseClient
+const { data, error: updateError } = await supabaseClient
 .from("meetings")
 .update({ status: "ended" })
-.eq("id", currentMeetingId);
+.eq("id", currentMeetingId)
+.select();
+
+console.log("UPDATE RESULT:", data, updateError);
 
 if(updateError){
 alert("Error updating meeting");

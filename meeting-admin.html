@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Meeting Admin - Varada Nexus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
+color:white;
+padding:30px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+.card{
+background:rgba(15,23,42,0.8);
+padding:25px;
+border-radius:14px;
+margin-bottom:20px;
+}
+
+input, select{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:none;
+background:rgba(255,255,255,0.12);
+color:white;
+}
+
+button{
+margin-top:12px;
+padding:10px;
+border:none;
+border-radius:8px;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+color:white;
+cursor:pointer;
+font-weight:600;
+}
+
+.table{
+margin-top:15px;
+width:100%;
+border-collapse:collapse;
+}
+
+.table th, .table td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.1);
+text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Meeting Admin Panel</h2>
+
+<!-- CREATE MEETING -->
+<div class="card">
+<h3>Create Meeting</h3>
+
+<input id="title" placeholder="Meeting Title">
+
+<button onclick="createMeeting()">Create Meeting</button>
+
+<p id="meetingInfo"></p>
+</div>
+
+<!-- ADD USERS -->
+<div class="card">
+<h3>Generate Credentials</h3>
+
+<input id="meetingId" placeholder="Meeting ID">
+<select id="role">
+<option value="user">User</option>
+<option value="admin">Admin</option>
+</select>
+
+<button onclick="generateUser()">Generate Credential</button>
+
+<table class="table" id="userTable">
+<tr>
+<th>Username</th>
+<th>Password</th>
+<th>Role</th>
+</tr>
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const supabase = supabase.createClient(
+"YOUR_URL",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+);
+
+let currentMeetingId = null;
+
+/* CREATE MEETING */
+async function createMeeting(){
+
+let title = document.getElementById("title").value;
+
+let room = "VN_" + Date.now();
+
+const { data } = await supabase
+.from("meetings")
+.insert([{ title, room_name: room }])
+.select()
+.single();
+
+currentMeetingId = data.id;
+
+document.getElementById("meetingInfo").innerText =
+"Meeting Created | ID: " + data.id + " | Room: " + room;
+
+document.getElementById("meetingId").value = data.id;
+}
+
+/* GENERATE USER */
+async function generateUser(){
+
+let meetingId = document.getElementById("meetingId").value;
+let role = document.getElementById("role").value;
+
+if(!meetingId){
+alert("Enter meeting ID");
+return;
+}
+
+let username = "VN_" + Math.random().toString(36).substring(2,6);
+let password = Math.random().toString(36).substring(2,8);
+
+await supabase.from("credentials").insert([{
+meeting_id: meetingId,
+username,
+password,
+role
+}]);
+
+let table = document.getElementById("userTable");
+
+let row = table.insertRow();
+
+row.innerHTML = `
+<td>${username}</td>
+<td>${password}</td>
+<td>${role}</td>
+`;
+
+}
+</script>
+
+</body>
+</html>

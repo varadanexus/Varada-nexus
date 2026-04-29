@@ -175,10 +175,14 @@ let room = "VN_" + Date.now() + "_" + Math.random().toString(36).substring(2,6);
 
 const { data } = await supabaseClient
 .from("meetings")
-.insert([{ title, room_name: room }])
+.insert([{ 
+  title, 
+  room_name: room,
+  status: "active"
+}])
 .select()
 .single();
-
+  
 currentMeetingId = data.id;
 
 document.getElementById("meetingInfo").innerText =

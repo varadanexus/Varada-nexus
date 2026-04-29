@@ -56,7 +56,11 @@ const valid = await validateMeeting();
 if(!valid) return;
 
 /* START JITSI */
-const api = new JitsiMeetExternalAPI("meet.jit.si", {
+let api = null;
+
+if(role === "admin"){
+
+api = new JitsiMeetExternalAPI("meet.jit.si", {
 roomName: room,
 width: "100%",
 height: "100%",
@@ -66,12 +70,7 @@ configOverwrite: {
 startWithAudioMuted: false,
 startWithVideoMuted: false,
 disableDeepLinking: true,
-
 prejoinPageEnabled: false,
-
-
-
-/* 🔥 CRITICAL */
 enableWelcomePage: false
 },
 
@@ -82,6 +81,22 @@ SHOW_POWERED_BY: false,
 DEFAULT_BACKGROUND: "#020617"
 }
 });
+
+api.executeCommand("displayName", user);
+
+api.addEventListener("videoConferenceJoined", async () => {
+
+console.log("Admin joined → marking meeting live");
+
+/* 🔥 UPDATE DATABASE WHEN ADMIN ENTERS */
+await supabaseClient
+.from("meetings")
+.update({ status: "live" })
+.eq("room_name", room);
+
+});
+
+}
 
 
 
@@ -112,7 +127,6 @@ document.body.innerHTML = `
 </div>
 `;
 
-/* CHECK EVERY 3 SEC IF ADMIN STARTED */
 setInterval(async () => {
 
 const { data } = await supabaseClient
@@ -121,9 +135,9 @@ const { data } = await supabaseClient
 .eq("room_name", room)
 .single();
 
-/* When meeting is active → reload */
-if(data && data.status === "active"){
-location.reload();
+/* 🔥 ONLY JOIN WHEN ADMIN ENTERED */
+if(data && data.status === "live"){
+window.location.reload();
 }
 
 }, 3000);

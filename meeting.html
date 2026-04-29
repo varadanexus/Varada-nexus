@@ -92,24 +92,30 @@ api.executeCommand("displayName", user);
 if(role === "admin"){
 
 api.addEventListener("videoConferenceJoined", () => {
-console.log("Admin joined → setting moderator");
 
-// FORCE moderator by setting password
+console.log("Admin joined → forcing moderator");
+
+/* FORCE LOCK → MAKES ADMIN MODERATOR */
 api.executeCommand("password", "VN_LOCK");
-});
 
-api.addEventListener("participantRoleChanged", (event) => {
-if(event.role === "moderator"){
-console.log("Moderator confirmed → unlocking room");
-
-// REMOVE password so users can join
+/* UNLOCK AFTER 2 SEC */
+setTimeout(() => {
 api.executeCommand("password", "");
-}
+console.log("Room unlocked");
+}, 2000);
+
 });
+
+
 
 }else{
 
 alert("Waiting for admin to start meeting...");
+
+/* WAIT 3 SECONDS BEFORE JOIN */
+setTimeout(() => {
+location.reload();
+}, 3000);
 
 }
 

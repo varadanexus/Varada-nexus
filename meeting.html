@@ -15,7 +15,7 @@
 
 const params = new URLSearchParams(window.location.search);
 
-const room = params.get("room");
+const meetingId = params.get("id");
 const role = params.get("role");
 const user = params.get("user") || "Guest";
 
@@ -69,18 +69,20 @@ if(role === "admin"){
   api.executeCommand("displayName", user);
 
   /* 🔥 ADMIN ENTER = MAKE LIVE */
-  api.addEventListener("conferenceJoined", async () => {
+api.addEventListener("conferenceJoined", async () => {
 
-    console.log("🔥 ADMIN JOINED");
+  console.log("ADMIN JOINED");
+  console.log("ROOM FROM URL:", room);
 
-    const { error } = await supabaseClient
-      .from("meetings")
-      .update({ status: "live" })
-      .eq("room_name", room);
+  const { data, error } = await supabaseClient
+    .from("meetings")
+    .update({ status: "live" })
+    .eq("room_name", room)
+    .select();
 
-    console.log("UPDATE STATUS:", error ? error : "SUCCESS");
+  console.log("UPDATE RESPONSE:", data, error);
 
-  });
+});
 
 }
 

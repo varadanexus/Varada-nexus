@@ -65,7 +65,10 @@ parentNode: document.querySelector("#meet"),
 configOverwrite: {
 startWithAudioMuted: false,
 startWithVideoMuted: false,
-disableDeepLinking: true
+disableDeepLinking: true,
+enableLobby: false,
+lobbyModeEnabled: false,
+requireDisplayName: false
 },
 
 interfaceConfigOverwrite: {
@@ -80,10 +83,8 @@ DEFAULT_BACKGROUND: "#020617"
 api.executeCommand("displayName", user);
 
 /* ADMIN CONTROL */
-if(role === "admin"){
-api.addEventListener("videoConferenceJoined", () => {
-console.log("Admin joined");
-});
+if(role !== "admin"){
+alert("Waiting for admin to start meeting...");
 }
 
 })();

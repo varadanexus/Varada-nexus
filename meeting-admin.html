@@ -132,9 +132,6 @@ currentMeetingId = savedId;
 
 document.getElementById("meetingId").value = savedId;
 document.getElementById("genBtn").disabled = false;
-
-localStorage.setItem("meeting_id", data.id);
-await loadMeetings();
   
 document.getElementById("meetingSelect").value = savedId;
 
@@ -163,6 +160,10 @@ document.getElementById("meetingInfo").innerText =
 
 document.getElementById("meetingId").value = data.id;
 document.getElementById("genBtn").disabled = false;
+
+localStorage.setItem("meeting_id", data.id);
+await loadMeetings();
+  
 }
 
 /* GENERATE USER */

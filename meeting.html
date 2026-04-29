@@ -41,7 +41,7 @@ const { data } = await supabaseClient
 .eq("room_name", room)
 .single();
 
-if(!data || data.status !== "active"){
+if(!data || data.status === "ended"){
 alert("Meeting has ended");
 window.location.href = "login.html";
 return false;

@@ -117,6 +117,21 @@ const supabaseClient = supabase.createClient(
 
 let currentMeetingId = null;
 
+window.onload = async function(){
+
+let savedId = localStorage.getItem("meeting_id");
+
+if(savedId){
+currentMeetingId = savedId;
+
+document.getElementById("meetingId").value = savedId;
+document.getElementById("genBtn").disabled = false;
+
+await loadCredentials();
+}
+
+}
+  
 /* CREATE MEETING */
 async function createMeeting(){
 
@@ -167,7 +182,7 @@ role
 
 let table = document.getElementById("userTable");
 
-let row = table.insertRow();
+await loadCredentials();
 
 row.innerHTML = `
 <td>${username}</td>
@@ -281,6 +296,75 @@ btn.style.background = "#f59e0b";
 statusCell.innerText = "Active";
 statusCell.style.color = "#22c55e";
 }
+
+}
+
+async function loadCredentials(){
+
+if(!currentMeetingId) return;
+
+const { data, error } = await supabaseClient
+.from("credentials")
+.select("*")
+.eq("meeting_id", currentMeetingId);
+
+if(error){
+console.error(error);
+return;
+}
+
+let table = document.getElementById("userTable");
+
+/* RESET TABLE */
+table.innerHTML = `
+<tr>
+<th>Username</th>
+<th>Password</th>
+<th>Role</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+`;
+
+data.forEach(user => {
+
+let row = table.insertRow();
+
+row.innerHTML = `
+<td>${user.username}</td>
+<td id="pass-${user.username}">${user.password}</td>
+<td>${user.role}</td>
+
+<td id="status-${user.username}" style="color:${user.is_active ? '#22c55e' : '#ef4444'};">
+${user.is_active ? 'Active' : 'Inactive'}
+</td>
+
+<td>
+
+<button onclick="copyCredential('${user.username}','${user.password}')"
+style="background:#22c55e;padding:5px 8px;border-radius:6px;margin:2px;">
+Copy
+</button>
+
+<button onclick="regeneratePassword('${user.username}')"
+style="background:#3b82f6;padding:5px 8px;border-radius:6px;margin:2px;">
+Reset
+</button>
+
+<button onclick="toggleActive('${user.username}', this)"
+style="background:${user.is_active ? '#f59e0b' : '#22c55e'};padding:5px 8px;border-radius:6px;margin:2px;">
+${user.is_active ? 'Disable' : 'Enable'}
+</button>
+
+<button onclick="deleteCredential('${user.username}', this)"
+style="background:#ef4444;padding:5px 8px;border-radius:6px;margin:2px;">
+Delete
+</button>
+
+</td>
+`;
+
+});
 
 }
   

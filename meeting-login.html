@@ -119,8 +119,8 @@ let username = document.getElementById("username").value;
 let password = document.getElementById("password").value;
 
 if(!username || !password){
-document.getElementById("error").innerText="Enter credentials";
-return;
+  document.getElementById("error").innerText="Enter credentials";
+  return;
 }
 
 const { data, error } = await supabaseClient
@@ -131,17 +131,32 @@ const { data, error } = await supabaseClient
 .eq("is_active", true)
 .single();
 
-if(!data){
-document.getElementById("error").innerText="Invalid credentials";
-return;
+/* 🔴 HANDLE ERROR */
+if(error){
+  console.error(error);
+  document.getElementById("error").innerText="Server error";
+  return;
 }
 
+/* 🔴 INVALID */
+if(!data){
+  document.getElementById("error").innerText="Invalid credentials";
+  return;
+}
+
+/* 🔴 MEETING LINK BROKEN */
+if(!data.meetings){
+  document.getElementById("error").innerText="Meeting not found";
+  return;
+}
+
+/* ⛔ BLOCK USERS IF NOT LIVE */
 if(data.role !== "admin" && data.meetings.status !== "live"){
   document.getElementById("error").innerText="Waiting for admin to start meeting";
   return;
 }
 
-/* REDIRECT TO VIDEO */
+/* ✅ REDIRECT */
 window.location.href =
 "meeting.html?id=" + data.meetings.id +
 "&role=" + data.role +

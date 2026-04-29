@@ -79,6 +79,12 @@ text-align:left;
 <button onclick="createMeeting()">Create Meeting</button>
 
 <p id="meetingInfo"></p>
+
+<button onclick="endMeeting()" 
+style="background:#ef4444;margin-top:10px;">
+End Meeting
+</button>
+  
 </div>
 
 <!-- ADD USERS -->
@@ -388,6 +394,65 @@ Delete
 `;
 
 });
+
+}
+
+async function endMeeting(){
+
+if(!currentMeetingId){
+alert("No meeting selected");
+return;
+}
+
+if(!confirm("End this meeting? All users will be removed.")) return;
+
+/* 1. DELETE ALL CREDENTIALS */
+const { error: deleteError } = await supabaseClient
+.from("credentials")
+.delete()
+.eq("meeting_id", currentMeetingId);
+
+if(deleteError){
+alert("Error deleting users");
+console.error(deleteError);
+return;
+}
+
+/* 2. UPDATE MEETING STATUS */
+const { error: updateError } = await supabaseClient
+.from("meetings")
+.update({ status: "ended" })
+.eq("id", currentMeetingId);
+
+if(updateError){
+alert("Error updating meeting");
+console.error(updateError);
+return;
+}
+
+/* 3. CLEAR UI */
+document.getElementById("userTable").innerHTML = `
+<tr>
+<th>Username</th>
+<th>Password</th>
+<th>Role</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+`;
+
+alert("Meeting ended");
+
+/* 4. RESET STATE */
+localStorage.removeItem("meeting_id");
+currentMeetingId = null;
+
+document.getElementById("meetingId").value = "";
+document.getElementById("meetingSelect").value = "";
+document.getElementById("genBtn").disabled = true;
+
+/* 5. REFRESH MEETINGS LIST */
+await loadMeetings();
 
 }
   

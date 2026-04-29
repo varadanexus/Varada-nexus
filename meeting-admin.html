@@ -171,7 +171,7 @@ async function createMeeting(){
 
 let title = document.getElementById("title").value;
 
-let room = "VN_" + Date.now();
+let room = "VN_" + Date.now() + "_" + Math.random().toString(36).substring(2,6);
 
 const { data } = await supabaseClient
 .from("meetings")

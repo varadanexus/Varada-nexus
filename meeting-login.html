@@ -105,12 +105,12 @@ color:white;
 
 <script>
 
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 );
 
-async function loginMeeting(){
+window.loginMeeting = async function(){
 
 let username = document.getElementById("username").value;
 let password = document.getElementById("password").value;
@@ -120,7 +120,7 @@ document.getElementById("error").innerText="Enter credentials";
 return;
 }
 
-const { data, error } = await supabase
+const { data, error } = await supabaseClient
 .from("credentials")
 .select("*, meetings(room_name, status)")
 .eq("username", username)

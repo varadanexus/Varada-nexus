@@ -19,11 +19,7 @@ const meetingId = params.get("id");
 const role = params.get("role");
 const user = params.get("user") || "Guest";
 
-/* ❌ NO ROOM */
-if(!room){
-  alert("Invalid meeting");
-  window.location.href = "login.html";
-}
+
 
 /* ✅ SUPABASE */
 const supabaseClient = supabase.createClient(
@@ -36,7 +32,7 @@ async function getMeeting(){
   const { data } = await supabaseClient
     .from("meetings")
     .select("*")
-    .eq("room_name", room)
+    .eq("id", meetingId)
     .single();
 
   return data;
@@ -46,11 +42,13 @@ async function getMeeting(){
 
 const meeting = await getMeeting();
 
-if(!meeting || meeting.status === "ended"){
-  alert("Meeting has ended");
+if(!meeting){
+  alert("Meeting not found");
   window.location.href = "login.html";
   return;
 }
+
+const room = meeting.room_name;   // 🔥 ADD THIS LINE
 
 /* ================= ADMIN ================= */
 if(role === "admin"){
@@ -77,7 +75,7 @@ api.addEventListener("conferenceJoined", async () => {
   const { data, error } = await supabaseClient
     .from("meetings")
     .update({ status: "live" })
-    .eq("room_name", room)
+    .eq("id", meetingId)
     .select();
 
   console.log("UPDATE RESPONSE:", data, error);

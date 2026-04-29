@@ -125,7 +125,7 @@ return;
 
 const { data, error } = await supabaseClient
 .from("credentials")
-.select("*, meetings(room_name, status)")
+.select("*, meetings(id, room_name, status)")
 .eq("username", username)
 .eq("password", password)
 .eq("is_active", true)

@@ -247,15 +247,15 @@ color:#cbd5f5;
 <p style="font-size:13px;color:#cbd5f5;">Enter your meeting credentials</p>
 
 <div class="field">
-  <input id="username" placeholder="Meeting ID">
+  <input id="phone" placeholder="Phone Number">
 </div>
 
 <div class="field">
-  <input type="password" id="password" placeholder="Password">
-  <span class="show-password" onclick="togglePassword()">Show</span>
+  <input id="otp" placeholder="Enter OTP">
 </div>
 
-<button onclick="loginMeeting()">Join Meeting</button>
+<button id="otpBtn" onclick="sendOTP()">Send OTP</button>
+<button onclick="verifyOTP()">Verify & Join</button>
 
 <div id="error" class="error"></div>
 
@@ -278,51 +278,120 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
-window.loginMeeting = async function(){
+let timer = 30
+let attempts = 0
+let interval
 
-let username = document.getElementById("username").value;
-let password = document.getElementById("password").value;
+async function sendOTP(){
 
-if(!username || !password){
-  document.getElementById("error").innerText="Enter credentials";
-  return;
+if(attempts >= 3){
+  document.getElementById("error").innerText = "Max attempts reached"
+  return
 }
 
-const { data, error } = await supabaseClient
+let phone = document.getElementById("phone").value
+let btn = document.getElementById("otpBtn")
+
+if(!phone){
+  document.getElementById("error").innerText = "Enter phone"
+  return
+}
+
+btn.disabled = true
+btn.innerText = "Sending..."
+
+const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-otp", {
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body: JSON.stringify({ phone })
+})
+
+const data = await res.json()
+
+if(!res.ok){
+  document.getElementById("error").innerText = data.error
+  btn.disabled = false
+  btn.innerText = "Send OTP"
+  return
+}
+
+// 🔥 TIMER
+timer = 30
+btn.innerText = "Resend in 30s"
+
+interval = setInterval(()=>{
+  timer--
+  btn.innerText = "Resend in " + timer + "s"
+
+  if(timer <= 0){
+    clearInterval(interval)
+    btn.disabled = false
+    btn.innerText = "Send OTP"
+  }
+
+},1000)
+
+}
+
+async function verifyOTP(){
+
+if(attempts >= 3){
+  document.getElementById("error").innerText = "Max attempts reached"
+  return
+}
+
+let phone = document.getElementById("phone").value
+let otp = document.getElementById("otp").value
+
+if(!phone || !otp){
+  document.getElementById("error").innerText = "Enter OTP"
+  return
+}
+
+const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/verify-otp", {
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body: JSON.stringify({ phone, otp })
+})
+
+const data = await res.json()
+
+if(!res.ok){
+  attempts++
+  document.getElementById("error").innerText = data.error
+  return
+}
+
+// 🔥 CHECK ACCESS
+const { data: cred } = await supabaseClient
 .from("credentials")
 .select("*, meetings(id, room_name, status)")
-.eq("username", username)
-.eq("password", password)
+.eq("phone", phone)
 .eq("is_active", true)
-.single();
+.single()
 
-if(error){
-  document.getElementById("error").innerText="Server error";
-  return;
+if(!cred){
+  document.getElementById("error").innerText="Not allowed"
+  return
 }
 
-if(!data){
-  document.getElementById("error").innerText="Invalid credentials";
-  return;
+if(cred.role !== "admin" && cred.meetings.status !== "live"){
+  document.getElementById("error").innerText="Waiting for admin"
+  return
 }
 
-if(!data.meetings){
-  document.getElementById("error").innerText="Meeting not found";
-  return;
-}
-
-if(data.role !== "admin" && data.meetings.status !== "live"){
-  document.getElementById("error").innerText="Waiting for admin to start meeting";
-  return;
-}
-
+// ✅ REDIRECT
 window.location.href =
-"meeting.html?id=" + data.meetings.id +
-"&role=" + data.role +
-"&user=" + data.username;
+"meeting.html?id=" + cred.meetings.id +
+"&role=" + cred.role +
+"&user=" + phone
 
 }
-
+  
 function togglePassword(){
   let pass = document.getElementById("password")
   pass.type = pass.type === "password" ? "text" : "password"

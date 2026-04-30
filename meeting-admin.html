@@ -201,31 +201,45 @@ async function generateUser(){
 
 let meetingId = document.getElementById("meetingId").value;
 let role = document.getElementById("role").value;
-let phone = document.getElementById("phone").value;
+let phoneInput = document.getElementById("phone").value.trim();
 
 if(!meetingId){
   alert("Enter meeting ID");
   return;
 }
 
-if(!phone){
+if(!phoneInput){
   alert("Enter phone number");
   return;
 }
 
-/* ✅ INSERT PHONE INSTEAD OF USERNAME */
-await supabaseClient.from("credentials").insert([{
+if(phoneInput.length !== 10){
+  alert("Enter valid 10 digit number");
+  return;
+}
+
+let phone = "91" + phoneInput;
+
+/* INSERT */
+const { error } = await supabaseClient.from("credentials").insert([{
   meeting_id: meetingId,
   phone: phone,
   role: role,
   is_active: true
 }]);
 
-await loadCredentials();
-
+if(error){
+  console.error(error);
+  alert("Insert failed ❌");
+  return;
 }
 
-async function deleteCredential(username, btn){
+document.getElementById("phone").value = "";
+
+await loadCredentials();
+}
+
+async function deleteCredential(phone, btn){
 
 if(!confirm("Delete this credential?")) return;
 
@@ -238,6 +252,9 @@ if(error){
   alert("Error deleting");
   console.error(error);
   return;
+}
+
+btn.parentElement.parentElement.remove();
 }
 
 /* REMOVE ROW FROM UI */
@@ -274,7 +291,7 @@ document.getElementById("pass-"+username).innerText = newPass;
 alert("Password updated");
 }
 
-async function toggleActive(username, btn){
+async function toggleActive(phone, btn){
 
 let isCurrentlyDisable = btn.innerText === "Disable";
 
@@ -289,8 +306,7 @@ console.error(error);
 return;
 }
 
-/* UI update */
-let statusCell = document.getElementById("status-"+username);
+let statusCell = document.getElementById("status-"+phone);
 
 if(isCurrentlyDisable){
 btn.innerText = "Enable";
@@ -303,7 +319,6 @@ btn.style.background = "#f59e0b";
 statusCell.innerText = "Active";
 statusCell.style.color = "#22c55e";
 }
-
 }
 
 async function loadMeetings(){

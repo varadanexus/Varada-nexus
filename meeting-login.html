@@ -14,18 +14,15 @@
 
 <style>
 
-/* SAME STYLE AS YOUR LOGIN */
+/* ===== SAME GLOBAL STYLE AS LOGIN ===== */
 body{
 margin:0;
 font-family:'Inter',sans-serif;
-height:100vh;
+min-height:100vh;
 background:linear-gradient(-45deg,#020617,#0f172a,#1e3a8a,#020617);
 background-size:400% 400%;
 animation:bg 12s ease infinite;
 color:white;
-display:flex;
-justify-content:center;
-align-items:center;
 }
 
 @keyframes bg{
@@ -34,28 +31,107 @@ align-items:center;
 100%{background-position:0% 50%}
 }
 
+/* ===== HEADER ===== */
+header{
+position:sticky;
+top:0;
+z-index:1000;
+background:rgba(10,15,30,0.55);
+backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 20px;
+}
+
+.nav-left{
+display:flex;
+align-items:center;
+gap:14px;
+}
+
+.logo{
+height:48px;
+}
+
+.brand-block{
+display:flex;
+flex-direction:column;
+}
+
+.brand-name{
+font-size:19px;
+font-weight:600;
+}
+
+.brand-sub{
+font-size:10px;
+color:#94a3b8;
+}
+
+.nav-links{
+display:flex;
+gap:28px;
+}
+
+.nav-links a{
+color:#cbd5f5;
+text-decoration:none;
+font-size:14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+color:white;
+}
+
+/* ===== MAIN ===== */
+main{
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:calc(100vh - 100px);
+padding:40px 20px;
+}
+
+/* ===== CARD ===== */
 .card{
 background:rgba(15,23,42,0.75);
 backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,0.08);
 padding:40px 30px;
 border-radius:16px;
-width:350px;
+width:360px;
 text-align:center;
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 
+/* ===== INPUTS ===== */
 input{
 width:100%;
-padding:10px;
+height:44px;
 margin-top:12px;
 border-radius:8px;
 border:none;
+padding:0 12px;
 background:rgba(255,255,255,0.12);
 color:white;
 }
 
+input::placeholder{
+color:#94a3b8;
+}
+
+/* ===== BUTTON ===== */
 button{
 width:100%;
-padding:10px;
+height:44px;
 margin-top:15px;
 border:none;
 border-radius:8px;
@@ -65,12 +141,14 @@ font-weight:600;
 cursor:pointer;
 }
 
+/* ===== ERROR ===== */
 .error{
 color:#f87171;
 margin-top:10px;
 font-size:13px;
 }
 
+/* ===== BACK ===== */
 .back{
 margin-top:15px;
 font-size:12px;
@@ -82,11 +160,47 @@ cursor:pointer;
 color:white;
 }
 
+/* ===== FOOTER ===== */
+footer{
+text-align:center;
+padding:10px;
+font-size:13px;
+color:#cbd5f5;
+}
+
 </style>
 
 </head>
 
 <body>
+
+<!-- ===== NAVBAR ===== -->
+<header>
+<div class="nav-container">
+
+<div class="nav-left">
+<img src="images/logo.png" class="logo">
+<div class="brand-block">
+<span class="brand-name">Varada Nexus</span>
+<span class="brand-sub">Private Limited</span>
+</div>
+</div>
+
+<nav class="nav-links">
+<a href="index.html">Home</a>
+<a href="founder.html">Founder</a>
+<a href="services.html">Services</a>
+<a href="team.html">Team</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Login</a>
+<a href="meeting-login.html" class="active">Join Meeting</a>
+</nav>
+
+</div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main>
 
 <div class="card">
 
@@ -106,11 +220,17 @@ color:white;
 
 </div>
 
+</main>
+
+<footer>
+© 2025 Varada Nexus Private Limited
+</footer>
+
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 window.loginMeeting = async function(){
@@ -131,32 +251,26 @@ const { data, error } = await supabaseClient
 .eq("is_active", true)
 .single();
 
-/* 🔴 HANDLE ERROR */
 if(error){
-  console.error(error);
   document.getElementById("error").innerText="Server error";
   return;
 }
 
-/* 🔴 INVALID */
 if(!data){
   document.getElementById("error").innerText="Invalid credentials";
   return;
 }
 
-/* 🔴 MEETING LINK BROKEN */
 if(!data.meetings){
   document.getElementById("error").innerText="Meeting not found";
   return;
 }
 
-/* ⛔ BLOCK USERS IF NOT LIVE */
 if(data.role !== "admin" && data.meetings.status !== "live"){
   document.getElementById("error").innerText="Waiting for admin to start meeting";
   return;
 }
 
-/* ✅ REDIRECT */
 window.location.href =
 "meeting.html?id=" + data.meetings.id +
 "&role=" + data.role +

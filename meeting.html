@@ -103,6 +103,15 @@ const api = new JitsiMeetExternalAPI("8x8.vc", {
 
 api.executeCommand("displayName", user);
 
+// 🔴 REDIRECT WHEN MEETING ENDS
+api.addEventListener("readyToClose", () => {
+  window.location.href = "login.html";
+});
+
+api.addEventListener("videoConferenceLeft", () => {
+  window.location.href = "login.html";
+});
+  
 /* 🔥 ADMIN = START MEETING */
 if(role === "admin"){
   api.addEventListener("videoConferenceJoined", async () => {

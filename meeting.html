@@ -21,6 +21,7 @@ const params = new URLSearchParams(window.location.search);
 
 const meetingId = params.get("id");
 const role = params.get("role");
+console.log("ROLE:", role);
 const user = params.get("user") || "Guest";
 
 /* SUPABASE */
@@ -71,15 +72,19 @@ async function getJWT(){
 /* 🎥 START JITSI */
 const key = "jwt_" + user;
 
-if(role === "admin"){
-  localStorage.removeItem(key);
-}
-  
-let JWT = localStorage.getItem(key);
+let JWT;
 
-if(!JWT){
+if(role === "admin"){
+  // 🔥 ALWAYS FRESH TOKEN FOR ADMIN
   JWT = await getJWT();
   localStorage.setItem(key, JWT);
+}else{
+  JWT = localStorage.getItem(key);
+
+  if(!JWT){
+    JWT = await getJWT();
+    localStorage.setItem(key, JWT);
+  }
 }
 
 const api = new JitsiMeetExternalAPI("8x8.vc", {

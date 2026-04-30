@@ -279,17 +279,20 @@ const supabaseClient = supabase.createClient(
 );
 
 let timer = 30
-let attempts = 0
 let interval
 
 async function sendOTP(){
 
-if(attempts >= 3){
-  document.getElementById("error").innerText = "Max attempts reached"
+
+
+let rawPhone = document.getElementById("phone").value.trim()
+
+if(rawPhone.length !== 10){
+  document.getElementById("error").innerText = "Enter valid 10 digit number"
   return
 }
 
-let phone = document.getElementById("phone").value
+let phone = "91" + rawPhone
 let btn = document.getElementById("otpBtn")
 
 if(!phone){
@@ -342,7 +345,14 @@ if(attempts >= 3){
   return
 }
 
-let phone = document.getElementById("phone").value
+let rawPhone = document.getElementById("phone").value.trim()
+
+if(rawPhone.length !== 10){
+  document.getElementById("error").innerText = "Invalid phone"
+  return
+}
+
+let phone = "91" + rawPhone
 let otp = document.getElementById("otp").value
 
 if(!phone || !otp){
@@ -361,7 +371,7 @@ const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/v
 const data = await res.json()
 
 if(!res.ok){
-  attempts++
+ 
   document.getElementById("error").innerText = data.error
   return
 }

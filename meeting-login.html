@@ -311,7 +311,16 @@ const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/s
   body: JSON.stringify({ phone })
 })
 
-const data = await res.json()
+const text = await res.text()
+console.log("OTP RESPONSE RAW:", text)
+
+let data
+try {
+  data = JSON.parse(text)
+} catch {
+  document.getElementById("error").innerText = "Server error (invalid JSON)"
+  return
+}
 
 if(!res.ok){
   document.getElementById("error").innerText = data.error

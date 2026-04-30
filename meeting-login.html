@@ -280,6 +280,7 @@ const supabaseClient = supabase.createClient(
 
 let timer = 30
 let interval
+let attempts = 0
 
 async function sendOTP(){
 
@@ -349,7 +350,7 @@ interval = setInterval(()=>{
 
 async function verifyOTP(){
 
-if(attempts >= 3){
+if(attempts >= 5){
   document.getElementById("error").innerText = "Max attempts reached"
   return
 }

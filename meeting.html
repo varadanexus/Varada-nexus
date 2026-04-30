@@ -69,7 +69,18 @@ async function getJWT(){
 }
   
 /* 🎥 START JITSI */
-const JWT = await getJWT();
+const key = "jwt_" + user;
+
+if(role === "admin"){
+  localStorage.removeItem(key);
+}
+  
+let JWT = localStorage.getItem(key);
+
+if(!JWT){
+  JWT = await getJWT();
+  localStorage.setItem(key, JWT);
+}
 
 const api = new JitsiMeetExternalAPI("8x8.vc", {
   roomName: "vpaas-magic-cookie-f3041005ff11471ba5dd27a0afb629d5/" + room,

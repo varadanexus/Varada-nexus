@@ -681,17 +681,56 @@ async function openInvoiceModal(ref, type){
 
 type = (type || "").toUpperCase()
 
-if(type !== "GST INVOICE" && type !== "CLIENT INVOICE"){
+if(
+  type !== "GST INVOICE" &&
+  type !== "CLIENT INVOICE" &&
+  type !== "TRANSPORTER_PAYMENT"
+){
     alert("Preview only available for invoices")
     return
 }
 
 /* 🔥 GET INVOICE ID */
-let { data } = await supabaseClient
-.from("client_invoices_gst")
-.select("id")
-.eq("invoice_no", ref)
-.maybeSingle()
+let data = null
+
+/* 🔵 CLIENT / GST INVOICE */
+if(type === "GST INVOICE" || type === "CLIENT INVOICE"){
+
+    let res = await supabaseClient
+    .from("client_invoices_gst")
+    .select("id")
+    .eq("invoice_no", ref)
+    .maybeSingle()
+
+    if(!res.data){
+        const alt = await supabaseClient
+        .from("client_invoices")
+        .select("id")
+        .eq("invoice_no", ref)
+        .maybeSingle()
+
+        res.data = alt.data
+    }
+
+    data = res.data
+}
+
+/* 🟠 TRANSPORTER PAYMENT */
+if(type === "TRANSPORTER_PAYMENT"){
+
+    const res = await supabaseClient
+    .from("transporter_payments")
+    .select("id")
+    .eq("transaction_id", ref)
+    .maybeSingle()
+
+    data = res.data
+}
+
+if(!data){
+    alert("Document not found")
+    return
+}
 
 if(!data){
     const res = await supabaseClient
@@ -711,7 +750,13 @@ if(!data){
 currentInvoiceId = data.id
 
 /* 🔥 GENERATE PDF BLOB */
-const blobResult = await generateInvoiceBlob(data.id)
+let blobResult
+
+if(type === "TRANSPORTER_PAYMENT"){
+    blobResult = await generateTransporterPaymentPDF(data.id)
+}else{
+    blobResult = await generateInvoiceBlob(data.id)
+}
 
 /* 🔥 FORCE CORRECT URL */
 let finalUrl = ""
@@ -753,6 +798,38 @@ if(currentInvoiceId){
 function printInvoice(){
     let iframe = document.getElementById("invoiceFrame")
     iframe.contentWindow.print()
+}
+
+async function generateTransporterPaymentPDF(id){
+
+const { data } = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!data){
+    alert("Payment not found")
+    return
+}
+
+const { jsPDF } = window.jspdf
+const doc = new jsPDF()
+
+doc.setFontSize(16)
+doc.text("Transporter Payment Receipt", 20, 20)
+
+doc.setFontSize(11)
+
+doc.text(`Date: ${new Date(data.payment_date).toLocaleDateString("en-IN")}`, 20, 40)
+doc.text(`Transporter: ${data.transporter_name || "-"}`, 20, 50)
+doc.text(`Amount: ₹${data.amount}`, 20, 60)
+doc.text(`Method: ${data.payment_method || "-"}`, 20, 70)
+doc.text(`Transaction ID: ${data.transaction_id || "-"}`, 20, 80)
+
+const blob = doc.output("blob")
+
+return URL.createObjectURL(blob)
 }
   
 </script>

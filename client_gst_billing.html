@@ -346,7 +346,7 @@ let totalFreight=0
 let totalMargin=0
 let totalGST=0
 let totalInvoice=0
-
+let currentEditPayment = null
 
 async function init(){
 await loadClients()
@@ -367,7 +367,7 @@ let html = ""
 data?.forEach(p=>{
 html += `
 <tr>
-<td>${new Date(p.payment_date).toLocaleDateString()}</td>
+<td>${p.payment_date ? p.payment_date.split("T")[0].split("-").reverse().join("/") : "-"}</td>
 <td>${p.invoice_no}</td>
 <td>₹${Number(p.amount).toFixed(2)}</td>
 <td>${p.payment_method}</td>
@@ -1503,7 +1503,7 @@ await supabaseClient
     amount: amount,
     payment_method: method,
     transaction_id: txnId,
-    payment_date: date ? new Date(date).toISOString() : new Date().toISOString()
+    payment_date: date ? date + "T00:00:00" : new Date().toISOString()
 }])
   
 /* 🔥 COMPANY LEDGER ENTRY */
@@ -1557,123 +1557,7 @@ window.addEventListener("load", () => {
     init()
 })
 
-async function editGSTPayment(id){
 
-const { data:p } = await supabaseClient
-.from("gst_payments")
-.select("*")
-.eq("id", id)
-.single()
-
-if(!p){
-alert("Payment not found")
-return
-}
-
-/* INPUT NEW VALUES */
-let newAmount = Number(prompt("Edit Amount", p.amount))
-let newMethod = prompt("Edit Method", p.payment_method)
-let newTxn = prompt("Edit Transaction ID", p.transaction_id || "")
-let oldTxn = p.transaction_id
-
-if(!newTxn || newTxn.trim() === ""){
-    alert("Transaction ID is mandatory")
-    return
-}
-
-const { data:dup } = await supabaseClient
-.from("gst_payments")
-.select("id")
-.eq("transaction_id", newTxn)
-.neq("id", id)
-.maybeSingle()
-
-if(dup){
-    alert("Duplicate Transaction ID detected")
-    return
-}
-  
-if(!newAmount || newAmount <= 0){
-alert("Invalid amount")
-return
-}
-
-/* 🔥 DIFFERENCE CALCULATION */
-let diff = newAmount - p.amount
-
-/* 🔥 UPDATE PAYMENT TABLE */
-await supabaseClient
-.from("gst_payments")
-.update({
-amount: newAmount,
-payment_method: newMethod,
-transaction_id: newTxn
-})
-.eq("id", id)
-
-/* 🔥 UPDATE INVOICE BALANCE */
-const { data:inv } = await supabaseClient
-.from("client_invoices_gst")
-.select("*")
-.eq("id", p.invoice_id)
-.single()
-
-let newBalance = Number(inv.balance_amount) - diff
-
-if(newBalance < 0) newBalance = 0
-
-await supabaseClient
-.from("client_invoices_gst")
-.update({
-balance_amount: newBalance,
-payment_status: newBalance === 0 ? "Paid" : "Pending"
-})
-.eq("id", p.invoice_id)
-
-/* 🔥 LEDGER UPDATE (OPTIONAL SIMPLE WAY) */
-/* easiest: delete old + reinsert new */
-
-// 🔥 DELETE ONLY THIS PAYMENT (NOT ALL)
-await supabaseClient
-.from("company_ledger")
-.delete()
-.eq("transaction_id", oldTxn)
-.eq("reference_no", p.invoice_no)
-.eq("party", p.client_name)
-
-// 🔥 GET LAST BALANCE
-const { data:lastEntryArr } = await supabaseClient
-.from("company_ledger")
-.select("balance")
-.order("created_at", { ascending:false })
-.limit(1)
-
-let lastBalance = lastEntryArr?.[0]?.balance || 0
-
-let newLedgerBalance = lastBalance + newAmount
-
-
-// 🔥 INSERT UPDATED ENTRY
-await supabaseClient
-.from("company_ledger")
-.insert([{
-entry_type: "Client Payment",
-reference_no: p.invoice_no,
-party: p.client_name,
-debit: 0,
-credit: newAmount,
-balance: newLedgerBalance,
-payment_method: newMethod || "N/A",
-transaction_id: newTxn,
-payment_date: p.payment_date,
-remarks: "Client Payment Edited"
-}])
-
-alert("Payment Updated ✅")
-
-await syncInvoiceWithUI(p.invoice_id)
-  
-}
 
 async function deleteGSTPayment(id){
 
@@ -1847,9 +1731,190 @@ async function syncInvoiceWithUI(invoiceId, btn=null){
 
   }
 }
+
+function editGSTPayment(id){
+
+supabaseClient
+.from("gst_payments")
+.select("*")
+.eq("id", id)
+.single()
+.then(({data:p})=>{
+
+if(!p){
+alert("Payment not found")
+return
+}
+
+currentEditPayment = p
+
+document.getElementById("editAmount").value = p.amount
+document.getElementById("editMethod").value = p.payment_method
+document.getElementById("editTxn").value = p.transaction_id || ""
+document.getElementById("editDate").value = p.payment_date 
+? p.payment_date.split("T")[0] 
+: ""
+
+document.getElementById("editModal").style.display = "flex"
+
+})
+}
+
+async function updatePayment(){
+
+let p = currentEditPayment
+
+let newAmount = Number(document.getElementById("editAmount").value)
+let newMethod = document.getElementById("editMethod").value
+let newTxn = document.getElementById("editTxn").value
+let newDate = document.getElementById("editDate").value
+
+if(!newAmount || newAmount <= 0){
+alert("Invalid amount")
+return
+}
+
+if(!newTxn){
+alert("Transaction ID required")
+return
+}
+
+if(!newDate){
+alert("Date required")
+return
+}
+
+/* DUP CHECK */
+const { data:dup } = await supabaseClient
+.from("gst_payments")
+.select("id")
+.eq("transaction_id", newTxn)
+.neq("id", p.id)
+.maybeSingle()
+
+if(dup){
+alert("Duplicate Transaction ID")
+return
+}
+
+/* DIFF */
+let diff = newAmount - p.amount
+
+/* UPDATE PAYMENT */
+await supabaseClient
+.from("gst_payments")
+.update({
+amount: newAmount,
+payment_method: newMethod,
+transaction_id: newTxn,
+payment_date: newDate + "T00:00:00"
+})
+.eq("id", p.id)
+
+/* UPDATE INVOICE */
+const { data:inv } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.eq("id", p.invoice_id)
+.single()
+
+let newBalance = Number(inv.balance_amount) - diff
+if(newBalance < 0) newBalance = 0
+
+await supabaseClient
+.from("client_invoices_gst")
+.update({
+balance_amount: newBalance,
+payment_status: newBalance === 0 ? "Paid" : "Pending"
+})
+.eq("id", p.invoice_id)
+
+/* DELETE OLD LEDGER */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("transaction_id", p.transaction_id)
+.eq("reference_no", p.invoice_no)
+
+/* GET LAST BALANCE */
+const { data:last } = await supabaseClient
+.from("company_ledger")
+.select("balance")
+.order("created_at",{ascending:false})
+.limit(1)
+
+let lastBal = last?.[0]?.balance || 0
+
+let newLedgerBalance = lastBal + newAmount
+
+/* INSERT NEW LEDGER */
+await supabaseClient
+.from("company_ledger")
+.insert([{
+entry_type:"Client Payment",
+reference_no:p.invoice_no,
+party:p.client_name,
+debit:0,
+credit:newAmount,
+balance:newLedgerBalance,
+payment_method:newMethod,
+transaction_id:newTxn,
+payment_date:newDate + "T00:00:00",
+remarks:"Client Payment Edited"
+}])
+
+alert("Updated ✅")
+
+closeModal()
+await syncInvoiceWithUI(p.invoice_id)
+}
+  
   
 </script>
 
+<!-- EDIT PAYMENT MODAL -->
+<div id="editModal" style="
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+">
+
+<div style="
+background:#111827;
+padding:20px;
+border-radius:12px;
+width:320px;
+">
+
+<h3>Edit Payment</h3>
+
+<input id="editAmount" placeholder="Amount">
+
+<input type="date" id="editDate">
+
+<select id="editMethod">
+<option>Bank Transfer</option>
+<option>UPI</option>
+<option>Cash</option>
+</select>
+
+<input id="editTxn" placeholder="Transaction ID">
+
+<br><br>
+
+<button onclick="updatePayment()">Save</button>
+<button onclick="closeModal()" style="background:#ef4444;">Cancel</button>
+
+</div>
+</div>
+
+
+  
 <script src="rbac.js"></script>
 <script src="menu-rbac.js"></script>
 <script src="global-logout.js"></script>

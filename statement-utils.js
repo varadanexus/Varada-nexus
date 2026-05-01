@@ -1,6 +1,11 @@
 export async function generateTransporterPDFBlob(invoiceId){
 
-const supabaseClient = window.supabaseClient
+import { createClient } from "https://esm.sh/@supabase/supabase-js"
+
+const supabaseClient = createClient(
+  "https://ticsgbtxfhhihamejiss.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
   
   const { jsPDF } = window.jspdf
 

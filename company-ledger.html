@@ -721,28 +721,25 @@ if(type === "GST INVOICE" || type === "CLIENT INVOICE"){
 /* 🟠 TRANSPORTER PAYMENT */
 if(type === "TRANSPORTER_PAYMENT"){
 
-    let res = await supabaseClient
-    .from("transporter_payments")
-    .select("id")
-    .eq("invoice_no", ref)   // ✅ THIS IS THE FIX
+    /* 🔥 DIRECT DRIVE FETCH USING REFERENCE */
+    const { data, error } = await supabaseClient
+    .from("trip_documents")
+    .select("file_url")
+    .ilike("file_name", `%${ref}%`)
+    .limit(1)
     .maybeSingle()
 
-    data = res.data
-}
+    if(error || !data){
+        console.error("❌ Drive fetch error:", error)
+        alert("Transporter invoice not found in Drive")
+        return
+    }
 
-if(!data){
-    alert("Document not found")
+    /* 🔥 SHOW PDF DIRECTLY */
+    document.getElementById("invoiceFrame").src = data.file_url
+    document.getElementById("invoiceModal").style.display = "flex"
+
     return
-}
-
-if(!data){
-    const res = await supabaseClient
-    .from("client_invoices")
-    .select("id")
-    .eq("invoice_no", ref)
-    .maybeSingle()
-
-    data = res.data
 }
 
 if(!data){

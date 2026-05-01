@@ -15,6 +15,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="invoice-utils.js"></script>
+
+<script type="module">
+import { generateTransporterPDFBlob } from './statement-utils.js'
+window.generateTransporterPDFBlob = generateTransporterPDFBlob
+</script>
   
 <style>
 
@@ -721,22 +726,26 @@ if(type === "GST INVOICE" || type === "CLIENT INVOICE"){
 /* 🟠 TRANSPORTER PAYMENT */
 if(type === "TRANSPORTER_PAYMENT"){
 
-    const { data, error } = await supabaseClient
-    .from("transporter_invoices")
-    .select("drive_link")
-    .eq("invoice_no", ref)
-    .maybeSingle()
+const { data } = await supabaseClient
+.from("transporter_invoices")
+.select("id")
+.eq("invoice_no", ref)
+.single()
 
-    if(error || !data || !data.drive_link){
-        console.error("❌ Drive fetch error:", error)
-        alert("Transporter invoice not found ❌")
-        return
-    }
-
-    document.getElementById("invoiceFrame").src = data.drive_link
-    document.getElementById("invoiceModal").style.display = "flex"
-
+if(!data){
+    alert("Invoice not found")
     return
+}
+
+currentInvoiceId = data.id
+
+const blob = await generateTransporterPDFBlob(data.id)
+const url = URL.createObjectURL(blob)
+
+document.getElementById("invoiceFrame").src = url
+document.getElementById("invoiceModal").style.display = "flex"
+
+return
 }
 
 if(!data){
@@ -797,37 +806,7 @@ function printInvoice(){
     iframe.contentWindow.print()
 }
 
-async function generateTransporterPaymentPDF(id){
 
-const { data } = await supabaseClient
-.from("transporter_payments")
-.select("*")
-.eq("id", id)
-.single()
-
-if(!data){
-    alert("Payment not found")
-    return
-}
-
-const { jsPDF } = window.jspdf
-const doc = new jsPDF()
-
-doc.setFontSize(16)
-doc.text("Transporter Payment Receipt", 20, 20)
-
-doc.setFontSize(11)
-
-doc.text(`Date: ${new Date(data.payment_date).toLocaleDateString("en-IN")}`, 20, 40)
-doc.text(`Transporter: ${data.transporter_name || "-"}`, 20, 50)
-doc.text(`Amount: ₹${data.amount}`, 20, 60)
-doc.text(`Method: ${data.payment_method || "-"}`, 20, 70)
-doc.text(`Transaction ID: ${data.transaction_id || "-"}`, 20, 80)
-
-const blob = doc.output("blob")
-
-return URL.createObjectURL(blob)
-}
   
 </script>
 

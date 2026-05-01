@@ -868,7 +868,7 @@ html+=`
 <td>${t.status||""}</td>
 <td>
 
-<td>
+
 
 <div style="display:flex;flex-direction:column;gap:6px;">
 
@@ -885,6 +885,7 @@ html+=`
   <!-- ✏️ EDIT -->
   ${canEdit ? `
   <button class="editBtn" 
+  onclick="editTrip('${t.id}')"
   style="display:flex;align-items:center;gap:6px;">
   ✏️ Edit
   </button>` : ""}
@@ -892,6 +893,7 @@ html+=`
   <!-- 🗑 DELETE -->
   ${canDelete ? `
   <button class="deleteBtn" 
+  onclick="deleteTrip('${t.id}')"
   style="display:flex;align-items:center;gap:6px;">
   🗑 Delete
   </button>` : ""}

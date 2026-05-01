@@ -463,36 +463,71 @@ async function editTransporterPayment(id){
 let amount = prompt("Enter new amount")
 if(!amount) return
 
-const {error} = await supabaseClient
+/* 1️⃣ GET PAYMENT */
+const {data:payment} = await supabaseClient
+.from("transporter_payments")
+.select("invoice_id")
+.eq("id", id)
+.single()
+
+/* 2️⃣ GET INVOICE */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", payment.invoice_id)
+.single()
+
+/* 3️⃣ UPDATE PAYMENT */
+await supabaseClient
 .from("transporter_payments")
 .update({ amount: Number(amount) })
 .eq("id", id)
 
-if(error){
-alert("Update failed")
-return
-}
+/* 4️⃣ UPDATE LEDGER */
+await supabaseClient
+.from("company_ledger")
+.update({ debit: Number(amount) })
+.eq("reference_no", inv.invoice_no)
+.eq("entry_type", "TRANSPORTER_PAYMENT")
 
-alert("Updated ✅")
+alert("Updated + Ledger Synced ✅")
 
 await loadTransporterPayments()
 }
 
+    
 async function deleteTransporterPayment(id){
 
 if(!confirm("Delete this payment?")) return
 
-const {error} = await supabaseClient
+/* 1️⃣ GET PAYMENT */
+const {data:payment} = await supabaseClient
+.from("transporter_payments")
+.select("invoice_id")
+.eq("id", id)
+.single()
+
+/* 2️⃣ GET INVOICE */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", payment.invoice_id)
+.single()
+
+/* 3️⃣ DELETE PAYMENT */
+await supabaseClient
 .from("transporter_payments")
 .delete()
 .eq("id", id)
 
-if(error){
-alert("Delete failed")
-return
-}
+/* 4️⃣ DELETE LEDGER ENTRY */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", inv.invoice_no)
+.eq("entry_type", "TRANSPORTER_PAYMENT")
 
-alert("Deleted ✅")
+alert("Deleted + Ledger Cleared ✅")
 
 await loadTransporterPayments()
 }

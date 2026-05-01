@@ -687,11 +687,21 @@ if(type !== "GST INVOICE" && type !== "CLIENT INVOICE"){
 }
 
 /* 🔥 GET INVOICE ID */
-const { data } = await supabaseClient
+let { data } = await supabaseClient
 .from("client_invoices_gst")
 .select("id")
 .eq("invoice_no", ref)
-.single()
+.maybeSingle()
+
+if(!data){
+    const res = await supabaseClient
+    .from("client_invoices")
+    .select("id")
+    .eq("invoice_no", ref)
+    .maybeSingle()
+
+    data = res.data
+}
 
 if(!data){
     alert("Invoice not found")
@@ -701,12 +711,31 @@ if(!data){
 currentInvoiceId = data.id
 
 /* 🔥 GENERATE PDF BLOB */
-const blobUrl = await generateInvoiceBlob(data.id)
+const blobResult = await generateInvoiceBlob(data.id)
+
+/* 🔥 FORCE CORRECT URL */
+let finalUrl = ""
+
+if(typeof blobResult === "string"){
+    finalUrl = blobResult
+}
+else if(blobResult?.url){
+    finalUrl = blobResult.url
+}
+else if(blobResult?.blob){
+    finalUrl = URL.createObjectURL(blobResult.blob)
+}
+else{
+    console.error("❌ Invalid blob result:", blobResult)
+    alert("Invoice preview failed")
+    return
+}
 
 /* 🔥 SHOW MODAL */
-document.getElementById("invoiceFrame").src = blobUrl
+document.getElementById("invoiceFrame").src = finalUrl
 document.getElementById("invoiceModal").style.display = "flex"
 
+console.log("✅ FINAL URL:", finalUrl)
 }
 
 function closeInvoiceModal(){

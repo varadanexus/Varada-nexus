@@ -241,6 +241,28 @@ window.location.href="login.html"
 
 <tbody id="paymentTable"></tbody>
 
+<div class="card">
+
+<h3>Transporter Payments</h3>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Transporter</th>
+<th>Amount</th>
+<th>Method</th>
+<th>Txn ID</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="transporterPaymentTable"></tbody>
+
+</table>
+
+</div>
+    
 </table>
 
 </div>
@@ -255,6 +277,7 @@ let payments=[]
 window.onload = async () => {
   await loadAgents()
   await loadPayments()
+    await loadTransporterPayments()
 
   document.getElementById("agentSelect").addEventListener("change", (e)=>{
     document.getElementById("settleBtn").disabled = !e.target.value
@@ -340,6 +363,65 @@ async function loadPayments(){
   document.getElementById("paymentTable").innerHTML = html
 }
 
+async function loadTransporterPayments(){
+
+const {data, error} = await supabaseClient
+.from("transporter_payments")
+.select(`
+id,
+amount,
+payment_date,
+payment_method,
+transaction_id,
+invoice_id,
+transporter_invoices (
+transporter_id
+)
+`)
+.order("payment_date",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+/* GET TRANSPORTER NAMES */
+const {data:transporters} = await supabaseClient
+.from("transporters")
+.select("id, transporter_name")
+
+let nameMap = {}
+transporters?.forEach(t=>{
+nameMap[t.id] = t.transporter_name
+})
+
+let html=""
+
+data?.forEach(p=>{
+
+let transporterId = p.transporter_invoices?.transporter_id
+let name = nameMap[transporterId] || "Transporter"
+
+html += `
+<tr>
+<td>${(p.payment_date || "").split("T")[0]}</td>
+<td>${name}</td>
+<td>₹ ${Number(p.amount).toFixed(2)}</td>
+<td>${p.payment_method || "-"}</td>
+<td>${p.transaction_id || "-"}</td>
+
+<td>
+<button onclick="editTransporterPayment('${p.id}')">Edit</button>
+<button onclick="deleteTransporterPayment('${p.id}')">Delete</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("transporterPaymentTable").innerHTML = html
+}
+
 /* SETTLE */
 async function settleAgent(){
   let agentId = document.getElementById("agentSelect").value
@@ -376,6 +458,45 @@ async function settleAgent(){
   await loadPayments()
 }
 
+async function editTransporterPayment(id){
+
+let amount = prompt("Enter new amount")
+if(!amount) return
+
+const {error} = await supabaseClient
+.from("transporter_payments")
+.update({ amount: Number(amount) })
+.eq("id", id)
+
+if(error){
+alert("Update failed")
+return
+}
+
+alert("Updated ✅")
+
+await loadTransporterPayments()
+}
+
+async function deleteTransporterPayment(id){
+
+if(!confirm("Delete this payment?")) return
+
+const {error} = await supabaseClient
+.from("transporter_payments")
+.delete()
+.eq("id", id)
+
+if(error){
+alert("Delete failed")
+return
+}
+
+alert("Deleted ✅")
+
+await loadTransporterPayments()
+}
+    
 </script>
 
 <script src="rbac.js"></script>

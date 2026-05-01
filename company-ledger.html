@@ -721,22 +721,44 @@ if(type === "GST INVOICE" || type === "CLIENT INVOICE"){
 /* 🟠 TRANSPORTER PAYMENT */
 if(type === "TRANSPORTER_PAYMENT"){
 
-    /* 🔥 DIRECT DRIVE FETCH USING REFERENCE */
-    const { data, error } = await supabaseClient
+    let file = null
+
+    /* 🔥 TRY 1: match by file name */
+    let res1 = await supabaseClient
     .from("trip_documents")
-    .select("file_url")
+    .select("file_url,file_name")
     .ilike("file_name", `%${ref}%`)
     .limit(1)
-    .maybeSingle()
 
-    if(error || !data){
-        console.error("❌ Drive fetch error:", error)
-        alert("Transporter invoice not found in Drive")
+    if(res1.data && res1.data.length){
+        file = res1.data[0]
+    }
+
+    /* 🔥 TRY 2: fallback by trip_no */
+    if(!file){
+        let res2 = await supabaseClient
+        .from("trip_documents")
+        .select("file_url,file_name")
+        .eq("trip_no", ref)
+        .limit(1)
+
+        if(res2.data && res2.data.length){
+            file = res2.data[0]
+        }
+    }
+
+    /* 🔥 DEBUG */
+    console.log("REF:", ref)
+    console.log("SEARCH1:", res1.data)
+
+    /* ❌ NOT FOUND */
+    if(!file){
+        alert("Transporter invoice not found in Drive ❌")
         return
     }
 
-    /* 🔥 SHOW PDF DIRECTLY */
-    document.getElementById("invoiceFrame").src = data.file_url
+    /* ✅ OPEN */
+    document.getElementById("invoiceFrame").src = file.file_url
     document.getElementById("invoiceModal").style.display = "flex"
 
     return

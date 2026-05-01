@@ -479,7 +479,13 @@ else if(type === "TRANSPORTER_PAYMENT"){
 
 rows += `
 <tr>
-<td>${new Date(r.created_at).toLocaleDateString("en-IN")}</td>
+<td>${
+  new Date(
+    r.entry_type === "CLIENT PAYMENT" && r.payment_date
+      ? r.payment_date
+      : r.created_at
+  ).toLocaleDateString("en-IN")
+}</td>
 <td>${r.entry_type || r.type || "-"}</td>
 <td>
 ${r.reference_no ? `

@@ -724,19 +724,8 @@ if(type === "TRANSPORTER_PAYMENT"){
     let res = await supabaseClient
     .from("transporter_payments")
     .select("id")
-    .eq("transaction_id", ref)
+    .eq("invoice_no", ref)   // ✅ THIS IS THE FIX
     .maybeSingle()
-
-    /* 🔥 FALLBACK (VERY IMPORTANT) */
-    if(!res.data){
-        const alt = await supabaseClient
-        .from("transporter_payments")
-        .select("id")
-        .eq("reference_no", ref)
-        .maybeSingle()
-
-        res.data = alt.data
-    }
 
     data = res.data
 }

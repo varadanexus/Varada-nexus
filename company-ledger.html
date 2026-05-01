@@ -422,7 +422,7 @@ let openingBalance = Number(document.getElementById("openingBalance").value || 0
 let query = supabaseClient
 .from("company_ledger")
 .select("*")
-.order("created_at", { ascending:false })
+.order("created_at", { ascending:true })
 
 if(fromDate){
 query = query.gte("payment_date", fromDate + "T00:00:00")
@@ -473,8 +473,8 @@ let bDate = (bType === "CLIENT PAYMENT" && b.payment_date)
     ? new Date(b.payment_date)
     : new Date(b.created_at)
 
-/* 🔥 DESCENDING (LATEST FIRST) */
-return bDate - aDate
+/* ✅ ASCENDING (OLD FIRST) */
+return aDate - bDate
 
 })
   
@@ -551,7 +551,7 @@ let bDate = (bType === "CLIENT PAYMENT" && b.payment_date)
     ? new Date(b.payment_date)
     : new Date(b.created_at)
 
-return bDate - aDate
+return aDate - bDate
 
 })
   

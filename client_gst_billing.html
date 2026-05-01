@@ -1518,7 +1518,7 @@ const { error:ledgerError } = await supabaseClient
     balance: newBalance,
     payment_method: method || "N/A",
     transaction_id: txnId || "N/A",        
-    payment_date: date ? new Date(date).toISOString() : new Date().toISOString(),
+    payment_date: date ? date + "T00:00:00" : new Date().toISOString(),
     remarks: "Payment received from client"
 }])
 
@@ -1665,7 +1665,7 @@ credit: newAmount,
 balance: newLedgerBalance,
 payment_method: newMethod || "N/A",
 transaction_id: newTxn,
-payment_date: new Date().toISOString(),
+payment_date: p.payment_date,
 remarks: "Client Payment Edited"
 }])
 

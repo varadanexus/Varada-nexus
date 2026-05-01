@@ -422,9 +422,7 @@ let openingBalance = Number(document.getElementById("openingBalance").value || 0
 let query = supabaseClient
 .from("company_ledger")
 .select("*")
-.order("payment_date", { ascending:true })
-.order("created_at", { ascending:true })
-.order("id", { ascending:true })
+.order("created_at", { ascending:false })
 
 if(fromDate){
 query = query.gte("payment_date", fromDate + "T00:00:00")
@@ -462,6 +460,24 @@ let rows = ""
 let netBalance = 0
 let bankBalance = openingBalance
 
+data.sort((a,b)=>{
+
+let aType = (a.entry_type || "").toUpperCase()
+let bType = (b.entry_type || "").toUpperCase()
+
+let aDate = (aType === "CLIENT PAYMENT" && a.payment_date)
+    ? new Date(a.payment_date)
+    : new Date(a.created_at)
+
+let bDate = (bType === "CLIENT PAYMENT" && b.payment_date)
+    ? new Date(b.payment_date)
+    : new Date(b.created_at)
+
+/* 🔥 DESCENDING (LATEST FIRST) */
+return bDate - aDate
+
+})
+  
 data.forEach(r=>{
 
 let debit = Number(r.debit || 0)
@@ -522,6 +538,23 @@ function renderMonthly(data){
 
 let map = {}
 
+data.sort((a,b)=>{
+
+let aType = (a.entry_type || "").toUpperCase()
+let bType = (b.entry_type || "").toUpperCase()
+
+let aDate = (aType === "CLIENT PAYMENT" && a.payment_date)
+    ? new Date(a.payment_date)
+    : new Date(a.created_at)
+
+let bDate = (bType === "CLIENT PAYMENT" && b.payment_date)
+    ? new Date(b.payment_date)
+    : new Date(b.created_at)
+
+return bDate - aDate
+
+})
+  
 data.forEach(r=>{
 
     let entryType = (r.entry_type || r.type || "").toUpperCase()

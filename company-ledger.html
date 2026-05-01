@@ -482,7 +482,7 @@ rows += `
 <tr>
 <td>${
   new Date(
-    r.entry_type === "CLIENT PAYMENT" && r.payment_date
+    (r.entry_type || "").toUpperCase() === "CLIENT PAYMENT" && r.payment_date
       ? r.payment_date
       : r.created_at
   ).toLocaleDateString("en-IN")
@@ -527,7 +527,7 @@ data.forEach(r=>{
     let entryType = (r.entry_type || r.type || "").toUpperCase()
 
     let month = new Date(
-    r.entry_type === "CLIENT PAYMENT" && r.payment_date
+    (r.entry_type || "").toUpperCase() === "CLIENT PAYMENT" && r.payment_date
         ? r.payment_date
         : r.created_at
     ).toLocaleString('en-IN',{

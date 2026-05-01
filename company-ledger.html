@@ -422,15 +422,16 @@ let openingBalance = Number(document.getElementById("openingBalance").value || 0
 let query = supabaseClient
 .from("company_ledger")
 .select("*")
+.order("payment_date", { ascending:true })
 .order("created_at", { ascending:true })
 .order("id", { ascending:true })
 
 if(fromDate){
-query = query.gte("created_at", fromDate + "T00:00:00")
+query = query.gte("payment_date", fromDate + "T00:00:00")
 }
 
 if(toDate){
-query = query.lte("created_at", toDate + "T23:59:59.999")
+query = query.lte("payment_date", toDate + "T23:59:59.999")
 }
 
 if(type){
@@ -525,7 +526,11 @@ data.forEach(r=>{
 
     let entryType = (r.entry_type || r.type || "").toUpperCase()
 
-    let month = new Date(r.created_at).toLocaleString('en-IN',{
+    let month = new Date(
+    r.entry_type === "CLIENT PAYMENT" && r.payment_date
+        ? r.payment_date
+        : r.created_at
+    ).toLocaleString('en-IN',{
         month:'short',
         year:'numeric'
     })

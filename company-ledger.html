@@ -681,7 +681,7 @@ async function openInvoiceModal(ref, type){
 
 type = (type || "").toUpperCase()
 
-if(type !== "CLIENT INVOICE"){
+if(type !== "GST INVOICE" && type !== "CLIENT INVOICE"){
     alert("Preview only available for invoices")
     return
 }

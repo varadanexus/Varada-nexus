@@ -755,11 +755,7 @@ currentInvoiceId = data.id
 /* 🔥 GENERATE PDF BLOB */
 let blobResult
 
-if(type === "TRANSPORTER_PAYMENT"){
-    blobResult = await generateTransporterPaymentPDF(data.id)
-}else{
-    blobResult = await generateInvoiceBlob(data.id)
-}
+blobResult = await generateInvoiceBlob(data.id)
 
 /* 🔥 FORCE CORRECT URL */
 let finalUrl = ""

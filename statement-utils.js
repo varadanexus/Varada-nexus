@@ -1,10 +1,14 @@
+function getSB(){
+  return window.supabaseClient
+}
+
 async function generateTransporterPDFBlob(invoiceId){
 
-
+const sb = getSB()
   
   const { jsPDF } = window.jspdf
 
-  const { data: inv } = await window.supabaseClient
+  const { data: inv } = await sb
 .from("transporter_invoices")
   .select("*")
   .eq("id", invoiceId)
@@ -14,7 +18,7 @@ async function generateTransporterPDFBlob(invoiceId){
     throw new Error("Invoice not found")
   }
 
-  const {data:transporter} = await window.supabaseClient
+  const {data:transporter} = await sb
   .from("transporters")
   .select("transporter_name,gst_number,phone,address")
   .eq("id", inv.transporter_id)
@@ -22,7 +26,7 @@ async function generateTransporterPDFBlob(invoiceId){
 
   let tripIds = inv.trip_ids.split(",")
 
-  const {data:tripData}=await window.supabaseClient
+  const {data:tripData}=await sb
   .from("trips")
   .select(`
     trip_no, route, truck, trip_date, weight_kg,
@@ -31,7 +35,7 @@ async function generateTransporterPDFBlob(invoiceId){
   `)
   .in("id",tripIds)
 
-  const {data:adjustmentsData} = await window.supabaseClient
+const {data:adjustmentsData} = await sb
 .from("transporter_adjustments")
 .select("amount,type,reason,trip_id")
 .eq("invoice_id", invoiceId)

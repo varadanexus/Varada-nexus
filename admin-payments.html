@@ -293,6 +293,28 @@ Enter Payment:
 
 <div class="card">
 
+<h3>Transporter Payments</h3>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Invoice</th>
+<th>Amount</th>
+<th>Method</th>
+<th>Txn ID</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="transporterPaymentTable"></tbody>
+
+</table>
+
+</div>
+    
+<div class="card">
+
 <h3>Invoices</h3>
 
 <input id="searchInvoice" placeholder="Search Invoice" oninput="searchInvoices()">
@@ -364,13 +386,16 @@ let adjustments=[]
 let selectedTrips=[]
 let invoiceAmount=0
 let currentInvoice=null
-
+let editingPaymentId = null
+let editingInvoiceId = null
+    
 init()
 
 async function init(){
 await loadTransporters()
 await loadInvoices()
 await loadAdjustments()
+await loadTransporterPayments()
 }
 
 async function loadTransporters(){
@@ -699,7 +724,7 @@ const { error: ledgerError } = await supabaseClient
     payment_method: paymentMethod.value,
     transaction_id: document.getElementById("transactionId").value || null,
 
-    created_at: new Date().toISOString()
+    created_at: paymentDate.value
 }])
 
 if(ledgerError){
@@ -848,6 +873,171 @@ invoices.map(i => `<option value="${i.id}">${i.invoice_no}</option>`).join("")
 await renderInvoices(invoices)
 }
 
+async function loadTransporterPayments(){
+
+const {data, error} = await supabaseClient
+.from("transporter_payments")
+.select(`
+id,
+amount,
+payment_date,
+payment_method,
+transaction_id,
+invoice_id,
+transporter_invoices(invoice_no)
+`)
+.order("payment_date",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+let html=""
+
+data?.forEach(p=>{
+
+html += `
+<tr>
+<td>${(p.payment_date || "").split("T")[0]}</td>
+<td>${p.transporter_invoices?.invoice_no || "-"}</td>
+<td>₹ ${Number(p.amount).toFixed(2)}</td>
+<td>${p.payment_method || "-"}</td>
+<td>${p.transaction_id || "-"}</td>
+
+<td>
+<button onclick="editTransporterPayment('${p.id}')">Edit</button>
+<button onclick="deleteTransporterPayment('${p.id}')">Delete</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("transporterPaymentTable").innerHTML = html
+}
+
+async function editTransporterPayment(id){
+
+const {data:p} = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.eq("id", id)
+.single()
+
+if(!p){
+alert("Payment not found")
+return
+}
+
+editingPaymentId = id
+editingInvoiceId = p.invoice_id
+
+document.getElementById("modalAmount").value = p.amount
+document.getElementById("modalDate").value = (p.payment_date || "").split("T")[0]
+document.getElementById("modalMethod").value = p.payment_method || "Cash"
+document.getElementById("modalTxn").value = p.transaction_id || ""
+
+document.getElementById("paymentModal").style.display = "flex"
+}
+
+async function saveModalPayment(){
+
+let amount = Number(document.getElementById("modalAmount").value)
+let date = document.getElementById("modalDate").value
+let method = document.getElementById("modalMethod").value
+let txn = document.getElementById("modalTxn").value
+
+if(!amount || !date){
+alert("Fill all fields")
+return
+}
+
+/* 1️⃣ UPDATE PAYMENT */
+await supabaseClient
+.from("transporter_payments")
+.update({
+amount,
+payment_date: date,
+payment_method: method,
+transaction_id: txn
+})
+.eq("id", editingPaymentId)
+
+/* 2️⃣ GET INVOICE */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", editingInvoiceId)
+.single()
+
+/* 3️⃣ UPDATE LEDGER (IMPORTANT FIX) */
+await supabaseClient
+.from("company_ledger")
+.update({
+debit: amount,
+payment_method: method,
+transaction_id: txn,
+created_at: date   // 🔥 FIX DATE HERE
+})
+.eq("reference_no", inv.invoice_no)
+.eq("entry_type","TRANSPORTER_PAYMENT")
+
+/* 4️⃣ AUTO DRIVE RESYNC */
+await syncTransporterStatement(editingInvoiceId)
+
+closeModal()
+
+alert("Updated ✅")
+
+await loadTransporterPayments()
+await loadInvoices()
+}
+
+function closeModal(){
+document.getElementById("paymentModal").style.display = "none"
+}
+    
+async function deleteTransporterPayment(id){
+
+if(!confirm("Delete this payment?")) return
+
+/* 1️⃣ GET PAYMENT */
+const {data:p} = await supabaseClient
+.from("transporter_payments")
+.select("invoice_id")
+.eq("id", id)
+.single()
+
+/* 2️⃣ GET INVOICE */
+const {data:inv} = await supabaseClient
+.from("transporter_invoices")
+.select("invoice_no")
+.eq("id", p.invoice_id)
+.single()
+
+/* 3️⃣ DELETE PAYMENT */
+await supabaseClient
+.from("transporter_payments")
+.delete()
+.eq("id", id)
+
+/* 4️⃣ DELETE LEDGER */
+await supabaseClient
+.from("company_ledger")
+.delete()
+.eq("reference_no", inv.invoice_no)
+.eq("entry_type","TRANSPORTER_PAYMENT")
+
+/* 5️⃣ SYNC */
+await syncTransporterStatement(p.invoice_id)
+
+alert("Deleted ✅")
+
+await loadTransporterPayments()
+await loadInvoices()
+}
+    
 async function loadAdjustments(){
 
 const {data} = await supabaseClient
@@ -1465,5 +1655,28 @@ window.searchInvoices = searchInvoices
     
 </script>
 
+<div id="paymentModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;justify-content:center;align-items:center;">
+
+<div style="background:#111827;padding:20px;border-radius:12px;width:350px;">
+
+<h3>Edit Payment</h3>
+
+<input id="modalAmount" placeholder="Amount">
+<input type="date" id="modalDate">
+<select id="modalMethod">
+<option>Cash</option>
+<option>Bank Transfer</option>
+<option>UPI</option>
+</select>
+<input id="modalTxn" placeholder="Transaction ID">
+
+<br><br>
+
+<button onclick="saveModalPayment()">Save</button>
+<button onclick="closeModal()" style="background:#ef4444;">Cancel</button>
+
+</div>
+</div>
+    
 </body>
 </html>

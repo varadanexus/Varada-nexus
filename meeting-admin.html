@@ -265,6 +265,8 @@ const supabaseClient = window.supabaseClient
 
 let currentMeetingId = null;
 let realtimeChannel = null;
+let refreshInterval = null;
+
   
 window.onload = async function(){
 
@@ -282,6 +284,7 @@ document.getElementById("meetingSelect").value = savedId;
 
 await loadCredentials();
 subscribeToWaitingUsers();
+startAutoRefresh();   // 🔥 ADD THIS
 }
 
 }
@@ -595,6 +598,7 @@ localStorage.setItem("meeting_id", selectedId);
 
 loadCredentials();
 subscribeToWaitingUsers();
+startAutoRefresh();   // 🔥 ADD THIS
 
 }
   
@@ -834,6 +838,18 @@ async function toggleApproval(phone, isApproved){
 
   // 🔥 ADD THIS LINE
   await loadCredentials();
+
+}
+
+function startAutoRefresh(){
+
+  if(refreshInterval){
+    clearInterval(refreshInterval);
+  }
+
+  refreshInterval = setInterval(() => {
+    loadCredentials();
+  }, 2000);
 
 }
   

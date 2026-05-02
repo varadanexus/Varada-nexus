@@ -374,23 +374,26 @@ if(error){
 // 🚀 SEND WHATSAPP MESSAGE (WITH ERROR HANDLING)
 try {
 
-  const waRes = await fetch('/functions/v1/send-whatsapp', {
-    method: 'POST',
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      phone: phone,
-      name: name,
-      meeting_link: meetingLink,
-      scheduled_at: meeting.scheduled_local || meeting.scheduled_at
-    })
-  });
+const waRes = await fetch('https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp', {
+  method: 'POST',
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+  },
+  body: JSON.stringify({
+    phone: phone,
+    name: name,
+    meeting_link: meetingLink,
+    scheduled_at: meeting.scheduled_local || meeting.scheduled_at
+  })
+});
 
-  const waData = await waRes.json();
+const waData = await waRes.json();
 
-  if(!waRes.ok){
-    console.error("WhatsApp error:", waData);
-    alert("User created but WhatsApp failed");
-  }
+if(!waRes.ok){
+  console.error("WhatsApp error:", waData);
+  alert("User created but WhatsApp failed");
+}
 
 } catch (err) {
   console.error("WhatsApp send failed:", err);

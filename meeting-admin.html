@@ -220,6 +220,7 @@ End Meeting
 </select>
   
 <input id="meetingId" placeholder="Meeting ID" readonly>
+<input id="name" placeholder="Enter Name">
 <input id="phone" placeholder="Enter Phone Number">
 <select id="role">
 <option value="user">User</option>
@@ -303,7 +304,9 @@ async function generateUser(){
 let meetingId = document.getElementById("meetingId").value;
 let role = document.getElementById("role").value;
 let phoneInput = document.getElementById("phone").value.trim();
+let name = document.getElementById("name").value.trim();
 
+  
 if(!meetingId){
   alert("Enter meeting ID");
   return;
@@ -314,6 +317,11 @@ if(!phoneInput){
   return;
 }
 
+if(!name){
+  alert("Enter name");
+  return;
+}
+  
 if(phoneInput.length !== 10){
   alert("Enter valid 10 digit number");
   return;
@@ -325,6 +333,7 @@ let phone = "91" + phoneInput;
 const { error } = await supabaseClient.from("credentials").insert([{
   meeting_id: meetingId,
   phone: phone,
+  name: name,          // ✅ ADD THIS
   role: role,
   is_active: true
 }]);
@@ -336,7 +345,8 @@ if(error){
 }
 
 document.getElementById("phone").value = "";
-
+document.getElementById("name").value = "";
+  
 await loadCredentials();
 }
 
@@ -480,6 +490,7 @@ let table = document.getElementById("userTable");
 /* RESET TABLE */
 table.innerHTML = `
 <tr>
+<th>Name</th>
 <th>Phone</th>
 <th>Role</th>
 <th>Status</th>
@@ -492,6 +503,7 @@ data.forEach(user => {
 let row = table.insertRow();
 
 row.innerHTML = `
+<td>${user.name || "-"}</td>
 <td>${user.phone}</td>
 <td>${user.role}</td>
 

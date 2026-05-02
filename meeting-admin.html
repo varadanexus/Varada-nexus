@@ -372,17 +372,23 @@ if(existing && existing.length > 0){
 }
   
 /* INSERT */
-const { error } = await supabaseClient.from("credentials").insert([{
+const { data, error } = await supabaseClient
+.from("credentials")
+.insert([{
   meeting_id: meetingId,
   phone: phone,
-  name: name,          // ✅ ADD THIS
+  name: name,
   role: role,
-  is_active: true
-}]);
+  is_active: true,
+  is_approved: role === "admin"   // ✅ IMPORTANT
+}])
+.select();
+
+console.log("INSERT:", data, error);
 
 if(error){
-  console.error(error);
   alert("Insert failed ❌");
+  console.error(error);
   return;
 }
 

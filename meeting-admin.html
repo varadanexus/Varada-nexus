@@ -264,7 +264,8 @@ End Meeting
 const supabaseClient = window.supabaseClient
 
 let currentMeetingId = null;
-
+let realtimeChannel = null;
+  
 window.onload = async function(){
 
 await loadMeetings();
@@ -425,7 +426,6 @@ document.getElementById("phone").value = "";
 document.getElementById("name").value = "";
   
 await loadCredentials();
-subscribeToWaitingUsers();
 }
 
 async function deleteCredential(phone, btn){
@@ -772,24 +772,27 @@ await loadMeetings();
 
 function subscribeToWaitingUsers(){
 
-  supabaseClient
-  .channel("realtime-credentials-" + currentMeetingId)
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "credentials",
-      filter: `meeting_id=eq.${currentMeetingId}`
-    },
-    (payload) => {
-      console.log("REALTIME UPDATE:", payload);
+  // 🔴 REMOVE OLD CHANNEL
+  if(realtimeChannel){
+    supabaseClient.removeChannel(realtimeChannel);
+  }
 
-      // 🔥 REFRESH TABLE LIVE
-      loadCredentials();
-    }
-  )
-  .subscribe();
+  realtimeChannel = supabaseClient
+    .channel("realtime-credentials-" + currentMeetingId)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "credentials",
+        filter: `meeting_id=eq.${currentMeetingId}`
+      },
+      (payload) => {
+        console.log("REALTIME UPDATE:", payload);
+        loadCredentials();
+      }
+    )
+    .subscribe();
 
 }
 

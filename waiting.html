@@ -170,6 +170,26 @@ if(incomingPhone === currentPhone && payload.new.is_approved){
   }
 )
 .subscribe();
+
+// 🔥 FALLBACK CHECK (VERY IMPORTANT)
+setInterval(async () => {
+
+  const { data } = await supabaseClient
+    .from("credentials")
+    .select("is_approved, role")
+    .eq("phone", phone)
+    .eq("meeting_id", meeting)
+    .single();
+
+  if(data?.is_approved){
+    window.location.href =
+      `meeting.html?id=${meeting}` +
+      `&user=${phone}` +
+      `&role=${data.role || "user"}` +
+      `&name=${encodeURIComponent(userName)}`;
+  }
+
+}, 2000);
   
 </script>
 

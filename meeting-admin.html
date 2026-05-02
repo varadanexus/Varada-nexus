@@ -496,13 +496,21 @@ let statusCell = document.getElementById("status-"+phone);
 if(isCurrentlyDisable){
 btn.innerText = "Enable";
 btn.style.background = "#22c55e";
-statusCell.innerText = "Inactive";
-statusCell.style.color = "#ef4444";
+
+statusCell.innerHTML = `
+<span style="color:#22c55e;">Admitted</span><br>
+<span style="color:#ef4444;">Inactive</span>
+`;
+
 }else{
 btn.innerText = "Disable";
 btn.style.background = "#f59e0b";
-statusCell.innerText = "Active";
-statusCell.style.color = "#22c55e";
+
+statusCell.innerHTML = `
+<span style="color:#22c55e;">Admitted</span><br>
+<span style="color:#22c55e;">Active</span>
+`;
+
 }
 }
 
@@ -626,8 +634,14 @@ row.innerHTML = `
 <td>${user.phone}</td>
 <td>${user.role}</td>
 
-<td style="color:${user.is_approved ? '#22c55e' : '#facc15'};">
+<td id="status-${user.phone}">
+<span style="color:${user.is_approved ? '#22c55e' : '#facc15'};">
 ${user.is_approved ? 'Admitted' : 'Waiting'}
+</span>
+<br>
+<span style="color:${user.is_active ? '#22c55e' : '#ef4444'};">
+${user.is_active ? 'Active' : 'Inactive'}
+</span>
 </td>
 
 <td>

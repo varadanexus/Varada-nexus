@@ -199,6 +199,7 @@ window.location.href="login.html"
 <h3>Create Meeting</h3>
 
 <input id="title" placeholder="Meeting Title">
+<input id="scheduled_at" type="datetime-local">
 
 <button onclick="createMeeting()">Create Meeting</button>
 
@@ -272,6 +273,7 @@ await loadCredentials();
 async function createMeeting(){
 
 let title = document.getElementById("title").value;
+let scheduledAt = document.getElementById("scheduled_at").value;
 
 let room = "VN_" + Date.now() + "_" + Math.random().toString(36).substring(2,6);
 
@@ -280,7 +282,9 @@ const { data } = await supabaseClient
 .insert([{ 
   title, 
   room_name: room,
-  status: "waiting"
+  status: "waiting",
+  scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+  scheduled_local: scheduledAt
 }])
 .select()
 .single();
@@ -328,7 +332,30 @@ if(phoneInput.length !== 10){
 }
 
 let phone = "91" + phoneInput;
+const meetingLink = `${window.location.origin}/meeting-login.html?id=${meetingId}`;
 
+const { data: meeting, error: meetingError } = await supabaseClient
+.from("meetings")
+.select("*")
+.eq("id", meetingId)
+.single();
+
+if(meetingError || !meeting){
+  alert("Meeting not found");
+  return;
+}
+
+const { data: existing } = await supabaseClient
+.from("credentials")
+.select("*")
+.eq("phone", phone)
+.eq("meeting_id", meetingId);
+
+if(existing && existing.length > 0){
+  alert("User already exists for this meeting");
+  return;
+}
+  
 /* INSERT */
 const { error } = await supabaseClient.from("credentials").insert([{
   meeting_id: meetingId,
@@ -344,6 +371,31 @@ if(error){
   return;
 }
 
+// 🚀 SEND WHATSAPP MESSAGE (WITH ERROR HANDLING)
+try {
+
+  const waRes = await fetch('/functions/v1/send-whatsapp', {
+    method: 'POST',
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone: phone,
+      name: name,
+      meeting_link: meetingLink,
+      scheduled_at: meeting.scheduled_local || meeting.scheduled_at
+    })
+  });
+
+  const waData = await waRes.json();
+
+  if(!waRes.ok){
+    console.error("WhatsApp error:", waData);
+    alert("User created but WhatsApp failed");
+  }
+
+} catch (err) {
+  console.error("WhatsApp send failed:", err);
+  alert("WhatsApp service error");
+}
 document.getElementById("phone").value = "";
 document.getElementById("name").value = "";
   

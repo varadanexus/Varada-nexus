@@ -648,7 +648,7 @@ ${user.is_active ? 'Active' : 'Inactive'}
 
 <button onclick="toggleApproval('${user.phone}', ${user.is_approved})"
 style="background:${user.is_approved ? '#ef4444' : '#22c55e'};padding:5px 8px;border-radius:6px;margin:2px;">
-${user.is_approved ? 'Unadmit' : 'Admit'}
+${user.is_approved ? 'Remove' : 'Admit'}
 </button>
 
 <button onclick="toggleActive('${user.phone}', this)"

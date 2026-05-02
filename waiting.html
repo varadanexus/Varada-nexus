@@ -132,7 +132,10 @@ supabaseClient
   (payload) => {
 
     // 🔥 ONLY CURRENT USER
-    if(payload.new.phone === phone && payload.new.is_approved){
+    const incomingPhone = String(payload.new.phone).slice(-10);
+const currentPhone = String(phone).slice(-10);
+
+if(incomingPhone === currentPhone && payload.new.is_approved){
       window.location.href =
         `meeting.html?id=${meeting}` +
         `&user=${phone}` +

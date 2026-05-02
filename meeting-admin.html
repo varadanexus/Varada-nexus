@@ -604,7 +604,7 @@ if(!currentMeetingId) return;
 
 const { data, error } = await supabaseClient
 .from("credentials")
-.select("*")
+.select("name, phone, role, is_active, is_approved, status")
 .eq("meeting_id", currentMeetingId);
 
 if(error){
@@ -635,13 +635,21 @@ row.innerHTML = `
 <td>${user.role}</td>
 
 <td id="status-${user.phone}">
-<span style="color:${user.is_approved ? '#22c55e' : '#facc15'};">
-${user.is_approved ? 'Admitted' : 'Waiting'}
+
+<span style="color:${
+  user.status === 'in_meeting' ? '#22c55e' :
+  user.status === 'waiting' ? '#facc15' :
+  '#ef4444'
+};">
+${user.status || 'offline'}
 </span>
+
 <br>
+
 <span style="color:${user.is_active ? '#22c55e' : '#ef4444'};">
 ${user.is_active ? 'Active' : 'Inactive'}
 </span>
+
 </td>
 
 <td>

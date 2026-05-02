@@ -2,6 +2,10 @@
 <html>
 <head>
 <title>Waiting Room</title>
+  
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+  
 <style>
 body{
   background:#0a0f1c;
@@ -27,7 +31,7 @@ body{
 
 <script>
 
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
   "https://ticsgbtxfhhihamejiss.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
 );
@@ -39,7 +43,7 @@ const meeting = params.get("meeting");
 // 🔴 POLLING (CHECK EVERY 3 SEC)
 setInterval(async () => {
 
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from("credentials")
     .select("is_approved")
     .eq("phone", phone)

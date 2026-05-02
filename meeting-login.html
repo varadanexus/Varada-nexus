@@ -145,6 +145,7 @@ border:none;
 background:rgba(255,255,255,0.12);
 color:white;
 font-size:14px;
+display:block;
 }
 
 .field input:focus{
@@ -170,15 +171,13 @@ cursor:pointer;
 .send-otp{
 position:absolute;
 right:12px;
-top:0;
-height:100%;
-display:flex;
-align-items:center;
+top:50%;
+transform:translateY(-50%);   /* ✅ TRUE CENTER */
 font-size:12px;
 color:#22c55e;
 cursor:pointer;
 font-weight:600;
-transition:0.2s;
+line-height:1;               /* 🔥 FIX ALIGNMENT ISSUE */
 }
   
 /* ===== BUTTON ===== */

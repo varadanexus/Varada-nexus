@@ -21,8 +21,12 @@ const params = new URLSearchParams(window.location.search);
 
 const meetingId = params.get("id");
 const role = params.get("role");
+
+const phone = params.get("user") || "Guest";
+const user = params.get("name") || phone;   // ✅ THIS IS THE FIX
+
 console.log("ROLE:", role);
-const user = params.get("user") || "Guest";
+console.log("NAME:", user);
 
 /* SUPABASE */
 const supabaseClient = supabase.createClient(

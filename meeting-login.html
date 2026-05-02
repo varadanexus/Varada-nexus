@@ -166,6 +166,17 @@ font-size:12px;
 color:#93c5fd;
 cursor:pointer;
 }
+
+.send-otp{
+position:absolute;
+right:12px;
+top:50%;
+transform:translateY(-50%);
+font-size:12px;
+color:#22c55e;
+cursor:pointer;
+font-weight:600;
+}
   
 /* ===== BUTTON ===== */
 button{
@@ -252,9 +263,9 @@ color:#cbd5f5;
 
 <div class="field">
   <input id="otp" placeholder="Enter OTP">
+  <span id="otpBtn" class="send-otp" onclick="sendOTP()">Send</span>
 </div>
 
-<button id="otpBtn" onclick="sendOTP()">Send OTP</button>
 <button onclick="verifyOTP()">Verify & Join</button>
 
 <div id="error" class="error"></div>
@@ -301,7 +312,8 @@ if(!phone){
   return
 }
 
-btn.disabled = true
+btn.style.pointerEvents = "none";
+btn.style.opacity = "0.5";
 btn.innerText = "Sending..."
 
 const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-otp", {
@@ -325,7 +337,8 @@ try {
 
 if(!res.ok){
   document.getElementById("error").innerText = data.error
-  btn.disabled = false
+  btn.style.pointerEvents = "auto";
+  btn.style.opacity = "1";
   btn.innerText = "Send OTP"
   return
 }

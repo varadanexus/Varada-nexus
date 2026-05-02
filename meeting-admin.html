@@ -212,6 +212,21 @@ End Meeting
   
 </div>
 
+<!-- MEETINGS LIST -->
+<div class="card">
+<h3>All Meetings</h3>
+
+<table class="table" id="meetingTable">
+<tr>
+<th>Title</th>
+<th>Date</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</table>
+
+</div>
+  
 <!-- ADD USERS -->
 <div class="card">
 <h3>Generate Credentials</h3>
@@ -495,8 +510,8 @@ console.error(error);
 return;
 }
 
+// ✅ DROPDOWN (EXISTING)
 let dropdown = document.getElementById("meetingSelect");
-
 dropdown.innerHTML = `<option value="">Select Meeting</option>`;
 
 data.forEach(m => {
@@ -505,6 +520,46 @@ dropdown.innerHTML += `
 ${m.title} (${m.status})
 </option>
 `;
+});
+
+// ✅ NEW TABLE
+let table = document.getElementById("meetingTable");
+
+table.innerHTML = `
+<tr>
+<th>Title</th>
+<th>Date</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+`;
+
+data.forEach(m => {
+
+let date = m.scheduled_local || "-";
+
+let row = table.insertRow();
+
+row.innerHTML = `
+<td>${m.title}</td>
+<td>${date}</td>
+<td>${m.status}</td>
+
+<td>
+
+<button onclick="editMeeting('${m.id}', '${m.title}', '${m.scheduled_local || ''}')"
+style="background:#3b82f6;padding:5px 8px;border-radius:6px;margin:2px;">
+Edit
+</button>
+
+<button onclick="deleteMeeting('${m.id}')"
+style="background:#ef4444;padding:5px 8px;border-radius:6px;margin:2px;">
+Delete
+</button>
+
+</td>
+`;
+
 });
 
 }
@@ -645,6 +700,58 @@ document.getElementById("genBtn").disabled = true;
 /* 5. REFRESH MEETINGS LIST */
 await loadMeetings();
 
+}
+  
+async function editMeeting(id, title, scheduled){
+
+let newTitle = prompt("Edit Title:", title);
+if(newTitle === null) return;
+
+let newDate = prompt("Edit Date (YYYY-MM-DDTHH:MM):", scheduled || "");
+
+const { error } = await supabaseClient
+.from("meetings")
+.update({
+  title: newTitle,
+  scheduled_local: newDate,
+  scheduled_at: newDate ? new Date(newDate).toISOString() : null
+})
+.eq("id", id);
+
+if(error){
+alert("Update failed");
+console.error(error);
+return;
+}
+
+alert("Meeting updated");
+await loadMeetings();
+}
+
+async function deleteMeeting(id){
+
+if(!confirm("Delete this meeting?")) return;
+
+// 🔴 DELETE USERS FIRST (FK SAFETY)
+await supabaseClient
+.from("credentials")
+.delete()
+.eq("meeting_id", id);
+
+// 🔴 DELETE MEETING
+const { error } = await supabaseClient
+.from("meetings")
+.delete()
+.eq("id", id);
+
+if(error){
+alert("Delete failed");
+console.error(error);
+return;
+}
+
+alert("Meeting deleted");
+await loadMeetings();
 }
   
 </script>

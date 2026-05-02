@@ -399,7 +399,7 @@ if(!res.ok){
 // 🔥 CHECK ACCESS
 const { data: cred } = await supabaseClient
 .from("credentials")
-.select("*, meetings(id, room_name, status)")
+.select("name, phone, role, meetings(id, room_name, status)")
 .eq("phone", phone)
 .eq("is_active", true)
 .single()
@@ -418,7 +418,8 @@ if(cred.role !== "admin" && cred.meetings.status !== "live"){
 window.location.href =
 "meeting.html?id=" + cred.meetings.id +
 "&role=" + cred.role +
-"&user=" + phone
+"&user=" + phone +
+"&name=" + encodeURIComponent(cred.name || phone)
 
 }
   

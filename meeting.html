@@ -107,6 +107,13 @@ const api = new JitsiMeetExternalAPI("8x8.vc", {
 
 api.executeCommand("displayName", user);
 
+// 🔥 SET STATUS = IN_MEETING
+await supabaseClient
+  .from("credentials")
+  .update({ status: "in_meeting" })
+  .eq("phone", phone)
+  .eq("meeting_id", meetingId);
+  
 // 🔥 FORCE REMOVE (REALTIME)
 supabaseClient
 .channel("force-remove-" + meetingId)
@@ -150,11 +157,25 @@ setInterval(async () => {
 }, 3000);
   
 // 🔴 REDIRECT WHEN MEETING ENDS
-api.addEventListener("readyToClose", () => {
+api.addEventListener("readyToClose", async () => {
+
+  await supabaseClient
+    .from("credentials")
+    .update({ status: "offline" })
+    .eq("phone", phone)
+    .eq("meeting_id", meetingId);
+
   window.location.href = "index.html";
 });
 
-api.addEventListener("videoConferenceLeft", () => {
+api.addEventListener("videoConferenceLeft", async () => {
+
+  await supabaseClient
+    .from("credentials")
+    .update({ status: "offline" })
+    .eq("phone", phone)
+    .eq("meeting_id", meetingId);
+
   window.location.href = "index.html";
 });
   

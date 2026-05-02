@@ -119,6 +119,22 @@ console.log("WAITING DATA:", data, error);
 
 loadDetails();
 
+// ✅ INITIAL CHECK (VERY IMPORTANT)
+const { data: initialData } = await supabaseClient
+  .from("credentials")
+  .select("is_approved, role")
+  .eq("phone", phone)
+  .eq("meeting_id", meeting)
+  .single();
+
+if(initialData?.is_approved){
+  window.location.href =
+    `meeting.html?id=${meeting}` +
+    `&user=${phone}` +
+    `&role=${initialData.role || "user"}` +
+    `&name=${encodeURIComponent(userName)}`;
+}
+  
 supabaseClient
 .channel("waiting-" + meeting)
 .on(

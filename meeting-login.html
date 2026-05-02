@@ -173,11 +173,12 @@ right:12px;
 top:0;
 height:100%;
 display:flex;
-align-items:center;   /* ✅ PERFECT VERTICAL CENTER */
+align-items:center;
 font-size:12px;
 color:#22c55e;
 cursor:pointer;
 font-weight:600;
+transition:0.2s;
 }
   
 /* ===== BUTTON ===== */
@@ -341,25 +342,31 @@ if(!res.ok){
   document.getElementById("error").innerText = data.error
   btn.style.pointerEvents = "auto";
   btn.style.opacity = "1";
-  btn.innerText = "Send OTP"
+  btn.innerText = "Send"
   return
 }
 
 // 🔥 TIMER
-timer = 30
-btn.innerText = "Resend in 30s"
+timer = 30;
 
-interval = setInterval(()=>{
-  timer--
-  btn.innerText = "Resend in " + timer + "s"
+btn.innerText = "30s";
+btn.style.pointerEvents = "none";
+btn.style.opacity = "0.6";
+
+interval = setInterval(() => {
+  timer--;
+
+  btn.innerText = timer + "s";
 
   if(timer <= 0){
-    clearInterval(interval)
-    btn.disabled = false
-    btn.innerText = "Send OTP"
+    clearInterval(interval);
+
+    btn.style.pointerEvents = "auto";
+    btn.style.opacity = "1";
+    btn.innerText = "Send";
   }
 
-},1000)
+}, 1000);
 
 }
 

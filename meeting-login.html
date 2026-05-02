@@ -399,7 +399,7 @@ if(!res.ok){
 // 🔥 CHECK ACCESS
 const { data: cred } = await supabaseClient
 .from("credentials")
-.select("name, phone, role, meetings(id, room_name, status)")
+.select("name, phone, role, is_approved, meetings(id, room_name, status)")
 .eq("phone", phone)
 .eq("is_active", true)
 .single()
@@ -407,6 +407,11 @@ const { data: cred } = await supabaseClient
 if(!cred){
   document.getElementById("error").innerText="Not allowed"
   return
+}
+
+if(cred.role !== "admin" && !cred.is_approved){
+  window.location.href = `waiting.html?phone=${phone}&meeting=${cred.meetings.id}`;
+  return;
 }
 
 if(cred.role !== "admin" && cred.meetings.status !== "live"){

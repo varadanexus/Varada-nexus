@@ -119,6 +119,14 @@ console.log("WAITING DATA:", data, error);
 
 (async () => {
   await loadDetails();
+
+  // 🔥 SET STATUS = WAITING (ADD THIS)
+  await supabaseClient
+    .from("credentials")
+    .update({ status: "waiting" })
+    .eq("phone", phone)
+    .eq("meeting_id", meeting);
+
   await checkInitial();
 })();
 

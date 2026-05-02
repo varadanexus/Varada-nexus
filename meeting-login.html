@@ -397,15 +397,15 @@ if(!res.ok){
 }
 
 // 🔥 CHECK ACCESS
-const { data, error } = await supabaseClient
+const { data: credData, error } = await supabaseClient
 .from("credentials")
 .select("name, phone, role, is_approved, meetings(id, room_name, status)")
 .eq("phone", phone)
 .eq("is_active", true);
 
-console.log("CREDENTIAL QUERY:", data, error);
+console.log("CREDENTIAL QUERY:", credData, error);
 
-const cred = data?.[0];
+const cred = credData?.[0];
 
 if(!cred){
   document.getElementById("error").innerText="User not found / not created"

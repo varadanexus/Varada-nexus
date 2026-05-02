@@ -107,6 +107,48 @@ const api = new JitsiMeetExternalAPI("8x8.vc", {
 
 api.executeCommand("displayName", user);
 
+// 🔥 FORCE REMOVE (REALTIME)
+supabaseClient
+.channel("force-remove-" + meetingId)
+.on(
+  "postgres_changes",
+  {
+    event: "UPDATE",
+    schema: "public",
+    table: "credentials",
+    filter: `meeting_id=eq.${meetingId}`
+  },
+  (payload) => {
+
+    const incomingPhone = String(payload.new.phone).slice(-10);
+    const currentPhone = String(phone).slice(-10);
+
+    if(incomingPhone === currentPhone && !payload.new.is_approved){
+      alert("You have been removed by admin");
+      window.location.href = "meeting-login.html";
+    }
+
+  }
+)
+.subscribe();
+
+// 🔥 FALLBACK CHECK (SAFETY)
+setInterval(async () => {
+
+  const { data } = await supabaseClient
+    .from("credentials")
+    .select("is_approved")
+    .eq("phone", phone)
+    .eq("meeting_id", meetingId)
+    .single();
+
+  if(data && !data.is_approved){
+    alert("You have been removed by admin");
+    window.location.href = "meeting-login.html";
+  }
+
+}, 3000);
+  
 // 🔴 REDIRECT WHEN MEETING ENDS
 api.addEventListener("readyToClose", () => {
   window.location.href = "index.html";

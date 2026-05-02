@@ -146,7 +146,7 @@ supabaseClient
     filter: `meeting_id=eq.${meeting}`
   },
   (payload) => {
-
+console.log("REALTIME EVENT:", payload);
     // 🔥 ONLY CURRENT USER
     const incomingPhone = String(payload.new.phone).slice(-10);
 const currentPhone = String(phone).slice(-10);

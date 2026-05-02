@@ -91,32 +91,23 @@ const meeting = params.get("meeting");
 let userName = "";
 let meetingTitle = "";
 
-// 🔴 POLLING (CHECK EVERY 3 SEC)
-setInterval(async () => {
-
-  const { data } = await supabaseClient
-    .from("credentials")
-    .select("is_approved")
-    .eq("phone", phone)
-    .eq("meeting_id", meeting)
-    .single();
-
-  if(data?.is_approved){
-    window.location.href = `meeting.html?id=${meeting}&user=${phone}`;
-  }
-
-}, 3000);
-
+if(!phone || !meeting){
+  document.body.innerHTML = "<h3 style='color:white;text-align:center;margin-top:40vh;'>Invalid access</h3>";
+  throw new Error("Missing params");
+}
+  
 async function loadDetails(){
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("credentials")
     .select("name, meetings(title)")
     .eq("phone", phone)
     .eq("meeting_id", meeting)
     .single();
 
-  if(data){
+console.log("WAITING DATA:", data, error);
+  
+  if(data && data.meetings){
     userName = data.name || "User";
     meetingTitle = data.meetings?.title || "Meeting";
 
@@ -127,6 +118,31 @@ async function loadDetails(){
 }
 
 loadDetails();
+
+supabaseClient
+.channel("waiting-" + meeting)
+.on(
+  "postgres_changes",
+  {
+    event: "UPDATE",
+    schema: "public",
+    table: "credentials",
+    filter: `meeting_id=eq.${meeting}`
+  },
+  (payload) => {
+
+    // 🔥 ONLY CURRENT USER
+    if(payload.new.phone === phone && payload.new.is_approved){
+      window.location.href =
+        `meeting.html?id=${meeting}` +
+        `&user=${phone}` +
+        `&role=${payload.new.role || "user"}` +
+        `&name=${encodeURIComponent(userName)}`;
+    }
+
+  }
+)
+.subscribe();
   
 </script>
 

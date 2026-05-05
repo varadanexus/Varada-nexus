@@ -60,7 +60,7 @@ const { data: agent } = await supabaseClient
   .from("agents")
   .select("is_active")
   .eq("auth_id", session.user.id)
-  .single()
+  .maybeSingle()
 
 if(agent && agent.is_active === false){
   await supabaseClient.auth.signOut()
@@ -85,7 +85,7 @@ const {data:user}=await supabaseClient
 .from("users")
 .select("session_token")
 .eq("auth_id",authId)
-.single()
+.maybeSingle()
 
 if(!user) return
 
@@ -114,7 +114,7 @@ const {data:settings}=await supabaseClient
 .from("system_settings")
 .select("*")
 .eq("id",1)
-.single()
+.maybeSingle()
 
 if(!settings) return
 
@@ -144,7 +144,7 @@ const {data:user}=await supabaseClient
 .from("users")
 .select("is_admin")
 .eq("auth_id",authId)
-.single()
+.maybeSingle()
 
 /* ADMIN BADGE */
 

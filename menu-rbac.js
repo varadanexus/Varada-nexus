@@ -11,7 +11,7 @@ const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
-.single()
+.maybeSingle()
 
 if(!user) return
 

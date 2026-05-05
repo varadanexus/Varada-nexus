@@ -4,6 +4,7 @@
 <head>
 
 <title>Master Data</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -180,7 +181,7 @@ overflow-x:auto;
 <div id="sidebar-container"></div>
 
 <script>
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

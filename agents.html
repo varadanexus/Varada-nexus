@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Agents - Varada Nexus ERP</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -162,7 +163,7 @@ const supabaseClient = supabase.createClient(
 <script>
 
 /* LOAD SIDEBAR + INIT */
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

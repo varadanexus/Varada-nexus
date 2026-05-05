@@ -4,6 +4,7 @@
 <head>
 
 <title>Admin Transporter Ledger - Varada Nexus ERP</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -167,7 +168,7 @@ if (!window.supabaseClient) {
 
 /* ✅ STANDARD SIDEBAR (same as dashboard) */
 
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

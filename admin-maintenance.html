@@ -4,6 +4,8 @@
 <head>
 
 <title>System Maintenance Control - Varada Nexus ERP</title>
+<base href="/">
+
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
 
@@ -87,7 +89,7 @@ font-weight:600;
 async function loadSidebar(){
 try{
 
-const res = await fetch("sidebar.html")
+const res = await fetch("/sidebar.html")
 const html = await res.text()
 
 document.getElementById("sidebar-container").innerHTML = html

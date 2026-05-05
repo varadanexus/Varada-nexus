@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Meeting Admin - Varada Nexus</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -100,7 +101,7 @@ text-align:left;
 
 <script>
 
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

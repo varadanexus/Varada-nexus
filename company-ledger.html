@@ -3,6 +3,7 @@
 
 <head>
 <title>Company Ledger - Varada Nexus</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -19,7 +20,7 @@
 <script src="invoice-utils.js"></script>
 
 <script type="module">
-import { generateTransporterPDFBlob } from './statement-utils.js'
+import { generateTransporterPDFBlob } from '/statement-utils.js'
 
 window.generateTransporterPDFBlob = generateTransporterPDFBlob
 </script>
@@ -102,7 +103,7 @@ text-align:left;
 
 /* ✅ SAME STRUCTURE AS DASHBOARD */
 
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

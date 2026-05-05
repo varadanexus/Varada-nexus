@@ -4,6 +4,7 @@
 <head>
 
 <title>Dashboard - Varada Nexus ERP</title>
+<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -136,7 +137,7 @@ const supabaseClient = window.supabaseClient
 <script>
 
 /* LOAD SIDEBAR + RBAC */
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 

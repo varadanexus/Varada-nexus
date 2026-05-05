@@ -146,7 +146,7 @@ const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",authId)
-.single()
+.maybeSingle()
 
 if(!user) return
 
@@ -154,7 +154,7 @@ const {data:userRole} = await supabaseClient
 .from("user_roles")
 .select("role_id")
 .eq("user_id",user.id)
-.single()
+.maybeSingle()
 
 if(!userRole) return
 
@@ -162,7 +162,7 @@ const {data:role} = await supabaseClient
 .from("roles")
 .select("role_name")
 .eq("id",userRole.role_id)
-.single()
+.maybeSingle()
 
 if(role){
 document.getElementById("userRole").innerText = role.role_name
@@ -420,7 +420,7 @@ const { data:c } = await supabaseClient
 .from("gst_credit_notes")
 .select("*")
 .eq("id", id)
-.single()
+.maybeSingle()
 
 if(!c){
 alert("Credit note not found")
@@ -440,7 +440,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", c.invoice_id)
-.single()
+.maybeSingle()
 
 let diff = newAmount - c.amount
 
@@ -494,7 +494,7 @@ const { data:c } = await supabaseClient
 .from("gst_credit_notes")
 .select("*")
 .eq("id", id)
-.single()
+.maybeSingle()
 
 if(!c){
 alert("Not found")
@@ -506,7 +506,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", c.invoice_id)
-.single()
+.maybeSingle()
 
 let newBalance = Number(inv.balance_amount) + Number(c.amount)
 
@@ -862,7 +862,7 @@ const { data:inv, error:invError } = await supabaseClient
     gst_percent: gstPercent
 }])
 .select()
-.single()
+.maybeSingle()
 
 if(invError || !inv){
     console.log("❌ Invoice Save Error:", invError)
@@ -1118,7 +1118,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", invoiceId)
-.single()
+.maybeSingle()
 
 if(!inv){
     alert("Invoice not found")
@@ -1233,7 +1233,7 @@ const { data:invData } = await supabaseClient
 .from("client_invoices_gst")
 .select("invoice_no,client_name,drive_file_id") // 🔥 ADD THIS
 .eq("id", id)
-.single()
+.maybeSingle()
 
 if(invData){
 
@@ -1317,7 +1317,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", invoiceId)
-.single()
+.maybeSingle()
 
 if(!inv){
 alert("Invoice not found")
@@ -1354,7 +1354,7 @@ const { data:lastEntry } = await supabaseClient
 .select("balance")
 .order("created_at", { ascending:false })
 .limit(1)
-.single()
+.maybeSingle()
 
 let lastBalance = lastEntry?.balance || 0
 
@@ -1445,7 +1445,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", invoiceId)
-.single()
+.maybeSingle()
 
 if(!inv){
 alert("Invoice not found")
@@ -1568,7 +1568,7 @@ const { data:p } = await supabaseClient
 .from("gst_payments")
 .select("*")
 .eq("id", id)
-.single()
+.maybeSingle()
 
 if(!p){
 alert("Payment not found")
@@ -1580,7 +1580,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", p.invoice_id)
-.single()
+.maybeSingle()
 
 /* 🔥 RESTORE INVOICE BALANCE */
 let restoredBalance = Number(inv.balance_amount) + Number(p.amount)
@@ -1656,7 +1656,7 @@ async function regenerateAndReplaceInvoice(invoiceId){
   .from("client_invoices_gst")
   .select("*")
   .eq("id", invoiceId)
-  .single()
+  .maybeSingle()
 
   if(!inv){
     console.error("Invoice not found")
@@ -1738,7 +1738,7 @@ supabaseClient
 .from("gst_payments")
 .select("*")
 .eq("id", id)
-.single()
+.maybeSingle()
 .then(({data:p})=>{
 
 if(!p){
@@ -1816,7 +1816,7 @@ const { data:inv } = await supabaseClient
 .from("client_invoices_gst")
 .select("*")
 .eq("id", p.invoice_id)
-.single()
+.maybeSingle()
 
 let newBalance = Number(inv.balance_amount) - diff
 if(newBalance < 0) newBalance = 0

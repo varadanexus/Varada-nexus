@@ -4,6 +4,8 @@
 <head>
 <title>Transporter Payments - Varada Nexus</title>
 
+<base href="/">
+
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
     
@@ -82,7 +84,7 @@ color:#9ca3af;
 
 /* ✅ STANDARD SIDEBAR (FIXED) */
 
-fetch("sidebar.html")
+fetch("/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 
@@ -181,7 +183,7 @@ document.getElementById("userRole").innerText = role.role_name
 
 window.logout = async function(){
 await supabaseClient.auth.signOut()
-window.location.href="login.html"
+window.location.href="/login.html"
 }
 
 }
@@ -343,7 +345,7 @@ Enter Payment:
 
 <script type="module">
 
-import { generateTransporterPDFBlob } from './statement-utils.js'
+import { generateTransporterPDFBlob } from '/statement-utils.js'
 
 const supabaseClient = window.supabaseClient
 

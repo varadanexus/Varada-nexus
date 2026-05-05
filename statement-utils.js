@@ -1,4 +1,4 @@
-async function generateTransporterPDFBlob(invoiceId){
+export async function generateTransporterPDFBlob(invoiceId){
   
   const { jsPDF } = window.jspdf
 

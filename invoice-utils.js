@@ -37,17 +37,22 @@ creditNotes?.forEach(c=>{
 
 
 /* 3️⃣ BUILD TABLE */
-let rows = []
-
 bd.forEach(t=>{
+
+let expense = Number(t.expense || 0)
+
+let contractAdjusted = Number(t.contract_value || 0) - expense
+let freightAdjusted  = Number(t.freight_cost || 0) - expense
+
 rows.push([
 t.trip_no,
-t.truck_no || "-",   // ✅ NEW COLUMN
-Number(t.contract_value || 0).toFixed(2),
-Number(t.freight_cost || 0).toFixed(2),
+t.truck_no || "-",
+contractAdjusted.toFixed(2),
+freightAdjusted.toFixed(2),
 Number(t.margin || 0).toFixed(2),
 Number(t.gst || 0).toFixed(2)
 ])
+
 })
 
 

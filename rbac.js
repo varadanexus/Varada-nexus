@@ -12,7 +12,7 @@ const {data:user} = await supabaseClient
 .from("users")
 .select("id")
 .eq("auth_id",session.user.id)
-.single()
+.maybeSingle()
 
 return user || null
 }

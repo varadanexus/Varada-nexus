@@ -14,6 +14,22 @@ const { data:bd } = await supabaseClient
 .select("*")
 .eq("invoice_id", invoiceId)
 
+/* 🔥 FETCH EXPENSES */
+const { data:expenses } = await supabaseClient
+.from("expenses")
+.select("trip_id, amount")
+
+let expenseMap = {}
+
+expenses?.forEach(e=>{
+    if(!expenseMap[e.trip_id]){
+        expenseMap[e.trip_id] = 0
+    }
+    expenseMap[e.trip_id] += Number(e.amount || 0)
+})
+
+    
+
 if(!inv){
     alert("Invoice not found")
     return null
@@ -41,7 +57,7 @@ let rows = []
 
 bd.forEach(t=>{
 
-let expense = Number(t.expense || 0)
+let expense = expenseMap[t.trip_id] || 0
 
 let contractAdjusted = Number(t.contract_value || 0) - expense
 let freightAdjusted  = Number(t.freight_cost || 0) - expense

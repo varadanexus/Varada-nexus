@@ -37,6 +37,8 @@ creditNotes?.forEach(c=>{
 
 
 /* 3️⃣ BUILD TABLE */
+let rows = []
+
 bd.forEach(t=>{
 
 let expense = Number(t.expense || 0)

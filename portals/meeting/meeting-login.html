@@ -435,7 +435,7 @@ if(!cred){
 }
 
 if(cred.role !== "admin" && !cred.is_approved){
-  window.location.href = `waiting.html?phone=${phone}&meeting=${cred.meetings.id}`;
+  window.location.href = `/portals/meeting/waiting.html?phone=${phone}&meeting=${cred.meetings.id}`;
   return;
 }
 
@@ -446,7 +446,7 @@ if(cred.role !== "admin" && cred.meetings.status !== "live"){
 
 // ✅ REDIRECT
 window.location.href =
-"meeting.html?id=" + cred.meetings.id +
+"/portals/meeting/meeting.html?id=" + cred.meetings.id +
 "&role=" + cred.role +
 "&user=" + phone +
 "&name=" + encodeURIComponent(cred.name || phone)

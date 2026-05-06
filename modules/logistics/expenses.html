@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Trip Expenses - Varada Nexus ERP</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+    
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/session-check.js"></script>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+h1{
+font-size:20px;
+margin-bottom:12px;
+}
+
+/* CARD */
+.card{
+background:#111827;
+padding:18px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* GRID */
+.form-grid{
+display:grid;
+grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+gap:12px;
+}
+
+/* INPUTS */
+input,select{
+background:#0f172a;
+border:1px solid rgba(255,255,255,0.05);
+color:white;
+padding:8px;
+border-radius:6px;
+}
+
+/* BUTTON */
+button{
+padding:8px 12px;
+background:#3b82f6;
+color:white;
+border:none;
+cursor:pointer;
+border-radius:6px;
+transition:0.2s;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+font-size:12px;
+text-align:left;
+}
+
+/* ACTION BUTTONS */
+.editBtn{background:#0ea5e9;}
+.deleteBtn{background:#ef4444;}
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+
+/* LOAD SIDEBAR + INIT */
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+setTimeout(async ()=>{
+
+    console.log("✅ Sidebar injected")
+
+    await initSidebar()
+
+    console.log("✅ User initialized")
+
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+        console.log("✅ RBAC applied")
+    } else {
+        console.log("❌ RBAC function missing")
+    }
+
+    if(typeof setActiveMenu === "function"){
+    setActiveMenu()
+}  // 🔥 MUST COME AFTER RBAC
+
+    console.log("✅ Active menu set")
+
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    document.getElementById("sidebar").style.display="block"
+
+},300) // 🔥 IMPORTANT (increase delay)
+
+})
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+const userEl = document.getElementById("userName")
+
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+const roleEl = document.getElementById("userRole")
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
+}
+
+}
+
+</script>
+
+<div class="main">
+
+<h1>Trip Expenses</h1>
+
+<div class="card">
+
+<h3>Add Expense</h3>
+
+<div class="form-grid">
+
+<select id="trip"></select>
+
+<select id="type">
+<option>Fuel</option>
+<option>Toll</option>
+<option>Driver</option>
+<option>Maintenance</option>
+<option>Other</option>
+</select>
+
+<input id="amount" placeholder="Amount">
+
+<button onclick="saveExpense()">Add Expense</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<input id="searchTrip" placeholder="Search Trip No">
+
+<select id="filterType">
+<option value="">All Types</option>
+<option>Fuel</option>
+<option>Toll</option>
+<option>Driver</option>
+<option>Maintenance</option>
+<option>Other</option>
+</select>
+
+<button onclick="applyFilter()">Filter</button>
+<button onclick="clearFilter()">Clear</button>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>Expense ID</th>
+<th>Trip</th>
+<th>Type</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="expenseTable"></tbody>
+
+</table>
+
+<br>
+
+<button onclick="prevPage()">Previous</button>
+<button onclick="nextPage()">Next</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+</div>
+
+<script>
+
+let trips=[]
+let expenses=[]
+let filtered=[]
+
+let page=1
+let pageSize=10
+
+init()
+
+async function init(){
+await loadTrips()
+await loadExpenses()
+}
+
+/* LOAD TRIPS */
+
+async function loadTrips(){
+
+const {data}=await supabaseClient
+.from("trips")
+.select("*")
+.order("created_at",{ascending:false})
+
+trips=data || []
+
+let html='<option value="">Select Trip</option>'
+
+trips.forEach(t=>{
+html+=`<option value="${t.id}">${t.trip_no}</option>`
+})
+
+document.getElementById("trip").innerHTML=html
+
+}
+
+/* GENERATE ID */
+
+async function generateExpenseId(){
+
+const now=new Date()
+
+let year=now.getFullYear().toString().slice(-2)
+let month=("0"+(now.getMonth()+1)).slice(-2)
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("expense_id")
+.ilike("expense_id","EXP"+year+month+"%")
+
+let seq=(data?.length || 0)+1
+
+return "EXP"+year+month+seq.toString().padStart(4,"0")
+
+}
+
+/* SAVE */
+
+async function saveExpense(){
+
+let tripId = document.getElementById("trip").value
+let type = document.getElementById("type").value
+let amount = document.getElementById("amount").value
+
+if(!tripId || !amount){
+alert("Enter Trip and Amount")
+return
+}
+
+let expenseId = await generateExpenseId()
+
+/* ✅ SAVE EXPENSE */
+const {data:expense, error} = await supabaseClient
+.from("expenses")
+.insert({
+expense_id: expenseId,
+trip_id: tripId,
+expense_type: type,
+amount: amount,
+expense_date: new Date()
+})
+.select()
+.single()
+
+if(error){
+console.error(error)
+alert("Error saving expense ❌")
+return
+}
+
+/************** WHATSAPP EXPENSE FLOW **************/
+
+try{
+
+let phones = []
+
+/* 1️⃣ GET TRIP */
+let trip = trips.find(t => t.id == tripId)
+if(!trip){
+  console.warn("Trip not found")
+  return
+}
+
+/* 2️⃣ GET TRANSPORTER */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("phone, transporter_name")
+.eq("id", trip.transporter_id)
+.single()
+
+let name = transporter?.transporter_name || "Transporter"
+
+if(transporter?.phone){
+  phones.push(transporter.phone)
+}
+
+/* 3️⃣ MANAGER USERS */
+const {data:managerRole} = await supabaseClient
+.from("roles")
+.select("id")
+.eq("role_name","manager")
+.single()
+
+let managerIds = []
+
+if(managerRole){
+  const {data:users} = await supabaseClient
+  .from("user_roles")
+  .select("user_id")
+  .eq("role_id", managerRole.id)
+
+  managerIds = users?.map(x=>x.user_id) || []
+}
+
+const {data:managerPhones} = await supabaseClient
+.from("user_contacts")
+.select("phone")
+.in("user_id", managerIds)
+
+managerPhones?.forEach(p=>{
+  if(p.phone) phones.push(p.phone)
+})
+
+/* 4️⃣ REMOVE DUPLICATES */
+phones = [...new Set(phones)]
+
+console.log("📲 Expense WhatsApp phones:", phones)
+console.log("🚀 Expense payload:", {
+  phones,
+  template: "expense_update_api",
+  params: [
+    name,
+    trip.trip_no,
+    type,
+    amount
+  ]
+})
+
+/* 5️⃣ SEND */
+if(phones.length){
+
+  const res = await fetch("https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-whatsapp", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+    },
+    body: JSON.stringify({
+      phones: phones,
+      template: "expense_update_api",
+      params: [
+  String(name),        // {{1}}
+  String(type),        // {{2}} ✅ Expense Type
+  String(amount),      // {{3}} ✅ Amount
+  String(trip.trip_no) // {{4}} ✅ Trip
+]
+    })
+  })
+
+const result = await res.json()
+
+console.log("📩 Expense WA Response:", result)
+
+if(!res.ok){
+  console.error("❌ WhatsApp failed:", result)
+}
+
+}
+
+}catch(err){
+console.error("Expense WhatsApp error:", err)
+}
+
+/* RESET FORM */
+document.getElementById("trip").value=""
+document.getElementById("amount").value=""
+
+loadExpenses()
+
+/* 🔥 AUTO SYNC TRANSPORTER STATEMENT */
+
+try {
+
+  // 🔹 FIND INVOICE CONTAINING THIS TRIP
+  const { data: invoices } = await supabaseClient
+    .from("transporter_invoices")
+    .select("id, trip_ids")
+
+  let invoiceId = null
+
+  invoices?.forEach(inv => {
+    if(inv.trip_ids?.split(",").includes(tripId)){
+      invoiceId = inv.id
+    }
+  })
+
+  if(invoiceId){
+    console.log("🔄 Expense → syncing invoice:", invoiceId)
+
+    // 🔥 CALL GLOBAL FUNCTION (FROM ADMIN PAGE)
+    if(window.syncTransporterStatement){
+      await window.syncTransporterStatement(invoiceId)
+    } else {
+      console.warn("syncTransporterStatement not found")
+    }
+  }
+
+} catch(err){
+  console.error("❌ Expense sync failed:", err)
+}
+    
+alert("Expense Added ✅")
+}
+
+/* LOAD */
+
+async function loadExpenses(){
+
+const {data}=await supabaseClient
+.from("expenses")
+.select("*")
+.order("created_at",{ascending:false})
+
+expenses=data || []
+filtered=expenses
+
+renderTable()
+
+}
+
+/* RENDER */
+
+function renderTable(){
+
+let start=(page-1)*pageSize
+let rows=filtered.slice(start,start+pageSize)
+
+let html=""
+
+rows.forEach(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+html+=`
+<tr>
+<td>${e.expense_id || ""}</td>
+<td>${trip ? trip.trip_no : ""}</td>
+<td>${e.expense_type}</td>
+<td>${e.amount}</td>
+<td>${e.expense_date || ""}</td>
+<td>
+<button class="editBtn" onclick="editExpense('${e.id}')">Edit</button>
+<button class="deleteBtn" onclick="deleteExpense('${e.id}')">Delete</button>
+</td>
+</tr>
+`
+})
+
+document.getElementById("expenseTable").innerHTML=html
+
+}
+
+/* EDIT */
+
+function editExpense(id){
+
+let e=expenses.find(x=>x.id==id)
+
+let val=prompt("Edit Amount",e.amount)
+if(val===null) return
+
+supabaseClient.from("expenses")
+.update({amount:val})
+.eq("id",id)
+.then(()=>loadExpenses())
+
+}
+
+/* DELETE */
+
+async function deleteExpense(id){
+
+if(!confirm("Delete?")) return
+
+await supabaseClient.from("expenses")
+.delete()
+.eq("id",id)
+
+loadExpenses()
+
+}
+
+
+/* PAGINATION */
+
+function nextPage(){
+if(page*pageSize >= filtered.length) return
+page++
+renderTable()
+}
+
+function prevPage(){
+if(page>1){page--;renderTable()}
+}
+
+/* FILTER */
+
+function applyFilter(){
+
+let tripSearch=document.getElementById("searchTrip").value.toLowerCase()
+let typeFilter=document.getElementById("filterType").value
+
+filtered=expenses.filter(e=>{
+
+let trip=trips.find(t=>t.id==e.trip_id)
+
+return (
+(!tripSearch || (trip && trip.trip_no.toLowerCase().includes(tripSearch))) &&
+(!typeFilter || e.expense_type===typeFilter)
+)
+
+})
+
+page=1
+renderTable()
+
+}
+
+function clearFilter(){
+
+document.getElementById("searchTrip").value=""
+document.getElementById("filterType").value=""
+
+filtered=expenses
+page=1
+renderTable()
+
+}
+
+/* PDF */
+
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf
+let doc=new jsPDF()
+
+let rows=[]
+
+filtered.forEach(e=>{
+let trip=trips.find(t=>t.id==e.trip_id)
+rows.push([e.expense_id,trip?.trip_no||"",e.expense_type,e.amount,e.expense_date])
+})
+
+doc.autoTable({
+head:[["Expense ID","Trip","Type","Amount","Date"]],
+body:rows
+})
+
+doc.save("trip_expenses.pdf")
+
+}
+
+</script>
+
+<script src="/js/rbac.js"></script>
+<script src="/js/menu-rbac.js"></script>
+<script src="/js/global-logout.js"></script>
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

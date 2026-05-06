@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>GST Filing - Varada Nexus</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+    
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+<script src="/js/session-check.js"></script>
+<script src="/js/menu-rbac.js"></script>
+<script src="/js/rbac.js"></script>
+    
+<style>
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+margin-bottom:16px;
+}
+
+input{
+padding:8px;
+border-radius:8px;
+background:#0f172a;
+color:white;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin:5px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+th{
+color:#9ca3af;
+text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar) sidebar.style.display="none"
+
+setTimeout(async()=>{
+
+    /* RBAC */
+    if(typeof applyMenuRBAC==="function"){
+        await applyMenuRBAC()
+    }
+
+    /* USER */
+    await initSidebar()
+
+    /* ACTIVE MENU 🔥 */
+    setActiveMenu()
+
+    /* ICONS */
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    /* SHOW */
+    if(sidebar) sidebar.style.display="block"
+
+    /* 🔐 PAGE PERMISSION (SAFE) */
+const canView = await checkPermission("gst-filing.html","view")
+
+if(!canView){
+    alert("Access Denied")
+    window.location.href = "dashboard.html"
+    return
+}
+
+/* 🔐 EXPORT PERMISSION */
+const canExport = await checkPermission("gst-filing.html","create")
+
+if(!canExport){
+    document.querySelectorAll("button").forEach(b=>{
+        if(b.innerText.includes("Export")){
+            b.style.display="none"
+        }
+    })
+}
+    
+},200)
+
+})
+
+/* 🔥 ACTIVE MENU FUNCTION */
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}
+
+/* USER INIT */
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+const userEl = document.getElementById("userName")
+
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+const roleEl = document.getElementById("userRole")
+
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
+}
+
+/* LOGOUT */
+window.logout = async function(){
+await supabaseClient.auth.signOut()
+window.location.href="/website/login.html"
+}
+
+}
+</script>
+    
+<div class="main">
+
+<h2>GST Filing</h2>
+
+<div class="card">
+
+<input type="month" id="monthFilter">
+
+<button onclick="loadGST()">Load</button>
+<button onclick="exportExcel()">Export Excel</button>
+<button onclick="exportJSON()">Export JSON</button>
+
+</div>
+
+<div class="card">
+<h3>GST Data</h3>
+<table>
+<thead>
+<tr>
+<th>Invoice</th>
+<th>Client</th>
+<th>GSTIN</th>
+<th>Type</th>
+<th>Taxable</th>
+<th>CGST</th>
+<th>SGST</th>
+<th>Total GST</th>
+<th>Invoice</th>
+</tr>
+</thead>
+<tbody id="gstTable"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>Summary</h3>
+<div id="summary"></div>
+</div>
+
+</div>
+
+<script>
+
+    
+let globalData = []
+
+async function loadGST(){
+
+let month = document.getElementById("monthFilter").value
+
+if(!month){
+alert("Select month")
+return
+}
+
+let start = new Date(month + "-01")
+let end = new Date(start)
+end.setMonth(end.getMonth()+1)
+
+/* 🔥 FETCH INVOICES */
+const { data:invoices, error:invError } = await supabaseClient
+.from("client_invoices_gst")
+.select("*")
+.gte("created_at", start.toISOString())
+.lt("created_at", end.toISOString())
+
+if(invError){
+    console.log("Invoice fetch error:", invError)
+    alert("Error loading invoices")
+    return
+}
+
+let invoiceList = invoices || []
+
+if(invoiceList.length === 0){
+    document.getElementById("gstTable").innerHTML =
+        "<tr><td colspan='9'>No data found for selected month</td></tr>"
+
+    document.getElementById("summary").innerHTML =
+        "No GST data available"
+
+    return
+}
+    
+/* 🔥 FETCH CLIENTS */
+const { data:clients, error:clientError } = await supabaseClient
+.from("clients")
+.select("company,gst_no")
+
+if(clientError){
+    console.log("Client fetch error:", clientError)
+    alert("Error loading clients")
+    return
+}
+
+let clientList = clients || []
+
+let rows = ""
+
+let seenInvoices = new Set()
+    
+let totalTaxable=0,totalGST=0,totalInvoice=0
+let b2b=0,b2c=0
+
+globalData = []
+
+for(let inv of (invoiceList)){
+
+if(seenInvoices.has(inv.invoice_no)){
+    console.warn("Duplicate invoice:", inv.invoice_no)
+    continue
+}
+seenInvoices.add(inv.invoice_no)
+    
+let client = clientList.find(c => c.company === inv.client_name)
+
+let gstin = (client?.gst_no || "").trim()
+
+let isValidGSTIN = /^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)
+let type = isValidGSTIN ? "B2B" : "B2C"
+
+let taxable = Number(inv.total_margin || 0)
+let gst = Number(inv.gst_total || 0)
+
+let rate = Number(inv.gst_rate || 18)
+    
+// ✅ DEFINE CREDIT NOTES FIRST
+let creditNoteGST = Number(inv.credit_note_gst || 0)
+let creditNoteTaxable = Number(inv.credit_note_amount || 0)
+
+// ✅ APPLY CREDIT NOTE
+taxable -= creditNoteTaxable
+gst -= creditNoteGST
+
+if(taxable < 0) taxable = 0
+if(gst < 0) gst = 0
+    
+// ✅ RECALCULATE GST SPLIT
+let cgst = Math.round((gst / 2) * 100) / 100
+let sgst = Math.round((gst / 2) * 100) / 100
+
+totalTaxable += taxable
+totalGST += gst
+totalInvoice += Number(inv.invoice_amount || 0)
+
+if(type==="B2B") b2b+=taxable
+else b2c+=taxable
+
+/* STORE FOR EXPORT */
+globalData.push({
+invoice: inv.invoice_no,
+client: inv.client_name,
+gstin,
+type,
+taxable,
+cgst,
+sgst,
+gst,
+rate: rate,   // ✅ ADD THIS
+invoice_value: inv.invoice_amount,
+date: inv.created_at
+})
+
+rows += `
+<tr>
+<td>${inv.invoice_no}</td>
+<td>${inv.client_name}</td>
+<td style="color:${gstin ? (isValidGSTIN ? '#22c55e' : '#ef4444') : '#9ca3af'}">
+${gstin || "-"}
+</td>
+<td>${type}</td>
+<td>₹${taxable.toFixed(2)}</td>
+<td>₹${cgst.toFixed(2)}</td>
+<td>₹${sgst.toFixed(2)}</td>
+<td>₹${gst.toFixed(2)}</td>
+<td>₹${Number(inv.invoice_amount).toFixed(2)}</td>
+</tr>
+`
+}
+
+document.getElementById("gstTable").innerHTML = rows 
+    
+let gstLiability = totalGST
+let gstCollected = totalGST   // same unless credit notes added
+
+let diff = Math.abs(gstLiability - gstCollected)
+
+let matchStatus = diff < 1
+    ? "✅ Matched"
+    : "❌ Mismatch"
+
+if(totalGST > 0 && gstCollected === 0){
+    matchStatus = "⚠️ Not Paid"
+}
+
+if(diff > 100){
+    matchStatus = "🚨 Major Mismatch"
+}
+
+document.getElementById("summary").innerHTML = `
+
+<div style="line-height:1.6">
+
+<b>GST Overview</b><br>
+Total Taxable: ₹${totalTaxable.toFixed(2)} <br>
+Total GST: ₹${totalGST.toFixed(2)} <br>
+Net GST After Credit Notes: ₹${totalGST.toFixed(2)} <br>
+Total Invoice: ₹${totalInvoice.toFixed(2)} <br><br>
+
+<b>Classification</b><br>
+B2B Sales: ₹${b2b.toFixed(2)} <br>
+B2C Sales: ₹${b2c.toFixed(2)} <br><br>
+
+<b>GST Liability</b><br>
+GST Payable: ₹${gstLiability.toFixed(2)} <br>
+GST Collected: ₹${gstCollected.toFixed(2)} <br>
+Status: <span style="color:${matchStatus.includes("Matched") ? "#22c55e" : "#ef4444"}">
+Difference: ₹${diff.toFixed(2)}<br>
+${matchStatus}
+</span><br><br>
+
+<b>Compliance Check</b><br>
+Invoices Count: ${globalData.length}
+
+</div>
+`
+}
+
+/* 🔥 EXPORT EXCEL */
+function exportExcel(){
+
+let csv = "Invoice,Client,GSTIN,Type,Taxable,CGST,SGST,Total GST,Invoice Value\n"
+
+globalData.forEach(r=>{
+csv += `${r.invoice},${r.client},${r.gstin},${r.type},${r.taxable},${r.cgst},${r.sgst},${r.gst},${r.invoice_value}\n`
+})
+
+let blob = new Blob([csv], {type:"text/csv"})
+let url = URL.createObjectURL(blob)
+
+let a = document.createElement("a")
+a.href = url
+a.download = "GST_Report.csv"
+a.click()
+}
+
+/* 🔥 EXPORT JSON (GSTR-1 STYLE) */
+function exportJSON(){
+
+let b2bMap = {}
+let b2cTotal = 0
+
+globalData.forEach(r=>{
+
+/* 🔥 B2B */
+if(r.gstin && r.gstin.length >= 15){
+
+if(!b2bMap[r.gstin]){
+b2bMap[r.gstin] = {
+ctin: r.gstin,
+inv: []
+}
+}
+
+b2bMap[r.gstin].inv.push({
+inum: r.invoice,
+idt: new Date(r.date).toISOString().split('T')[0],
+val: r.invoice_value,
+pos: "37", // Andhra Pradesh
+rchrg: "N",
+inv_typ: "R",
+itms: [{
+num: 1,
+itm_det: {
+txval: r.taxable,
+rt: r.rate,
+camt: r.cgst,
+samt: r.sgst,
+csamt: 0,
+...(r.hsn !== "NA" ? { hsn_sc: r.hsn } : {})
+}
+}]
+})
+
+}
+
+/* 🔥 B2C */
+else{
+b2cTotal += r.taxable
+}
+
+})
+
+/* 🔥 FINAL STRUCTURE */
+let finalJSON = {
+gstin: "37AAKCV7495B1ZV",   // YOUR GSTIN
+fp: document.getElementById("monthFilter").value.replace("-", ""),
+version: "GST1.0",
+
+b2b: Object.values(b2bMap),
+
+b2cs: [{
+sply_ty: "INTRA",
+txval: b2cTotal,
+rt: globalData[0]?.rate || 18,
+camt: b2cTotal * 0.09,
+samt: b2cTotal * 0.09,
+csamt: 0
+}]
+
+}
+
+/* DOWNLOAD */
+let blob = new Blob([JSON.stringify(finalJSON,null,2)], {type:"application/json"})
+let url = URL.createObjectURL(blob)
+
+let a = document.createElement("a")
+a.href = url
+a.download = "GSTR1_Final.json"
+a.click()
+}
+
+
+    
+</script>
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

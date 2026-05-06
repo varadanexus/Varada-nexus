@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Dashboard - Varada Nexus ERP</title>
+<base href="/">
+
+<script>
+if(window.location.pathname === "/dashboard.html"){
+    window.location.replace("/modules/logistics/dashboard.html")
+}
+</script>
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+    
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 🔥 RBAC MUST LOAD FIRST -->
+
+
+<script src="/js/session-check.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN LAYOUT (same as your system) */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* PAGE TITLE */
+.main h1{
+font-size:20px;
+font-weight:600;
+margin-bottom:10px;
+}
+
+/* GRID */
+.card-container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:16px;
+margin-top:16px;
+}
+
+/* CARD (MATCH YOUR ERP STYLE) */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+transition:all 0.2s ease;
+}
+
+/* HOVER EFFECT */
+.card:hover{
+transform:translateY(-2px);
+background:#131c2e;
+}
+
+/* TITLE */
+.card h3{
+font-size:12px;
+color:#9ca3af;
+margin:0;
+}
+
+/* VALUE */
+.card p{
+font-size:18px;
+font-weight:600;
+margin-top:6px;
+}
+
+/* OPTIONAL COLOR HINTS */
+.card:nth-child(1) p{color:#60a5fa;}   /* Trips */
+.card:nth-child(2) p{color:#22c55e;}   /* Revenue */
+.card:nth-child(3) p{color:#f59e0b;}   /* Cost */
+.card:nth-child(4) p{color:#ef4444;}   /* Profit */
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+/* MAIN SUPABASE CLIENT */
+
+if(!window.supabaseClient){
+    window.supabaseClient = supabase.createClient(
+        "https://ticsgbtxfhhihamejiss.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+    )
+}
+
+const supabaseClient = window.supabaseClient
+
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+<h1>Dashboard</h1>
+
+<div class="card-container">
+
+<div class="card">
+<h3>Total Trips</h3>
+<p id="totalTrips">0</p>
+</div>
+
+<div class="card">
+<h3>Total Company Amount</h3>
+<p id="totalRevenue">0</p>
+</div>
+
+<div class="card">
+<h3>Total Transporter Amount</h3>
+<p id="totalCost">0</p>
+</div>
+
+<div class="card">
+<h3>Total Profit</h3>
+<p id="totalProfit">0</p>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* LOAD SIDEBAR + RBAC */
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+if(sidebar){
+    sidebar.style.display = "none"   // 🔥 hide initially
+}
+
+setTimeout(async ()=>{
+
+    console.log("🔥 Sidebar injected")
+
+    /* ✅ STEP 1: RBAC FIRST (LIKE OLD SYSTEM) */
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+        console.log("✅ RBAC applied")
+    }
+
+    /* ✅ STEP 2: USER INIT */
+    await initSidebar()
+    console.log("✅ User initialized")
+
+    /* ✅ STEP 3: ACTIVE MENU */
+    setActiveMenu()
+    console.log("✅ Active menu applied")
+
+    /* ✅ STEP 4: ICONS */
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    /* ✅ STEP 5: SHOW SIDEBAR */
+    if(sidebar){
+        sidebar.style.display = "block"
+    }
+
+},200)
+
+})
+/* SIDEBAR USER + ROLE */
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+/* NAME */
+const userEl = document.getElementById("userName")
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
+
+/* USER */
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+/* MULTI ROLE */
+const {data:userRoles} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+
+if(!userRoles || userRoles.length===0) return
+
+let roleId = userRoles[0].role_id
+
+/* ROLE NAME */
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",roleId)
+.single()
+
+if(role){
+    const roleEl = document.getElementById("userRole")
+    if(roleEl){
+        roleEl.innerText = role.role_name
+    }
+}
+
+
+
+}
+
+function setActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+        if(link.dataset.page === currentPage){
+            link.classList.add("active")
+        }
+    })
+
+}
+
+function forceActiveMenu(){
+
+    let currentPage = window.location.pathname.split("/").pop()
+
+    console.log("📄 Current Page:", currentPage)
+
+    document.querySelectorAll("#sidebar a").forEach(link=>{
+
+let page = link.getAttribute("data-page")
+
+if(page === currentPage){
+link.classList.add("active")
+}
+
+})
+
+}
+    
+/* DASHBOARD DATA */
+
+async function loadDashboard(){
+
+try{
+
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("*")
+
+const {data:expenses} = await supabaseClient
+.from("expenses")
+.select("*")
+
+let tripsData = trips || []
+let expensesData = expenses || []
+
+let totalTrips = tripsData.length
+let totalRevenue = 0
+let totalCost = 0
+let totalProfit = 0
+
+let expenseMap = {}
+
+expensesData.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount || 0)
+})
+
+tripsData.forEach(trip=>{
+
+let mt = (trip.weight_kg || 0)/1000
+let expense = expenseMap[trip.id] || 0
+
+let companyAmount = (Number(trip.company_rate || 0)*mt) - expense
+let transporterAmount = (Number(trip.transporter_rate || 0)*mt) - expense
+
+let profit = companyAmount - transporterAmount
+
+totalRevenue += companyAmount
+totalCost += transporterAmount
+totalProfit += profit
+
+})
+
+document.getElementById("totalTrips").innerText = totalTrips
+document.getElementById("totalRevenue").innerText = "₹ "+Math.round(totalRevenue)
+document.getElementById("totalCost").innerText = "₹ "+Math.round(totalCost)
+document.getElementById("totalProfit").innerText = "₹ "+Math.round(totalProfit)
+
+}catch(err){
+console.log(err)
+}
+
+}
+
+loadDashboard()
+
+</script>
+
+<script src="/js/menu-rbac.js"></script>
+<script src="/js/global-logout.js"></script>
+<script src="/js/rbac.js"></script>
+
+
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

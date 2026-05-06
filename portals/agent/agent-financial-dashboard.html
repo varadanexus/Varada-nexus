@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agent Summary</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+.summary{
+display:flex;
+gap:20px;
+}
+
+.box{
+flex:1;
+padding:20px;
+border-radius:8px;
+color:white;
+font-size:18px;
+}
+
+.earn{background:#16a34a;}
+.paid{background:#dc2626;}
+.balance{background:#1f3c88;}
+</style>
+</head>
+
+<body>
+
+<!-- ✅ GLOBAL SUPABASE (FIX) -->
+<script>
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+
+<!-- ✅ GLOBAL LOGOUT (LOAD BEFORE SIDEBAR) -->
+<script src="agent-global.js"></script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(async data=>{
+document.getElementById("sidebar-container").innerHTML=data
+
+/* LOAD AGENT NAME */
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+if(!session) return
+
+const {data:agent} = await supabaseClient
+.from("agents")
+.select("name")
+.eq("auth_id", session.user.id)
+.single()
+
+const el = document.getElementById("userName")
+if(el && agent) el.innerText = agent.name
+})
+</script>
+
+<div class="main">
+
+<h2>Agent Summary</h2>
+
+<div class="summary">
+
+<div class="box earn">
+Total Earned<br>
+₹ <span id="earned">0</span>
+</div>
+
+<div class="box paid">
+Total Paid<br>
+₹ <span id="paid">0</span>
+</div>
+
+<div class="box balance">
+Balance<br>
+₹ <span id="balance">0</span>
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location="login.html"
+return
+}
+
+const authId = session.user.id
+
+/* GET AGENT */
+const {data:agent, error} = await supabaseClient
+.from("agents")
+.select("id")
+.eq("auth_id", authId)
+.single()
+
+if(error || !agent){
+console.log("Agent not found")
+return
+}
+
+/* ✅ USE LEDGER (SOURCE OF TRUTH) */
+const {data:ledger} = await supabaseClient
+.from("agent_trip_ledger")
+.select("commission_amount, paid_amount")
+.eq("agent_id", agent.id)
+
+let earned = ledger?.reduce((s,l)=>s+Number(l.commission_amount||0),0) || 0
+let paid   = ledger?.reduce((s,l)=>s+Number(l.paid_amount||0),0) || 0
+
+let balance = Math.max(0, earned - paid)
+
+document.getElementById("earned").innerText = earned.toFixed(2)
+document.getElementById("paid").innerText = paid.toFixed(2)
+document.getElementById("balance").innerText = balance.toFixed(2)
+
+}
+
+</script>
+  
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

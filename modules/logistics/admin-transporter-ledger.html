@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Admin Transporter Ledger - Varada Nexus ERP</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/session-check.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
+}
+
+/* CARDS */
+.card{
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
+}
+
+/* HEADINGS */
+h2{
+margin-bottom:10px;
+font-size:20px;
+font-weight:600;
+}
+
+/* INPUTS + SELECTS */
+select,input{
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
+outline:none;
+}
+
+/* FIX DROPDOWN OVERLAY */
+select{
+position:relative;
+z-index:10;
+}
+
+/* BUTTONS */
+button{
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+}
+
+/* HEADER */
+th{
+text-align:left;
+font-size:12px;
+color:#9ca3af;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+/* ROWS */
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+font-size:13px;
+}
+
+/* HOVER */
+tr:hover{
+background:#0f172a;
+}
+
+/* TOTAL ROW */
+tr:last-child{
+background:#0b1220;
+font-weight:600;
+}
+
+/* SEARCH + FILTER BAR */
+#searchBox{
+margin-bottom:10px;
+}
+
+/* PAGINATION */
+button{
+margin-top:6px;
+margin-right:6px;
+}
+
+.total-row{
+background:#0b1220 !important;
+font-weight:600;
+}
+
+.total-row td{
+color:#e5e7eb;f
+border-top:1px solid rgba(255,255,255,0.08);
+}
+
+.total-row{
+background:linear-gradient(90deg,#0b1220,#0f172a);
+font-weight:600;
+}
+
+.total-row td{
+color:#93c5fd; /* light blue */
+}
+  
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+/* SUPABASE CLIENT */
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    "https://ticsgbtxfhhihamejiss.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+  )
+}
+
+
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<script>
+
+/* ✅ STANDARD SIDEBAR (same as dashboard) */
+
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+
+/* 🔥 HIDE FIRST */
+if(sidebar){
+    sidebar.style.display = "none"
+}
+
+setTimeout(async ()=>{
+
+    /* ✅ RBAC FIRST */
+    if(typeof applyMenuRBAC === "function"){
+        await applyMenuRBAC()
+    }
+
+    /* ✅ USER INIT */
+    await initSidebar()
+
+    /* ✅ ACTIVE MENU */
+    setActiveMenu()
+
+    /* ✅ ICON FIX */
+    if(window.lucide){
+        lucide.createIcons()
+    }
+
+    /* ✅ SHOW LAST */
+    if(sidebar){
+        sidebar.style.display = "block"
+    }
+
+},200)
+
+})
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+    let page = link.getAttribute("data-page")
+
+    if(page === currentPage){
+        link.classList.add("active")
+    }
+
+})
+
+}  
+
+async function initSidebar(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+const userEl = document.getElementById("userName")
+
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
+
+const {data:user} = await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRole} = await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+.single()
+
+if(!userRole) return
+
+const {data:role} = await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",userRole.role_id)
+.single()
+
+if(role){
+const roleEl = document.getElementById("userRole")
+
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
+}
+
+
+
+}
+
+</script>
+
+<div class="main">
+
+<h2>Admin Transporter Ledger</h2>
+
+<div class="card">
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+<select id="transporterSelect"></select>
+<button onclick="loadLedger()">Load Ledger</button>
+</div>
+
+</div>   <!-- ✅ CLOSE FIRST CARD -->
+
+<div class="card">   <!-- ✅ SECOND CARD STARTS PROPERLY -->
+  
+<!-- 🔍 SEARCH -->
+<input id="searchBox" placeholder="Search..." oninput="renderLedger()" style="padding:8px;margin-bottom:10px;width:200px;">
+<!-- 📅 DATE FILTER -->
+<input type="date" id="fromDate" onchange="renderLedger()" style="margin-left:10px;">
+<input type="date" id="toDate" onchange="renderLedger()" style="margin-left:5px;">
+
+  
+<!-- 📄 PAGE SIZE -->
+<select id="pageSize" onchange="renderLedger()">
+<option value="50">50</option>
+<option value="100">100</option>
+<option value="150">150</option>
+<option value="200">200</option>
+</select>
+
+<!-- 📥 PDF -->
+<button onclick="downloadLedgerPDF()" style="margin-left:10px;">Download PDF</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Reference</th>
+<th>Debit</th>
+<th>Credit</th>
+<th>Balance</th>
+</tr>
+</thead>
+
+<tbody id="ledgerTable"></tbody>
+
+</table>
+
+<div style="margin-top:10px;">
+<button onclick="prevPage()">Prev</button>
+<button onclick="nextPage()">Next</button>
+</div>
+   
+
+</div>
+
+<script>
+
+let transporters=[]
+let trips=[]
+let expenses=[]
+let payments=[]
+let allEntries = []
+let currentPage = 1
+
+async function init(){
+  await loadTransporters()
+}
+
+/* LOAD TRANSPORTERS */
+
+async function loadTransporters(){
+
+const {data, error} = await window.supabaseClient
+.from("transporters")
+.select("*")
+
+if(error){
+  console.error("Transporter load error:", error)
+  alert("Error loading transporters")
+  return
+}
+
+transporters=data || []
+
+let html='<option value="">Select Transporter</option>'
+
+transporters.forEach(t=>{
+html+=`<option value="${t.id}">${t.transporter_name}</option>`
+})
+
+document.getElementById("transporterSelect").innerHTML=html
+}
+
+/* LOAD LEDGER */
+
+async function loadLedger(){
+
+ currentPage = 1
+  
+let transporterId=document.getElementById("transporterSelect").value
+
+if(!transporterId){
+alert("Select transporter")
+return
+}
+
+/* TRIPS */
+const {data:tripData}=await window.supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id",transporterId)
+
+/* EXPENSES */
+const {data:expenseData}=await window.supabaseClient
+.from("expenses")
+.select("*")
+
+/* PAYMENTS */
+
+// get invoices
+const {data:invoiceData} = await window.supabaseClient
+.from("transporter_invoices")
+.select("id")
+.eq("transporter_id", transporterId)
+
+let invoiceIds = invoiceData?.map(i => i.id) || []
+
+// get payments
+let paymentData = []
+
+if(invoiceIds.length){
+  const res = await window.supabaseClient
+  .from("transporter_payments")
+  .select("*")
+  .in("invoice_id", invoiceIds)
+
+  paymentData = res.data || []
+}
+
+/* SAFE ASSIGN */
+trips=tripData || []
+expenses=expenseData || []
+payments=paymentData || []
+
+let entries=[]
+
+/* TRIPS */
+trips.forEach(t=>{
+
+let weightMT=(t.weight_kg || 0)/1000
+let gross=(t.transporter_rate || 0)*weightMT
+
+let tripExpenses=expenses
+.filter(e=>e.trip_id==t.id)
+.reduce((sum,e)=>sum+Number(e.amount || 0),0)
+
+let net=gross-tripExpenses
+
+entries.push({
+date:t.trip_date || t.created_at,
+type:"Trip",
+ref:t.trip_no,
+debit:net,
+credit:0
+})
+
+})
+
+/* PAYMENTS */
+payments.forEach(p=>{
+
+entries.push({
+date:p.payment_date || p.created_at,
+type:"Payment",
+ref:p.transaction_id || "Payment",
+debit:0,
+credit:Number(p.amount || 0)
+})
+
+})
+
+/* SORT */
+entries.sort((a,b)=>{
+let da = new Date(a.date)
+let db = new Date(b.date)
+
+if(isNaN(da)) return 1
+if(isNaN(db)) return -1
+
+return da - db
+})
+
+/* FINAL */
+allEntries = entries
+currentPage = 1
+
+renderLedger()
+
+}
+
+function renderLedger(){
+
+
+
+let search = document.getElementById("searchBox").value.toLowerCase()
+let pageSize = Number(document.getElementById("pageSize").value)
+
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+let filtered = allEntries.filter(e => {
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let entryDate = e.date ? new Date(e.date) : null
+
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let start = (currentPage - 1) * pageSize
+let paginated = filtered.slice(start, start + pageSize)
+
+// 🔥 correct running balance
+let balance = 0
+filtered.slice(0, start).forEach(e=>{
+balance += e.debit
+balance -= e.credit
+})
+
+let html = ""
+
+paginated.forEach(e=>{
+balance += e.debit
+balance -= e.credit
+
+html += `
+<tr>
+<td>${e.date ? new Date(e.date).toLocaleDateString("en-IN") : ""}</td>
+<td>${e.type}</td>
+<td>${e.ref}</td>
+<td>${e.debit ? "₹"+e.debit.toFixed(0) : ""}</td>
+<td>${e.credit ? "₹"+e.credit.toFixed(0) : ""}</td>
+<td>₹${balance.toFixed(0)}</td>
+</tr>
+`
+})
+
+let totalDebit = filtered.reduce((s,e)=>s+e.debit,0)
+let totalCredit = filtered.reduce((s,e)=>s+e.credit,0)
+
+html += `
+<tr class="total-row">
+<td colspan="3">Total</td>
+<td>₹${totalDebit.toFixed(0)}</td>
+<td>₹${totalCredit.toFixed(0)}</td>
+<td></td>
+</tr>
+`
+  
+document.getElementById("ledgerTable").innerHTML = html
+}
+
+function downloadLedgerPDF(){
+
+const { jsPDF } = window.jspdf
+let doc = new jsPDF()
+
+doc.setFontSize(14)
+doc.text("Transporter Ledger", 14, 15)
+
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+doc.text(`From: ${fromDate || "-"}  To: ${toDate || "-"}`, 14, 22)
+  
+let search = document.getElementById("searchBox").value.toLowerCase()
+
+let filtered = allEntries.filter(e => {
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let entryDate = e.date ? new Date(e.date) : null
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let rows = filtered.map(e=>[
+e.date || "",
+e.type,
+e.ref,
+e.debit || "",
+e.credit || ""
+])
+
+doc.autoTable({
+startY: 28,
+head: [["Date","Type","Ref","Debit","Credit"]],
+body: rows
+})
+
+doc.save("ledger.pdf")
+}
+
+function nextPage(){
+
+let pageSize = Number(document.getElementById("pageSize").value)
+
+let search = document.getElementById("searchBox").value.toLowerCase()
+let fromDate = document.getElementById("fromDate").value
+let toDate = document.getElementById("toDate").value
+
+let filtered = allEntries.filter(e=>{
+let entryDate = e.date ? new Date(e.date) : null
+if(!entryDate || isNaN(entryDate)) return false
+
+let matchesSearch =
+(e.ref || "").toLowerCase().includes(search) ||
+(e.type || "").toLowerCase().includes(search)
+
+let matchesFrom = fromDate ? entryDate >= new Date(fromDate) : true
+
+let to = toDate ? new Date(toDate) : null
+if(to) to.setHours(23,59,59,999)
+
+let matchesTo = to ? entryDate <= to : true
+
+return matchesSearch && matchesFrom && matchesTo
+})
+
+let maxPage = Math.ceil(filtered.length / pageSize)
+
+if(currentPage < maxPage){
+currentPage++
+renderLedger()
+}
+
+}
+
+function prevPage(){
+if(currentPage>1) currentPage--
+renderLedger()
+}
+
+window.onload = function(){
+  init()
+}
+
+</script>
+
+<script src="/js/rbac.js"></script>
+<script src="/js/menu-rbac.js"></script>
+<script src="/js/global-logout.js"></script>
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

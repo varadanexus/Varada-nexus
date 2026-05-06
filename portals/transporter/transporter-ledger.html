@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Transporter Ledger</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:40px;}
+h2{color:#1f3c88;}
+
+.cards{
+display:flex;
+gap:15px;
+margin-bottom:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:8px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+min-width:180px;
+}
+
+.card h4{margin:0;color:#777;}
+.card h2{margin:5px 0;color:#1f3c88;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{background:#eee;}
+.credit{color:green;font-weight:bold;}
+.debit{color:red;font-weight:bold;}
+.balance{font-weight:bold;}
+</style>
+
+</head>
+
+<body>
+
+<div id="sidebar-container"></div>
+
+<script>
+fetch("transporter-sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+document.getElementById("sidebar-container").innerHTML=data
+})
+</script>
+
+<div class="main">
+
+<h2>Transporter Ledger</h2>
+
+<div class="cards">
+<div class="card"><h4>Total Debit</h4><h2 id="totalDebit">₹0</h2></div>
+<div class="card"><h4>Total Credit</h4><h2 id="totalCredit">₹0</h2></div>
+<div class="card"><h4>Closing Balance</h4><h2 id="closingBalance">₹0</h2></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Description</th>
+<th>Debit</th>
+<th>Credit</th>
+<th>Balance</th>
+</tr>
+</thead>
+<tbody id="ledgerTable"></tbody>
+</table>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+let ledger = []
+
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="/website/login.html"
+return
+}
+
+const authId = session.user.id
+
+/* GET TRANSPORTER */
+const {data:transporter} = await supabaseClient
+.from("transporters")
+.select("id, transporter_name")
+.eq("auth_id", authId)
+.single()
+
+if(!transporter) return
+
+/* GET TRIPS */
+const {data:trips} = await supabaseClient
+.from("trips")
+.select("*")
+.eq("transporter_id", transporter.id)
+
+/* GET EXPENSES */
+const {data:expenses} = await supabaseClient
+.from("expenses")
+.select("*")
+
+/* GET INVOICES */
+const {data:invoiceData} = await supabaseClient
+.from("transporter_invoices")
+.select("id")
+.eq("transporter_id", transporter.id)
+
+let invoiceIds = invoiceData?.map(i=>i.id) || []
+
+/* GET PAYMENTS */
+let payments = []
+
+if(invoiceIds.length){
+const res = await supabaseClient
+.from("transporter_payments")
+.select("*")
+.in("invoice_id", invoiceIds)
+
+payments = res.data || []
+}
+
+/* EXPENSE MAP */
+let expenseMap = {}
+
+expenses?.forEach(e=>{
+if(!expenseMap[e.trip_id]) expenseMap[e.trip_id]=0
+expenseMap[e.trip_id]+=Number(e.amount || 0)
+})
+
+let entries = []
+
+/* TRIPS → DEBIT */
+trips.forEach(t=>{
+
+let mt = (t.weight_kg || 0)/1000
+let gross = (t.transporter_rate || 0) * mt
+let exp = expenseMap[t.id] || 0
+
+let net = gross - exp   // 🔥 NO Math.max → loss allowed
+
+entries.push({
+date: t.trip_date || t.created_at,
+description: "Trip " + (t.trip_no || ""),
+debit: net,
+credit: 0
+})
+
+})
+
+/* PAYMENTS → CREDIT */
+payments.forEach(p=>{
+
+entries.push({
+date: p.payment_date || p.created_at,
+description: "Payment " + (p.transaction_id || ""),
+debit: 0,
+credit: Number(p.amount || 0)
+})
+
+})
+
+/* SORT */
+entries.sort((a,b)=>{
+let da = new Date(a.date)
+let db = new Date(b.date)
+return da - db
+})
+
+ledger = entries
+
+renderLedger()
+
+}
+
+function renderLedger(){
+
+let balance = 0
+let totalDebit = 0
+let totalCredit = 0
+
+let html = ""
+
+ledger.forEach(l=>{
+
+balance += l.debit
+balance -= l.credit
+
+totalDebit += l.debit
+totalCredit += l.credit
+
+html += `
+<tr>
+<td>${l.date ? new Date(l.date).toLocaleDateString("en-IN") : ""}</td>
+<td>${l.description}</td>
+<td class="debit">${l.debit ? "₹ "+l.debit.toFixed(0) : ""}</td>
+<td class="credit">${l.credit ? "₹ "+l.credit.toFixed(0) : ""}</td>
+<td class="balance">₹ ${balance.toFixed(0)}</td>
+</tr>
+`
+})
+
+document.getElementById("ledgerTable").innerHTML = html
+
+document.getElementById("totalDebit").innerText = "₹ " + totalDebit.toFixed(0)
+document.getElementById("totalCredit").innerText = "₹ " + totalCredit.toFixed(0)
+document.getElementById("closingBalance").innerText = "₹ " + balance.toFixed(0)
+
+}
+
+/* LOAD USER */
+async function loadUserInfo(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="/website/login.html"
+return
+}
+
+const email = session.user.email
+
+const userEl = document.getElementById("userName")
+
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
+document.getElementById("sidebar").style.display = "block"
+
+}
+
+/* LOGOUT */
+async function logout(){
+
+if(!confirm("Logout?")) return
+
+await supabaseClient.auth.signOut()
+window.location.href="/website/login.html"
+
+}
+
+document.addEventListener("DOMContentLoaded", loadUserInfo)
+
+</script>
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

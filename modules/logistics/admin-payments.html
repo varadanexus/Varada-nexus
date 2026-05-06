@@ -5,7 +5,6 @@
 <title>Transporter Payments - Varada Nexus</title>
 <base href="/">
 
-<base href="/">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
@@ -85,7 +84,7 @@ color:#9ca3af;
 
 /* ✅ STANDARD SIDEBAR (FIXED) */
 
-fetch("/sidebar.html")
+fetch("/components/sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 
@@ -152,7 +151,11 @@ if(!session) return
 const authId = session.user.id
 const email = session.user.email
 
-document.getElementById("userName").innerText = email.split("@")[0]
+const userEl = document.getElementById("userName")
+
+if(userEl){
+    userEl.innerText = email.split("@")[0]
+}
 
 const {data:user} = await supabaseClient
 .from("users")
@@ -177,7 +180,11 @@ const {data:role} = await supabaseClient
 .single()
 
 if(role){
-document.getElementById("userRole").innerText = role.role_name
+const roleEl = document.getElementById("userRole")
+
+if(roleEl){
+    roleEl.innerText = role.role_name
+}
 }
 
 /* LOGOUT */
@@ -346,7 +353,7 @@ Enter Payment:
 
 <script type="module">
 
-import { generateTransporterPDFBlob } from '/statement-utils.js'
+import { generateTransporterPDFBlob } from 'js/statement-utils.js'
 
 const supabaseClient = window.supabaseClient
 
@@ -1688,5 +1695,11 @@ window.closeModal = closeModal
 </div>
 </div>
     
+
+
+
+
+
+<script src="/js/navigation.js"></script>  
 </body>
 </html>

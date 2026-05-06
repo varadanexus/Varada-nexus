@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agent Dashboard</title>
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.main{margin-left:220px;padding:30px;}
+
+.cards{display:flex;gap:15px;margin-bottom:20px;}
+.card{
+background:white;padding:15px;border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+min-width:200px;
+}
+
+.card:hover{
+transform:translateY(-3px);
+transition:0.2s;
+}
+  
+table{width:100%;border-collapse:collapse;background:white;}
+th,td{padding:10px;border-bottom:1px solid #ddd;}
+th{background:#eee;}
+
+.profit{color:green;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<!-- ✅ SUPABASE FIRST (VERY IMPORTANT) -->
+<script>
+window.supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+</script>
+
+<!-- ✅ GLOBAL LOGOUT -->
+<script src="agent-global.js"></script>
+
+<div id="sidebar-container"></div>
+
+<!-- ✅ SIDEBAR LOAD AFTER GLOBAL -->
+<script>
+
+fetch("agent-sidebar.html")
+.then(res=>res.text())
+.then(async (data)=>{
+document.getElementById("sidebar-container").innerHTML = data
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+console.log("No session")
+return
+}
+
+const authId = session.user.id
+
+const {data:agent, error} = await supabaseClient
+.from("agents")
+.select("id,name")
+.eq("auth_id", authId)
+.single()
+
+if(error || !agent){
+console.log("Agent not found")
+return
+}
+
+const el = document.getElementById("userName")
+if(el) el.innerText = agent.name
+})
+  
+</script>
+
+<div class="main">
+
+<h2>Agent Dashboard</h2>
+
+<div class="cards">
+
+<div class="card">
+<h4>Total Trips</h4>
+<h2 id="totalTrips">0</h2>
+</div>
+
+<div class="card">
+<h4>Total Commission</h4>
+<h2 id="totalCommission">₹0</h2>
+</div>
+
+<div class="card">
+<h4>Total Paid</h4>
+<h2 id="totalPaid">₹0</h2>
+</div>
+
+<div class="card">
+<h4>Balance</h4>
+<h2 id="balance">₹0</h2>
+</div>
+  
+<!-- NAVIGATION -->
+
+<div class="card" onclick="goLedger()" style="cursor:pointer;">
+<h4>📄 Ledger</h4>
+<h2>View</h2>
+</div>
+
+<div class="card" onclick="goWithdraw()" style="cursor:pointer;">
+<h4>💸 Withdraw</h4>
+<h2>Request</h2>
+</div>
+
+<div class="card" onclick="goSummary()" style="cursor:pointer;">
+<h4>📊 Summary</h4>
+<h2>View</h2>
+</div>
+
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Trip No</th>
+<th>Route</th>
+<th>Truck</th>
+<th>Date</th>
+<th>Weight (MT)</th>
+<th>Commission</th>
+</tr>
+</thead>
+<tbody id="tripTable"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let ledger=[]
+  
+init()
+
+async function init(){
+
+const {data:{session}} = await supabaseClient.auth.getSession()
+
+if(!session){
+window.location="login.html"
+return
+}
+
+/* ✅ DEFINE authId FIRST */
+const authId = session.user.id
+
+/* ✅ GET AGENT FROM agents TABLE */
+const {data:agent, error} = await supabaseClient
+.from("agents")
+.select("id,name")
+.eq("auth_id", authId)
+.single()
+
+if(error || !agent){
+console.error(error)
+alert("Agent not found")
+return
+}
+
+
+
+/* GET LEDGER */
+const {data:ledgerData} = await supabaseClient
+.from("agent_trip_ledger")
+.select(`
+  *,
+  trips (trip_no, route, truck, weight_kg, trip_date)
+`)
+.eq("agent_id", agent.id)
+
+ledger = ledgerData || []
+
+/* ✅ SORT BY TRIP NUMBER ASC (OLD → NEW) */
+ledger.sort((a, b) => {
+
+  let aNum = parseInt((a.trips?.trip_no || "").replace(/\D/g,'')) || 0
+  let bNum = parseInt((b.trips?.trip_no || "").replace(/\D/g,'')) || 0
+
+  return aNum - bNum
+})
+
+render()
+}
+
+function render(){
+
+let totalCommission = 0
+let totalPaid = 0
+
+let html=""
+
+ledger?.forEach(l=>{
+
+/* 🔥 ADD THIS LINE HERE */
+if(!l.trip_id && l.paid_amount){
+  return   // skip payment rows
+}
+
+let t = l.trips || {}
+
+let weight = (t.weight_kg || 0) / 1000
+let commission = Number(l.commission_amount || 0)
+
+html += `
+<tr>
+<td>${t.trip_no || "-"}</td>
+<td>${t.route || "-"}</td>
+<td>${t.truck || "-"}</td>
+<td>${formatDate(t.trip_date)}</td>
+<td>${weight ? weight.toFixed(2) : "-"}</td>
+<td class="profit">${commission ? "₹ "+commission.toFixed(2) : "-"}</td>
+</tr>`
+})
+/* LEDGER CALCULATION */
+ledger?.forEach(l=>{
+totalCommission += Number(l.commission_amount || 0)
+totalPaid += Number(l.paid_amount || 0)
+})
+
+let balance = totalCommission - totalPaid
+
+tripTable.innerHTML = html
+
+let tripCount = ledger.filter(l => l.trip_id).length
+document.getElementById("totalTrips").innerText = tripCount
+document.getElementById("totalCommission").innerText = "₹ " + totalCommission.toFixed(2)
+document.getElementById("totalPaid").innerText = "₹ " + totalPaid.toFixed(2)
+
+let balEl = document.getElementById("balance")
+balEl.innerText = "₹ " + balance.toFixed(2)
+balEl.style.color = balance >= 0 ? "green" : "red"
+if(balance > 0){
+  balEl.innerText += " (Pending)"
+}
+
+} 
+  
+function formatDate(d){
+if(!d) return "-"
+return new Date(d).toLocaleDateString("en-GB")
+}
+
+/* NAVIGATION */
+
+function goLedger(){
+window.location.href="agent-my-ledger.html"
+}
+
+function goWithdraw(){
+window.location.href="agent-withdraw.html"
+}
+
+function goSummary(){
+window.location.href="agent-financial-dashboard.html"
+}
+
+</script>
+
+
+
+
+<script src="/js/navigation.js"></script>  
+</body>
+</html>

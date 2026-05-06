@@ -52,7 +52,7 @@ const meeting = await getMeeting();
 
 if(!meeting){
   alert("Meeting not found");
-  window.location.href = "index.html";
+  window.location.href = "/index.html";
   return;
 }
 
@@ -133,7 +133,7 @@ supabaseClient
 
     if(incomingPhone === currentPhone && !payload.new.is_approved){
       alert("You have been removed by admin");
-      window.location.href = "meeting-login.html";
+      window.location.href = "/portals/meeting/meeting-login.html";
     }
 
   }
@@ -152,7 +152,7 @@ setInterval(async () => {
 
   if(data && !data.is_approved){
     alert("You have been removed by admin");
-    window.location.href = "meeting-login.html";
+    window.location.href = "/portals/meeting/meeting-login.html";
   }
 
 }, 3000);
@@ -166,7 +166,7 @@ api.addEventListener("readyToClose", async () => {
     .eq("phone", phone)
     .eq("meeting_id", meetingId);
 
-  window.location.href = "index.html";
+  window.location.href = "/index.html";
 });
 
 api.addEventListener("videoConferenceLeft", async () => {
@@ -177,7 +177,7 @@ api.addEventListener("videoConferenceLeft", async () => {
     .eq("phone", phone)
     .eq("meeting_id", meetingId);
 
-  window.location.href = "index.html";
+  window.location.href = "/index.html";
 });
   
 /* 🔥 ADMIN = START MEETING */

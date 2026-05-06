@@ -579,7 +579,7 @@ if(!sidebar) return
 const { data:{session} } = await supabaseClient.auth.getSession()
 
 if(!session){
-    window.location = "/login.html"
+    window.location = "/website/login.html"
     return
 }
 

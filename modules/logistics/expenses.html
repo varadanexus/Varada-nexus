@@ -424,13 +424,13 @@ phones = [...new Set(phones)]
 console.log("📲 Expense WhatsApp phones:", phones)
 console.log("🚀 Expense payload:", {
   phones,
-  template: "expense_update_api",
-  params: [
-    name,
-    trip.trip_no,
-    type,
-    amount
-  ]
+  template: "expense_update_v1",
+  variables: {
+  "1": String(name),
+  "2": String(type),
+  "3": String(amount),
+  "4": String(trip.trip_no)
+}
 })
 
 /* 5️⃣ SEND */

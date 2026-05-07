@@ -305,8 +305,9 @@ console.log({
   message:
     doc.invoice_no,
 
-  mediaUrl:
-    doc.drive_link
+mediaUrl:
+
+`https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`
 
 })
     
@@ -420,8 +421,9 @@ console.log({
   message:
     doc.invoice_no,
 
-  mediaUrl:
-    doc.drive_link
+mediaUrl:
+
+`https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`
 
 })
     

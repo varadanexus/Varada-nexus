@@ -129,6 +129,76 @@ window.addEventListener("DOMContentLoaded", async () => {
 })
 
 </script>
+
+<!-- IMAGE MODAL -->
+
+<div
+  id="imageModal"
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/80
+    z-50
+    flex
+    items-center
+    justify-center
+    p-10
+  "
+>
+
+  <!-- CLOSE BUTTON -->
+  <button
+    onclick="closeImageModal()"
+    class="
+      absolute
+      top-5
+      right-5
+      text-white
+      text-4xl
+    "
+  >
+    ×
+  </button>
+
+  <!-- IMAGE -->
+  <img
+    id="modalImage"
+    class="
+      max-w-full
+      max-h-full
+      rounded-xl
+      shadow-2xl
+    "
+  >
+
+</div>
+
+<script>
+
+window.openImageModal = function(url){
+
+  document
+  .getElementById("modalImage")
+  .src = url
+
+  document
+  .getElementById("imageModal")
+  .classList
+  .remove("hidden")
+
+}
+
+window.closeImageModal = function(){
+
+  document
+  .getElementById("imageModal")
+  .classList
+  .add("hidden")
+
+}
+
+</script>
   
 </body>
 

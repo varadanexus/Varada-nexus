@@ -132,13 +132,43 @@
   "
 >
 
-      <!-- TOP HEADER -->
-      <div
-        id="chatHeader"
-        class="h-16 bg-white border-b flex items-center px-5 font-semibold"
-      >
-        Select Chat
-      </div>
+   <!-- TOP HEADER -->
+<div
+  id="chatHeader"
+
+  class="
+    h-16
+    bg-white
+    border-b
+    flex
+    items-center
+    px-5
+    font-semibold
+    gap-3
+  "
+>
+
+  <!-- MOBILE BACK -->
+  <button
+    onclick="showSidebar()"
+
+    class="
+      md:hidden
+      text-xl
+    "
+  >
+    ←
+  </button>
+
+  <div>
+
+    <div class="font-semibold">
+      Select Chat
+    </div>
+
+  </div>
+
+</div>
 
       <!-- MESSAGE AREA -->
       <div

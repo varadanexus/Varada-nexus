@@ -107,7 +107,13 @@ window.sendMedia = async function(){
           phone: chat.phone,
           direction: "outbound",
           message: file.name,
-          media_url: uploadData.fileUrl,
+          media_url:
+
+  file.type.startsWith("image/")
+  
+  ? `https://drive.google.com/thumbnail?id=${uploadData.fileId}&sz=w1000`
+
+  : uploadData.fileUrl,
           message_sid: waData.sid,
           status: "sent"
         })

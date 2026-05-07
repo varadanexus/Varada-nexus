@@ -70,22 +70,27 @@ window.subscribePresence = function(phone){
         return
       }
 
-      if(data.is_typing){
+if(data.is_typing){
 
-        header.innerHTML =
-        "typing..."
+  header.innerHTML = `
+    <span class="text-green-600">
+      typing...
+    </span>
+  `
 
-      }else if(data.is_online){
+}else if(data.is_online){
 
-        header.innerHTML =
-        "online"
+  header.innerHTML = `
+    <span class="text-green-600">
+      online
+    </span>
+  `
 
-      }else{
+}else{
 
-        header.innerHTML =
-        "last seen recently"
+  header.innerHTML = ""
 
-      }
+}
 
     }
 

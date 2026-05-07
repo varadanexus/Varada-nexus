@@ -250,29 +250,108 @@ async function(
 
   try{
 
+    let tableName = ""
+
     // ✅ GST
     if(invoiceType === "GST"){
 
-      window.open(
-
-`/modules/client/client_gst_billing.html?invoiceId=${invoiceId}`,
-
-        "_blank"
-      )
+      tableName =
+      "client_invoices_gst"
 
     }
 
     // ✅ NON GST
     else{
 
-      window.open(
+      tableName =
+      "client_invoices"
 
-`/modules/client/client-billing.html?invoiceId=${invoiceId}`,
+    }
 
-        "_blank"
+    // ✅ FETCH DOCUMENT
+    const {
+      data:doc,
+      error
+    } =
+    await window.supabase
+
+    .from(tableName)
+
+    .select("*")
+
+    .eq("id", invoiceId)
+
+    .single()
+
+    if(error){
+      throw error
+    }
+
+    if(!doc?.drive_link){
+
+      alert(
+        "Drive link missing"
+      )
+
+      return
+
+    }
+
+    // ✅ SEND WHATSAPP
+    const waRes =
+    await fetch(
+
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
+
+      {
+
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body: JSON.stringify({
+
+          phone:
+            window.currentChatPhone,
+
+          message:
+            doc.invoice_no ||
+
+            "Invoice",
+
+          mediaUrl:
+            doc.drive_link
+
+        })
+
+      }
+
+    )
+
+    const waData =
+    await waRes.json()
+
+    console.log(
+      "WA:",
+      waData
+    )
+
+    if(!waRes.ok){
+
+      throw new Error(
+        waData.error ||
+        "WhatsApp failed"
       )
 
     }
+
+    alert(
+      "Invoice sent successfully"
+    )
+
+    closeDocumentModal()
 
   }catch(err){
 
@@ -290,12 +369,90 @@ async function(invoiceId){
 
   try{
 
-    window.open(
+    // ✅ FETCH STATEMENT
+    const {
+      data:doc,
+      error
+    } =
+    await window.supabase
 
-`/modules/transporter/client-ledger.html?invoiceId=${invoiceId}`,
+    .from("transporter_invoices")
 
-      "_blank"
+    .select("*")
+
+    .eq("id", invoiceId)
+
+    .single()
+
+    if(error){
+      throw error
+    }
+
+    if(!doc?.drive_link){
+
+      alert(
+        "Drive link missing"
+      )
+
+      return
+
+    }
+
+    // ✅ SEND WA
+    const waRes =
+    await fetch(
+
+      "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
+
+      {
+
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body: JSON.stringify({
+
+          phone:
+            window.currentChatPhone,
+
+          message:
+            doc.invoice_no ||
+
+            "Statement",
+
+          mediaUrl:
+            doc.drive_link
+
+        })
+
+      }
+
     )
+
+    const waData =
+    await waRes.json()
+
+    console.log(
+      "WA:",
+      waData
+    )
+
+    if(!waRes.ok){
+
+      throw new Error(
+        waData.error ||
+        "WhatsApp failed"
+      )
+
+    }
+
+    alert(
+      "Statement sent successfully"
+    )
+
+    closeDocumentModal()
 
   }catch(err){
 

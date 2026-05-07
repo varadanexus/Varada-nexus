@@ -71,6 +71,9 @@ await window.supabase
   // CLEAR INPUT
   input.value = ""
 
+  // STOP TYPING
+setTyping(false)
+
   // RELOAD CHAT
   openChat(chat.id)
 

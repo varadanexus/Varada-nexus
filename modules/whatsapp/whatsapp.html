@@ -217,20 +217,21 @@
   </button>
 
   <button
-    onclick="sendStatement()"
+<button
+  onclick="openDocumentModal()"
 
-    class="
-      whitespace-nowrap
-      bg-green-100
-      text-green-700
-      px-3
-      py-2
-      rounded-lg
-      text-sm
-    "
-  >
-    📄 Statement
-  </button>
+  class="
+    whitespace-nowrap
+    bg-green-100
+    text-green-700
+    px-3
+    py-2
+    rounded-lg
+    text-sm
+  "
+>
+  📎 Send Documents
+</button>
 
 </div>
 
@@ -613,6 +614,115 @@ window.closePdfModal = function(){
       </button>
 
     </div>
+
+  </div>
+
+</div>
+
+<!-- DOCUMENT MODAL -->
+
+<div
+  id="documentModal"
+
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/60
+    z-50
+    flex
+    items-center
+    justify-center
+    p-5
+  "
+>
+
+  <div
+    class="
+      bg-white
+      rounded-2xl
+      w-full
+      max-w-2xl
+      h-[80vh]
+      overflow-hidden
+      flex
+      flex-col
+    "
+  >
+
+    <!-- HEADER -->
+
+    <div class="
+      p-4
+      border-b
+      flex
+      justify-between
+      items-center
+    ">
+
+      <div class="font-semibold text-lg">
+        Send Documents
+      </div>
+
+      <button
+        onclick="closeDocumentModal()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+    <!-- TYPE -->
+
+    <div class="
+      p-4
+      border-b
+      flex
+      gap-3
+    ">
+
+      <button
+        onclick="loadClientDocuments()"
+
+        class="
+          bg-blue-100
+          text-blue-700
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Client
+      </button>
+
+      <button
+        onclick="loadContractorDocuments()"
+
+        class="
+          bg-orange-100
+          text-orange-700
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Contractor
+      </button>
+
+    </div>
+
+    <!-- LIST -->
+
+    <div
+      id="documentList"
+
+      class="
+        flex-1
+        overflow-y-auto
+        p-4
+        space-y-3
+      "
+    ></div>
 
   </div>
 

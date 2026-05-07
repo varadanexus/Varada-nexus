@@ -2,6 +2,8 @@ window.openChat = async function(chatId){
 
   window.currentChatId = chatId
 
+hideSidebar()
+  
   const { data: chat } = await window.supabase
   .from("whatsapp_chats")
   .select("*")

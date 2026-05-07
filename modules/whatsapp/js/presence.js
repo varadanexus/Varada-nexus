@@ -108,20 +108,28 @@ window.setTyping = async function(isTyping){
       return
     }
 
-    await window.supabase
-    .from("whatsapp_presence")
-    .upsert({
+await window.supabase
+.from("whatsapp_presence")
+.upsert(
 
-      phone:
-        window.currentChatPhone,
+  {
 
-      is_typing:
-        isTyping,
+    phone:
+      window.currentChatPhone,
 
-      updated_at:
-        new Date()
+    is_typing:
+      isTyping,
 
-    })
+    updated_at:
+      new Date()
+
+  },
+
+  {
+    onConflict:"phone"
+  }
+
+)
 
   }catch(err){
 

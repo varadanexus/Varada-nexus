@@ -91,6 +91,8 @@
 
 <script defer src="./js/send-message.js"></script>
 
+<script defer src="./js/realtime.js"></script>
+
 <script>
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -98,7 +100,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   await new Promise(r => setTimeout(r, 300))
 
   loadChats()
-
+  startRealtime()
+  
 })
 
 </script>

@@ -78,7 +78,7 @@ window.openChat = async function(chatId){
 
   ${
     msg.status === "read"
-    ? "👁 Read"
+    ? "Read"
 
     : msg.status === "delivered"
     ? "✓✓ Delivered"
@@ -87,7 +87,7 @@ window.openChat = async function(chatId){
     ? "✓ Sent"
 
     : msg.status === "queued"
-    ? "⏳ Sending"
+    ? "Sending"
 
     : msg.status === "failed"
     ? "❌ Failed"

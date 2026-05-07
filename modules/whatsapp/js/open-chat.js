@@ -11,6 +11,18 @@ hideSidebar()
   .single()
 
   if(!chat) return
+
+// ✅ RESET UNREAD COUNT
+await window.supabase
+
+.from("whatsapp_chats")
+
+.update({
+  unread_count: 0
+})
+
+.eq("id", chatId)
+  
   window.currentChatPhone =
 chat.phone
   window.currentChatName =

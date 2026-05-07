@@ -63,11 +63,72 @@ window.openChat = async function(chatId){
           }
         ">
 
-<div class="text-sm">
+${
+  msg.media_url
 
-  ${msg.message}
+  ? msg.media_url.includes(".pdf")
 
-</div>
+    // PDF CARD
+    ? `
+
+      <a
+        href="${msg.media_url}"
+        target="_blank"
+        class="
+          flex
+          items-center
+          gap-3
+          bg-white/20
+          p-3
+          rounded-lg
+        "
+      >
+
+        <div class="text-3xl">
+          📄
+        </div>
+
+        <div>
+
+          <div class="font-semibold">
+            PDF Document
+          </div>
+
+          <div class="text-xs opacity-70">
+            Click to open
+          </div>
+
+        </div>
+
+      </a>
+
+    `
+
+    // IMAGE
+    : `
+
+      <img
+        src="${msg.media_url}"
+        class="
+          rounded-lg
+          max-w-[250px]
+          cursor-pointer
+        "
+      >
+
+    `
+
+  // NORMAL TEXT
+  : `
+
+    <div class="text-sm">
+
+      ${msg.message}
+
+    </div>
+
+  `
+}
 
 <div class="
   text-[11px]

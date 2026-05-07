@@ -717,14 +717,14 @@ if(phones.length){
     },
     body: JSON.stringify({
       phones: phones,
-      template: "trip_update_api",
-      params: [
-        String(transporterName),
-        String(trip.route || ""),
-        String(selectedTruck?.truck_number || ""),
-        String(transporterName),
-        String((parseFloat(weightVal)/1000).toFixed(2))
-      ]
+      template: "trip_update_v1",
+      variables: {
+        "1": String(transporterName),
+        "2": String(trip.route || ""),
+        "3": String(selectedTruck?.truck_number || ""),
+        "4": String(transporterName),
+        "5": String((parseFloat(weightVal)/1000).toFixed(2))
+      }
     })
   })
 

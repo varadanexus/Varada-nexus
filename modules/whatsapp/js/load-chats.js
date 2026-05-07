@@ -1,6 +1,6 @@
 window.loadChats = async function(){
 
-  const { data, error } = await supabase
+  const { data, error } = await window.supabase
   .from("whatsapp_chats")
   .select("*")
   .order("last_message_at", {

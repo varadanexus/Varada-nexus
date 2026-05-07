@@ -66,7 +66,7 @@ window.openChat = async function(chatId){
 ${
   msg.media_url
 
-  ? msg.media_url.includes(".pdf")
+  ? msg.message.toLowerCase().endsWith(".pdf")
 
     // PDF CARD
     ? `

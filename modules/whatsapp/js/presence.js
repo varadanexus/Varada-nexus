@@ -31,6 +31,19 @@ window.startPresence = async function(){
 // ✅ UPDATE CHAT HEADER
 window.subscribePresence = function(phone){
 
+  // ✅ REMOVE OLD CHANNEL
+  if(window.presenceChannel){
+
+    window.supabase
+    .removeChannel(
+      window.presenceChannel
+    )
+
+  }
+
+  // ✅ CREATE NEW CHANNEL
+  const channel =
+
   window.supabase
 
   .channel(`presence-${phone}`)
@@ -78,6 +91,11 @@ window.subscribePresence = function(phone){
 
   )
 
-  .subscribe()
+  // ✅ SUBSCRIBE LAST
+  channel.subscribe()
+
+  // ✅ STORE GLOBALLY
+  window.presenceChannel =
+  channel
 
 }

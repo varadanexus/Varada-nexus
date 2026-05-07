@@ -11,7 +11,8 @@ hideSidebar()
   .single()
 
   if(!chat) return
-
+  subscribePresence(chat.phone)
+  
   // HEADER
   document.getElementById("chatHeader")
   .innerHTML = `
@@ -20,9 +21,13 @@ hideSidebar()
         ${chat.name || "Unknown"}
       </div>
 
-      <div class="text-sm text-gray-500">
-        ${chat.phone}
-      </div>
+<div
+  id="chatPresence"
+  class="text-sm text-gray-500"
+>
+  ${chat.phone}
+</div>
+
     </div>
   `
 

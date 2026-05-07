@@ -111,8 +111,41 @@ ${
 
     `
 
-    // IMAGE
-    : `
+// IMAGE
+: `
+
+${
+  msg.direction === "inbound"
+
+  ? `
+
+<div
+  onclick="
+    window.open(
+      '${msg.media_url}',
+      '_blank'
+    )
+  "
+
+  class="
+    bg-gray-200
+    text-black
+    px-4
+    py-3
+    rounded-lg
+    cursor-pointer
+    hover:bg-gray-300
+    transition
+  "
+>
+
+  📎 Incoming Image
+
+</div>
+
+  `
+
+  : `
 
 <img
   src="${msg.media_url}"
@@ -132,7 +165,9 @@ ${
   "
 >
 
-    `
+  `
+}
+`
 
   // NORMAL TEXT
   : `

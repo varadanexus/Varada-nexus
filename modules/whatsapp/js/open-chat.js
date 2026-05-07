@@ -71,36 +71,43 @@ ${
     // PDF CARD
     ? `
 
-      <a
-        href="${msg.media_url}"
-        target="_blank"
-        class="
-          flex
-          items-center
-          gap-3
-          bg-white/20
-          p-3
-          rounded-lg
-        "
-      >
+<div
+  onclick="
+    openPdfModal(
+      '${msg.media_url}'
+    )
+  "
 
-        <div class="text-3xl">
-          📄
-        </div>
+  class="
+    flex
+    items-center
+    gap-3
+    bg-white/20
+    p-3
+    rounded-lg
+    cursor-pointer
+    hover:bg-white/30
+    transition
+  "
+>
 
-        <div>
+  <div class="text-3xl">
+    📄
+  </div>
 
-          <div class="font-semibold">
-            PDF Document
-          </div>
+  <div>
 
-          <div class="text-xs opacity-70">
-            Click to open
-          </div>
+    <div class="font-semibold">
+      PDF Document
+    </div>
 
-        </div>
+    <div class="text-xs opacity-70">
+      Click to preview
+    </div>
 
-      </a>
+  </div>
+
+</div>
 
     `
 

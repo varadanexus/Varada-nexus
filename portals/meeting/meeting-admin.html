@@ -422,12 +422,18 @@ const waRes = await fetch('https://ticsgbtxfhhihamejiss.supabase.co/functions/v1
     "Content-Type": "application/json",
     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
   },
-  body: JSON.stringify({
-    phone: phone,
-    name: name,
-    meeting_link: meetingLink,
-    scheduled_at: meeting.scheduled_local || meeting.scheduled_at
-  })
+body: JSON.stringify({
+  phones: [phone],
+
+  template: "meeting_info_v1",
+
+  variables: {
+    "1": String(name),
+    "2": String(meeting.scheduled_local || meeting.scheduled_at || ""),
+    "3": String(meetingLink),
+    "4": String(phoneInput)
+  }
+})
 });
 
 const waData = await waRes.json();

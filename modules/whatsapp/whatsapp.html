@@ -33,10 +33,37 @@
 
 <body class="bg-gray-100 h-screen overflow-hidden">
 
-  <div class="flex h-screen">
+<div
+  class="
+    flex
+    h-screen
+    overflow-hidden
+  "
+>
 
     <!-- LEFT SIDEBAR -->
-    <div class="w-[350px] bg-white border-r overflow-y-auto">
+<div
+  id="sidebar"
+
+  class="
+    w-full
+    md:w-[350px]
+    bg-white
+    border-r
+    overflow-y-auto
+
+    fixed
+    md:relative
+
+    inset-0
+    z-40
+
+    md:translate-x-0
+
+    transition
+
+  "
+>
 
 <div class="
   p-4
@@ -94,7 +121,16 @@
     </div>
 
     <!-- RIGHT CHAT AREA -->
-    <div class="flex-1 flex flex-col">
+<div
+  id="chatArea"
+
+  class="
+    flex-1
+    flex
+    flex-col
+    w-full
+  "
+>
 
       <!-- TOP HEADER -->
       <div
@@ -167,6 +203,8 @@
 <script defer src="./js/new-chat.js"></script>
 
 <script defer src="./js/search.js"></script>
+
+<script defer src="./js/mobile.js"></script>
   
 <script>
 

@@ -20,9 +20,9 @@ window.closeDocumentModal = function(){
 window.loadClientDocuments =
 async function(){
 
+  // ✅ NON GST
   const {
-    data,
-    error
+    data:nonGst
   } =
   await window.supabase
 
@@ -30,11 +30,47 @@ async function(){
 
   .select("*")
 
-  .order("created_at", {
-    ascending:false
-  })
+  // ✅ GST
+  const {
+    data:gst
+  } =
+  await window.supabase
 
-  console.log(data)
+  .from("client_invoices_gst")
+
+  .select("*")
+
+  // ✅ ADD TYPE
+  const nonGstDocs =
+  (nonGst || []).map(doc => ({
+    ...doc,
+    invoice_type:"NON_GST"
+  }))
+
+  const gstDocs =
+  (gst || []).map(doc => ({
+    ...doc,
+    invoice_type:"GST"
+  }))
+
+  // ✅ MERGE
+  const allDocs = [
+
+    ...gstDocs,
+    ...nonGstDocs
+
+  ]
+
+  // ✅ SORT LATEST FIRST
+  allDocs.sort((a,b)=>{
+
+    return new Date(
+      b.created_at
+    ) - new Date(
+      a.created_at
+    )
+
+  })
 
   const list =
   document.getElementById(
@@ -43,7 +79,7 @@ async function(){
 
   list.innerHTML = ""
 
-  data.forEach(doc => {
+  allDocs.forEach(doc => {
 
     list.innerHTML += `
 
@@ -58,8 +94,35 @@ async function(){
 
         <div>
 
-          <div class="font-semibold">
+          <div class="
+            font-semibold
+            flex
+            items-center
+            gap-2
+          ">
+
             ${doc.invoice_no}
+
+            <span class="
+              text-xs
+              px-2
+              py-1
+              rounded-full
+              ${
+                doc.invoice_type === "GST"
+                ? "bg-green-100 text-green-700"
+                : "bg-blue-100 text-blue-700"
+              }
+            ">
+
+              ${
+                doc.invoice_type === "GST"
+                ? "GST"
+                : "NON GST"
+              }
+
+            </span>
+
           </div>
 
           <div class="
@@ -74,7 +137,8 @@ async function(){
         <button
           onclick="
             sendClientInvoice(
-              '${doc.id}'
+              '${doc.id}',
+              '${doc.invoice_type}'
             )
           "
 
@@ -178,7 +242,10 @@ async function(){
 
 // ✅ SEND CLIENT INVOICE
 window.sendClientInvoice =
-async function(invoiceId){
+async function(
+  invoiceId,
+  invoiceType
+){
 
   try{
 

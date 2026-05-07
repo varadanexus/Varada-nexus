@@ -63,7 +63,39 @@ window.openChat = async function(chatId){
           }
         ">
 
-          ${msg.message}
+<div class="text-sm">
+
+  ${msg.message}
+
+</div>
+
+<div class="
+  text-[11px]
+  mt-1
+  opacity-70
+  text-right
+">
+
+  ${
+    msg.status === "read"
+    ? "👁 Read"
+
+    : msg.status === "delivered"
+    ? "✓✓ Delivered"
+
+    : msg.status === "sent"
+    ? "✓ Sent"
+
+    : msg.status === "queued"
+    ? "⏳ Sending"
+
+    : msg.status === "failed"
+    ? "❌ Failed"
+
+    : ""
+  }
+
+</div>
 
         </div>
 

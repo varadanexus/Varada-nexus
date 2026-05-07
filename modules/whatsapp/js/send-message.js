@@ -38,6 +38,8 @@ const waRes = await fetch(
 
 const waData = await waRes.json()
 
+const messageSid = waData.sid
+  
 console.log("WA SEND:", waData)
 
 if(!waRes.ok){
@@ -46,15 +48,16 @@ if(!waRes.ok){
 }
   
   // SAVE MESSAGE LOCALLY
-  await window.supabase
-  .from("whatsapp_messages")
-  .insert({
-    chat_id: chat.id,
-    phone: chat.phone,
-    direction: "outbound",
-    message,
-    status: "sent"
-  })
+await window.supabase
+.from("whatsapp_messages")
+.insert({
+  chat_id: chat.id,
+  phone: chat.phone,
+  direction: "outbound",
+  message,
+  message_sid: messageSid,
+  status: "sent"
+})
 
   // UPDATE CHAT
   await window.supabase

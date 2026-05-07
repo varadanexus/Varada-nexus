@@ -297,6 +297,19 @@ async function(
 
     }
 
+console.log({
+
+  phone:
+    window.currentChatPhone,
+
+  message:
+    doc.invoice_no,
+
+  mediaUrl:
+    doc.drive_link
+
+})
+    
     // ✅ SEND WHATSAPP
     const waRes =
     await fetch(
@@ -316,10 +329,11 @@ async function(
           phone:
             window.currentChatPhone,
 
-          message:
-            doc.invoice_no ||
-
-            "Invoice",
+message:
+  String(
+    doc.invoice_no ||
+    "Invoice Document"
+  ),
 
           mediaUrl:
             doc.drive_link
@@ -398,6 +412,19 @@ async function(invoiceId){
 
     }
 
+console.log({
+
+  phone:
+    window.currentChatPhone,
+
+  message:
+    doc.invoice_no,
+
+  mediaUrl:
+    doc.drive_link
+
+})
+    
     // ✅ SEND WA
     const waRes =
     await fetch(
@@ -417,10 +444,11 @@ async function(invoiceId){
           phone:
             window.currentChatPhone,
 
-          message:
-            doc.invoice_no ||
-
-            "Statement",
+message:
+  String(
+    doc.invoice_no ||
+    "Transporter Statement"
+  ),
 
           mediaUrl:
             doc.drive_link

@@ -38,9 +38,33 @@
     <!-- LEFT SIDEBAR -->
     <div class="w-[350px] bg-white border-r overflow-y-auto">
 
-      <div class="p-4 text-2xl font-bold border-b">
-        WhatsApp
-      </div>
+<div class="
+  p-4
+  border-b
+  flex
+  items-center
+  justify-between
+">
+
+  <div class="text-2xl font-bold">
+    WhatsApp
+  </div>
+
+  <button
+    onclick="openNewChatModal()"
+    class="
+      bg-green-600
+      text-white
+      px-3
+      py-2
+      rounded-lg
+      text-sm
+    "
+  >
+    + New
+  </button>
+
+</div>
 
       <div id="chatList"></div>
 
@@ -331,6 +355,91 @@ window.closePdfModal = function(){
 }
   
 </script>
+
+<!-- NEW CHAT MODAL -->
+
+<div
+  id="newChatModal"
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/50
+    z-50
+    flex
+    items-center
+    justify-center
+  "
+>
+
+  <div class="
+    bg-white
+    w-[400px]
+    rounded-xl
+    p-5
+    space-y-4
+  ">
+
+    <div class="text-xl font-semibold">
+      New Chat
+    </div>
+
+    <input
+      id="newChatName"
+      placeholder="Name"
+      class="
+        w-full
+        border
+        rounded-lg
+        px-4
+        py-3
+      "
+    >
+
+    <input
+      id="newChatPhone"
+      placeholder="Phone Number"
+      class="
+        w-full
+        border
+        rounded-lg
+        px-4
+        py-3
+      "
+    >
+
+    <div class="flex justify-end gap-3">
+
+      <button
+        onclick="closeNewChatModal()"
+        class="
+          px-4
+          py-2
+          border
+          rounded-lg
+        "
+      >
+        Cancel
+      </button>
+
+      <button
+        onclick="createNewChat()"
+        class="
+          bg-green-600
+          text-white
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Create
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
   
 </body>
 

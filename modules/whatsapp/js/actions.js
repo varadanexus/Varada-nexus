@@ -27,14 +27,17 @@ window.sendStatement = async function(){
 
     }
 
-    // ✅ OPEN LEDGER PAGE
-    const ledgerUrl =
+    // ✅ LOADING
+    alert(
+      "Generating statement..."
+    )
 
-    `/client-ledger.html?phone=${window.currentChatPhone}`
-
-    // ✅ OPEN IN NEW TAB
+    // ✅ FETCH PDF FROM LEDGER
+    const pdfWindow =
     window.open(
-      ledgerUrl,
+
+      `/client-ledger.html?phone=${window.currentChatPhone}&autoPdf=true`,
+
       "_blank"
     )
 

@@ -99,3 +99,34 @@ window.subscribePresence = function(phone){
   channel
 
 }
+
+window.setTyping = async function(isTyping){
+
+  try{
+
+    if(!window.currentChatPhone){
+      return
+    }
+
+    await window.supabase
+    .from("whatsapp_presence")
+    .upsert({
+
+      phone:
+        window.currentChatPhone,
+
+      is_typing:
+        isTyping,
+
+      updated_at:
+        new Date()
+
+    })
+
+  }catch(err){
+
+    console.error(err)
+
+  }
+
+}

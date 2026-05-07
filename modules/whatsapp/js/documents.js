@@ -240,6 +240,7 @@ async function(){
 
 }
 
+
 // ✅ SEND CLIENT INVOICE
 window.sendClientInvoice =
 async function(
@@ -249,110 +250,29 @@ async function(
 
   try{
 
-    alert("Generating invoice...")
+    // ✅ GST
+    if(invoiceType === "GST"){
 
-    // ✅ GENERATE PDF
-    const blobResult =
-    await generateInvoiceBlob(
-      invoiceId
-    )
+      window.open(
 
-    let pdfBlob = null
+`/modules/client/client_gst_billing.html?invoiceId=${invoiceId}`,
 
-    if(blobResult?.blob){
-
-      pdfBlob = blobResult.blob
-
-    }else{
-
-      pdfBlob = blobResult
+        "_blank"
+      )
 
     }
 
-    // ✅ BASE64
-    const reader =
-    new FileReader()
+    // ✅ NON GST
+    else{
 
-    reader.onload =
-    async function(){
+      window.open(
 
-      const base64 =
-      reader.result.split(",")[1]
+`/modules/client/client-billing.html?invoiceId=${invoiceId}`,
 
-      // ✅ UPLOAD
-      const uploadRes =
-      await fetch(
-        "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-drive",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body: JSON.stringify({
-
-            file_base64:
-              base64,
-
-            file_name:
-              `invoice_${Date.now()}.pdf`,
-
-            trip_no:
-              "ClientInvoices"
-
-          })
-
-        }
+        "_blank"
       )
-
-      const uploadData =
-      await uploadRes.json()
-
-      console.log(
-        "UPLOAD:",
-        uploadData
-      )
-
-      // ✅ SEND WHATSAPP
-      await fetch(
-        "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body: JSON.stringify({
-
-            phone:
-              window.currentChatPhone,
-
-            message:
-              "Invoice Document",
-
-            mediaUrl:
-              uploadData.fileUrl
-
-          })
-
-        }
-      )
-
-      alert(
-        "Invoice sent successfully"
-      )
-
-      closeDocumentModal()
 
     }
-
-    reader.readAsDataURL(
-      pdfBlob
-    )
 
   }catch(err){
 
@@ -370,94 +290,11 @@ async function(invoiceId){
 
   try{
 
-    alert(
-      "Generating statement..."
-    )
+    window.open(
 
-    // ✅ PDF
-    const pdfBlob =
-    await generateTransporterPDFBlob(
-      invoiceId
-    )
+`/modules/transporter/client-ledger.html?invoiceId=${invoiceId}`,
 
-    // ✅ BASE64
-    const reader =
-    new FileReader()
-
-    reader.onload =
-    async function(){
-
-      const base64 =
-      reader.result.split(",")[1]
-
-      // ✅ UPLOAD
-      const uploadRes =
-      await fetch(
-        "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-drive",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body: JSON.stringify({
-
-            file_base64:
-              base64,
-
-            file_name:
-              `statement_${Date.now()}.pdf`,
-
-            trip_no:
-              "TransporterStatements"
-
-          })
-
-        }
-      )
-
-      const uploadData =
-      await uploadRes.json()
-
-      // ✅ SEND WA
-      await fetch(
-        "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body: JSON.stringify({
-
-            phone:
-              window.currentChatPhone,
-
-            message:
-              "Transporter Statement",
-
-            mediaUrl:
-              uploadData.fileUrl
-
-          })
-
-        }
-      )
-
-      alert(
-        "Statement sent successfully"
-      )
-
-      closeDocumentModal()
-
-    }
-
-    reader.readAsDataURL(
-      pdfBlob
+      "_blank"
     )
 
   }catch(err){

@@ -30,25 +30,61 @@ chat.name
   subscribePresence(chat.phone)
   
   // HEADER
-  document.getElementById("chatHeader")
-  .innerHTML = `
-    <div>
-      <div class="font-semibold">
-        ${chat.name || "Unknown"}
-      </div>
+document.getElementById("chatHeader")
+.innerHTML = `
 
-<div class="text-sm text-gray-500">
+<div class="
+  flex
+  items-center
+  justify-between
+  w-full
+">
 
   <div>
-    ${chat.phone}
-  </div>
 
-  <div id="chatPresence"></div>
+    <div class="
+      font-semibold
+      flex
+      items-center
+      gap-2
+    ">
 
-</div>
+      <span id="chatName">
+        ${chat.name || "Unknown"}
+      </span>
+
+      <button
+        onclick="
+          editChatName(
+            '${chat.id}',
+            '${chat.name || ""}'
+          )
+        "
+
+        class="
+          text-xs
+          bg-gray-200
+          px-2
+          py-1
+          rounded
+        "
+      >
+        Edit
+      </button>
 
     </div>
-  `
+
+    <div
+      id="chatPresence"
+      class="text-sm text-gray-500"
+    >
+      ${chat.phone}
+    </div>
+
+  </div>
+
+</div>
+`
 
   // LOAD MESSAGES
   const { data: messages } = await window.supabase

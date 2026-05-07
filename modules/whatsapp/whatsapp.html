@@ -161,6 +161,27 @@ window.addEventListener("DOMContentLoaded", async () => {
     ×
   </button>
 
+<a
+  id="downloadImageBtn"
+  download
+  target="_blank"
+
+  class="
+    absolute
+    top-5
+    left-5
+    bg-white
+    text-black
+    px-4
+    py-2
+    rounded-lg
+    font-semibold
+    shadow-lg
+  "
+>
+  Download
+</a>
+  
   <!-- IMAGE -->
   <img
     id="modalImage"
@@ -206,6 +227,28 @@ window.addEventListener("DOMContentLoaded", async () => {
     ×
   </button>
 
+<a
+  id="downloadPdfBtn"
+  download
+  target="_blank"
+
+  class="
+    absolute
+    top-5
+    left-5
+    bg-white
+    text-black
+    px-4
+    py-2
+    rounded-lg
+    font-semibold
+    shadow-lg
+    z-50
+  "
+>
+  Download
+</a>
+  
   <!-- PDF -->
   <iframe
     id="pdfFrame"
@@ -229,6 +272,10 @@ window.openImageModal = function(url){
   .getElementById("modalImage")
   .src = url
 
+document
+.getElementById("downloadImageBtn")
+.href = url
+  
   document
   .getElementById("imageModal")
   .classList
@@ -255,6 +302,10 @@ window.openPdfModal = function(url){
   const previewUrl =
   `https://drive.google.com/file/d/${fileId}/preview`
 
+document
+.getElementById("downloadPdfBtn")
+.href = url
+  
   document
   .getElementById("pdfFrame")
   .src = previewUrl

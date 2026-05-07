@@ -307,8 +307,7 @@ console.log({
 
 mediaUrl:
 
-`https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`
-
+`https://drive.usercontent.google.com/download?id=${doc.drive_file_id}&export=view&authuser=0`
 })
     
     // ✅ SEND WHATSAPP
@@ -423,8 +422,7 @@ console.log({
 
 mediaUrl:
 
-`https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`
-
+`https://drive.usercontent.google.com/download?id=${doc.drive_file_id}&export=view&authuser=0`
 })
     
     // ✅ SEND WA

@@ -247,9 +247,17 @@ window.closeImageModal = function(){
 
 window.openPdfModal = function(url){
 
+  // EXTRACT FILE ID
+  const fileId =
+  url.split("id=")[1]
+
+  // GOOGLE PREVIEW URL
+  const previewUrl =
+  `https://drive.google.com/file/d/${fileId}/preview`
+
   document
   .getElementById("pdfFrame")
-  .src = url
+  .src = previewUrl
 
   document
   .getElementById("pdfModal")

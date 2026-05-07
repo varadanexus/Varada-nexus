@@ -19,6 +19,32 @@ window.sendMessage = async function(){
 
   if(!chat) return
 
+// SEND TO TWILIO
+const waRes = await fetch(
+  "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
+  {
+    method:"POST",
+
+    headers:{
+      "Content-Type":"application/json"
+    },
+
+    body:JSON.stringify({
+      phone: chat.phone,
+      message
+    })
+  }
+)
+
+const waData = await waRes.json()
+
+console.log("WA SEND:", waData)
+
+if(!waRes.ok){
+  alert("WhatsApp send failed")
+  return
+}
+  
   // SAVE MESSAGE LOCALLY
   await window.supabase
   .from("whatsapp_messages")

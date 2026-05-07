@@ -729,6 +729,54 @@ window.closePdfModal = function(){
   </div>
 
 </div>
+
+<script>
+
+window.editChatName =
+async function(
+  chatId,
+  currentName
+){
+
+  const newName = prompt(
+    "Edit Contact Name",
+    currentName
+  )
+
+  if(!newName){
+    return
+  }
+
+  const { error } =
+
+  await window.supabase
+
+  .from("whatsapp_chats")
+
+  .update({
+    name: newName
+  })
+
+  .eq("id", chatId)
+
+  if(error){
+
+    alert(error.message)
+
+    return
+
+  }
+
+  // ✅ UPDATE UI
+  document
+  .getElementById("chatName")
+  .innerText = newName
+
+  // ✅ REFRESH SIDEBAR
+  loadChats()
+
+}
+</script>
   
 </body>
 

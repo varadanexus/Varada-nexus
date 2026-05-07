@@ -107,14 +107,23 @@ ${
     // IMAGE
     : `
 
-      <img
-        src="${msg.media_url}"
-        class="
-          rounded-lg
-          max-w-[250px]
-          cursor-pointer
-        "
-      >
+<img
+  src="${msg.media_url}"
+
+  onclick="
+    openImageModal(
+      '${msg.media_url}'
+    )
+  "
+
+  class="
+    rounded-lg
+    max-w-[250px]
+    cursor-pointer
+    hover:opacity-90
+    transition
+  "
+>
 
     `
 

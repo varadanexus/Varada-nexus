@@ -11,6 +11,8 @@ hideSidebar()
   .single()
 
   if(!chat) return
+  window.currentChatPhone =
+chat.phone
   subscribePresence(chat.phone)
   
   // HEADER

@@ -803,14 +803,14 @@ phones = [...new Set(phones)]
 console.log("📲 Payment phones:", phones)
 console.log("🚀 PAYMENT PAYLOAD:", {
   phones,
-  template: "payment_update_api",
-  params: [
-    name,
-    payment.id,
-    amount,
-    tripList,
-    status
-  ]
+  template: "payment_update_v1",
+  variables: {
+  "1": String(name),
+  "2": String(currentInvoice.invoice_no),
+  "3": String(Number(amount).toLocaleString("en-IN")),
+  "4": String(tripList),
+  "5": String(status)
+}
 })
 /* 🔹 SEND */
 if(phones.length){

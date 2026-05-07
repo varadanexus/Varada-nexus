@@ -23,11 +23,14 @@ chat.phone
         ${chat.name || "Unknown"}
       </div>
 
-<div
-  id="chatPresence"
-  class="text-sm text-gray-500"
->
-  ${chat.phone}
+<div class="text-sm text-gray-500">
+
+  <div>
+    ${chat.phone}
+  </div>
+
+  <div id="chatPresence"></div>
+
 </div>
 
     </div>

@@ -85,11 +85,17 @@
 
   </div>
 
-<script src="./js/load-chats.js"></script>
+<script defer src="./js/load-chats.js"></script>
 
 <script>
 
+window.addEventListener("DOMContentLoaded", async () => {
+
+  await new Promise(r => setTimeout(r, 300))
+
   loadChats()
+
+})
 
 </script>
   

@@ -127,8 +127,7 @@
   id="chatArea"
 
   class="
-    hidden
-    md:flex
+    flex
 
     flex-1
     flex-col
@@ -788,6 +787,23 @@ async function(
 
 <script>
 
+// ✅ INITIAL MOBILE STATE
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    if(window.innerWidth < 768){
+
+      document
+      .getElementById("chatArea")
+      .classList
+      .add("hidden")
+
+    }
+
+  }
+)
+
 // ✅ OPEN CHAT
 window.hideSidebar = function(){
 
@@ -810,15 +826,19 @@ window.hideSidebar = function(){
 // ✅ BACK BUTTON
 window.showSidebar = function(){
 
-  document
-  .getElementById("sidebar")
-  .classList
-  .remove("hidden")
+  if(window.innerWidth < 768){
 
-  document
-  .getElementById("chatArea")
-  .classList
-  .add("hidden")
+    document
+    .getElementById("sidebar")
+    .classList
+    .remove("hidden")
+
+    document
+    .getElementById("chatArea")
+    .classList
+    .add("hidden")
+
+  }
 
 }
 

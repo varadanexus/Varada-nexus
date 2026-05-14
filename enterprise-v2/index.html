@@ -457,12 +457,12 @@
 
       <div class="menu-title">Navigation</div>
       <nav class="menu">
-        <a class="active" href="#welcome">Dashboard</a>
-        <a href="#modules">Modules</a>
-        <a href="#portals">Portals</a>
-        <a href="#permissions">Permissions</a>
-        <a href="#reports">Reports</a>
-        <a href="#settings">Settings</a>
+        <a class="active" data-page="module_dashboard" href="#welcome">Dashboard</a>
+        <a data-page="module_transportation" href="#modules">Modules</a>
+        <a data-page="module_meetings" href="#portals">Portals</a>
+        <a data-page="module_accounts" href="#permissions">Permissions</a>
+        <a data-page="module_reports" href="#reports">Reports</a>
+        <a data-page="module_settings" href="#settings">Settings</a>
       </nav>
     </aside>
 
@@ -611,6 +611,13 @@
           const page = String(card.getAttribute('data-page') || '').trim();
           if (!allowedPages.has(page)) {
             card.style.display = 'none';
+          }
+        });
+
+        navLinks.forEach((link) => {
+          const page = String(link.getAttribute('data-page') || '').trim();
+          if (page && !allowedPages.has(page)) {
+            link.style.display = 'none';
           }
         });
       }

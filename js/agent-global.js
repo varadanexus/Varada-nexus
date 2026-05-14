@@ -31,13 +31,28 @@ alert("System not ready ❌")
 return
 }
 
+/* ✅ SIGN OUT */
 await supabaseClient.auth.signOut()
 
-window.location.href = "login.html"
+/* ✅ CLEAR LOCAL STORAGE */
+localStorage.clear()
+sessionStorage.clear()
+
+/* ✅ REMOVE SUPABASE TOKENS */
+Object.keys(localStorage).forEach(key=>{
+if(key.includes("supabase")){
+localStorage.removeItem(key)
+}
+})
+
+/* ✅ FORCE REDIRECT */
+window.location.replace("/website/login.html")
 
 }catch(err){
+
 console.error("Logout error:", err)
 alert("Logout failed ❌")
+
 }
 
 }

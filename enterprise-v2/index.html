@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise V2 Dashboard</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2e;
+      --panel-2: #16233d;
+      --text: #e6edf7;
+      --muted: #93a4c3;
+      --accent: #4f8cff;
+      --accent-2: #65d6ff;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 10%, #14223f, var(--bg) 45%);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #0e172b, #0b1324);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      margin-bottom: 18px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #031025;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .menu-title {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 16px 10px 8px;
+    }
+
+    .menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #d6e1f5;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin: 4px 0;
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+      font-size: 14px;
+    }
+
+    .menu a:hover,
+    .menu a.active {
+      background: rgba(79, 140, 255, 0.12);
+      border-color: rgba(101, 214, 255, 0.35);
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .menu-toggle {
+      display: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(79, 140, 255, 0.1);
+      color: #dbe8ff;
+      font-size: 18px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .topbar {
+      height: 68px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: rgba(11, 18, 32, 0.7);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 4;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar .meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-pill {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(79, 140, 255, 0.1);
+      color: #dbe8ff;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 5px 10px 5px 5px;
+    }
+
+    .profile-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #031025;
+    }
+
+    .profile-text {
+      line-height: 1.2;
+    }
+
+    .profile-text strong {
+      display: block;
+      font-size: 12px;
+      color: #e9f1ff;
+      font-weight: 600;
+    }
+
+    .profile-text span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .main {
+      padding: 22px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(79,140,255,0.16), rgba(101,214,255,0.08));
+      border: 1px solid rgba(101,214,255,0.3);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .hero h3 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .search-row {
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: rgba(101, 214, 255, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.15);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 130px;
+      box-shadow: var(--shadow);
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.01);
+      border-color: rgba(101,214,255,0.45);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .card:active {
+      transform: translateY(-1px) scale(0.995);
+    }
+
+    .card .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(79, 140, 255, 0.14);
+      color: #b8d3ff;
+      margin-bottom: 8px;
+    }
+
+    .card h4 {
+      margin: 4px 0 8px;
+      font-size: 16px;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 16px;
+      text-align: right;
+    }
+
+    .section-block {
+      margin-top: 18px;
+      background: linear-gradient(180deg, rgba(17,26,46,0.85), rgba(22,35,61,0.75));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-block h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .section-block p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .main {
+        padding: 18px;
+      }
+      .cards {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      }
+      .topbar-left {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+        border-right: 1px solid var(--border);
+        border-bottom: none;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        z-index: 20;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .topbar {
+        position: relative;
+        height: auto;
+        padding: 12px 14px;
+        align-items: flex-start;
+        gap: 10px;
+        flex-direction: column;
+      }
+      .topbar h2 { font-size: 16px; }
+      .topbar .meta { font-size: 12px; }
+      .topbar-right {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .menu-toggle {
+        display: inline-flex;
+      }
+      .topbar-left {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .search-input {
+        max-width: 100%;
+      }
+      .main {
+        padding: 14px;
+      }
+      .section-block {
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cards,
+      #moduleCards {
+        grid-template-columns: 1fr;
+      }
+      .topbar-right {
+        gap: 8px;
+      }
+      .top-pill {
+        width: 100%;
+      }
+      .profile {
+        margin-left: auto;
+      }
+      .hero,
+      .section-block {
+        border-radius: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-badge">VN</div>
+        <div>
+          <h1>Varada Nexus ERP</h1>
+          <p>Enterprise V2</p>
+        </div>
+      </div>
+
+      <div class="menu-title">Navigation</div>
+      <nav class="menu">
+        <a class="active" href="#welcome">Dashboard</a>
+        <a href="#modules">Modules</a>
+        <a href="#portals">Portals</a>
+        <a href="#permissions">Permissions</a>
+        <a href="#reports">Reports</a>
+        <a href="#settings">Settings</a>
+      </nav>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" title="Menu">☰</button>
+          <h2>Enterprise Dashboard Home</h2>
+          <div class="meta">Corporate Dark UI • Responsive Layout</div>
+        </div>
+        <div class="topbar-right">
+          <div class="top-pill" id="liveDateTime">Loading time...</div>
+          <button class="icon-btn" aria-label="Notifications" title="Notifications">🔔</button>
+          <div class="profile" aria-label="User profile">
+            <div class="profile-avatar">VN</div>
+            <div class="profile-text">
+              <strong>Enterprise Admin</strong>
+              <span>Super Admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main">
+        <div id="welcome" class="hero">
+          <h3>Welcome to Enterprise-v2</h3>
+          <p>Unified access to business modules, portals, and cross-domain operational systems.</p>
+        </div>
+
+        <div class="search-row">
+          <input id="moduleSearch" class="search-input" type="text" placeholder="Search modules..." aria-label="Search modules" />
+        </div>
+
+        <div id="modules" class="cards">
+          <div class="section-block" style="grid-column: 1 / -1; margin-top: 0; margin-bottom: 2px;">
+            <h3>Modules</h3>
+            <p>Explore core business modules across operations, finance, communication, and execution.</p>
+          </div>
+        </div>
+
+        <div class="cards" id="moduleCards" style="margin-top: 12px;">
+          <a class="card" data-module="Transportation" href="modules/transportation/index.html"><span class="tag">Module</span><h4>Transportation</h4><p>Trip lifecycle, fleet coordination, and movement operations.</p></a>
+          <a class="card" data-module="Trading" href="modules/trading/index.html"><span class="tag">Module</span><h4>Trading</h4><p>Commodity and business trading workflows with operational visibility.</p></a>
+          <a class="card" data-module="Hospital Services" href="modules/hospital/index.html"><span class="tag">Module</span><h4>Hospital Services</h4><p>Healthcare-related execution and institutional service operations.</p></a>
+          <a class="card" data-module="Mining Services" href="modules/mining/index.html"><span class="tag">Module</span><h4>Mining Services</h4><p>Resource operations, extraction coordination, and support systems.</p></a>
+          <a class="card" data-module="Arbitrage" href="modules/arbitrage/index.html"><span class="tag">Module</span><h4>Arbitrage</h4><p>Opportunity tracking, decision workflows, and strategic execution.</p></a>
+          <a class="card" data-module="Construction" href="modules/construction/index.html"><span class="tag">Module</span><h4>Construction</h4><p>Project execution, planning milestones, and delivery management.</p></a>
+          <a class="card" data-module="E-Commerce" href="modules/ecommerce/index.html"><span class="tag">Module</span><h4>E-Commerce</h4><p>Digital commerce operations, order visibility, and growth controls.</p></a>
+          <a class="card" data-module="Accounts" href="modules/accounts/index.html"><span class="tag">Module</span><h4>Accounts</h4><p>Financial workflows including ledgers, payments, and summaries.</p></a>
+          <a class="card" data-module="WhatsApp" href="modules/whatsapp/index.html"><span class="tag">Module</span><h4>WhatsApp</h4><p>Communication workflows, alerting, and message-linked operations.</p></a>
+          <a class="card" data-module="Meetings" href="modules/meetings/index.html"><span class="tag">Module</span><h4>Meetings</h4><p>Internal and external meeting coordination and participation tools.</p></a>
+        </div>
+
+        <section id="portals" class="section-block">
+          <h3>Portals</h3>
+          <p>Placeholder section for role-based portal access such as Admin, Agent, Transporter, and Meeting portals.</p>
+        </section>
+
+        <section id="permissions" class="section-block">
+          <h3>Permissions</h3>
+          <p>Placeholder section for enterprise RBAC configuration, policy mapping, and access governance controls.</p>
+        </section>
+
+        <section id="reports" class="section-block">
+          <h3>Reports</h3>
+          <p>Placeholder section for analytics, financial reporting, module performance insights, and operational dashboards.</p>
+        </section>
+
+        <section id="settings" class="section-block">
+          <h3>Settings</h3>
+          <p>Placeholder section for system preferences, profile settings, notifications, and organization-level configuration.</p>
+        </section>
+
+        <div class="footer-note">Enterprise-v2 workspace (non-production)</div>
+      </main>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const dtEl = document.getElementById('liveDateTime');
+      function updateDateTime() {
+        const now = new Date();
+        dtEl.textContent = now.toLocaleString(undefined, {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      }
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+
+      const input = document.getElementById('moduleSearch');
+      const cards = Array.from(document.querySelectorAll('#moduleCards .card'));
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('menuToggle');
+      const navLinks = Array.from(document.querySelectorAll('.menu a'));
+
+      input.addEventListener('input', function () {
+        const q = input.value.trim().toLowerCase();
+        cards.forEach((card) => {
+          const name = (card.dataset.module || '').toLowerCase();
+          const desc = card.textContent.toLowerCase();
+          const show = !q || name.includes(q) || desc.includes(q);
+          card.style.display = show ? 'block' : 'none';
+        });
+      });
+
+      if (menuToggle) {
+        menuToggle.addEventListener('click', function () {
+          sidebar.classList.toggle('open');
+        });
+      }
+
+      navLinks.forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 900) {
+            sidebar.classList.remove('open');
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

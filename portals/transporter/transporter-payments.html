@@ -55,7 +55,7 @@ border-bottom:1px solid #eee;
 <div id="sidebar-container"></div>
 
 <script>
-fetch("transporter-sidebar.html")
+fetch("/components/transporter-sidebar.html")
 .then(res=>res.text())
 .then(data=>{
 document.getElementById("sidebar-container").innerHTML=data

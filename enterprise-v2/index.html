@@ -505,16 +505,16 @@
         </div>
 
         <div class="cards" id="moduleCards" style="margin-top: 12px;">
-          <a class="card" data-module="Transportation" href="modules/transportation/index.html"><span class="tag">Module</span><h4>Transportation</h4><p>Trip lifecycle, fleet coordination, and movement operations.</p></a>
-          <a class="card" data-module="Trading" href="modules/trading/index.html"><span class="tag">Module</span><h4>Trading</h4><p>Commodity and business trading workflows with operational visibility.</p></a>
-          <a class="card" data-module="Hospital Services" href="modules/hospital/index.html"><span class="tag">Module</span><h4>Hospital Services</h4><p>Healthcare-related execution and institutional service operations.</p></a>
-          <a class="card" data-module="Mining Services" href="modules/mining/index.html"><span class="tag">Module</span><h4>Mining Services</h4><p>Resource operations, extraction coordination, and support systems.</p></a>
-          <a class="card" data-module="Arbitrage" href="modules/arbitrage/index.html"><span class="tag">Module</span><h4>Arbitrage</h4><p>Opportunity tracking, decision workflows, and strategic execution.</p></a>
-          <a class="card" data-module="Construction" href="modules/construction/index.html"><span class="tag">Module</span><h4>Construction</h4><p>Project execution, planning milestones, and delivery management.</p></a>
-          <a class="card" data-module="E-Commerce" href="modules/ecommerce/index.html"><span class="tag">Module</span><h4>E-Commerce</h4><p>Digital commerce operations, order visibility, and growth controls.</p></a>
-          <a class="card" data-module="Accounts" href="modules/accounts/index.html"><span class="tag">Module</span><h4>Accounts</h4><p>Financial workflows including ledgers, payments, and summaries.</p></a>
-          <a class="card" data-module="WhatsApp" href="modules/whatsapp/index.html"><span class="tag">Module</span><h4>WhatsApp</h4><p>Communication workflows, alerting, and message-linked operations.</p></a>
-          <a class="card" data-module="Meetings" href="modules/meetings/index.html"><span class="tag">Module</span><h4>Meetings</h4><p>Internal and external meeting coordination and participation tools.</p></a>
+          <a class="card" data-module="Transportation" data-page="module_transportation" href="modules/transportation/index.html"><span class="tag">Module</span><h4>Transportation</h4><p>Trip lifecycle, fleet coordination, and movement operations.</p></a>
+          <a class="card" data-module="Trading" data-page="module_trading" href="modules/trading/index.html"><span class="tag">Module</span><h4>Trading</h4><p>Commodity and business trading workflows with operational visibility.</p></a>
+          <a class="card" data-module="Hospital Services" data-page="module_hospital" href="modules/hospital/index.html"><span class="tag">Module</span><h4>Hospital Services</h4><p>Healthcare-related execution and institutional service operations.</p></a>
+          <a class="card" data-module="Mining Services" data-page="module_mining" href="modules/mining/index.html"><span class="tag">Module</span><h4>Mining Services</h4><p>Resource operations, extraction coordination, and support systems.</p></a>
+          <a class="card" data-module="Arbitrage" data-page="module_arbitrage" href="modules/arbitrage/index.html"><span class="tag">Module</span><h4>Arbitrage</h4><p>Opportunity tracking, decision workflows, and strategic execution.</p></a>
+          <a class="card" data-module="Construction" data-page="module_construction" href="modules/construction/index.html"><span class="tag">Module</span><h4>Construction</h4><p>Project execution, planning milestones, and delivery management.</p></a>
+          <a class="card" data-module="E-Commerce" data-page="module_ecommerce" href="modules/ecommerce/index.html"><span class="tag">Module</span><h4>E-Commerce</h4><p>Digital commerce operations, order visibility, and growth controls.</p></a>
+          <a class="card" data-module="Accounts" data-page="module_accounts" href="modules/accounts/index.html"><span class="tag">Module</span><h4>Accounts</h4><p>Financial workflows including ledgers, payments, and summaries.</p></a>
+          <a class="card" data-module="WhatsApp" data-page="module_whatsapp" href="modules/whatsapp/index.html"><span class="tag">Module</span><h4>WhatsApp</h4><p>Communication workflows, alerting, and message-linked operations.</p></a>
+          <a class="card" data-module="Meetings" data-page="module_meetings" href="modules/meetings/index.html"><span class="tag">Module</span><h4>Meetings</h4><p>Internal and external meeting coordination and participation tools.</p></a>
         </div>
 
         <section id="portals" class="section-block">
@@ -575,6 +575,46 @@
       const navLinks = Array.from(document.querySelectorAll('.menu a'));
       const logoutBtn = document.getElementById('logoutBtn');
 
+      async function applyModulePermissions(authUserId) {
+        const { data: internalUser, error: userErr } = await supabaseClient
+          .from('users')
+          .select('id')
+          .eq('auth_id', authUserId)
+          .maybeSingle();
+
+        if (userErr || !internalUser?.id) return;
+
+        const { data: userRoles, error: rolesErr } = await supabaseClient
+          .from('user_roles')
+          .select('role_id')
+          .eq('user_id', internalUser.id);
+
+        if (rolesErr || !userRoles?.length) {
+          cards.forEach((card) => { card.style.display = 'none'; });
+          return;
+        }
+
+        const roleIds = userRoles.map((r) => r.role_id);
+
+        const { data: permissions, error: permErr } = await supabaseClient
+          .from('role_permissions')
+          .select('page_name')
+          .in('role_id', roleIds)
+          .eq('action_name', 'view')
+          .eq('can_access', true);
+
+        if (permErr) return;
+
+        const allowedPages = new Set((permissions || []).map((p) => String(p.page_name || '').trim()));
+
+        cards.forEach((card) => {
+          const page = String(card.getAttribute('data-page') || '').trim();
+          if (!allowedPages.has(page)) {
+            card.style.display = 'none';
+          }
+        });
+      }
+
       async function enforceSessionAndBindProfile() {
         const { data, error } = await supabaseClient.auth.getSession();
         const session = data?.session;
@@ -587,6 +627,8 @@
         const email = session.user?.email || 'unknown@user';
         profileEmailEl.textContent = email;
         profileRoleEl.textContent = 'Authenticated User';
+
+        await applyModulePermissions(session.user.id);
       }
 
       enforceSessionAndBindProfile();

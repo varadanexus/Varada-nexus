@@ -198,7 +198,17 @@ const {data:expenses}=await supabaseClient
 .in("trip_id", tripIds)
 
 expensesData=expenses||[]
-allTrips=trips||[]
+
+/* ✅ SORT TRIPS BY NUMBER */
+allTrips=(trips||[]).sort((a,b)=>{
+
+let aNum = parseInt((a.trip_no || "").match(/\d+$/)?.[0] || 0)
+let bNum = parseInt((b.trip_no || "").match(/\d+$/)?.[0] || 0)
+
+return aNum - bNum
+
+})
+
 filteredTrips=[...allTrips]
 
 buildFilters()

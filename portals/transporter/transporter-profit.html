@@ -186,7 +186,16 @@ if(!expenseDetails[e.trip_id]) expenseDetails[e.trip_id]=[]
 expenseDetails[e.trip_id].push(e)
 })
 
-allTrips=trips||[]
+/* ✅ SORT TRIPS BY TRIP NUMBER */
+allTrips=(trips||[]).sort((a,b)=>{
+
+let aNum = parseInt((a.trip_no || "").match(/\d+$/)?.[0] || 0)
+let bNum = parseInt((b.trip_no || "").match(/\d+$/)?.[0] || 0)
+
+return aNum - bNum
+
+})
+
 filteredTrips=[...allTrips]
 
 buildFilters()

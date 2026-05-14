@@ -44,7 +44,7 @@ async function checkLogin(){
 
 const page = window.location.pathname.split("/").pop()
 
-if(page === "login.html") return null
+if(page === "/website/login.html") return null
 
 /* ✅ PREVENT AUTO LOGIN AFTER LOGOUT */
 const logoutFlag = sessionStorage.getItem("manual_logout")
@@ -57,7 +57,7 @@ return null
 const { data } = await supabaseClient.auth.getSession()
 
 if(!data.session){
-window.location.replace("login.html")
+window.location.replace("/website/login.html")
 return null
 }
 
@@ -73,7 +73,7 @@ const { data: agent } = await supabaseClient
 if(agent && agent.is_active === false){
   await supabaseClient.auth.signOut()
   alert("Account disabled 🚫")
-  window.location.replace("login.html")
+  window.location.replace("/website/login.html")
   return null
 }
 /* 🔥 END BLOCK */
@@ -105,7 +105,7 @@ alert("Your account was logged in from another device.")
 
 await supabaseClient.auth.signOut()
 
-window.location.replace("login.html")
+window.location.replace("/website/login.html")
 }
 }
 
@@ -116,7 +116,7 @@ async function checkMaintenance(session){
 
 const page = window.location.pathname.split("/").pop()
 
-if(page === "login.html") return
+if(page === "/website/login.html") return
 
 const {data:settings}=await supabaseClient
 .from("system_settings")
@@ -140,7 +140,7 @@ await supabaseClient.auth.signOut()
 
 localStorage.setItem("erp_system_version", systemVersion)
 
-window.location.replace("login.html")
+window.location.replace("/website/login.html")
 return
 }
 
@@ -225,7 +225,7 @@ await supabaseClient.auth.signOut()
 
 alert("Session expired due to inactivity.")
 
-window.location.replace("login.html")
+window.location.replace("/website/login.html")
 }
 
 function resetInactivityTimer(){

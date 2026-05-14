@@ -202,7 +202,12 @@ debit: Number(l.paid_amount || 0)
 })
 
 entries.sort((a,b)=>{
-  return (a.ref || "").localeCompare(b.ref || "", undefined, {numeric:true})
+
+let aNum = parseInt((a.ref || "").match(/\d+$/)?.[0] || 0)
+let bNum = parseInt((b.ref || "").match(/\d+$/)?.[0] || 0)
+
+return aNum - bNum
+
 })
   
 /* KPIs + CHART */

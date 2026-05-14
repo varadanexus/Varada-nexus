@@ -190,10 +190,15 @@ ledger = ledgerData || []
 /* ✅ SORT BY TRIP NUMBER ASC (OLD → NEW) */
 ledger.sort((a, b) => {
 
-  let aNum = parseInt((a.trips?.trip_no || "").replace(/\D/g,'')) || 0
-  let bNum = parseInt((b.trips?.trip_no || "").replace(/\D/g,'')) || 0
+let aTrip = a.trips?.trip_no || ""
+let bTrip = b.trips?.trip_no || ""
 
-  return aNum - bNum
+/* EXTRACT LAST NUMBER */
+let aNum = parseInt(aTrip.match(/\d+$/)?.[0] || 0)
+let bNum = parseInt(bTrip.match(/\d+$/)?.[0] || 0)
+
+return aNum - bNum
+
 })
 
 render()

@@ -33,6 +33,17 @@ chat.name
 document.getElementById("chatHeader")
 .innerHTML = `
 
+<button
+  onclick="showSidebar()"
+
+  class="
+    md:hidden
+    text-xl
+  "
+>
+  ←
+</button>
+
 <div class="
   flex
   items-center

@@ -183,6 +183,22 @@
       font-size: 16px;
     }
 
+    .logout-btn {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e6edf7;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .logout-btn:hover {
+      border-color: rgba(101, 214, 255, 0.45);
+      background: rgba(79, 140, 255, 0.14);
+    }
+
     .profile {
       display: flex;
       align-items: center;
@@ -463,10 +479,11 @@
           <div class="profile" aria-label="User profile">
             <div class="profile-avatar">VN</div>
             <div class="profile-text">
-              <strong>Enterprise Admin</strong>
-              <span>Super Admin</span>
+              <strong id="profileEmail">Loading...</strong>
+              <span id="profileRole">Authenticated User</span>
             </div>
           </div>
+          <button class="logout-btn" id="logoutBtn" aria-label="Logout">Logout</button>
         </div>
       </header>
 
@@ -525,9 +542,17 @@
     </section>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
+      const SUPABASE_URL = 'https://ticsgbtxfhhihamejiss.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg';
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
       const dtEl = document.getElementById('liveDateTime');
+      const profileEmailEl = document.getElementById('profileEmail');
+      const profileRoleEl = document.getElementById('profileRole');
+
       function updateDateTime() {
         const now = new Date();
         dtEl.textContent = now.toLocaleString(undefined, {
@@ -548,6 +573,23 @@
       const sidebar = document.getElementById('sidebar');
       const menuToggle = document.getElementById('menuToggle');
       const navLinks = Array.from(document.querySelectorAll('.menu a'));
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      async function enforceSessionAndBindProfile() {
+        const { data, error } = await supabaseClient.auth.getSession();
+        const session = data?.session;
+
+        if (error || !session) {
+          window.location.replace('/website/login.html');
+          return;
+        }
+
+        const email = session.user?.email || 'unknown@user';
+        profileEmailEl.textContent = email;
+        profileRoleEl.textContent = 'Authenticated User';
+      }
+
+      enforceSessionAndBindProfile();
 
       input.addEventListener('input', function () {
         const q = input.value.trim().toLowerCase();
@@ -572,6 +614,17 @@
           }
         });
       });
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function () {
+          try {
+            await supabaseClient.auth.signOut();
+          } finally {
+            sessionStorage.setItem('manual_logout', 'true');
+            window.location.replace('/website/login.html');
+          }
+        });
+      }
     })();
   </script>
 </body>

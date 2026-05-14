@@ -424,13 +424,13 @@ phones = [...new Set(phones)]
 console.log("📲 Expense WhatsApp phones:", phones)
 console.log("🚀 Expense payload:", {
   phones,
-  template: "expense_update_api",
-  params: [
-    name,
-    trip.trip_no,
-    type,
-    amount
-  ]
+  template: "expense_update_v1",
+  variables: {
+  "1": String(name),
+  "2": String(type),
+  "3": String(amount),
+  "4": String(trip.trip_no)
+}
 })
 
 /* 5️⃣ SEND */
@@ -442,16 +442,18 @@ if(phones.length){
       "Content-Type":"application/json",
       "Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
     },
-    body: JSON.stringify({
-      phones: phones,
-      template: "expense_update_api",
-      params: [
-  String(name),        // {{1}}
-  String(type),        // {{2}} ✅ Expense Type
-  String(amount),      // {{3}} ✅ Amount
-  String(trip.trip_no) // {{4}} ✅ Trip
-]
-    })
+body: JSON.stringify({
+  phones: phones,
+
+  template: "expense_update_v1",
+
+  variables: {
+    "1": String(name),
+    "2": String(type),
+    "3": String(amount),
+    "4": String(trip.trip_no)
+  }
+})
   })
 
 const result = await res.json()

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>WhatsApp CRM</title>
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+  
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script type="module">
+
+    import { createClient }
+    from "https://esm.sh/@supabase/supabase-js"
+
+    window.supabase = createClient(
+      "https://ticsgbtxfhhihamejiss.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+    )
+
+  </script>
+
+</head>
+
+<body class="bg-gray-100 h-screen overflow-hidden">
+
+<div
+  class="
+    flex
+    h-screen
+    overflow-hidden
+  "
+>
+
+    <!-- LEFT SIDEBAR -->
+<div
+  id="sidebar"
+
+  class="
+    w-full
+    md:w-[350px]
+    bg-white
+    border-r
+    overflow-y-auto
+
+    fixed
+    md:relative
+
+    inset-0
+    z-40
+
+    md:translate-x-0
+
+    transition
+
+  "
+>
+
+<div class="
+  p-4
+  border-b
+  flex
+  items-center
+  justify-between
+">
+
+  <div class="text-2xl font-bold">
+    WhatsApp
+  </div>
+
+  <button
+    onclick="openNewChatModal()"
+    class="
+      bg-green-600
+      text-white
+      px-3
+      py-2
+      rounded-lg
+      text-sm
+    "
+  >
+    + New
+  </button>
+
+</div>
+
+      <!-- SEARCH -->
+
+<div class="p-3 border-b bg-white">
+
+  <input
+    id="chatSearch"
+    placeholder="Search chats..."
+    oninput="filterChats()"
+
+    class="
+      w-full
+      border
+      rounded-lg
+      px-4
+      py-3
+      outline-none
+    "
+  >
+
+</div>
+
+<!-- CHAT LIST -->
+
+<div id="chatList"></div>
+
+    </div>
+
+    <!-- RIGHT CHAT AREA -->
+<div
+  id="chatArea"
+
+  class="
+    flex-1
+    flex
+    flex-col
+    w-full
+  "
+>
+
+   <!-- TOP HEADER -->
+<div
+  id="chatHeader"
+
+  class="
+    h-16
+    bg-white
+    border-b
+    flex
+    items-center
+    px-5
+    font-semibold
+    gap-3
+  "
+>
+
+  <!-- MOBILE BACK -->
+  <button
+    onclick="showSidebar()"
+
+    class="
+      md:hidden
+      text-xl
+    "
+  >
+    ←
+  </button>
+
+  <div>
+
+    <div class="font-semibold">
+      Select Chat
+    </div>
+
+  </div>
+
+</div>
+
+  <!-- QUICK ACTIONS -->
+
+<div
+  class="
+    bg-white
+    border-b
+    px-4
+    py-2
+    flex
+    gap-2
+    overflow-x-auto
+  "
+>
+
+  <button
+    onclick="sendTripUpdate()"
+
+    class="
+      whitespace-nowrap
+      bg-blue-100
+      text-blue-700
+      px-3
+      py-2
+      rounded-lg
+      text-sm
+    "
+  >
+    🚚 Trip Update
+  </button>
+
+  <button
+    onclick="sendPaymentReminder()"
+
+    class="
+      whitespace-nowrap
+      bg-yellow-100
+      text-yellow-700
+      px-3
+      py-2
+      rounded-lg
+      text-sm
+    "
+  >
+    💰 Payment Reminder
+  </button>
+
+  <button
+<button
+  onclick="openDocumentModal()"
+
+  class="
+    whitespace-nowrap
+    bg-green-100
+    text-green-700
+    px-3
+    py-2
+    rounded-lg
+    text-sm
+  "
+>
+  📎 Send Documents
+</button>
+
+</div>
+
+      <!-- MESSAGE AREA -->
+      <div
+        id="messages"
+        class="flex-1 overflow-y-auto p-5 space-y-3"
+      ></div>
+
+      <!-- INPUT -->
+      <div class="bg-white border-t p-4 flex gap-3">
+
+<input
+  id="messageInput"
+
+  oninput="handleTyping()"
+
+  class="
+    flex-1
+    border
+    rounded-lg
+    px-4
+    py-3
+    outline-none
+  "
+
+  placeholder="Type message..."
+>
+
+<label
+  class="
+    bg-gray-200
+    px-4
+    rounded-lg
+    flex
+    items-center
+    cursor-pointer
+  "
+>
+
+  📎
+
+  <input
+    type="file"
+    id="fileInput"
+    class="hidden"
+    onchange="sendMedia()"
+  >
+
+</label>
+
+<button
+  onclick="sendMessage()"
+  class="bg-green-600 text-white px-5 rounded-lg"
+>
+  Send
+</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+<script defer src="./js/load-chats.js"></script>
+
+<script defer src="./js/open-chat.js"></script>
+
+<script defer src="./js/send-message.js"></script>
+
+<script defer src="./js/send-media.js"></script>
+  
+<script defer src="./js/realtime.js"></script>
+
+<script defer src="./js/new-chat.js"></script>
+
+<script defer src="./js/search.js"></script>
+
+<script defer src="./js/mobile.js"></script>
+
+<script defer src="./js/presence.js"></script>
+
+<script defer src="./js/typing.js"></script>
+
+<script defer src="./js/actions.js"></script>
+
+<script defer src="./js/documents.js"></script>
+  
+<script>
+
+window.addEventListener("DOMContentLoaded", async () => {
+
+  await new Promise(r => setTimeout(r, 300))
+
+  loadChats()
+  startRealtime()
+  startPresence()
+  
+})
+
+</script>
+
+<!-- IMAGE MODAL -->
+
+<div
+  id="imageModal"
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/80
+    z-50
+    flex
+    items-center
+    justify-center
+    p-10
+  "
+>
+
+  <!-- CLOSE BUTTON -->
+  <button
+    onclick="closeImageModal()"
+    class="
+      absolute
+      top-5
+      right-5
+      text-white
+      text-4xl
+    "
+  >
+    ×
+  </button>
+
+<a
+  id="downloadImageBtn"
+  download
+  target="_blank"
+
+  class="
+    absolute
+    top-5
+    left-5
+    bg-white
+    text-black
+    px-4
+    py-2
+    rounded-lg
+    font-semibold
+    shadow-lg
+  "
+>
+  Download
+</a>
+  
+  <!-- IMAGE -->
+  <img
+    id="modalImage"
+    class="
+      max-w-full
+      max-h-full
+      rounded-xl
+      shadow-2xl
+    "
+  >
+
+</div>
+
+<!-- PDF MODAL -->
+
+<div
+  id="pdfModal"
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/80
+    z-50
+    flex
+    items-center
+    justify-center
+    p-5
+  "
+>
+
+  <!-- CLOSE -->
+  <button
+    onclick="closePdfModal()"
+    class="
+      absolute
+      top-5
+      right-5
+      text-white
+      text-4xl
+      z-50
+    "
+  >
+    ×
+  </button>
+
+<a
+  id="downloadPdfBtn"
+  download
+  target="_blank"
+
+  class="
+    absolute
+    top-5
+    left-5
+    bg-white
+    text-black
+    px-4
+    py-2
+    rounded-lg
+    font-semibold
+    shadow-lg
+    z-50
+  "
+>
+  Download
+</a>
+  
+  <!-- PDF -->
+  <iframe
+    id="pdfFrame"
+    class="
+      w-full
+      h-full
+      bg-white
+      rounded-xl
+    "
+  ></iframe>
+
+</div>
+
+
+  
+<script>
+
+window.openImageModal = function(url){
+
+  document
+  .getElementById("modalImage")
+  .src = url
+
+document
+.getElementById("downloadImageBtn")
+.href = url
+  
+  document
+  .getElementById("imageModal")
+  .classList
+  .remove("hidden")
+
+}
+
+window.closeImageModal = function(){
+
+  document
+  .getElementById("imageModal")
+  .classList
+  .add("hidden")
+
+}
+
+window.openPdfModal = function(url){
+
+  // EXTRACT FILE ID
+  const fileId =
+  url.split("id=")[1]
+
+  // GOOGLE PREVIEW URL
+  const previewUrl =
+  `https://drive.google.com/file/d/${fileId}/preview`
+
+document
+.getElementById("downloadPdfBtn")
+.href = url
+  
+  document
+  .getElementById("pdfFrame")
+  .src = previewUrl
+
+  document
+  .getElementById("pdfModal")
+  .classList
+  .remove("hidden")
+
+}
+
+window.closePdfModal = function(){
+
+  document
+  .getElementById("pdfModal")
+  .classList
+  .add("hidden")
+
+  document
+  .getElementById("pdfFrame")
+  .src = ""
+
+}
+  
+</script>
+
+<!-- NEW CHAT MODAL -->
+
+<div
+  id="newChatModal"
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/50
+    z-50
+    flex
+    items-center
+    justify-center
+  "
+>
+
+  <div class="
+    bg-white
+    w-[400px]
+    rounded-xl
+    p-5
+    space-y-4
+  ">
+
+    <div class="text-xl font-semibold">
+      New Chat
+    </div>
+
+    <input
+      id="newChatName"
+      placeholder="Name"
+      class="
+        w-full
+        border
+        rounded-lg
+        px-4
+        py-3
+      "
+    >
+
+    <input
+      id="newChatPhone"
+      placeholder="Phone Number"
+      class="
+        w-full
+        border
+        rounded-lg
+        px-4
+        py-3
+      "
+    >
+
+    <div class="flex justify-end gap-3">
+
+      <button
+        onclick="closeNewChatModal()"
+        class="
+          px-4
+          py-2
+          border
+          rounded-lg
+        "
+      >
+        Cancel
+      </button>
+
+      <button
+        onclick="createNewChat()"
+        class="
+          bg-green-600
+          text-white
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Create
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- DOCUMENT MODAL -->
+
+<div
+  id="documentModal"
+
+  class="
+    hidden
+    fixed
+    inset-0
+    bg-black/60
+    z-50
+    flex
+    items-center
+    justify-center
+    p-5
+  "
+>
+
+  <div
+    class="
+      bg-white
+      rounded-2xl
+      w-full
+      max-w-2xl
+      h-[80vh]
+      overflow-hidden
+      flex
+      flex-col
+    "
+  >
+
+    <!-- HEADER -->
+
+    <div class="
+      p-4
+      border-b
+      flex
+      justify-between
+      items-center
+    ">
+
+      <div class="font-semibold text-lg">
+        Send Documents
+      </div>
+
+      <button
+        onclick="closeDocumentModal()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+    <!-- TYPE -->
+
+    <div class="
+      p-4
+      border-b
+      flex
+      gap-3
+    ">
+
+      <button
+        onclick="loadClientDocuments()"
+
+        class="
+          bg-blue-100
+          text-blue-700
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Client
+      </button>
+
+      <button
+        onclick="loadContractorDocuments()"
+
+        class="
+          bg-orange-100
+          text-orange-700
+          px-4
+          py-2
+          rounded-lg
+        "
+      >
+        Contractor
+      </button>
+
+    </div>
+
+    <!-- LIST -->
+
+    <div
+      id="documentList"
+
+      class="
+        flex-1
+        overflow-y-auto
+        p-4
+        space-y-3
+      "
+    ></div>
+
+  </div>
+
+</div>
+
+<script>
+
+window.editChatName =
+async function(
+  chatId,
+  currentName
+){
+
+  const newName = prompt(
+    "Edit Contact Name",
+    currentName
+  )
+
+  if(!newName){
+    return
+  }
+
+  const { error } =
+
+  await window.supabase
+
+  .from("whatsapp_chats")
+
+  .update({
+    name: newName
+  })
+
+  .eq("id", chatId)
+
+  if(error){
+
+    alert(error.message)
+
+    return
+
+  }
+
+  // ✅ UPDATE UI
+  document
+  .getElementById("chatName")
+  .innerText = newName
+
+  // ✅ REFRESH SIDEBAR
+  loadChats()
+
+}
+</script>
+  
+</body>
+
+</html>

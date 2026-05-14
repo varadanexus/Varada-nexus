@@ -144,7 +144,7 @@ async function checkInitial(){
 
   if(initialData?.is_approved){
     window.location.href =
-      `meeting.html?id=${meeting}` +
+      `/portals/meeting/meeting.html?id=${meeting}` +
       `&user=${phone}` +
       `&role=${initialData.role || "user"}` +
       `&name=${encodeURIComponent(userName)}`;
@@ -170,7 +170,7 @@ const currentPhone = String(phone).slice(-10);
 
 if(incomingPhone === currentPhone && payload.new.is_approved){
       window.location.href =
-        `meeting.html?id=${meeting}` +
+        `/portals/meeting/meeting.html?id=${meeting}` +
         `&user=${phone}` +
         `&role=${payload.new.role || "user"}` +
         `&name=${encodeURIComponent(userName)}`;
@@ -192,7 +192,7 @@ setInterval(async () => {
 
   if(data?.is_approved){
     window.location.href =
-      `meeting.html?id=${meeting}` +
+      `/portals/meeting/meeting.html?id=${meeting}` +
       `&user=${phone}` +
       `&role=${data.role || "user"}` +
       `&name=${encodeURIComponent(userName)}`;

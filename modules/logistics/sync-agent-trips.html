@@ -2,24 +2,88 @@
 <html>
 
 <head>
+
 <title>Sync Agent Trips</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:40px;
+}
+
+.box{
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+max-width:700px;
+margin:auto;
+}
+
+h2{
+margin-top:0;
+color:#1f3c88;
+}
+
+#log{
+margin-top:20px;
+background:#111;
+color:#0f0;
+padding:15px;
+height:400px;
+overflow:auto;
+border-radius:6px;
+font-family:monospace;
+font-size:13px;
+white-space:pre-wrap;
+}
+</style>
 
 </head>
 
 <body>
 
+<div class="box">
+
+<h2>Agent Trip Sync</h2>
+
+<p>
+This will sync old trips into <b>agent_trip_ledger</b>.
+Already synced trips will be skipped automatically.
+</p>
+
+<button onclick="syncOldTrips()" style="
+padding:10px 20px;
+background:#1f3c88;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+">
+Start Sync
+</button>
+
+<div id="log"></div>
+
+</div>
+
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://ticsgbtxfhhihamejiss.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 )
+
+function addLog(text){
+document.getElementById("log").innerHTML += text + "\n"
+}
 
 async function syncOldTrips(){
 
-alert("Starting sync...")
+addLog("Starting sync...")
 
 /* GET ALL TRIPS */
 const {data:trips,error:tripError} = await supabaseClient
@@ -28,34 +92,37 @@ const {data:trips,error:tripError} = await supabaseClient
 
 if(tripError){
 console.error(tripError)
-alert("Trip fetch failed")
+addLog("Trip fetch failed")
 return
 }
 
 /* GET AGENT MAPPINGS */
 const {data:mappings,error:mapError} = await supabaseClient
-.from("truck_agent_mapping")
+.from("truck_agents")
 .select("*")
 
 if(mapError){
 console.error(mapError)
-alert("Mapping fetch failed")
+addLog("Mapping fetch failed")
 return
 }
 
 let inserted = 0
 let skipped = 0
+let failed = 0
 
 for(const trip of trips){
 
-/* FIND MAPPINGS FOR THIS TRUCK */
-let truckMappings = mappings.filter(m=>m.truck === trip.truck)
+/* FIND AGENTS FOR TRUCK */
+let truckMappings = mappings.filter(m => m.truck === trip.truck)
 
-if(!truckMappings.length) continue
+if(!truckMappings.length){
+continue
+}
 
 for(const map of truckMappings){
 
-/* CHECK IF ALREADY EXISTS */
+/* CHECK EXISTING */
 const {data:existing} = await supabaseClient
 .from("agent_trip_ledger")
 .select("id")
@@ -65,6 +132,7 @@ const {data:existing} = await supabaseClient
 
 if(existing){
 skipped++
+addLog("Skipped: " + trip.trip_no)
 continue
 }
 
@@ -78,13 +146,16 @@ let freight = weightMT * rate
 let commission = 0
 
 if(map.type === "percentage"){
+
 commission = freight * (Number(map.value || 0) / 100)
-}
-else{
+
+}else{
+
 commission = Number(map.value || 0)
+
 }
 
-/* INSERT LEDGER */
+/* INSERT */
 const {error:insertError} = await supabaseClient
 .from("agent_trip_ledger")
 .insert({
@@ -94,26 +165,41 @@ commission_amount: commission
 })
 
 if(insertError){
+
+failed++
 console.error(insertError)
+
+addLog("Failed: " + trip.trip_no)
+
 }else{
+
 inserted++
-console.log("Synced:", trip.trip_no)
-}
+
+addLog("Synced: " + trip.trip_no)
 
 }
 
 }
 
-alert(`
-Sync Completed
+}
 
-Inserted: ${inserted}
-Skipped: ${skipped}
-`)
+addLog("")
+addLog("SYNC COMPLETED")
+addLog("----------------------")
+addLog("Inserted: " + inserted)
+addLog("Skipped: " + skipped)
+addLog("Failed: " + failed)
+
+alert(
+"Sync Completed\n\n" +
+"Inserted: " + inserted + "\n" +
+"Skipped: " + skipped + "\n" +
+"Failed: " + failed
+)
 
 }
 
-syncOldTrips()
-</script>  
+</script>
+
 </body>
 </html>

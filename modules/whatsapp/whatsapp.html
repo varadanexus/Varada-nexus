@@ -48,6 +48,7 @@
   class="
     w-full
     md:w-[350px]
+
     bg-white
     border-r
     overflow-y-auto
@@ -58,10 +59,11 @@
     inset-0
     z-40
 
-    md:translate-x-0
+    md:z-auto
 
-    transition
+    block
 
+    md:block
   "
 >
 
@@ -125,10 +127,16 @@
   id="chatArea"
 
   class="
+    hidden
+    md:flex
+
     flex-1
-    flex
     flex-col
+
     w-full
+    h-screen
+
+    bg-gray-100
   "
 >
 
@@ -216,7 +224,7 @@
     💰 Payment Reminder
   </button>
 
-  <button
+
 <button
   onclick="openDocumentModal()"
 
@@ -777,7 +785,45 @@ async function(
 
 }
 </script>
-  
+
+<script>
+
+// ✅ OPEN CHAT
+window.hideSidebar = function(){
+
+  if(window.innerWidth < 768){
+
+    document
+    .getElementById("sidebar")
+    .classList
+    .add("hidden")
+
+    document
+    .getElementById("chatArea")
+    .classList
+    .remove("hidden")
+
+  }
+
+}
+
+// ✅ BACK BUTTON
+window.showSidebar = function(){
+
+  document
+  .getElementById("sidebar")
+  .classList
+  .remove("hidden")
+
+  document
+  .getElementById("chatArea")
+  .classList
+  .add("hidden")
+
+}
+
+</script>
+
 </body>
 
 </html>

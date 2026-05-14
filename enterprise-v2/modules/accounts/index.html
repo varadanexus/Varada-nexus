@@ -5,26 +5,517 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Accounts | Enterprise V2</title>
   <style>
-    :root { --bg:#0b1220; --panel:#111a2e; --panel2:#16233d; --text:#e6edf7; --muted:#93a4c3; --border:rgba(255,255,255,.08); --shadow:0 12px 30px rgba(0,0,0,.35); }
+    :root { --bg:#0b1220; --panel:#111a2e; --panel2:#16233d; --text:#e6edf7; --muted:#93a4c3; --border:rgba(255,255,255,.08); --shadow:0 12px 30px rgba(0,0,0,.35); --accent:#4f8cff; }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 10%, #14223f, var(--bg) 45%);min-height:100vh;display:grid;place-items:center;padding:24px}
-    .wrap{width:min(860px,100%);background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
-    h1{margin:0 0 8px;font-size:30px}
-    p{margin:0;color:var(--muted);line-height:1.6}
-    .btn{display:inline-block;margin-top:20px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(79,140,255,.12);text-decoration:none;color:inherit}
+    body{margin:0;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 10%, #14223f, var(--bg) 45%);min-height:100vh;padding:24px}
+    .wrap{width:min(1100px,100%);margin:0 auto;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    h1{margin:0;font-size:30px}
+    p{margin:6px 0 0;color:var(--muted);line-height:1.6}
+    .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(79,140,255,.12);text-decoration:none;color:inherit}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+    .kpi{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:24px;font-weight:700;margin-top:8px}
+    .status{margin-top:14px;color:var(--muted);font-size:13px}
+    .status.error{color:#fca5a5}
+    .tx-section{margin-top:18px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .tx-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .tx-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .tx-title{margin:0;font-size:18px}
+    .tx-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
+    .tx-table{width:100%;border-collapse:collapse;min-width:980px}
+    .tx-table th,.tx-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left;font-size:13px}
+    .tx-table th{background:rgba(79,140,255,.12);color:#dbe8ff;font-weight:600;position:sticky;top:0}
+    .tx-table td{color:#d2ddf2}
+    .tx-empty{padding:14px;color:var(--muted);font-size:13px}
+    .export-btn{display:inline-block;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(79,140,255,.12);color:var(--text);font-size:12px;cursor:pointer}
+    .export-btn:hover{background:rgba(79,140,255,.2)}
+    .charts{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+    .chart-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .chart-card h3{margin:0 0 10px;font-size:16px}
+    .chart-box{position:relative;height:260px}
+    .chart-empty{color:var(--muted);font-size:13px;margin-top:8px}
+    @media (max-width:700px){body{padding:14px}.wrap{padding:16px}h1{font-size:24px}.kpi .value{font-size:20px}}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>Accounts</h1>
-    <p>This is a minimal placeholder page for the <strong>Accounts</strong> module in Enterprise-v2.</p>
-    <a class="btn" href="../../index.html">← Back to Dashboard</a>
+    <div class="head">
+      <div>
+        <h1>Accounts Dashboard</h1>
+        <p>Live financial snapshot for enterprise operations.</p>
+      </div>
+      <a class="btn" href="../../index.html">← Back to Dashboard</a>
+    </div>
+
+    <section class="kpis">
+      <article class="kpi">
+        <div class="label">Total Client Payments</div>
+        <div class="value" id="kpiClientPayments">₹0</div>
+      </article>
+      <article class="kpi">
+        <div class="label">Total Transporter Payments</div>
+        <div class="value" id="kpiTransporterPayments">₹0</div>
+      </article>
+      <article class="kpi">
+        <div class="label">Total Expenses</div>
+        <div class="value" id="kpiExpenses">₹0</div>
+      </article>
+      <article class="kpi">
+        <div class="label">Current Ledger Balance</div>
+        <div class="value" id="kpiLedgerBalance">₹0</div>
+      </article>
+    </section>
+
+    <section class="charts">
+      <article class="chart-card">
+        <h3>Monthly Client Payments</h3>
+        <div class="chart-box"><canvas id="chartClientPayments"></canvas></div>
+        <div class="chart-empty" id="chartClientPaymentsEmpty"></div>
+      </article>
+      <article class="chart-card">
+        <h3>Monthly Expenses</h3>
+        <div class="chart-box"><canvas id="chartExpenses"></canvas></div>
+        <div class="chart-empty" id="chartExpensesEmpty"></div>
+      </article>
+      <article class="chart-card" style="grid-column:1/-1;">
+        <h3>Monthly Cashflow Trend</h3>
+        <div class="chart-box"><canvas id="chartCashflow"></canvas></div>
+        <div class="chart-empty" id="chartCashflowEmpty"></div>
+      </article>
+    </section>
+
+    <section class="tx-section">
+      <div class="tx-head">
+        <h2 class="tx-title">Recent Transactions</h2>
+        <div class="tx-actions">
+          <button class="export-btn" id="exportCsvBtn" type="button">Export CSV</button>
+          <button class="export-btn" id="exportPdfBtn" type="button">Export PDF</button>
+        </div>
+      </div>
+      <div class="tx-wrap">
+        <table class="tx-table" id="txTable" aria-label="Recent transactions">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Transaction ID</th>
+              <th>Entry Type</th>
+              <th>Debit</th>
+              <th>Credit</th>
+              <th>Balance</th>
+              <th>Reference</th>
+              <th>Narration</th>
+            </tr>
+          </thead>
+          <tbody id="txTableBody">
+            <tr><td colspan="8" class="tx-empty">Loading recent transactions...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="status" id="statusText">Loading account totals...</div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/enterprise-v2/js/supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="../../js/permission-guard.js"></script>
+  <script src="../../js/activity-logger.js"></script>
+  <script src="/enterprise-v2/js/auth-manager.js"></script>
   <script>
-    checkModuleAccess("module_accounts");
+    (function () {
+      const SUPABASE_URL = 'https://ticsgbtxfhhihamejiss.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg';
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const $client = document.getElementById('kpiClientPayments');
+      const $transporter = document.getElementById('kpiTransporterPayments');
+      const $expenses = document.getElementById('kpiExpenses');
+      const $ledger = document.getElementById('kpiLedgerBalance');
+      const $status = document.getElementById('statusText');
+      const $txBody = document.getElementById('txTableBody');
+      const $exportCsvBtn = document.getElementById('exportCsvBtn');
+      const $exportPdfBtn = document.getElementById('exportPdfBtn');
+      const $cpEmpty = document.getElementById('chartClientPaymentsEmpty');
+      const $exEmpty = document.getElementById('chartExpensesEmpty');
+      const $cfEmpty = document.getElementById('chartCashflowEmpty');
+
+      let clientChart, expenseChart, cashflowChart;
+      let latestTransactionRows = [];
+
+      const inr = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(Number(n || 0));
+
+      function sumFromRows(rows, keys) {
+        return (rows || []).reduce((acc, row) => {
+          for (const k of keys) {
+            const v = Number(row?.[k]);
+            if (!Number.isNaN(v)) {
+              return acc + v;
+            }
+          }
+          return acc;
+        }, 0);
+      }
+
+      async function fetchTableTotal(table, candidateKeys) {
+        const { data, error } = await supabaseClient.from(table).select('*');
+        if (error) throw error;
+        return sumFromRows(data, candidateKeys);
+      }
+
+      function pick(row, keys, fallback = '-') {
+        for (const k of keys) {
+          const v = row?.[k];
+          if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+        }
+        return fallback;
+      }
+
+      function monthKey(rawDate) {
+        const d = new Date(rawDate);
+        if (Number.isNaN(d.getTime())) return null;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      }
+
+      function monthLabel(key) {
+        const [y, m] = key.split('-').map(Number);
+        return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      }
+
+      function aggregateByMonth(rows, dateKeys, valueKeys) {
+        const map = new Map();
+        (rows || []).forEach((row) => {
+          const rawDate = pick(row, dateKeys, null);
+          if (!rawDate) return;
+          const k = monthKey(rawDate);
+          if (!k) return;
+          const v = Number(pick(row, valueKeys, 0)) || 0;
+          map.set(k, (map.get(k) || 0) + v);
+        });
+        return map;
+      }
+
+      function toSortedMonthKeys(...maps) {
+        const keys = new Set();
+        maps.forEach((m) => (m ? m.forEach((_v, k) => keys.add(k)) : null));
+        return Array.from(keys).sort();
+      }
+
+      function baseChartOptions() {
+        return {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#dbe8ff' } }
+          },
+          scales: {
+            x: { ticks: { color: '#b9c9e6' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+            y: { ticks: { color: '#b9c9e6' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          }
+        };
+      }
+
+      function destroyIfExists(chart) {
+        if (chart) chart.destroy();
+      }
+
+      function renderCharts(clientRows, expensesRows, ledgerRows) {
+        const clientMap = aggregateByMonth(clientRows, ['payment_date', 'date', 'created_at'], ['amount', 'payment_amount', 'total_amount', 'paid_amount']);
+        const expenseMap = aggregateByMonth(expensesRows, ['expense_date', 'date', 'created_at'], ['amount', 'expense_amount', 'total_amount']);
+
+        const creditMap = aggregateByMonth(ledgerRows, ['entry_date', 'date', 'created_at'], ['credit', 'credit_amount', 'cr_amount']);
+        const debitMap = aggregateByMonth(ledgerRows, ['entry_date', 'date', 'created_at'], ['debit', 'debit_amount', 'dr_amount']);
+
+        const keys = toSortedMonthKeys(clientMap, expenseMap, creditMap, debitMap);
+        if (keys.length === 0) {
+          $cpEmpty.textContent = 'No monthly data available.';
+          $exEmpty.textContent = 'No monthly data available.';
+          $cfEmpty.textContent = 'No monthly data available.';
+          return;
+        }
+
+        $cpEmpty.textContent = '';
+        $exEmpty.textContent = '';
+        $cfEmpty.textContent = '';
+
+        const labels = keys.map(monthLabel);
+        const clientVals = keys.map((k) => clientMap.get(k) || 0);
+        const expenseVals = keys.map((k) => expenseMap.get(k) || 0);
+        const cashflowVals = keys.map((k) => (creditMap.get(k) || 0) - (debitMap.get(k) || 0));
+
+        destroyIfExists(clientChart);
+        destroyIfExists(expenseChart);
+        destroyIfExists(cashflowChart);
+
+        clientChart = new Chart(document.getElementById('chartClientPayments'), {
+          type: 'bar',
+          data: { labels, datasets: [{ label: 'Client Payments', data: clientVals, backgroundColor: 'rgba(79,140,255,0.65)', borderColor: 'rgba(79,140,255,1)', borderWidth: 1 }] },
+          options: baseChartOptions()
+        });
+
+        expenseChart = new Chart(document.getElementById('chartExpenses'), {
+          type: 'bar',
+          data: { labels, datasets: [{ label: 'Expenses', data: expenseVals, backgroundColor: 'rgba(248,113,113,0.65)', borderColor: 'rgba(248,113,113,1)', borderWidth: 1 }] },
+          options: baseChartOptions()
+        });
+
+        cashflowChart = new Chart(document.getElementById('chartCashflow'), {
+          type: 'line',
+          data: { labels, datasets: [{ label: 'Cashflow (Credit - Debit)', data: cashflowVals, fill: true, tension: 0.35, backgroundColor: 'rgba(34,197,94,0.22)', borderColor: 'rgba(34,197,94,1)', pointBackgroundColor: 'rgba(34,197,94,1)', pointRadius: 3 }] },
+          options: baseChartOptions()
+        });
+      }
+
+      function toDateValue(row) {
+        const raw = pick(row, ['date', 'entry_date', 'transaction_date', 'created_at'], null);
+        if (!raw) return 0;
+        const t = new Date(raw).getTime();
+        return Number.isNaN(t) ? 0 : t;
+      }
+
+      function renderTransactions(rows) {
+        latestTransactionRows = rows || [];
+        if (!rows || rows.length === 0) {
+          $txBody.innerHTML = '<tr><td colspan="8" class="tx-empty">No recent transactions found.</td></tr>';
+          return;
+        }
+
+        $txBody.innerHTML = rows.map((row) => {
+          const dateRaw = pick(row, ['date', 'entry_date', 'transaction_date', 'created_at'], '-');
+          const dateText = dateRaw === '-' ? '-' : new Date(dateRaw).toLocaleString('en-IN');
+
+          const txnId = pick(row, ['transaction_id', 'txn_id', 'id', 'voucher_no']);
+          const entryType = pick(row, ['entry_type', 'type', 'ledger_type']);
+          const debit = Number(pick(row, ['debit', 'debit_amount', 'dr_amount'], 0)) || 0;
+          const credit = Number(pick(row, ['credit', 'credit_amount', 'cr_amount'], 0)) || 0;
+          const balance = Number(pick(row, ['balance', 'running_balance', 'closing_balance'], 0)) || 0;
+          const reference = pick(row, ['reference', 'ref_no', 'reference_no']);
+          const narration = pick(row, ['narration', 'description', 'remarks']);
+
+          return `<tr>
+            <td>${dateText}</td>
+            <td>${txnId}</td>
+            <td>${entryType}</td>
+            <td>${inr(debit)}</td>
+            <td>${inr(credit)}</td>
+            <td>${inr(balance)}</td>
+            <td>${reference}</td>
+            <td>${narration}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      function csvEscape(value) {
+        const str = String(value ?? '');
+        if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+        return str;
+      }
+
+      function exportTransactionsCsv() {
+        if (!latestTransactionRows.length) return;
+
+        const headers = ['Date', 'Transaction ID', 'Entry Type', 'Debit', 'Credit', 'Balance', 'Reference', 'Narration'];
+        const lines = [headers.join(',')];
+
+        latestTransactionRows.forEach((row) => {
+          const dateRaw = pick(row, ['date', 'entry_date', 'transaction_date', 'created_at'], '-');
+          const dateText = dateRaw === '-' ? '-' : new Date(dateRaw).toLocaleString('en-IN');
+          const txnId = pick(row, ['transaction_id', 'txn_id', 'id', 'voucher_no']);
+          const entryType = pick(row, ['entry_type', 'type', 'ledger_type']);
+          const debit = Number(pick(row, ['debit', 'debit_amount', 'dr_amount'], 0)) || 0;
+          const credit = Number(pick(row, ['credit', 'credit_amount', 'cr_amount'], 0)) || 0;
+          const balance = Number(pick(row, ['balance', 'running_balance', 'closing_balance'], 0)) || 0;
+          const reference = pick(row, ['reference', 'ref_no', 'reference_no']);
+          const narration = pick(row, ['narration', 'description', 'remarks']);
+
+          const rowValues = [dateText, txnId, entryType, inr(debit), inr(credit), inr(balance), reference, narration]
+            .map(csvEscape)
+            .join(',');
+          lines.push(rowValues);
+        });
+
+        const today = new Date();
+        const fileDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const fileName = `accounts-transactions-${fileDate}.csv`;
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function exportSummaryPdf() {
+        if (!window.jspdf || !window.jspdf.jsPDF) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const now = new Date();
+        const generatedAt = now.toLocaleString('en-IN');
+
+        let y = 44;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('Varada Nexus Private Limited', 40, y);
+
+        y += 24;
+        doc.setFontSize(13);
+        doc.text('Accounts Dashboard Summary', 40, y);
+
+        y += 18;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Generated: ${generatedAt}`, 40, y);
+
+        y += 24;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('KPI Totals', 40, y);
+
+        y += 16;
+        doc.setFont('helvetica', 'normal');
+        const kpis = [
+          ['Total Client Payments', $client.textContent || '₹0'],
+          ['Total Transporter Payments', $transporter.textContent || '₹0'],
+          ['Total Expenses', $expenses.textContent || '₹0'],
+          ['Current Ledger Balance', $ledger.textContent || '₹0']
+        ];
+
+        kpis.forEach(([label, value]) => {
+          doc.text(`${label}: ${value}`, 50, y);
+          y += 16;
+        });
+
+        y += 8;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Recent Transactions (Top Rows)', 40, y);
+        y += 14;
+
+        const headers = ['Date', 'Transaction ID', 'Entry Type', 'Debit', 'Credit', 'Balance', 'Reference', 'Narration'];
+        const colX = [40, 118, 208, 282, 342, 404, 470, 530];
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        headers.forEach((h, i) => doc.text(h, colX[i], y));
+        y += 12;
+
+        doc.setFont('helvetica', 'normal');
+        const rows = (latestTransactionRows || []).slice(0, 8);
+        if (rows.length === 0) {
+          doc.text('No recent transactions available.', 40, y);
+        } else {
+          rows.forEach((row) => {
+            if (y > 780) {
+              doc.addPage();
+              y = 44;
+            }
+            const dateRaw = pick(row, ['date', 'entry_date', 'transaction_date', 'created_at'], '-');
+            const dateText = dateRaw === '-' ? '-' : new Date(dateRaw).toLocaleDateString('en-IN');
+            const txnId = String(pick(row, ['transaction_id', 'txn_id', 'id', 'voucher_no'])).slice(0, 12);
+            const entryType = String(pick(row, ['entry_type', 'type', 'ledger_type'])).slice(0, 10);
+            const debit = inr(Number(pick(row, ['debit', 'debit_amount', 'dr_amount'], 0)) || 0);
+            const credit = inr(Number(pick(row, ['credit', 'credit_amount', 'cr_amount'], 0)) || 0);
+            const balance = inr(Number(pick(row, ['balance', 'running_balance', 'closing_balance'], 0)) || 0);
+            const reference = String(pick(row, ['reference', 'ref_no', 'reference_no'])).slice(0, 10);
+            const narration = String(pick(row, ['narration', 'description', 'remarks'])).slice(0, 18);
+
+            const vals = [dateText, txnId, entryType, debit, credit, balance, reference, narration];
+            vals.forEach((v, i) => doc.text(String(v), colX[i], y));
+            y += 12;
+          });
+        }
+
+        const fileDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        doc.save(`accounts-summary-${fileDate}.pdf`);
+      }
+
+      async function initAccountsDashboard() {
+        try {
+          const hasAccess = await checkModuleAccess("module_accounts");
+          if (!hasAccess) return;
+
+          const session = await getCurrentSession();
+          const authUser = await getCurrentUser();
+          const internalUser = await getInternalUser();
+          if (!session || !authUser || !internalUser) {
+            window.location.replace('/website/login.html');
+            return;
+          }
+
+          $status.textContent = 'Loading account totals...';
+          $status.classList.remove('error');
+
+          const [clientRowsResp, transporterRowsResp, expensesRowsResp, ledgerRowsResp] = await Promise.all([
+            supabaseClient.from('client_payments').select('*'),
+            supabaseClient.from('transporter_payments').select('*'),
+            supabaseClient.from('expenses').select('*'),
+            supabaseClient.from('company_ledger').select('*')
+          ]);
+
+          if (clientRowsResp.error) throw clientRowsResp.error;
+          if (transporterRowsResp.error) throw transporterRowsResp.error;
+          if (expensesRowsResp.error) throw expensesRowsResp.error;
+          if (ledgerRowsResp.error) throw ledgerRowsResp.error;
+
+          const clientTotal = sumFromRows(clientRowsResp.data, ['amount', 'payment_amount', 'total_amount', 'paid_amount']);
+          const transporterTotal = sumFromRows(transporterRowsResp.data, ['amount', 'payment_amount', 'total_amount', 'paid_amount']);
+          const expensesTotal = sumFromRows(expensesRowsResp.data, ['amount', 'expense_amount', 'total_amount']);
+
+          const ledgerCredits = sumFromRows(ledgerRowsResp.data, ['credit', 'credit_amount', 'cr_amount']);
+          const ledgerDebits = sumFromRows(ledgerRowsResp.data, ['debit', 'debit_amount', 'dr_amount']);
+          const ledgerBalance = ledgerCredits - ledgerDebits;
+
+          $client.textContent = inr(clientTotal);
+          $transporter.textContent = inr(transporterTotal);
+          $expenses.textContent = inr(expensesTotal);
+          $ledger.textContent = inr(ledgerBalance);
+
+          renderCharts(clientRowsResp.data, expensesRowsResp.data, ledgerRowsResp.data);
+
+          const latest10 = [...(ledgerRowsResp.data || [])]
+            .sort((a, b) => toDateValue(b) - toDateValue(a))
+            .slice(0, 10);
+          renderTransactions(latest10);
+
+          if (typeof logActivity === 'function') {
+            logActivity(
+              "access_module",
+              "accounts",
+              "module_accounts",
+              "Opened Accounts Dashboard"
+            );
+          }
+
+          $status.textContent = 'Dashboard totals loaded successfully.';
+        } catch (err) {
+          console.error('Accounts dashboard load error:', err);
+          $status.textContent = 'Unable to load totals right now. Please retry.';
+          $status.classList.add('error');
+          $txBody.innerHTML = '<tr><td colspan="8" class="tx-empty">Unable to load recent transactions.</td></tr>';
+          $cpEmpty.textContent = 'Unable to load chart data.';
+          $exEmpty.textContent = 'Unable to load chart data.';
+          $cfEmpty.textContent = 'Unable to load chart data.';
+        }
+      }
+
+      initAccountsDashboard();
+
+      if ($exportCsvBtn) {
+        $exportCsvBtn.addEventListener('click', exportTransactionsCsv);
+      }
+
+      if ($exportPdfBtn) {
+        $exportPdfBtn.addEventListener('click', exportSummaryPdf);
+      }
+    })();
   </script>
 </body>
 </html>

@@ -56,7 +56,7 @@ window.supabaseClient = supabase.createClient(
 <div id="sidebar-container"></div>
 
 <script>
-fetch("agent-sidebar.html")
+fetch("/components/agent-sidebar.html")
 .then(res=>res.text())
 .then(async data=>{
 document.getElementById("sidebar-container").innerHTML=data

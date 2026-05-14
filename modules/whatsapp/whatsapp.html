@@ -34,10 +34,13 @@
 <body class="bg-gray-100 h-screen overflow-hidden">
 
 <div
+  id="mainContainer"
+
   class="
     flex
     h-screen
     overflow-hidden
+    relative
   "
 >
 
@@ -45,26 +48,18 @@
 <div
   id="sidebar"
 
-  class="
-    w-full
-    md:w-[350px]
+class="
+  w-full
+  md:w-[350px]
 
-    bg-white
-    border-r
-    overflow-y-auto
+  bg-white
+  border-r
+  overflow-y-auto
 
-    fixed
-    md:relative
+  relative
 
-    inset-0
-    z-40
-
-    md:z-auto
-
-    block
-
-    md:block
-  "
+  z-40
+"
 >
 
 <div class="
@@ -787,7 +782,7 @@ async function(
 
 <script>
 
-// ✅ INITIAL MOBILE STATE
+// ✅ INITIAL MOBILE
 window.addEventListener(
   "DOMContentLoaded",
   () => {
@@ -796,8 +791,7 @@ window.addEventListener(
 
       document
       .getElementById("chatArea")
-      .classList
-      .add("hidden")
+      .style.display = "none"
 
     }
 
@@ -811,32 +805,28 @@ window.hideSidebar = function(){
 
     document
     .getElementById("sidebar")
-    .classList
-    .add("hidden")
+    .style.display = "none"
 
     document
     .getElementById("chatArea")
-    .classList
-    .remove("hidden")
+    .style.display = "flex"
 
   }
 
 }
 
-// ✅ BACK BUTTON
+// ✅ BACK
 window.showSidebar = function(){
 
   if(window.innerWidth < 768){
 
     document
     .getElementById("sidebar")
-    .classList
-    .remove("hidden")
+    .style.display = "block"
 
     document
     .getElementById("chatArea")
-    .classList
-    .add("hidden")
+    .style.display = "none"
 
   }
 

@@ -1,0 +1,104 @@
+<script>
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+async function syncOldTrips(){
+
+alert("Starting sync...")
+
+/* GET ALL TRIPS */
+const {data:trips,error:tripError} = await supabaseClient
+.from("trips")
+.select("*")
+
+if(tripError){
+console.error(tripError)
+alert("Trip fetch failed")
+return
+}
+
+/* GET AGENT MAPPINGS */
+const {data:mappings,error:mapError} = await supabaseClient
+.from("truck_agent_mapping")
+.select("*")
+
+if(mapError){
+console.error(mapError)
+alert("Mapping fetch failed")
+return
+}
+
+let inserted = 0
+let skipped = 0
+
+for(const trip of trips){
+
+/* FIND MAPPINGS FOR THIS TRUCK */
+let truckMappings = mappings.filter(m=>m.truck === trip.truck)
+
+if(!truckMappings.length) continue
+
+for(const map of truckMappings){
+
+/* CHECK IF ALREADY EXISTS */
+const {data:existing} = await supabaseClient
+.from("agent_trip_ledger")
+.select("id")
+.eq("trip_id", trip.id)
+.eq("agent_id", map.agent_id)
+.maybeSingle()
+
+if(existing){
+skipped++
+continue
+}
+
+/* CALCULATE FREIGHT */
+let weightMT = (trip.weight_kg || 0) / 1000
+let rate = Number(trip.transporter_rate || 0)
+
+let freight = weightMT * rate
+
+/* CALCULATE COMMISSION */
+let commission = 0
+
+if(map.type === "percentage"){
+commission = freight * (Number(map.value || 0) / 100)
+}
+else{
+commission = Number(map.value || 0)
+}
+
+/* INSERT LEDGER */
+const {error:insertError} = await supabaseClient
+.from("agent_trip_ledger")
+.insert({
+agent_id: map.agent_id,
+trip_id: trip.id,
+commission_amount: commission
+})
+
+if(insertError){
+console.error(insertError)
+}else{
+inserted++
+console.log("Synced:", trip.trip_no)
+}
+
+}
+
+}
+
+alert(`
+Sync Completed
+
+Inserted: ${inserted}
+Skipped: ${skipped}
+`)
+
+}
+
+syncOldTrips()
+</script>  

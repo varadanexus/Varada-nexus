@@ -433,9 +433,17 @@ pass.type = pass.type==="password" ? "text" : "password"
 
 async function autoLogin(){
 
+/* ✅ PREVENT RESTORE AFTER LOGOUT */
+const logoutFlag = sessionStorage.getItem("manual_logout")
+
+if(logoutFlag){
+sessionStorage.removeItem("manual_logout")
+return
+}
+
 const { data: { session } } = await supabaseClient.auth.getSession()
 
-if(!session) return   // not logged in → stay on login page
+if(!session) return
 
 let authId = session.user.id
 
@@ -448,7 +456,7 @@ const {data:agent} = await supabaseClient
 
 if(agent){
   if(agent.is_active){
-    window.location.href = "/portals/agent/agent-dashboard.html"
+    window.location.href="/portals/agent/agent-dashboard.html"
     return
   }
 }
@@ -468,7 +476,7 @@ const {data:userRoles} = await supabaseClient
 .select("role_id")
 .eq("user_id", user.id)
 
-if(!userRoles || userRoles.length === 0) return
+if(!userRoles || userRoles.length===0) return
 
 let roleId = userRoles[0].role_id
 
@@ -480,16 +488,14 @@ const {data:role} = await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
-/* 🔥 ROUTING */
-
 if(roleName.includes("customer")){
-  window.location.href="/portals/transporter/transporter-dashboard.html"
-  return
+window.location.href="/portals/transporter/transporter-dashboard.html"
+return
 }
 
 if(roleName.includes("admin") || roleName.includes("manager")){
-  window.location.href="/modules/logistics/financial-dashboard.html"
-  return
+window.location.href="/modules/logistics/financial-dashboard.html"
+return
 }
 
 window.location.href="/modules/logistics/dashboard.html"

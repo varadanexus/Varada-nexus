@@ -46,6 +46,14 @@ const page = window.location.pathname.split("/").pop()
 
 if(page === "login.html") return null
 
+/* ✅ PREVENT AUTO LOGIN AFTER LOGOUT */
+const logoutFlag = sessionStorage.getItem("manual_logout")
+
+if(logoutFlag){
+sessionStorage.removeItem("manual_logout")
+return null
+}
+
 const { data } = await supabaseClient.auth.getSession()
 
 if(!data.session){

@@ -264,12 +264,31 @@ document.getElementById("sidebar").style.display = "block"
 /* LOGOUT */
 async function logout(){
 
-if(!confirm("Logout?")) return
+let confirmLogout = confirm("Are you sure you want to logout?")
+if(!confirmLogout) return
 
+/* ✅ MARK MANUAL LOGOUT */
+sessionStorage.setItem("manual_logout","1")
+
+/* ✅ SIGN OUT */
 await supabaseClient.auth.signOut()
-window.location.href="/website/login.html"
+
+/* ✅ CLEAR STORAGE */
+localStorage.clear()
+sessionStorage.clear()
+
+/* ✅ REMOVE SUPABASE CACHE */
+Object.keys(localStorage).forEach(key=>{
+if(key.includes("supabase")){
+localStorage.removeItem(key)
+}
+})
+
+/* ✅ HARD REDIRECT */
+window.location.replace("/website/login.html")
 
 }
+
 
 document.addEventListener("DOMContentLoaded", loadUserInfo)
 

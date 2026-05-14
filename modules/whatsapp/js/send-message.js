@@ -19,47 +19,36 @@ window.sendMessage = async function(){
 
   if(!chat) return
 
-// SEND TO TWILIO
-const waRes = await fetch(
-  "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
-  {
-    method:"POST",
+  // ✅ SEND TO TWILIO
+  const waRes = await fetch(
+    "https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/send-custom-whatsapp",
+    {
+      method:"POST",
 
-    headers:{
-      "Content-Type":"application/json"
-    },
+      headers:{
+        "Content-Type":"application/json"
+      },
 
-    body:JSON.stringify({
-      phone: chat.phone,
-      message
-    })
+      body:JSON.stringify({
+        phone: chat.phone,
+        message
+      })
+    }
+  )
+
+  const waData = await waRes.json()
+
+  console.log("WA SEND:", waData)
+
+  if(!waRes.ok){
+
+    alert("WhatsApp send failed")
+
+    return
+
   }
-)
 
-const waData = await waRes.json()
-
-const messageSid = waData.sid
-  
-console.log("WA SEND:", waData)
-
-if(!waRes.ok){
-  alert("WhatsApp send failed")
-  return
-}
-  
-  // SAVE MESSAGE LOCALLY
-await window.supabase
-.from("whatsapp_messages")
-.insert({
-  chat_id: chat.id,
-  phone: chat.phone,
-  direction: "outbound",
-  message,
-  message_sid: messageSid,
-  status: "sent"
-})
-
-  // UPDATE CHAT
+  // ✅ UPDATE CHAT ONLY
   await window.supabase
   .from("whatsapp_chats")
   .update({
@@ -68,13 +57,10 @@ await window.supabase
   })
   .eq("id", chat.id)
 
-  // CLEAR INPUT
+  // ✅ CLEAR INPUT
   input.value = ""
 
-  // STOP TYPING
-setTyping(false)
-
-  // RELOAD CHAT
-  openChat(chat.id)
+  // ✅ STOP TYPING
+  setTyping(false)
 
 }

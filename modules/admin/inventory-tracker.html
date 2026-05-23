@@ -240,6 +240,13 @@ link.classList.add("active")
 Create Project
 </button>
 
+<button class="edit-btn"
+onclick="updateProject()">
+
+Update Project
+
+</button>
+
 </div>
 
 <!-- PROJECT LIST -->
@@ -316,6 +323,13 @@ Expenses
 Add Inventory
 </button>
 
+<button class="edit-btn"
+onclick="updateInventory()">
+
+Update Inventory
+
+</button>
+
 <table>
 
 <thead>
@@ -372,6 +386,13 @@ Add Inventory
 
 <button onclick="addTask()">
 Add Task
+</button>
+
+<button class="edit-btn"
+onclick="updateTask()">
+
+Update Task
+
 </button>
 
 <table>
@@ -432,6 +453,13 @@ placeholder="Notes">
 
 <button onclick="addExpense()">
 Add Expense
+</button>
+
+<button class="edit-btn"
+onclick="updateExpense()">
+
+Update Expense
+
 </button>
 
 <br><br>
@@ -566,6 +594,11 @@ projectTable.innerHTML += `
 
 <button onclick="selectProject('${project.id}')">
 Open
+</button>
+
+<button class="edit-btn"
+onclick="editProject('${project.id}')">
+Edit
 </button>
 
 <button class="delete-btn"
@@ -734,6 +767,11 @@ inventoryTable.innerHTML += `
 
 <td>
 
+<button class="edit-btn"
+onclick="editInventory('${item.id}')">
+Edit
+</button>
+
 <button class="delete-btn"
 onclick="deleteInventory('${item.id}')">
 Delete
@@ -878,6 +916,11 @@ ${task.progress || 0}%
 
 <td>
 
+<button class="edit-btn"
+onclick="editTask('${task.id}')">
+Edit
+</button>
+
 <button class="delete-btn"
 onclick="deleteTask('${task.id}')">
 Delete
@@ -1001,6 +1044,13 @@ expenseTable.innerHTML += `
 
 <td>
 
+<button class="edit-btn"
+onclick="editExpense('${exp.id}')">
+
+Edit
+
+</button>
+
 <button class="delete-btn"
 onclick="deleteExpense('${exp.id}')">
 
@@ -1064,6 +1114,255 @@ expenseNotes.value=""
 expenseDate.value=""
 
 }
+
+/* =========================
+EDIT PROJECT
+========================= */
+
+async function editProject(id){
+
+const {data} = await supabaseClient
+.from("interior_projects")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!data) return
+
+projectName.value = data.project_name || ""
+clientName.value = data.client_name || ""
+phone.value = data.phone || ""
+siteAddress.value = data.site_address || ""
+budget.value = data.budget || ""
+startDate.value = data.start_date || ""
+projectStatus.value = data.status || "Planning"
+projectManager.value = data.project_manager || ""
+
+selectedEditProject = id
+
+}
+
+/* UPDATE PROJECT */
+
+async function updateProject(){
+
+if(!selectedEditProject){
+alert("No project selected")
+return
+}
+
+const payload = {
+
+project_name:projectName.value,
+client_name:clientName.value,
+phone:phone.value,
+site_address:siteAddress.value,
+budget:budget.value,
+start_date:startDate.value,
+status:projectStatus.value,
+project_manager:projectManager.value
+
+}
+
+await supabaseClient
+.from("interior_projects")
+.update(payload)
+.eq("id",selectedEditProject)
+
+alert("Project Updated")
+
+selectedEditProject = null
+
+clearProjectForm()
+
+loadProjects()
+
+}
+
+/* =========================
+EDIT INVENTORY
+========================= */
+
+async function editInventory(id){
+
+const {data} = await supabaseClient
+.from("project_inventory")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!data) return
+
+invItem.value = data.item_name || ""
+invQty.value = data.quantity || ""
+invUnit.value = data.unit || ""
+invCost.value = data.cost || ""
+invVendor.value = data.vendor || ""
+invNotes.value = data.notes || ""
+
+selectedEditInventory = id
+
+}
+
+/* UPDATE INVENTORY */
+
+async function updateInventory(){
+
+if(!selectedEditInventory){
+alert("No inventory selected")
+return
+}
+
+const payload = {
+
+item_name:invItem.value,
+quantity:invQty.value,
+unit:invUnit.value,
+cost:invCost.value,
+vendor:invVendor.value,
+notes:invNotes.value
+
+}
+
+await supabaseClient
+.from("project_inventory")
+.update(payload)
+.eq("id",selectedEditInventory)
+
+alert("Inventory Updated")
+
+selectedEditInventory = null
+
+clearInventoryForm()
+
+loadInventory()
+
+}
+
+/* =========================
+EDIT TASK
+========================= */
+
+async function editTask(id){
+
+const {data} = await supabaseClient
+.from("project_tasks")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!data) return
+
+taskName.value = data.task_name || ""
+assignedTo.value = data.assigned_to || ""
+taskStartDate.value = data.start_date || ""
+taskDeadline.value = data.deadline || ""
+taskProgress.value = data.progress || ""
+taskStatus.value = data.status || "Pending"
+taskRemarks.value = data.remarks || ""
+
+selectedEditTask = id
+
+}
+
+/* UPDATE TASK */
+
+async function updateTask(){
+
+if(!selectedEditTask){
+alert("No task selected")
+return
+}
+
+const payload = {
+
+task_name:taskName.value,
+assigned_to:assignedTo.value,
+start_date:taskStartDate.value,
+deadline:taskDeadline.value,
+progress:taskProgress.value,
+status:taskStatus.value,
+remarks:taskRemarks.value
+
+}
+
+await supabaseClient
+.from("project_tasks")
+.update(payload)
+.eq("id",selectedEditTask)
+
+alert("Task Updated")
+
+selectedEditTask = null
+
+clearTaskForm()
+
+loadTasks()
+
+}
+
+/* =========================
+EDIT EXPENSE
+========================= */
+
+async function editExpense(id){
+
+const {data} = await supabaseClient
+.from("project_expenses")
+.select("*")
+.eq("id",id)
+.single()
+
+if(!data) return
+
+expenseType.value = data.expense_type || "Material"
+expenseAmount.value = data.amount || ""
+expenseDate.value = data.expense_date || ""
+expenseNotes.value = data.notes || ""
+
+selectedEditExpense = id
+
+}
+
+/* UPDATE EXPENSE */
+
+async function updateExpense(){
+
+if(!selectedEditExpense){
+alert("No expense selected")
+return
+}
+
+const payload = {
+
+expense_type:expenseType.value,
+amount:expenseAmount.value,
+expense_date:expenseDate.value,
+notes:expenseNotes.value
+
+}
+
+await supabaseClient
+.from("project_expenses")
+.update(payload)
+.eq("id",selectedEditExpense)
+
+alert("Expense Updated")
+
+selectedEditExpense = null
+
+clearExpenseForm()
+
+loadExpenses()
+
+}
+
+/* GLOBAL IDS */
+
+let selectedEditProject = null
+let selectedEditInventory = null
+let selectedEditTask = null
+let selectedEditExpense = null
   
 /* INIT */
 
@@ -1081,6 +1380,18 @@ window.addTask = addTask
 window.deleteTask = deleteTask
 window.addExpense = addExpense
 window.deleteExpense = deleteExpense
+
+window.editProject = editProject
+window.updateProject = updateProject
+
+window.editInventory = editInventory
+window.updateInventory = updateInventory
+
+window.editTask = editTask
+window.updateTask = updateTask
+
+window.editExpense = editExpense
+window.updateExpense = updateExpense
   
 </script>
 

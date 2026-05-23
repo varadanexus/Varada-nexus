@@ -405,7 +405,70 @@ Add Task
 
 <h3>Project Expenses</h3>
 
-<p>Coming Next</p>
+<div class="grid">
+
+<select id="expenseType">
+
+<option>Material</option>
+<option>Labour</option>
+<option>Transport</option>
+<option>Misc</option>
+
+</select>
+
+<input id="expenseAmount"
+type="number"
+placeholder="Amount">
+
+<input id="expenseDate"
+type="date">
+
+<input id="expenseNotes"
+placeholder="Notes">
+
+</div>
+
+<br>
+
+<button onclick="addExpense()">
+Add Expense
+</button>
+
+<br><br>
+
+<div class="card">
+
+<h3>Project Financial Summary</h3>
+
+<p id="projectSummary">
+
+Budget: ₹0 <br>
+Spent: ₹0 <br>
+Remaining: ₹0
+
+</p>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Type</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Notes</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="expenseTable"></tbody>
+
+</table>
 
 </div>
 
@@ -531,6 +594,8 @@ projectModules.classList.remove("hidden")
 await loadInventory()
 
 await loadTasks()
+
+await loadExpenses()
 
 }
 
@@ -855,6 +920,150 @@ taskProgress.value=""
 taskRemarks.value=""
 
 }
+
+/* =========================
+PROJECT EXPENSES
+========================= */
+
+async function addExpense(){
+
+if(!selectedProject){
+alert("Select project first")
+return
+}
+
+const payload = {
+
+project_id:selectedProject,
+
+expense_type:expenseType.value,
+
+amount:expenseAmount.value,
+
+notes:expenseNotes.value,
+
+expense_date:expenseDate.value
+
+}
+
+const {error} = await supabaseClient
+.from("project_expenses")
+.insert([payload])
+
+if(error){
+console.error(error)
+alert("Error adding expense")
+return
+}
+
+clearExpenseForm()
+
+loadExpenses()
+
+}
+
+/* LOAD EXPENSES */
+
+async function loadExpenses(){
+
+if(!selectedProject) return
+
+const {data,error} = await supabaseClient
+.from("project_expenses")
+.select("*")
+.eq("project_id",selectedProject)
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+expenseTable.innerHTML = ""
+
+let totalSpent = 0
+
+data.forEach(exp=>{
+
+totalSpent += Number(exp.amount || 0)
+
+expenseTable.innerHTML += `
+
+<tr>
+
+<td>${exp.expense_type || ""}</td>
+
+<td>₹${exp.amount || 0}</td>
+
+<td>${exp.expense_date || ""}</td>
+
+<td>${exp.notes || ""}</td>
+
+<td>
+
+<button class="delete-btn"
+onclick="deleteExpense('${exp.id}')">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+/* PROJECT DETAILS */
+
+const {data:project} = await supabaseClient
+.from("interior_projects")
+.select("budget")
+.eq("id",selectedProject)
+.single()
+
+let budget = Number(project?.budget || 0)
+
+let remaining = budget - totalSpent
+
+projectSummary.innerHTML = `
+
+Budget: ₹${budget.toLocaleString()} <br><br>
+
+Spent: ₹${totalSpent.toLocaleString()} <br><br>
+
+Remaining: ₹${remaining.toLocaleString()}
+
+`
+
+}
+
+/* DELETE EXPENSE */
+
+async function deleteExpense(id){
+
+if(!confirm("Delete expense?")) return
+
+await supabaseClient
+.from("project_expenses")
+.delete()
+.eq("id",id)
+
+loadExpenses()
+
+}
+
+/* CLEAR FORM */
+
+function clearExpenseForm(){
+
+expenseAmount.value=""
+expenseNotes.value=""
+expenseDate.value=""
+
+}
   
 /* INIT */
 
@@ -870,6 +1079,8 @@ window.addInventory = addInventory
 window.deleteInventory = deleteInventory
 window.addTask = addTask
 window.deleteTask = deleteTask
+window.addExpense = addExpense
+window.deleteExpense = deleteExpense
   
 </script>
 

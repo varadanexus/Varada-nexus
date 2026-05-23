@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Inventory Tracker</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background:#f5f5f5;
+    padding:20px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:30px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1,h2{
+    margin-bottom:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px;
+}
+
+input,select{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+button{
+    padding:10px 20px;
+    background:black;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+table th,
+table td{
+    border:1px solid #ddd;
+    padding:12px;
+    text-align:left;
+}
+
+.progress-bar{
+    background:#eee;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress{
+    background:green;
+    color:white;
+    text-align:center;
+    padding:5px;
+}
+
+.delete-btn{
+    background:red;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Interior Inventory & Work Tracker</h1>
+
+<div class="card">
+
+<h2>Inventory Management</h2>
+
+<div class="grid">
+
+<input type="text" id="itemName" placeholder="Item Name">
+
+<input type="number" id="quantity" placeholder="Quantity">
+
+<input type="text" id="unit" placeholder="Unit">
+
+<select id="status">
+<option>Available</option>
+<option>Low Stock</option>
+<option>Out of Stock</option>
+</select>
+
+</div>
+
+<button onclick="addInventory()">Add Inventory</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Item</th>
+<th>Quantity</th>
+<th>Unit</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="inventoryTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h2>Work Progress Tracker</h2>
+
+<div class="grid">
+
+<input type="text" id="workName" placeholder="Work Name">
+
+<input type="text" id="assignedTo" placeholder="Assigned To">
+
+<input type="number" id="progressValue" placeholder="Progress %">
+
+<select id="workStatus">
+<option>Pending</option>
+<option>In Progress</option>
+<option>Completed</option>
+</select>
+
+</div>
+
+<button onclick="addWork()">Add Work</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Work</th>
+<th>Assigned</th>
+<th>Progress</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="workTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+function addInventory(){
+
+    const item =
+    document.getElementById('itemName').value;
+
+    const quantity =
+    document.getElementById('quantity').value;
+
+    const unit =
+    document.getElementById('unit').value;
+
+    const status =
+    document.getElementById('status').value;
+
+    if(!item || !quantity){
+        alert('Enter item details');
+        return;
+    }
+
+    const table =
+    document.getElementById('inventoryTable');
+
+    const row =
+    table.insertRow();
+
+    row.innerHTML = `
+        <td>${item}</td>
+        <td>${quantity}</td>
+        <td>${unit}</td>
+        <td>${status}</td>
+        <td>
+            <button class="delete-btn"
+            onclick="this.parentElement.parentElement.remove()">
+            Delete
+            </button>
+        </td>
+    `;
+
+    document.getElementById('itemName').value = '';
+    document.getElementById('quantity').value = '';
+    document.getElementById('unit').value = '';
+}
+
+function addWork(){
+
+    const work =
+    document.getElementById('workName').value;
+
+    const assigned =
+    document.getElementById('assignedTo').value;
+
+    const progress =
+    document.getElementById('progressValue').value;
+
+    const status =
+    document.getElementById('workStatus').value;
+
+    if(!work || !assigned){
+        alert('Enter work details');
+        return;
+    }
+
+    const table =
+    document.getElementById('workTable');
+
+    const row =
+    table.insertRow();
+
+    row.innerHTML = `
+        <td>${work}</td>
+        <td>${assigned}</td>
+        <td>
+            <div class="progress-bar">
+                <div class="progress"
+                style="width:${progress}%">
+                ${progress}%
+                </div>
+            </div>
+        </td>
+        <td>${status}</td>
+        <td>
+            <button class="delete-btn"
+            onclick="this.parentElement.parentElement.remove()">
+            Delete
+            </button>
+        </td>
+    `;
+
+    document.getElementById('workName').value = '';
+    document.getElementById('assignedTo').value = '';
+    document.getElementById('progressValue').value = '';
+}
+
+</script>
+
+</body>
+</html>

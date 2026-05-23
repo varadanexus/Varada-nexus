@@ -276,9 +276,104 @@ userEl.innerText = "Admin"
 
 <script>
 
-/* INVENTORY */
+const supabaseClient = window.supabaseClient
 
-function addInventory(){
+/* LOAD INVENTORY */
+
+async function loadInventory(){
+
+const {data,error} = await supabaseClient
+.from("inventory_items")
+.select("*")
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+inventoryTable.innerHTML = ""
+
+data.forEach(item=>{
+
+inventoryTable.innerHTML += `
+<tr>
+
+<td>${item.item_name}</td>
+
+<td>${item.quantity}</td>
+
+<td>${item.unit}</td>
+
+<td>${item.status}</td>
+
+<td>
+<button class="delete-btn"
+onclick="deleteInventory('${item.id}')">
+Delete
+</button>
+</td>
+
+</tr>
+`
+
+})
+
+}
+
+/* LOAD WORK */
+
+async function loadWork(){
+
+const {data,error} = await supabaseClient
+.from("work_progress")
+.select("*")
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+workTable.innerHTML = ""
+
+data.forEach(item=>{
+
+workTable.innerHTML += `
+<tr>
+
+<td>${item.work_name}</td>
+
+<td>${item.assigned_to}</td>
+
+<td>
+<div class="progress-bar">
+<div class="progress-fill"
+style="width:${item.progress}%">
+${item.progress}%
+</div>
+</div>
+</td>
+
+<td>${item.status}</td>
+
+<td>
+<button class="delete-btn"
+onclick="deleteWork('${item.id}')">
+Delete
+</button>
+</td>
+
+</tr>
+`
+
+})
+
+}
+
+/* ADD INVENTORY */
+
+async function addInventory(){
 
 const item =
 document.getElementById("itemName").value
@@ -297,35 +392,34 @@ alert("Enter details")
 return
 }
 
-const table =
-document.getElementById("inventoryTable")
+const {error} = await supabaseClient
+.from("inventory_items")
+.insert([{
 
-const row =
-table.insertRow()
+item_name:item,
+quantity,
+unit,
+status
 
-row.innerHTML = `
-<td>${item}</td>
-<td>${quantity}</td>
-<td>${unit}</td>
-<td>${status}</td>
+}])
 
-<td>
-<button class="delete-btn"
-onclick="this.parentElement.parentElement.remove()">
-Delete
-</button>
-</td>
-`
+if(error){
+console.error(error)
+alert("Save failed")
+return
+}
 
-document.getElementById("itemName").value = ""
-document.getElementById("quantity").value = ""
-document.getElementById("unit").value = ""
+document.getElementById("itemName").value=""
+document.getElementById("quantity").value=""
+document.getElementById("unit").value=""
+
+loadInventory()
 
 }
 
-/* WORK */
+/* ADD WORK */
 
-function addWork(){
+async function addWork(){
 
 const work =
 document.getElementById("workName").value
@@ -344,46 +438,68 @@ alert("Enter details")
 return
 }
 
-const table =
-document.getElementById("workTable")
+const {error} = await supabaseClient
+.from("work_progress")
+.insert([{
 
-const row =
-table.insertRow()
+work_name:work,
+assigned_to:assigned,
+progress,
+status
 
-row.innerHTML = `
-<td>${work}</td>
+}])
 
-<td>${assigned}</td>
+if(error){
+console.error(error)
+alert("Save failed")
+return
+}
 
-<td>
-<div class="progress-bar">
-<div class="progress-fill"
-style="width:${progress}%">
-${progress}%
-</div>
-</div>
-</td>
+document.getElementById("workName").value=""
+document.getElementById("assignedTo").value=""
+document.getElementById("progressValue").value=""
 
-<td>${status}</td>
-
-<td>
-<button class="delete-btn"
-onclick="this.parentElement.parentElement.remove()">
-Delete
-</button>
-</td>
-`
-
-document.getElementById("workName").value = ""
-document.getElementById("assignedTo").value = ""
-document.getElementById("progressValue").value = ""
+loadWork()
 
 }
+
+/* DELETE INVENTORY */
+
+async function deleteInventory(id){
+
+await supabaseClient
+.from("inventory_items")
+.delete()
+.eq("id",id)
+
+loadInventory()
+
+}
+
+/* DELETE WORK */
+
+async function deleteWork(id){
+
+await supabaseClient
+.from("work_progress")
+.delete()
+.eq("id",id)
+
+loadWork()
+
+}
+
+/* INITIAL LOAD */
+
+loadInventory()
+loadWork()
 
 /* GLOBAL */
 
 window.addInventory = addInventory
 window.addWork = addWork
+window.deleteInventory = deleteInventory
+window.deleteWork = deleteWork
 
 </script>
 

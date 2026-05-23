@@ -340,13 +340,62 @@ Add Inventory
 
 </div>
 
-<!-- TASKS -->
-
 <div id="tasksTab" class="card hidden">
 
 <h3>Project Tasks</h3>
 
-<p>Coming Next</p>
+<div class="grid">
+
+<input id="taskName" placeholder="Task Name">
+
+<input id="assignedTo" placeholder="Assigned Worker">
+
+<input id="taskStartDate" type="date">
+
+<input id="taskDeadline" type="date">
+
+<input id="taskProgress" type="number" placeholder="Progress %">
+
+<select id="taskStatus">
+
+<option>Pending</option>
+<option>In Progress</option>
+<option>Completed</option>
+
+</select>
+
+<input id="taskRemarks" placeholder="Remarks">
+
+</div>
+
+<br>
+
+<button onclick="addTask()">
+Add Task
+</button>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Task</th>
+<th>Assigned</th>
+<th>Start</th>
+<th>Deadline</th>
+<th>Progress</th>
+<th>Status</th>
+<th>Remarks</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="taskTable"></tbody>
+
+</table>
 
 </div>
 
@@ -480,6 +529,8 @@ selectedProject = id
 projectModules.classList.remove("hidden")
 
 await loadInventory()
+
+await loadTasks()
 
 }
 
@@ -660,6 +711,150 @@ invVendor.value=""
 invNotes.value=""
 
 }
+
+/* =========================
+PROJECT TASKS
+========================= */
+
+async function addTask(){
+
+if(!selectedProject){
+alert("Select project first")
+return
+}
+
+const payload = {
+
+project_id:selectedProject,
+
+task_name:taskName.value,
+
+assigned_to:assignedTo.value,
+
+start_date:taskStartDate.value,
+
+deadline:taskDeadline.value,
+
+progress:taskProgress.value,
+
+status:taskStatus.value,
+
+remarks:taskRemarks.value
+
+}
+
+const {error} = await supabaseClient
+.from("project_tasks")
+.insert([payload])
+
+if(error){
+console.error(error)
+alert("Error adding task")
+return
+}
+
+clearTaskForm()
+
+loadTasks()
+
+}
+
+/* LOAD TASKS */
+
+async function loadTasks(){
+
+if(!selectedProject) return
+
+const {data,error} = await supabaseClient
+.from("project_tasks")
+.select("*")
+.eq("project_id",selectedProject)
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+taskTable.innerHTML = ""
+
+data.forEach(task=>{
+
+taskTable.innerHTML += `
+
+<tr>
+
+<td>${task.task_name || ""}</td>
+
+<td>${task.assigned_to || ""}</td>
+
+<td>${task.start_date || ""}</td>
+
+<td>${task.deadline || ""}</td>
+
+<td>
+
+<div class="progress-bar">
+
+<div class="progress-fill"
+style="width:${task.progress || 0}%">
+
+${task.progress || 0}%
+
+</div>
+
+</div>
+
+</td>
+
+<td>${task.status || ""}</td>
+
+<td>${task.remarks || ""}</td>
+
+<td>
+
+<button class="delete-btn"
+onclick="deleteTask('${task.id}')">
+Delete
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+}
+
+/* DELETE TASK */
+
+async function deleteTask(id){
+
+if(!confirm("Delete task?")) return
+
+await supabaseClient
+.from("project_tasks")
+.delete()
+.eq("id",id)
+
+loadTasks()
+
+}
+
+/* CLEAR TASK FORM */
+
+function clearTaskForm(){
+
+taskName.value=""
+assignedTo.value=""
+taskStartDate.value=""
+taskDeadline.value=""
+taskProgress.value=""
+taskRemarks.value=""
+
+}
   
 /* INIT */
 
@@ -673,6 +868,8 @@ window.deleteProject = deleteProject
 window.openTab = openTab
 window.addInventory = addInventory
 window.deleteInventory = deleteInventory
+window.addTask = addTask
+window.deleteTask = deleteTask
   
 </script>
 

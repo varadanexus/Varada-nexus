@@ -2,7 +2,9 @@
 <html>
 
 <head>
-<title>Inventory Tracker - Varada Nexus</title>
+
+<title>Interior ERP - Varada Nexus</title>
+
 <base href="/">
 
 <link rel="icon" type="image/png" href="/images/logo.png">
@@ -17,7 +19,7 @@ window.supabaseClient = supabase.createClient(
 )
 
 </script>
-  
+
 <style>
 
 body{
@@ -38,29 +40,35 @@ padding:24px;
 background:#111827;
 padding:16px;
 border-radius:12px;
-border:1px solid rgba(255,255,255,0.04);
+border:1px solid rgba(255,255,255,0.05);
 margin-bottom:16px;
 }
 
 /* GRID */
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:10px;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:12px;
 }
 
 /* INPUTS */
-input,select{
+input,select,textarea{
+
+width:100%;
+box-sizing:border-box;
+
 padding:10px;
 border-radius:8px;
+
 border:1px solid rgba(255,255,255,0.08);
+
 background:#0f172a;
 color:#e5e7eb;
 }
 
 /* BUTTON */
 button{
-padding:8px 14px;
+padding:10px 14px;
 background:#3b82f6;
 color:white;
 border:none;
@@ -72,40 +80,56 @@ cursor:pointer;
 table{
 width:100%;
 border-collapse:collapse;
-background:#111827;
 margin-top:15px;
 }
 
 th,td{
-padding:10px;
+padding:12px;
 border-bottom:1px solid rgba(255,255,255,0.05);
 text-align:left;
 }
 
 th{
-color:#9ca3af;
+color:#94a3b8;
 }
 
-/* PROGRESS */
-.progress-bar{
-width:100%;
-height:20px;
-background:#1f2937;
-border-radius:10px;
-overflow:hidden;
+/* PROJECT HEADER */
+.project-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
 }
 
-.progress-fill{
-height:100%;
-background:#22c55e;
-text-align:center;
-font-size:12px;
-line-height:20px;
-color:white;
+/* TABS */
+.tabs{
+display:flex;
+gap:10px;
+margin-bottom:15px;
 }
 
+.tab{
+padding:10px 14px;
+background:#1e293b;
+border-radius:8px;
+cursor:pointer;
+}
+
+.tab.active{
+background:#3b82f6;
+}
+
+/* DELETE */
 .delete-btn{
 background:#ef4444;
+}
+
+.edit-btn{
+background:#f59e0b;
+}
+
+.hidden{
+display:none;
 }
 
 </style>
@@ -118,7 +142,7 @@ background:#ef4444;
 
 <script>
 
-/* SIDEBAR LOAD */
+/* SIDEBAR */
 
 fetch("/components/sidebar.html")
 .then(res=>res.text())
@@ -132,13 +156,7 @@ if(sidebar){
 sidebar.style.display = "none"
 }
 
-setTimeout(async ()=>{
-
-if(typeof applyMenuRBAC === "function"){
-await applyMenuRBAC()
-}
-
-await initSidebar()
+setTimeout(()=>{
 
 setActiveMenu()
 
@@ -156,7 +174,8 @@ sidebar.style.display = "block"
 
 function setActiveMenu(){
 
-let currentPage = window.location.pathname.split("/").pop()
+let currentPage =
+window.location.pathname.split("/").pop()
 
 document.querySelectorAll("#sidebar a").forEach(link=>{
 
@@ -170,105 +189,134 @@ link.classList.add("active")
 
 }
 
-async function initSidebar(){
-
-const userEl = document.getElementById("userName")
-
-if(userEl){
-userEl.innerText = "Admin"
-}
-
-}
-
 </script>
 
 <div class="main">
 
-<h2>Interior Inventory & Work Tracker</h2>
+<div class="project-header">
 
-<!-- INVENTORY -->
-<div class="card">
-
-<h3>Inventory Management</h3>
-
-<div class="grid">
-
-<input type="text" id="itemName" placeholder="Item Name">
-
-<input type="number" id="quantity" placeholder="Quantity">
-
-<input type="text" id="unit" placeholder="Unit">
-
-<select id="status">
-<option>Available</option>
-<option>Low Stock</option>
-<option>Out of Stock</option>
-</select>
+<div>
+<h2>Interior ERP Module</h2>
+<p>Project Management + Inventory + Tasks</p>
+</div>
 
 </div>
 
-<br>
+<!-- PROJECT DETAILS -->
 
-<button onclick="addInventory()">Add Inventory</button>
-
-<table>
-
-<thead>
-<tr>
-<th>Item</th>
-<th>Quantity</th>
-<th>Unit</th>
-<th>Status</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="inventoryTable"></tbody>
-
-</table>
-
-</div>
-
-<!-- WORK -->
 <div class="card">
 
-<h3>Work Progress Tracker</h3>
+<h3>Create Project</h3>
 
 <div class="grid">
 
-<input type="text" id="workName" placeholder="Work Name">
+<input id="projectName" placeholder="Project Name">
 
-<input type="text" id="assignedTo" placeholder="Assigned To">
+<input id="clientName" placeholder="Client Name">
 
-<input type="number" id="progressValue" placeholder="Progress %">
+<input id="phone" placeholder="Phone">
 
-<select id="workStatus">
-<option>Pending</option>
+<input id="projectManager" placeholder="Project Manager">
+
+<input id="budget" type="number" placeholder="Budget">
+
+<input id="startDate" type="date">
+
+<select id="projectStatus">
+
+<option>Planning</option>
 <option>In Progress</option>
 <option>Completed</option>
+
 </select>
+
+<input id="siteAddress" placeholder="Site Address">
 
 </div>
 
 <br>
 
-<button onclick="addWork()">Add Work</button>
+<button onclick="createProject()">
+Create Project
+</button>
+
+</div>
+
+<!-- PROJECT LIST -->
+
+<div class="card">
+
+<h3>Projects</h3>
 
 <table>
 
 <thead>
 <tr>
-<th>Work</th>
-<th>Assigned</th>
-<th>Progress</th>
+
+<th>Project</th>
+<th>Client</th>
+<th>Budget</th>
 <th>Status</th>
 <th>Action</th>
+
 </tr>
 </thead>
 
-<tbody id="workTable"></tbody>
+<tbody id="projectTable"></tbody>
 
 </table>
+
+</div>
+
+<!-- PROJECT MODULES -->
+
+<div id="projectModules" class="hidden">
+
+<div class="tabs">
+
+<div class="tab active" onclick="openTab('inventoryTab',this)">
+Inventory
+</div>
+
+<div class="tab" onclick="openTab('tasksTab',this)">
+Tasks
+</div>
+
+<div class="tab" onclick="openTab('expensesTab',this)">
+Expenses
+</div>
+
+</div>
+
+<!-- INVENTORY -->
+
+<div id="inventoryTab" class="card">
+
+<h3>Project Inventory</h3>
+
+<p>Coming Next</p>
+
+</div>
+
+<!-- TASKS -->
+
+<div id="tasksTab" class="card hidden">
+
+<h3>Project Tasks</h3>
+
+<p>Coming Next</p>
+
+</div>
+
+<!-- EXPENSES -->
+
+<div id="expensesTab" class="card hidden">
+
+<h3>Project Expenses</h3>
+
+<p>Coming Next</p>
+
+</div>
 
 </div>
 
@@ -278,12 +326,64 @@ userEl.innerText = "Admin"
 
 const supabaseClient = window.supabaseClient
 
-/* LOAD INVENTORY */
+let selectedProject = null
 
-async function loadInventory(){
+/* CREATE PROJECT */
+
+async function createProject(){
+
+const payload = {
+
+project_name:
+projectName.value,
+
+client_name:
+clientName.value,
+
+phone:
+phone.value,
+
+site_address:
+siteAddress.value,
+
+budget:
+budget.value,
+
+start_date:
+startDate.value,
+
+status:
+projectStatus.value,
+
+project_manager:
+projectManager.value
+
+}
+
+const {error} = await supabaseClient
+.from("interior_projects")
+.insert([payload])
+
+if(error){
+console.error(error)
+alert("Error creating project")
+return
+}
+
+alert("Project Created")
+
+clearProjectForm()
+
+loadProjects()
+
+}
+
+/* LOAD PROJECTS */
+
+async function loadProjects(){
 
 const {data,error} = await supabaseClient
-.from("inventory_items")
+.from("interior_projects")
 .select("*")
 .order("created_at",{ascending:false})
 
@@ -292,214 +392,114 @@ console.error(error)
 return
 }
 
-inventoryTable.innerHTML = ""
+projectTable.innerHTML = ""
 
-data.forEach(item=>{
+data.forEach(project=>{
 
-inventoryTable.innerHTML += `
+projectTable.innerHTML += `
+
 <tr>
 
-<td>${item.item_name}</td>
+<td>${project.project_name}</td>
 
-<td>${item.quantity}</td>
+<td>${project.client_name}</td>
 
-<td>${item.unit}</td>
+<td>₹${project.budget || 0}</td>
 
-<td>${item.status}</td>
+<td>${project.status}</td>
 
 <td>
+
+<button onclick="selectProject('${project.id}')">
+Open
+</button>
+
 <button class="delete-btn"
-onclick="deleteInventory('${item.id}')">
+onclick="deleteProject('${project.id}')">
 Delete
 </button>
+
 </td>
 
 </tr>
+
 `
 
 })
 
 }
 
-/* LOAD WORK */
+/* SELECT PROJECT */
 
-async function loadWork(){
+async function selectProject(id){
 
-const {data,error} = await supabaseClient
-.from("work_progress")
-.select("*")
-.order("created_at",{ascending:false})
+selectedProject = id
 
-if(error){
-console.error(error)
-return
-}
-
-workTable.innerHTML = ""
-
-data.forEach(item=>{
-
-workTable.innerHTML += `
-<tr>
-
-<td>${item.work_name}</td>
-
-<td>${item.assigned_to}</td>
-
-<td>
-<div class="progress-bar">
-<div class="progress-fill"
-style="width:${item.progress}%">
-${item.progress}%
-</div>
-</div>
-</td>
-
-<td>${item.status}</td>
-
-<td>
-<button class="delete-btn"
-onclick="deleteWork('${item.id}')">
-Delete
-</button>
-</td>
-
-</tr>
-`
-
-})
+projectModules.classList.remove("hidden")
 
 }
 
-/* ADD INVENTORY */
+/* DELETE */
 
-async function addInventory(){
+async function deleteProject(id){
 
-const item =
-document.getElementById("itemName").value
-
-const quantity =
-document.getElementById("quantity").value
-
-const unit =
-document.getElementById("unit").value
-
-const status =
-document.getElementById("status").value
-
-if(!item || !quantity){
-alert("Enter details")
-return
-}
-
-const {error} = await supabaseClient
-.from("inventory_items")
-.insert([{
-
-item_name:item,
-quantity,
-unit,
-status
-
-}])
-
-if(error){
-console.error(error)
-alert("Save failed")
-return
-}
-
-document.getElementById("itemName").value=""
-document.getElementById("quantity").value=""
-document.getElementById("unit").value=""
-
-loadInventory()
-
-}
-
-/* ADD WORK */
-
-async function addWork(){
-
-const work =
-document.getElementById("workName").value
-
-const assigned =
-document.getElementById("assignedTo").value
-
-const progress =
-document.getElementById("progressValue").value
-
-const status =
-document.getElementById("workStatus").value
-
-if(!work || !assigned){
-alert("Enter details")
-return
-}
-
-const {error} = await supabaseClient
-.from("work_progress")
-.insert([{
-
-work_name:work,
-assigned_to:assigned,
-progress,
-status
-
-}])
-
-if(error){
-console.error(error)
-alert("Save failed")
-return
-}
-
-document.getElementById("workName").value=""
-document.getElementById("assignedTo").value=""
-document.getElementById("progressValue").value=""
-
-loadWork()
-
-}
-
-/* DELETE INVENTORY */
-
-async function deleteInventory(id){
+if(!confirm("Delete project?")) return
 
 await supabaseClient
-.from("inventory_items")
+.from("interior_projects")
 .delete()
 .eq("id",id)
 
-loadInventory()
+loadProjects()
 
 }
 
-/* DELETE WORK */
+/* FORM RESET */
 
-async function deleteWork(id){
+function clearProjectForm(){
 
-await supabaseClient
-.from("work_progress")
-.delete()
-.eq("id",id)
-
-loadWork()
+projectName.value=""
+clientName.value=""
+phone.value=""
+siteAddress.value=""
+budget.value=""
+projectManager.value=""
 
 }
 
-/* INITIAL LOAD */
+/* TABS */
 
-loadInventory()
-loadWork()
+function openTab(id,el){
+
+document.querySelectorAll(".tab")
+.forEach(t=>t.classList.remove("active"))
+
+el.classList.add("active")
+
+document.getElementById("inventoryTab")
+.classList.add("hidden")
+
+document.getElementById("tasksTab")
+.classList.add("hidden")
+
+document.getElementById("expensesTab")
+.classList.add("hidden")
+
+document.getElementById(id)
+.classList.remove("hidden")
+
+}
+
+/* INIT */
+
+loadProjects()
 
 /* GLOBAL */
 
-window.addInventory = addInventory
-window.addWork = addWork
-window.deleteInventory = deleteInventory
-window.deleteWork = deleteWork
+window.createProject = createProject
+window.selectProject = selectProject
+window.deleteProject = deleteProject
+window.openTab = openTab
 
 </script>
 

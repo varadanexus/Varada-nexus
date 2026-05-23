@@ -493,6 +493,11 @@ window.location.href="/portals/transporter/transporter-dashboard.html"
 return
 }
 
+if(roleName.includes("client")){
+window.location.href="/portals/client/client-dashboard.html"
+return
+}
+
 if(roleName.includes("admin") || roleName.includes("manager")){
 window.location.href="/modules/logistics/financial-dashboard.html"
 return

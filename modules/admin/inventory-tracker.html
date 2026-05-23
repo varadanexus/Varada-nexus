@@ -273,6 +273,8 @@ Download Project PDF
 
 <input id="clientName" placeholder="Client Name">
 
+<input id="clientEmail" placeholder="Client Email">
+  
 <input id="phone" placeholder="Phone">
 
 <input id="projectManager" placeholder="Project Manager">
@@ -676,6 +678,9 @@ projectName.value,
 client_name:
 clientName.value,
 
+client_email:
+clientEmail.value,
+  
 phone:
 phone.value,
 
@@ -809,6 +814,7 @@ function clearProjectForm(){
 
 projectName.value=""
 clientName.value=""
+clientEmail.value=""
 phone.value=""
 siteAddress.value=""
 budget.value=""
@@ -1287,6 +1293,7 @@ if(!data) return
 
 projectName.value = data.project_name || ""
 clientName.value = data.client_name || ""
+clientEmail.value = data.client_email || ""
 phone.value = data.phone || ""
 siteAddress.value = data.site_address || ""
 budget.value = data.budget || ""

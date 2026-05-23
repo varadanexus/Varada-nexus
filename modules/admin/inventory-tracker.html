@@ -1,100 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html>
 
-<title>Inventory Tracker</title>
+<head>
+<title>Inventory Tracker - Varada Nexus</title>
+<base href="/">
+
+<link rel="icon" type="image/png" href="/images/logo.png">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
 body{
-    font-family: Arial, sans-serif;
-    background:#f5f5f5;
-    padding:20px;
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
 }
 
-.container{
-    max-width:1200px;
-    margin:auto;
+/* MAIN */
+.main{
+margin-left:220px;
+padding:24px;
 }
 
+/* CARD */
 .card{
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    margin-bottom:30px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+background:#111827;
+padding:16px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,0.04);
+margin-bottom:16px;
 }
 
-h1,h2{
-    margin-bottom:20px;
-}
-
+/* GRID */
 .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:10px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:10px;
 }
 
+/* INPUTS */
 input,select{
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:6px;
+padding:10px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.08);
+background:#0f172a;
+color:#e5e7eb;
 }
 
+/* BUTTON */
 button{
-    padding:10px 20px;
-    background:black;
-    color:white;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    margin-top:15px;
+padding:8px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
 
+/* TABLE */
 table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
+width:100%;
+border-collapse:collapse;
+background:#111827;
+margin-top:15px;
 }
 
-table th,
-table td{
-    border:1px solid #ddd;
-    padding:12px;
-    text-align:left;
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+text-align:left;
 }
 
+th{
+color:#9ca3af;
+}
+
+/* PROGRESS */
 .progress-bar{
-    background:#eee;
-    border-radius:10px;
-    overflow:hidden;
+width:100%;
+height:20px;
+background:#1f2937;
+border-radius:10px;
+overflow:hidden;
 }
 
-.progress{
-    background:green;
-    color:white;
-    text-align:center;
-    padding:5px;
+.progress-fill{
+height:100%;
+background:#22c55e;
+text-align:center;
+font-size:12px;
+line-height:20px;
+color:white;
 }
 
 .delete-btn{
-    background:red;
+background:#ef4444;
 }
 
 </style>
+
 </head>
 
 <body>
 
-<div class="container">
+<div id="sidebar-container"></div>
 
-<h1>Interior Inventory & Work Tracker</h1>
+<script>
 
+/* SIDEBAR LOAD */
+
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("sidebar-container").innerHTML = data
+
+const sidebar = document.getElementById("sidebar")
+
+if(sidebar){
+sidebar.style.display = "none"
+}
+
+setTimeout(async ()=>{
+
+if(typeof applyMenuRBAC === "function"){
+await applyMenuRBAC()
+}
+
+await initSidebar()
+
+setActiveMenu()
+
+if(window.lucide){
+lucide.createIcons()
+}
+
+if(sidebar){
+sidebar.style.display = "block"
+}
+
+},200)
+
+})
+
+function setActiveMenu(){
+
+let currentPage = window.location.pathname.split("/").pop()
+
+document.querySelectorAll("#sidebar a").forEach(link=>{
+
+let page = link.getAttribute("data-page")
+
+if(page === currentPage){
+link.classList.add("active")
+}
+
+})
+
+}
+
+async function initSidebar(){
+
+const userEl = document.getElementById("userName")
+
+if(userEl){
+userEl.innerText = "Admin"
+}
+
+}
+
+</script>
+
+<div class="main">
+
+<h2>Interior Inventory & Work Tracker</h2>
+
+<!-- INVENTORY -->
 <div class="card">
 
-<h2>Inventory Management</h2>
+<h3>Inventory Management</h3>
 
 <div class="grid">
 
@@ -111,6 +197,8 @@ table td{
 </select>
 
 </div>
+
+<br>
 
 <button onclick="addInventory()">Add Inventory</button>
 
@@ -132,9 +220,10 @@ table td{
 
 </div>
 
+<!-- WORK -->
 <div class="card">
 
-<h2>Work Progress Tracker</h2>
+<h3>Work Progress Tracker</h3>
 
 <div class="grid">
 
@@ -151,6 +240,8 @@ table td{
 </select>
 
 </div>
+
+<br>
 
 <button onclick="addWork()">Add Work</button>
 
@@ -176,100 +267,118 @@ table td{
 
 <script>
 
+/* INVENTORY */
+
 function addInventory(){
 
-    const item =
-    document.getElementById('itemName').value;
+const item =
+document.getElementById("itemName").value
 
-    const quantity =
-    document.getElementById('quantity').value;
+const quantity =
+document.getElementById("quantity").value
 
-    const unit =
-    document.getElementById('unit').value;
+const unit =
+document.getElementById("unit").value
 
-    const status =
-    document.getElementById('status').value;
+const status =
+document.getElementById("status").value
 
-    if(!item || !quantity){
-        alert('Enter item details');
-        return;
-    }
-
-    const table =
-    document.getElementById('inventoryTable');
-
-    const row =
-    table.insertRow();
-
-    row.innerHTML = `
-        <td>${item}</td>
-        <td>${quantity}</td>
-        <td>${unit}</td>
-        <td>${status}</td>
-        <td>
-            <button class="delete-btn"
-            onclick="this.parentElement.parentElement.remove()">
-            Delete
-            </button>
-        </td>
-    `;
-
-    document.getElementById('itemName').value = '';
-    document.getElementById('quantity').value = '';
-    document.getElementById('unit').value = '';
+if(!item || !quantity){
+alert("Enter details")
+return
 }
+
+const table =
+document.getElementById("inventoryTable")
+
+const row =
+table.insertRow()
+
+row.innerHTML = `
+<td>${item}</td>
+<td>${quantity}</td>
+<td>${unit}</td>
+<td>${status}</td>
+
+<td>
+<button class="delete-btn"
+onclick="this.parentElement.parentElement.remove()">
+Delete
+</button>
+</td>
+`
+
+document.getElementById("itemName").value = ""
+document.getElementById("quantity").value = ""
+document.getElementById("unit").value = ""
+
+}
+
+/* WORK */
 
 function addWork(){
 
-    const work =
-    document.getElementById('workName').value;
+const work =
+document.getElementById("workName").value
 
-    const assigned =
-    document.getElementById('assignedTo').value;
+const assigned =
+document.getElementById("assignedTo").value
 
-    const progress =
-    document.getElementById('progressValue').value;
+const progress =
+document.getElementById("progressValue").value
 
-    const status =
-    document.getElementById('workStatus').value;
+const status =
+document.getElementById("workStatus").value
 
-    if(!work || !assigned){
-        alert('Enter work details');
-        return;
-    }
-
-    const table =
-    document.getElementById('workTable');
-
-    const row =
-    table.insertRow();
-
-    row.innerHTML = `
-        <td>${work}</td>
-        <td>${assigned}</td>
-        <td>
-            <div class="progress-bar">
-                <div class="progress"
-                style="width:${progress}%">
-                ${progress}%
-                </div>
-            </div>
-        </td>
-        <td>${status}</td>
-        <td>
-            <button class="delete-btn"
-            onclick="this.parentElement.parentElement.remove()">
-            Delete
-            </button>
-        </td>
-    `;
-
-    document.getElementById('workName').value = '';
-    document.getElementById('assignedTo').value = '';
-    document.getElementById('progressValue').value = '';
+if(!work || !assigned){
+alert("Enter details")
+return
 }
 
+const table =
+document.getElementById("workTable")
+
+const row =
+table.insertRow()
+
+row.innerHTML = `
+<td>${work}</td>
+
+<td>${assigned}</td>
+
+<td>
+<div class="progress-bar">
+<div class="progress-fill"
+style="width:${progress}%">
+${progress}%
+</div>
+</div>
+</td>
+
+<td>${status}</td>
+
+<td>
+<button class="delete-btn"
+onclick="this.parentElement.parentElement.remove()">
+Delete
+</button>
+</td>
+`
+
+document.getElementById("workName").value = ""
+document.getElementById("assignedTo").value = ""
+document.getElementById("progressValue").value = ""
+
+}
+
+/* GLOBAL */
+
+window.addInventory = addInventory
+window.addWork = addWork
+
 </script>
+
+<script src="/js/navigation.js"></script>
 
 </body>
 </html>

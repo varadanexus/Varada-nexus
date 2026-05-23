@@ -193,11 +193,48 @@ link.classList.add("active")
 
 <div class="main">
 
-<div class="project-header">
+<!-- DASHBOARD -->
 
-<div>
-<h2>Interior ERP Module</h2>
-<p>Project Management + Inventory + Tasks</p>
+<div class="grid">
+
+<div class="card">
+<h3>Total Projects</h3>
+<h1 id="totalProjects">0</h1>
+</div>
+
+<div class="card">
+<h3>Active Projects</h3>
+<h1 id="activeProjects">0</h1>
+</div>
+
+<div class="card">
+<h3>Completed Projects</h3>
+<h1 id="completedProjects">0</h1>
+</div>
+
+<div class="card">
+<h3>Total Budget</h3>
+<h1 id="totalBudget">₹0</h1>
+</div>
+
+<div class="card">
+<h3>Total Expenses</h3>
+<h1 id="totalExpenses">₹0</h1>
+</div>
+
+<div class="card">
+<h3>Remaining Budget</h3>
+<h1 id="remainingBudget">₹0</h1>
+</div>
+
+<div class="card">
+<h3>Pending Tasks</h3>
+<h1 id="pendingTasks">0</h1>
+</div>
+
+<div class="card">
+<h3>Completion</h3>
+<h1 id="completionRate">0%</h1>
 </div>
 
 </div>
@@ -557,7 +594,7 @@ alert("Project Created")
 clearProjectForm()
 
 loadProjects()
-
+loadDashboard()
 }
 
 /* LOAD PROJECTS */
@@ -644,7 +681,7 @@ await supabaseClient
 .eq("id",id)
 
 loadProjects()
-
+loadDashboard()
 }
 
 /* FORM RESET */
@@ -1002,7 +1039,7 @@ return
 clearExpenseForm()
 
 loadExpenses()
-
+loadDashboard()
 }
 
 /* LOAD EXPENSES */
@@ -1102,7 +1139,7 @@ await supabaseClient
 .eq("id",id)
 
 loadExpenses()
-
+loadDashboard()
 }
 
 /* CLEAR FORM */
@@ -1176,7 +1213,7 @@ selectedEditProject = null
 clearProjectForm()
 
 loadProjects()
-
+loadDashboard()
 }
 
 /* =========================
@@ -1363,10 +1400,116 @@ let selectedEditProject = null
 let selectedEditInventory = null
 let selectedEditTask = null
 let selectedEditExpense = null
+
+/* =========================
+DASHBOARD ANALYTICS
+========================= */
+
+async function loadDashboard(){
+
+/* PROJECTS */
+
+const {data:projects} = await supabaseClient
+.from("interior_projects")
+.select("*")
+
+/* EXPENSES */
+
+const {data:expenses} = await supabaseClient
+.from("project_expenses")
+.select("*")
+
+/* TASKS */
+
+const {data:tasks} = await supabaseClient
+.from("project_tasks")
+.select("*")
+
+/* COUNTS */
+
+let totalProjectsCount =
+projects?.length || 0
+
+let activeProjectsCount =
+projects?.filter(p=>p.status==="In Progress").length || 0
+
+let completedProjectsCount =
+projects?.filter(p=>p.status==="Completed").length || 0
+
+/* BUDGET */
+
+let totalBudgetValue = 0
+
+projects?.forEach(p=>{
+totalBudgetValue += Number(p.budget || 0)
+})
+
+/* EXPENSES */
+
+let totalExpenseValue = 0
+
+expenses?.forEach(e=>{
+totalExpenseValue += Number(e.amount || 0)
+})
+
+/* REMAINING */
+
+let remainingValue =
+totalBudgetValue - totalExpenseValue
+
+/* PENDING TASKS */
+
+let pendingTasksCount =
+tasks?.filter(t=>t.status !== "Completed").length || 0
+
+/* COMPLETION */
+
+let totalProgress = 0
+
+tasks?.forEach(t=>{
+totalProgress += Number(t.progress || 0)
+})
+
+let completion = 0
+
+if(tasks?.length){
+completion =
+Math.round(totalProgress / tasks.length)
+}
+
+/* UI */
+
+totalProjects.innerText =
+totalProjectsCount
+
+activeProjects.innerText =
+activeProjectsCount
+
+completedProjects.innerText =
+completedProjectsCount
+
+totalBudget.innerText =
+"₹" + totalBudgetValue.toLocaleString()
+
+totalExpenses.innerText =
+"₹" + totalExpenseValue.toLocaleString()
+
+remainingBudget.innerText =
+"₹" + remainingValue.toLocaleString()
+
+pendingTasks.innerText =
+pendingTasksCount
+
+completionRate.innerText =
+completion + "%"
+
+}
   
 /* INIT */
 
 loadProjects()
+
+loadDashboard()
 
 /* GLOBAL */
 

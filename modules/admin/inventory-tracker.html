@@ -330,6 +330,13 @@ Tasks
 Expenses
 </div>
 
+<div class="tab"
+onclick="openTab('stockTab',this)">
+
+Stock Movement
+
+</div>
+  
 </div>
 
 <!-- INVENTORY -->
@@ -537,6 +544,94 @@ Remaining: ₹0
 
 </div>
 
+<!-- STOCK MOVEMENT -->
+
+<div id="stockTab" class="card hidden">
+
+<h3>Stock Movement System</h3>
+
+<div class="grid">
+
+<input id="stockItem"
+placeholder="Material Name">
+
+<select id="movementType">
+
+<option>IN</option>
+<option>OUT</option>
+
+</select>
+
+<input id="stockQty"
+type="number"
+placeholder="Quantity">
+
+<input id="stockUnit"
+placeholder="Unit">
+
+<input id="stockNotes"
+placeholder="Notes">
+
+</div>
+
+<br>
+
+<button onclick="addStockMovement()">
+
+Add Movement
+
+</button>
+
+<br><br>
+
+<div class="card">
+
+<h3>Live Stock Balance</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Material</th>
+<th>Balance</th>
+<th>Unit</th>
+
+</tr>
+
+</thead>
+
+<tbody id="stockBalanceTable"></tbody>
+
+</table>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Material</th>
+<th>Type</th>
+<th>Qty</th>
+<th>Unit</th>
+<th>Notes</th>
+<th>Date</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="stockMovementTable"></tbody>
+
+</table>
+
+</div>
+  
 </div>
 
 </div>
@@ -667,6 +762,8 @@ await loadTasks()
 
 await loadExpenses()
 
+await loadStockMovements()
+
 }
 
 /* DELETE */
@@ -712,7 +809,7 @@ document.getElementById("inventoryTab")
 document.getElementById("tasksTab")
 .classList.add("hidden")
 
-document.getElementById("expensesTab")
+document.getElementById("stockTab")
 .classList.add("hidden")
 
 document.getElementById(id)
@@ -1504,6 +1601,173 @@ completionRate.innerText =
 completion + "%"
 
 }
+
+/* =========================
+STOCK MOVEMENT SYSTEM
+========================= */
+
+async function addStockMovement(){
+
+if(!selectedProject){
+alert("Select project first")
+return
+}
+
+const payload = {
+
+project_id:selectedProject,
+
+item_name:stockItem.value,
+
+movement_type:movementType.value,
+
+quantity:stockQty.value,
+
+unit:stockUnit.value,
+
+notes:stockNotes.value
+
+}
+
+const {error} = await supabaseClient
+.from("stock_movements")
+.insert([payload])
+
+if(error){
+console.error(error)
+alert("Error saving movement")
+return
+}
+
+clearStockForm()
+
+loadStockMovements()
+
+}
+
+/* LOAD STOCK */
+
+async function loadStockMovements(){
+
+if(!selectedProject) return
+
+const {data,error} = await supabaseClient
+.from("stock_movements")
+.select("*")
+.eq("project_id",selectedProject)
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+stockMovementTable.innerHTML = ""
+
+let balances = {}
+
+data.forEach(item=>{
+
+let qty = Number(item.quantity || 0)
+
+if(!balances[item.item_name]){
+balances[item.item_name] = {
+qty:0,
+unit:item.unit || ""
+}
+}
+
+if(item.movement_type === "IN"){
+balances[item.item_name].qty += qty
+}else{
+balances[item.item_name].qty -= qty
+}
+
+stockMovementTable.innerHTML += `
+
+<tr>
+
+<td>${item.item_name || ""}</td>
+
+<td>${item.movement_type || ""}</td>
+
+<td>${item.quantity || 0}</td>
+
+<td>${item.unit || ""}</td>
+
+<td>${item.notes || ""}</td>
+
+<td>
+${new Date(item.created_at)
+.toLocaleDateString()}
+</td>
+
+<td>
+
+<button class="delete-btn"
+onclick="deleteStockMovement('${item.id}')">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+/* BALANCE TABLE */
+
+stockBalanceTable.innerHTML = ""
+
+Object.keys(balances).forEach(name=>{
+
+stockBalanceTable.innerHTML += `
+
+<tr>
+
+<td>${name}</td>
+
+<td>${balances[name].qty}</td>
+
+<td>${balances[name].unit}</td>
+
+</tr>
+
+`
+
+})
+
+}
+
+/* DELETE MOVEMENT */
+
+async function deleteStockMovement(id){
+
+if(!confirm("Delete stock movement?")) return
+
+await supabaseClient
+.from("stock_movements")
+.delete()
+.eq("id",id)
+
+loadStockMovements()
+
+}
+
+/* CLEAR FORM */
+
+function clearStockForm(){
+
+stockItem.value=""
+stockQty.value=""
+stockUnit.value=""
+stockNotes.value=""
+
+}
   
 /* INIT */
 
@@ -1524,6 +1788,9 @@ window.deleteTask = deleteTask
 window.addExpense = addExpense
 window.deleteExpense = deleteExpense
 
+window.addStockMovement = addStockMovement
+window.deleteStockMovement = deleteStockMovement
+  
 window.editProject = editProject
 window.updateProject = updateProject
 

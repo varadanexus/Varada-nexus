@@ -1,1 +1,276 @@
 
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Client Portal - Varada Nexus</title>
+
+<base href="/">
+
+<link rel="icon" type="image/png" href="/images/logo.png">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:#e5e7eb;
+}
+
+.main{
+padding:24px;
+max-width:1400px;
+margin:auto;
+}
+
+.card{
+background:#111827;
+padding:18px;
+border-radius:12px;
+margin-bottom:16px;
+border:1px solid rgba(255,255,255,0.05);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:14px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+text-align:left;
+}
+
+th{
+color:#94a3b8;
+}
+
+.progress-bar{
+width:100%;
+height:18px;
+background:#1e293b;
+border-radius:8px;
+overflow:hidden;
+}
+
+.progress-fill{
+height:100%;
+background:#22c55e;
+text-align:center;
+font-size:11px;
+line-height:18px;
+}
+
+button{
+padding:10px 14px;
+background:#3b82f6;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="main">
+
+<h2>Client Project Portal</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>Total Projects</h3>
+<h1 id="totalProjects">0</h1>
+</div>
+
+<div class="card">
+<h3>Total Budget</h3>
+<h1 id="totalBudget">₹0</h1>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Your Projects</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Project</th>
+<th>Status</th>
+<th>Budget</th>
+<th>Start Date</th>
+<th>Manager</th>
+
+</tr>
+
+</thead>
+
+<tbody id="projectTable"></tbody>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h3>Project Tasks</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Task</th>
+<th>Assigned</th>
+<th>Progress</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="taskTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+async function init(){
+
+const {data:{session}} =
+await supabaseClient.auth.getSession()
+
+if(!session){
+window.location.href="/website/login.html"
+return
+}
+
+let email = session.user.email
+
+/* LOAD PROJECTS */
+
+const {data:projects} = await supabaseClient
+.from("interior_projects")
+.select("*")
+.eq("client_email",email)
+
+projectTable.innerHTML = ""
+
+let totalBudgetValue = 0
+
+let projectIds = []
+
+projects?.forEach(project=>{
+
+projectIds.push(project.id)
+
+totalBudgetValue += Number(project.budget || 0)
+
+projectTable.innerHTML += `
+
+<tr>
+
+<td>${project.project_name || ""}</td>
+
+<td>${project.status || ""}</td>
+
+<td>₹${project.budget || 0}</td>
+
+<td>${project.start_date || ""}</td>
+
+<td>${project.project_manager || ""}</td>
+
+</tr>
+
+`
+
+})
+
+totalProjects.innerText =
+projects?.length || 0
+
+totalBudget.innerText =
+"₹" + totalBudgetValue.toLocaleString()
+
+/* LOAD TASKS */
+
+const {data:tasks} = await supabaseClient
+.from("project_tasks")
+.select("*")
+.in("project_id",projectIds)
+
+taskTable.innerHTML = ""
+
+tasks?.forEach(task=>{
+
+taskTable.innerHTML += `
+
+<tr>
+
+<td>${task.task_name || ""}</td>
+
+<td>${task.assigned_to || ""}</td>
+
+<td>
+
+<div class="progress-bar">
+
+<div class="progress-fill"
+style="width:${task.progress || 0}%">
+
+${task.progress || 0}%
+
+</div>
+
+</div>
+
+</td>
+
+<td>${task.status || ""}</td>
+
+</tr>
+
+`
+
+})
+
+}
+
+init()
+
+</script>
+
+</body>
+
+</html>

@@ -294,7 +294,49 @@ Expenses
 
 <h3>Project Inventory</h3>
 
-<p>Coming Next</p>
+<div class="grid">
+
+<input id="invItem" placeholder="Material Name">
+
+<input id="invQty" type="number" placeholder="Quantity">
+
+<input id="invUnit" placeholder="Unit">
+
+<input id="invCost" type="number" placeholder="Cost">
+
+<input id="invVendor" placeholder="Vendor">
+
+<input id="invNotes" placeholder="Notes">
+
+</div>
+
+<br>
+
+<button onclick="addInventory()">
+Add Inventory
+</button>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Material</th>
+<th>Qty</th>
+<th>Unit</th>
+<th>Cost</th>
+<th>Vendor</th>
+<th>Notes</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="inventoryTable"></tbody>
+
+</table>
 
 </div>
 
@@ -437,6 +479,8 @@ selectedProject = id
 
 projectModules.classList.remove("hidden")
 
+await loadInventory()
+
 }
 
 /* DELETE */
@@ -490,6 +534,133 @@ document.getElementById(id)
 
 }
 
+/* =========================
+PROJECT INVENTORY
+========================= */
+
+async function addInventory(){
+
+if(!selectedProject){
+alert("Select project first")
+return
+}
+
+const payload = {
+
+project_id:selectedProject,
+
+item_name:invItem.value,
+
+quantity:invQty.value,
+
+unit:invUnit.value,
+
+cost:invCost.value,
+
+vendor:invVendor.value,
+
+notes:invNotes.value
+
+}
+
+const {error} = await supabaseClient
+.from("project_inventory")
+.insert([payload])
+
+if(error){
+console.error(error)
+alert("Error adding inventory")
+return
+}
+
+clearInventoryForm()
+
+loadInventory()
+
+}
+
+/* LOAD INVENTORY */
+
+async function loadInventory(){
+
+if(!selectedProject) return
+
+const {data,error} = await supabaseClient
+.from("project_inventory")
+.select("*")
+.eq("project_id",selectedProject)
+.order("created_at",{ascending:false})
+
+if(error){
+console.error(error)
+return
+}
+
+inventoryTable.innerHTML = ""
+
+data.forEach(item=>{
+
+inventoryTable.innerHTML += `
+
+<tr>
+
+<td>${item.item_name || ""}</td>
+
+<td>${item.quantity || 0}</td>
+
+<td>${item.unit || ""}</td>
+
+<td>₹${item.cost || 0}</td>
+
+<td>${item.vendor || ""}</td>
+
+<td>${item.notes || ""}</td>
+
+<td>
+
+<button class="delete-btn"
+onclick="deleteInventory('${item.id}')">
+Delete
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+}
+
+/* DELETE INVENTORY */
+
+async function deleteInventory(id){
+
+if(!confirm("Delete inventory item?")) return
+
+await supabaseClient
+.from("project_inventory")
+.delete()
+.eq("id",id)
+
+loadInventory()
+
+}
+
+/* CLEAR FORM */
+
+function clearInventoryForm(){
+
+invItem.value=""
+invQty.value=""
+invUnit.value=""
+invCost.value=""
+invVendor.value=""
+invNotes.value=""
+
+}
+  
 /* INIT */
 
 loadProjects()
@@ -500,7 +671,9 @@ window.createProject = createProject
 window.selectProject = selectProject
 window.deleteProject = deleteProject
 window.openTab = openTab
-
+window.addInventory = addInventory
+window.deleteInventory = deleteInventory
+  
 </script>
 
 <script src="/js/navigation.js"></script>

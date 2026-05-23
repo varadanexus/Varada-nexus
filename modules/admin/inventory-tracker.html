@@ -10,7 +10,10 @@
 <link rel="icon" type="image/png" href="/images/logo.png">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
+  
 <script>
 
 window.supabaseClient = supabase.createClient(
@@ -195,6 +198,25 @@ link.classList.add("active")
 
 <!-- DASHBOARD -->
 
+<div class="project-header">
+
+<div>
+<h2>Interior ERP Module</h2>
+<p>Project Management + Inventory + Tasks</p>
+</div>
+
+<div>
+
+<button onclick="downloadProjectReport()">
+
+Download Project PDF
+
+</button>
+
+</div>
+
+</div>
+  
 <div class="grid">
 
 <div class="card">
@@ -1768,6 +1790,183 @@ stockUnit.value=""
 stockNotes.value=""
 
 }
+
+/* =========================
+PDF REPORT SYSTEM
+========================= */
+
+async function downloadProjectReport(){
+
+if(!selectedProject){
+alert("Select project first")
+return
+}
+
+const { jsPDF } = window.jspdf
+
+const doc = new jsPDF()
+
+/* PROJECT */
+
+const {data:project} = await supabaseClient
+.from("interior_projects")
+.select("*")
+.eq("id",selectedProject)
+.single()
+
+/* INVENTORY */
+
+const {data:inventory} = await supabaseClient
+.from("project_inventory")
+.select("*")
+.eq("project_id",selectedProject)
+
+/* TASKS */
+
+const {data:tasks} = await supabaseClient
+.from("project_tasks")
+.select("*")
+.eq("project_id",selectedProject)
+
+/* EXPENSES */
+
+const {data:expenses} = await supabaseClient
+.from("project_expenses")
+.select("*")
+.eq("project_id",selectedProject)
+
+/* HEADER */
+
+doc.setFontSize(20)
+
+doc.text(
+"VARADA NEXUS - PROJECT REPORT",
+14,
+20
+)
+
+doc.setFontSize(12)
+
+doc.text(
+`Project: ${project.project_name || ""}`,
+14,
+35
+)
+
+doc.text(
+`Client: ${project.client_name || ""}`,
+14,
+43
+)
+
+doc.text(
+`Phone: ${project.phone || ""}`,
+14,
+51
+)
+
+doc.text(
+`Status: ${project.status || ""}`,
+14,
+59
+)
+
+doc.text(
+`Budget: ₹${project.budget || 0}`,
+14,
+67
+)
+
+/* INVENTORY */
+
+doc.autoTable({
+
+startY:80,
+
+head:[[
+"Material",
+"Qty",
+"Unit",
+"Cost",
+"Vendor"
+]],
+
+body:inventory.map(i=>[
+i.item_name || "",
+i.quantity || 0,
+i.unit || "",
+i.cost || 0,
+i.vendor || ""
+])
+
+})
+
+/* TASKS */
+
+doc.autoTable({
+
+startY:doc.lastAutoTable.finalY + 10,
+
+head:[[
+"Task",
+"Assigned",
+"Progress",
+"Status"
+]],
+
+body:tasks.map(t=>[
+t.task_name || "",
+t.assigned_to || "",
+(t.progress || 0) + "%",
+t.status || ""
+])
+
+})
+
+/* EXPENSES */
+
+doc.autoTable({
+
+startY:doc.lastAutoTable.finalY + 10,
+
+head:[[
+"Type",
+"Amount",
+"Date",
+"Notes"
+]],
+
+body:expenses.map(e=>[
+e.expense_type || "",
+e.amount || 0,
+e.expense_date || "",
+e.notes || ""
+])
+
+})
+
+/* TOTAL */
+
+let totalExpenses = 0
+
+expenses.forEach(e=>{
+totalExpenses += Number(e.amount || 0)
+})
+
+doc.text(
+`Total Expenses: ₹${totalExpenses}`,
+14,
+doc.lastAutoTable.finalY + 15
+)
+
+/* SAVE */
+
+doc.save(
+(project.project_name || "Project")
++ "-Report.pdf"
+)
+
+}
   
 /* INIT */
 
@@ -1790,6 +1989,9 @@ window.deleteExpense = deleteExpense
 
 window.addStockMovement = addStockMovement
 window.deleteStockMovement = deleteStockMovement
+
+window.downloadProjectReport =
+downloadProjectReport
   
 window.editProject = editProject
 window.updateProject = updateProject

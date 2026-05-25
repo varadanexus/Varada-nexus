@@ -261,8 +261,8 @@ margin-bottom:20px;
 
 <div class="hero">
 
-<h1>
-Welcome to Your Project Portal
+<h1 id="welcomeText">
+Welcome
 </h1>
 
 <p>
@@ -426,6 +426,20 @@ const {data:projects} = await supabaseClient
 .from("interior_projects")
 .select("*")
 .eq("client_email",email)
+
+/* CLIENT NAME */
+
+if(projects && projects.length > 0){
+
+let clientName =
+projects[0].client_name || "Client"
+
+document.getElementById(
+"welcomeText"
+).innerText =
+`Welcome ${clientName}`
+
+}
 
 projectTable.innerHTML = ""
 

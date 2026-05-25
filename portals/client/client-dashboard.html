@@ -11,7 +11,11 @@
 <link rel="icon" type="image/png" href="/images/logo.png">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  
 <style>
 
 body{
@@ -346,11 +350,8 @@ Site Updates
 Expenses
 </button>
 
-<button disabled style="
-opacity:0.5;
-cursor:not-allowed;
-">
-Report Coming Soon
+<button onclick="downloadClientReport()">
+Download Report
 </button>
   
 </div>
@@ -793,6 +794,399 @@ function closeImage(){
 document.getElementById(
 "imageModal"
 ).style.display = "none"
+
+}
+
+async function downloadClientReport(){
+
+if(!currentProjectId){
+
+alert("Open a project first")
+return
+
+}
+
+const { jsPDF } = window.jspdf
+
+const doc = new jsPDF()
+
+/* PROJECT */
+
+const {data:project} =
+await supabaseClient
+.from("interior_projects")
+.select("*")
+.eq("id",currentProjectId)
+.single()
+
+/* INVENTORY */
+
+const {data:inventory} =
+await supabaseClient
+.from("project_inventory")
+.select("*")
+.eq("project_id",currentProjectId)
+
+/* TASKS */
+
+const {data:tasks} =
+await supabaseClient
+.from("project_tasks")
+.select("*")
+.eq("project_id",currentProjectId)
+
+/* EXPENSES */
+
+const {data:expenses} =
+await supabaseClient
+.from("project_expenses")
+.select("*")
+.eq("project_id",currentProjectId)
+
+/* SITE UPDATES */
+
+const {data:updates} =
+await supabaseClient
+.from("project_site_photos")
+.select("*")
+.eq("project_id",currentProjectId)
+.order("upload_date",{ascending:false})
+
+/* ================= HEADER ================= */
+
+const logo = new Image()
+
+logo.src = "/images/logo.png"
+
+await new Promise(resolve=>{
+logo.onload = resolve
+})
+
+doc.setFillColor(10,15,28)
+
+doc.rect(0,0,210,38,"F")
+
+doc.setFillColor(212,175,55)
+
+doc.rect(0,38,210,2,"F")
+
+doc.addImage(
+logo,
+"PNG",
+14,
+8,
+22,
+22
+)
+
+doc.setTextColor(255,255,255)
+
+doc.setFontSize(22)
+
+doc.text(
+"VARADA NEXUS",
+42,
+18
+)
+
+doc.setFontSize(11)
+
+doc.setTextColor(180,180,180)
+
+doc.text(
+"Client Project Report",
+42,
+26
+)
+
+doc.setTextColor(20,20,20)
+
+/* ================= PROJECT INFO ================= */
+
+doc.setFillColor(245,247,250)
+
+doc.roundedRect(
+14,
+48,
+182,
+42,
+4,
+4,
+"F"
+)
+
+doc.setFontSize(12)
+
+doc.text(
+`Project: ${project.project_name || ""}`,
+20,
+60
+)
+
+doc.text(
+`Client: ${project.client_name || ""}`,
+20,
+68
+)
+
+doc.text(
+`Phone: ${project.phone || ""}`,
+20,
+76
+)
+
+doc.text(
+`Status: ${project.status || ""}`,
+110,
+60
+)
+
+doc.text(
+`Budget: Rs. ${Number(project.budget || 0).toLocaleString()}`,
+110,
+68
+)
+
+doc.text(
+`Manager: ${project.project_manager || ""}`,
+110,
+76
+)
+
+/* ================= INVENTORY ================= */
+
+doc.setFontSize(16)
+
+doc.text(
+"Project Materials",
+14,
+102
+)
+
+doc.autoTable({
+
+startY:108,
+
+theme:"grid",
+
+headStyles:{
+fillColor:[37,99,235]
+},
+
+head:[[
+"Material",
+"Qty",
+"Unit",
+"Vendor"
+]],
+
+body:inventory.map(i=>[
+i.item_name || "",
+i.quantity || 0,
+i.unit || "",
+i.vendor || ""
+])
+
+})
+
+/* ================= TASKS ================= */
+
+let nextY =
+doc.lastAutoTable.finalY + 18
+
+if(nextY > 220){
+
+doc.addPage()
+
+nextY = 20
+
+}
+
+doc.setFontSize(16)
+
+doc.text(
+"Project Tasks",
+14,
+nextY
+)
+
+doc.autoTable({
+
+startY:nextY + 6,
+
+theme:"grid",
+
+headStyles:{
+fillColor:[37,99,235]
+},
+
+head:[[
+"Task",
+"Assigned",
+"Progress",
+"Status"
+]],
+
+body:tasks.map(t=>[
+t.task_name || "",
+t.assigned_to || "",
+(t.progress || 0) + "%",
+t.status || ""
+])
+
+})
+
+/* ================= EXPENSES ================= */
+
+nextY =
+doc.lastAutoTable.finalY + 18
+
+if(nextY > 220){
+
+doc.addPage()
+
+nextY = 20
+
+}
+
+doc.setFontSize(16)
+
+doc.text(
+"Project Expenses",
+14,
+nextY
+)
+
+doc.autoTable({
+
+startY:nextY + 6,
+
+theme:"grid",
+
+headStyles:{
+fillColor:[37,99,235]
+},
+
+head:[[
+"Type",
+"Amount",
+"Date"
+]],
+
+body:expenses.map(e=>[
+e.expense_type || "",
+"Rs. " + Number(e.amount || 0).toLocaleString(),
+e.expense_date || ""
+])
+
+})
+
+/* ================= SITE PHOTOS ================= */
+
+if(updates?.length){
+
+doc.addPage()
+
+doc.setFontSize(18)
+
+doc.text(
+"Construction Site Updates",
+14,
+20
+)
+
+let y = 35
+
+for(const update of updates.slice(0,6)){
+
+try{
+
+const img = new Image()
+
+img.crossOrigin = "Anonymous"
+
+img.src = update.photo_url
+
+await new Promise(resolve=>{
+img.onload = resolve
+})
+
+doc.addImage(
+img,
+"JPEG",
+14,
+y,
+60,
+45
+)
+
+doc.setFontSize(10)
+
+doc.text(
+update.upload_date || "",
+80,
+y + 8
+)
+
+doc.text(
+(update.caption || "").substring(0,80),
+80,
+y + 18
+)
+
+y += 60
+
+if(y > 240){
+
+doc.addPage()
+
+y = 20
+
+}
+
+}catch(e){
+
+console.log(e)
+
+}
+
+}
+
+}
+
+/* ================= FOOTER ================= */
+
+const pageCount =
+doc.internal.getNumberOfPages()
+
+for(let i=1;i<=pageCount;i++){
+
+doc.setPage(i)
+
+doc.setFontSize(10)
+
+doc.setTextColor(120)
+
+doc.text(
+"Generated by Varada Nexus Client Portal",
+14,
+290
+)
+
+doc.text(
+new Date().toLocaleString(),
+150,
+290
+)
+
+}
+
+/* SAVE */
+
+doc.save(
+(project.project_name || "Project")
++ "-Client-Report.pdf"
+)
 
 }
   

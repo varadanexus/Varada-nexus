@@ -745,7 +745,7 @@ projectTable.innerHTML += `
 
 <td>${project.client_name}</td>
 
-<td>₹${project.budget || 0}</td>
+<td>Rs. ${project.budget || 0}</td>
 
 <td>${project.status}</td>
 
@@ -921,7 +921,7 @@ inventoryTable.innerHTML += `
 
 <td>${item.unit || ""}</td>
 
-<td>₹${item.cost || 0}</td>
+<td>Rs. ${item.cost || 0}</td>
 
 <td>${item.vendor || ""}</td>
 
@@ -1198,7 +1198,7 @@ expenseTable.innerHTML += `
 
 <td>${exp.expense_type || ""}</td>
 
-<td>₹${exp.amount || 0}</td>
+<td>Rs. ${exp.amount || 0}</td>
 
 <td>${exp.expense_date || ""}</td>
 
@@ -1242,11 +1242,11 @@ let remaining = budget - totalSpent
 
 projectSummary.innerHTML = `
 
-Budget: ₹${budget.toLocaleString()} <br><br>
+Budget: Rs. ${budget.toLocaleString()} <br><br>
 
-Spent: ₹${totalSpent.toLocaleString()} <br><br>
+Spent: Rs. ${totalSpent.toLocaleString()} <br><br>
 
-Remaining: ₹${remaining.toLocaleString()}
+Remaining: Rs. ${remaining.toLocaleString()}
 
 `
 
@@ -1615,13 +1615,13 @@ completedProjects.innerText =
 completedProjectsCount
 
 totalBudget.innerText =
-"₹" + totalBudgetValue.toLocaleString()
+"Rs. " + totalBudgetValue.toLocaleString()
 
 totalExpenses.innerText =
-"₹" + totalExpenseValue.toLocaleString()
+"Rs. " + totalExpenseValue.toLocaleString()
 
 remainingBudget.innerText =
-"₹" + remainingValue.toLocaleString()
+"Rs. " + remainingValue.toLocaleString()
 
 pendingTasks.innerText =
 pendingTasksCount
@@ -1956,7 +1956,7 @@ doc.text(
 )
 
 doc.text(
-`Budget: ₹${Number(project.budget || 0).toLocaleString()}`,
+`Budget: Rs. ${Number(project.budget || 0).toLocaleString()}`,
 110,
 68
 )
@@ -2108,7 +2108,7 @@ doc.setTextColor(255,255,255)
 doc.setFontSize(13)
 
 doc.text(
-`Total Expenses: ₹${totalExpenses.toLocaleString()}`,
+`Total Expenses: Rs. ${totalExpenses.toLocaleString()}`,
 18,
 doc.lastAutoTable.finalY + 17
 )

@@ -346,8 +346,11 @@ Site Updates
 Expenses
 </button>
 
-<button onclick="downloadClientReport()">
-Download Report
+<button disabled style="
+opacity:0.5;
+cursor:not-allowed;
+">
+Report Coming Soon
 </button>
   
 </div>
@@ -639,8 +642,6 @@ ${task.progress || 0}%
 
 })
 
-}
-
 /* SITE UPDATES */
 
 const {data:updates} =
@@ -717,6 +718,9 @@ Rs. ${Number(exp.amount || 0).toLocaleString()}
 `
 
 })
+  
+}
+
   
 /* TAB SWITCHING */
 

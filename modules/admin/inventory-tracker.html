@@ -1981,7 +1981,7 @@ doc.text(
 
 doc.autoTable({
 
-startY:95,
+startY:97,
 
 theme:"grid",
 
@@ -2031,7 +2031,7 @@ doc.lastAutoTable.finalY + 7
 
 doc.autoTable({
 
-startY:doc.lastAutoTable.finalY + 10,
+startY:doc.lastAutoTable.finalY + 12,
 
 theme:"grid",
 
@@ -2067,9 +2067,21 @@ t.status || ""
 
 /* EXPENSES */
 
+doc.setFontSize(16)
+
+doc.setTextColor(37,99,235)
+
+doc.text(
+"Project Expenses",
+14,
+doc.lastAutoTable.finalY + 7
+)
+
+doc.autoTable({
+
+startY:doc.lastAutoTable.finalY + 12,
 
 theme:"grid",
-
 headStyles:{
 fillColor:[37,99,235],
 textColor:[255,255,255],

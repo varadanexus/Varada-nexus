@@ -338,6 +338,18 @@ Inventory
 Tasks
 </button>
 
+<button onclick="showSection('updates')">
+Site Updates
+</button>
+
+<button onclick="showSection('expenses')">
+Expenses
+</button>
+
+<button onclick="downloadClientReport()">
+Download Report
+</button>
+  
 </div>
 
 <!-- INVENTORY -->
@@ -395,6 +407,48 @@ Tasks
 
 </div>
 
+<!-- SITE UPDATES -->
+
+<div id="updatesSection"
+style="display:none;">
+
+<h3>Construction Site Updates</h3>
+
+<div
+class="grid"
+id="updatesGallery">
+</div>
+
+</div>
+
+<!-- EXPENSES -->
+
+<div id="expensesSection"
+style="display:none;">
+
+<h3>Project Expenses</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Type</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Notes</th>
+
+</tr>
+
+</thead>
+
+<tbody id="expenseTable"></tbody>
+
+</table>
+
+</div>
+  
 </div>
 
 </div>
@@ -587,6 +641,83 @@ ${task.progress || 0}%
 
 }
 
+/* SITE UPDATES */
+
+const {data:updates} =
+await supabaseClient
+.from("project_site_photos")
+.select("*")
+.eq("project_id",projectId)
+.order("upload_date",{ascending:false})
+
+updatesGallery.innerHTML = ""
+
+updates?.forEach(item=>{
+
+updatesGallery.innerHTML += `
+
+<div class="card">
+
+<img
+src="${item.photo_url}"
+style="
+width:100%;
+height:240px;
+object-fit:cover;
+border-radius:12px;
+cursor:pointer;
+"
+onclick="openImage('${item.photo_url}')"
+>
+
+<h4 style="margin-top:12px;">
+${item.upload_date || ""}
+</h4>
+
+<p>
+${item.caption || ""}
+</p>
+
+</div>
+
+`
+
+})
+
+/* EXPENSES */
+
+const {data:expenses} =
+await supabaseClient
+.from("project_expenses")
+.select("*")
+.eq("project_id",projectId)
+
+expenseTable.innerHTML = ""
+
+expenses?.forEach(exp=>{
+
+expenseTable.innerHTML += `
+
+<tr>
+
+<td>${exp.expense_type || ""}</td>
+
+<td>
+Rs. ${Number(exp.amount || 0).toLocaleString()}
+</td>
+
+<td>${exp.expense_date || ""}
+</td>
+
+<td>${exp.notes || ""}
+</td>
+
+</tr>
+
+`
+
+})
+  
 /* TAB SWITCHING */
 
 function showSection(section){
@@ -599,20 +730,68 @@ document.getElementById(
 "taskSection"
 ).style.display = "none"
 
+document.getElementById(
+"updatesSection"
+).style.display = "none"
+
+document.getElementById(
+"expensesSection"
+).style.display = "none"
+
 if(section==="inventory"){
+
 document.getElementById(
 "inventorySection"
 ).style.display = "block"
+
 }
 
 if(section==="tasks"){
+
 document.getElementById(
 "taskSection"
 ).style.display = "block"
-}
 
 }
 
+if(section==="updates"){
+
+document.getElementById(
+"updatesSection"
+).style.display = "block"
+
+}
+
+if(section==="expenses"){
+
+document.getElementById(
+"expensesSection"
+).style.display = "block"
+
+}
+
+}
+
+function openImage(url){
+
+document.getElementById(
+"imageModal"
+).style.display = "flex"
+
+document.getElementById(
+"modalImage"
+).src = url
+
+}
+
+function closeImage(){
+
+document.getElementById(
+"imageModal"
+).style.display = "none"
+
+}
+  
 async function logout(){
 
 await supabaseClient.auth.signOut()
@@ -625,6 +804,41 @@ init()
 
 </script>
 
+<div id="imageModal"
+style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.92);
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<span
+onclick="closeImage()"
+style="
+position:absolute;
+top:20px;
+right:30px;
+font-size:40px;
+cursor:pointer;
+color:white;
+">
+✕
+</span>
+
+<img
+id="modalImage"
+style="
+max-width:95%;
+max-height:95%;
+border-radius:14px;
+"
+>
+
+</div>
+  
 </body>
 
 </html>

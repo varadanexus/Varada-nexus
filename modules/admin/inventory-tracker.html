@@ -1969,6 +1969,16 @@ doc.text(
 
 /* INVENTORY */
 
+doc.setFontSize(16)
+
+doc.setTextColor(37,99,235)
+
+doc.text(
+"Materials",
+14,
+92
+)
+
 doc.autoTable({
 
 startY:95,
@@ -2009,6 +2019,16 @@ i.vendor || ""
 
 /* TASKS */
 
+doc.setFontSize(16)
+
+doc.setTextColor(37,99,235)
+
+doc.text(
+"Project Tasks",
+14,
+doc.lastAutoTable.finalY + 7
+)
+
 doc.autoTable({
 
 startY:doc.lastAutoTable.finalY + 10,
@@ -2047,9 +2067,6 @@ t.status || ""
 
 /* EXPENSES */
 
-doc.autoTable({
-
-startY:doc.lastAutoTable.finalY + 10,
 
 theme:"grid",
 

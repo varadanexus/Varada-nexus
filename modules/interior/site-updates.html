@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Site Updates - Varada Nexus</title>
+
+<base href="/">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Inter,sans-serif;
+background:#0a0f1c;
+color:white;
+}
+
+.main{
+padding:24px;
+max-width:1200px;
+margin:auto;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:14px;
+margin-bottom:20px;
+border:1px solid rgba(255,255,255,0.06);
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#0f172a;
+color:white;
+margin-top:10px;
+box-sizing:border-box;
+}
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+margin-top:15px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:16px;
+}
+
+.photo-card{
+background:#0f172a;
+padding:10px;
+border-radius:12px;
+}
+
+.photo-card img{
+width:100%;
+height:220px;
+object-fit:cover;
+border-radius:10px;
+}
+
+small{
+color:#94a3b8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="main">
+
+<h1>Construction Site Updates</h1>
+
+<div class="card">
+
+<h3>Upload Site Photos</h3>
+
+<select id="projectSelect"></select>
+
+<input type="date" id="uploadDate">
+
+<textarea
+id="caption"
+placeholder="Daily update caption..."
+></textarea>
+
+<input
+type="file"
+id="photoInput"
+multiple
+accept="image/*"
+>
+
+<button onclick="uploadPhotos()">
+Upload Site Photos
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Recent Site Updates</h3>
+
+<div
+class="grid"
+id="gallery"
+></div>
+
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient =
+supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"YOUR_ANON_KEY"
+)
+
+let projects = []
+
+init()
+
+async function init(){
+
+document.getElementById(
+"uploadDate"
+).value =
+new Date().toISOString().split("T")[0]
+
+await loadProjects()
+
+await loadGallery()
+
+}
+
+async function loadProjects(){
+
+const {data} =
+await supabaseClient
+.from("interior_projects")
+.select("*")
+.order("project_name")
+
+projects = data || []
+
+projectSelect.innerHTML =
+'<option value="">Select Project</option>' +
+
+projects.map(p=>`
+
+<option value="${p.id}">
+
+${p.project_name}
+
+</option>
+
+`).join("")
+
+}
+
+async function uploadPhotos(){
+
+const projectId =
+projectSelect.value
+
+if(!projectId){
+alert("Select project")
+return
+}
+
+const files =
+document.getElementById(
+"photoInput"
+).files
+
+if(!files.length){
+alert("Select photos")
+return
+}
+
+const project =
+projects.find(
+p=>p.id == projectId
+)
+
+const uploadDate =
+uploadDate.value
+
+const caption =
+document.getElementById(
+"caption"
+).value
+
+for(const file of files){
+
+const formData =
+new FormData()
+
+formData.append(
+"file",
+file
+)
+
+formData.append(
+"project_name",
+project.project_name
+)
+
+formData.append(
+"upload_date",
+uploadDate
+)
+
+formData.append(
+"caption",
+caption
+)
+
+const res = await fetch(
+"https://ticsgbtxfhhihamejiss.supabase.co/functions/v1/upload-site-photo",
+{
+method:"POST",
+body:formData
+}
+)
+
+const result =
+await res.json()
+
+if(result.success){
+
+await supabaseClient
+.from("project_site_photos")
+.insert({
+
+project_id:projectId,
+
+photo_url:
+result.fileUrl,
+
+drive_file_id:
+result.fileId,
+
+caption,
+
+upload_date:
+uploadDate
+
+})
+
+}
+
+}
+
+alert("Photos uploaded ✅")
+
+caption.value = ""
+
+photoInput.value = ""
+
+await loadGallery()
+
+}
+
+async function loadGallery(){
+
+const {data} =
+await supabaseClient
+.from("project_site_photos")
+.select(`
+*,
+interior_projects(
+project_name
+)
+`)
+.order(
+"created_at",
+{ascending:false}
+)
+
+gallery.innerHTML = ""
+
+data?.forEach(item=>{
+
+gallery.innerHTML += `
+
+<div class="photo-card">
+
+<img src="${item.photo_url}">
+
+<h4>
+
+${item.interior_projects?.project_name || ""}
+
+</h4>
+
+<p>
+
+${item.caption || ""}
+
+</p>
+
+<small>
+
+${item.upload_date || ""}
+
+</small>
+
+</div>
+
+`
+
+})
+
+}
+
+</script>
+
+</body>
+
+</html>

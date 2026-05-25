@@ -15,7 +15,7 @@
 <script src="/js/global-logout.js"></script>
 <script src="/js/rbac.js"></script>
 <script src="/js/navigation.js"></script>
-
+<script src="https://unpkg.com/lucide@latest"></script>
   
 <style>
 
@@ -273,7 +273,13 @@ await initSidebar()
 setActiveMenu()
 
 if(window.lucide){
+
+try{
 lucide.createIcons()
+}catch(e){
+console.log(e)
+}
+
 }
 
 if(sidebar){

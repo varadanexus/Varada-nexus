@@ -242,10 +242,17 @@ id="gallery"
 
 <script>
 
-const supabaseClient =
-supabase.createClient(
-"https://ticsgbtxfhhihamejiss.supabase.co",
+const supabaseUrl =
+"https://ticsgbtxfhhihamejiss.supabase.co"
+
+const supabaseAnonKey =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+
+const sb =
+window.supabaseClient || 
+supabase.createClient(
+supabaseUrl,
+supabaseAnonKey
 )
 
 /* LOAD SIDEBAR + RBAC */
@@ -295,8 +302,8 @@ sidebar.style.display = "block"
 async function initSidebar(){
 
 const {data:{session}} =
-await supabaseClient.auth.getSession()
-
+await sb.auth.getSession()
+  
 if(!session) return
 
 const authId = session.user.id
@@ -311,7 +318,7 @@ email.split("@")[0]
 }
 
 const {data:user} =
-await supabaseClient
+await sb
 .from("users")
 .select("id")
 .eq("auth_id",authId)

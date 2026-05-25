@@ -127,6 +127,34 @@ font-size:13px;
 color:#94a3b8;
 line-height:1.8;
 }
+
+.image-modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.92);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+padding:30px;
+box-sizing:border-box;
+}
+
+.image-modal img{
+max-width:95%;
+max-height:95%;
+border-radius:14px;
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+.close-btn{
+position:absolute;
+top:20px;
+right:30px;
+font-size:34px;
+cursor:pointer;
+color:white;
+}
   
 </style>
 
@@ -391,6 +419,8 @@ gallery.innerHTML += `
 src="${item.photo_url}"
 loading="lazy"
 referrerpolicy="no-referrer"
+onclick="openImage('${item.photo_url}')"
+style="cursor:pointer"
 onerror="this.style.display='none'"
 >
 
@@ -420,6 +450,26 @@ ${item.upload_date || ""}
 
 }
 
+function openImage(url){
+
+document.getElementById(
+"imageModal"
+).style.display = "flex"
+
+document.getElementById(
+"modalImage"
+).src = url
+
+}
+
+function closeImage(){
+
+document.getElementById(
+"imageModal"
+).style.display = "none"
+
+}
+  
 function showSelectedFiles(){
 
 const files =
@@ -447,6 +497,19 @@ document.getElementById(
   
 </script>
 
+<div id="imageModal" class="image-modal">
+
+<span
+class="close-btn"
+onclick="closeImage()"
+>
+✕
+</span>
+
+<img id="modalImage">
+
+</div>
+  
 </body>
 
 </html>

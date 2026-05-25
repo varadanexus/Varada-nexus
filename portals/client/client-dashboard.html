@@ -319,9 +319,30 @@ and live work updates in real time.
 
 </div>
 
-<div class="card">
+<div id="projectViewer" style="display:none;">
 
 <div class="card">
+
+<div style="
+display:flex;
+gap:10px;
+margin-bottom:20px;
+flex-wrap:wrap;
+">
+
+<button onclick="showSection('inventory')">
+Inventory
+</button>
+
+<button onclick="showSection('tasks')">
+Tasks
+</button>
+
+</div>
+
+<!-- INVENTORY -->
+
+<div id="inventorySection">
 
 <h3>Project Inventory</h3>
 
@@ -346,7 +367,11 @@ and live work updates in real time.
 </table>
 
 </div>
-  
+
+<!-- TASKS -->
+
+<div id="taskSection" style="display:none;">
+
 <h3>Project Tasks</h3>
 
 <table>
@@ -370,6 +395,10 @@ and live work updates in real time.
 
 </div>
 
+</div>
+
+</div>
+  
 </div>
 
 <script>
@@ -414,7 +443,15 @@ projectTable.innerHTML += `
 
 <tr>
 
-<td>${project.project_name || ""}</td>
+<td>
+
+<button onclick="openProject('${project.id}')">
+
+${project.project_name || ""}
+
+</button>
+
+</td>
 
 <td>
 
@@ -449,12 +486,24 @@ projects?.length || 0
 totalBudget.innerText =
 "₹" + totalBudgetValue.toLocaleString()
 
-/* LOAD INVENTORY */
+}
+
+let currentProjectId = null
+
+async function openProject(projectId){
+
+currentProjectId = projectId
+
+document.getElementById(
+"projectViewer"
+).style.display = "block"
+
+/* INVENTORY */
 
 const {data:inventory} = await supabaseClient
 .from("project_inventory")
 .select("*")
-.in("project_id",projectIds)
+.eq("project_id",projectId)
 
 inventoryTable.innerHTML = ""
 
@@ -479,13 +528,13 @@ inventoryTable.innerHTML += `
 `
 
 })
-  
-/* LOAD TASKS */
+
+/* TASKS */
 
 const {data:tasks} = await supabaseClient
 .from("project_tasks")
 .select("*")
-.in("project_id",projectIds)
+.eq("project_id",projectId)
 
 taskTable.innerHTML = ""
 
@@ -521,6 +570,32 @@ ${task.progress || 0}%
 `
 
 })
+
+}
+
+/* TAB SWITCHING */
+
+function showSection(section){
+
+document.getElementById(
+"inventorySection"
+).style.display = "none"
+
+document.getElementById(
+"taskSection"
+).style.display = "none"
+
+if(section==="inventory"){
+document.getElementById(
+"inventorySection"
+).style.display = "block"
+}
+
+if(section==="tasks"){
+document.getElementById(
+"taskSection"
+).style.display = "block"
+}
 
 }
 

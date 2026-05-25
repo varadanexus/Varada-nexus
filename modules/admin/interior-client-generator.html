@@ -13,6 +13,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="/js/session-check.js"></script>
+<script src="/js/menu-rbac.js"></script>
+<script src="/js/global-logout.js"></script>
+<script src="/js/rbac.js"></script>
+<script src="/js/navigation.js"></script>
+  
 <style>
 
 body{
@@ -23,9 +31,9 @@ color:white;
 }
 
 .container{
-max-width:1000px;
-margin:auto;
+margin-left:220px;
 padding:30px;
+max-width:1000px;
 }
 
 .topbar{
@@ -120,6 +128,26 @@ font-weight:600;
 
 <body>
 
+<script>
+
+if(!window.supabaseClient){
+
+window.supabaseClient =
+supabase.createClient(
+"https://ticsgbtxfhhihamejiss.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRpY3NnYnR4ZmhoaWhhbWVqaXNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MjE5MjksImV4cCI6MjA4ODk5NzkyOX0.rWgLPUMNnHIouP4ANQYfmzr3jAopfd3AFouoAMhSkmg"
+)
+
+}
+
+const supabaseClient =
+window.supabaseClient
+
+</script>
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+  
 <div class="container">
 
 <div class="topbar">
@@ -248,6 +276,123 @@ Generate Interior Client PDF
 </div>
 
 <script>
+
+/* LOAD SIDEBAR */
+
+fetch("/components/sidebar.html")
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById(
+"sidebar-container"
+).innerHTML = data
+
+const sidebar =
+document.getElementById("sidebar")
+
+if(sidebar){
+sidebar.style.display = "none"
+}
+
+setTimeout(async()=>{
+
+if(typeof applyMenuRBAC==="function"){
+await applyMenuRBAC()
+}
+
+await initSidebar()
+
+setActiveMenu()
+
+if(window.lucide){
+lucide.createIcons()
+}
+
+if(sidebar){
+sidebar.style.display = "block"
+}
+
+},200)
+
+})
+
+async function initSidebar(){
+
+const {data:{session}} =
+await supabaseClient.auth.getSession()
+
+if(!session) return
+
+const authId = session.user.id
+const email = session.user.email
+
+const userEl =
+document.getElementById("userName")
+
+if(userEl){
+userEl.innerText =
+email.split("@")[0]
+}
+
+const {data:user} =
+await supabaseClient
+.from("users")
+.select("id")
+.eq("auth_id",authId)
+.single()
+
+if(!user) return
+
+const {data:userRoles} =
+await supabaseClient
+.from("user_roles")
+.select("role_id")
+.eq("user_id",user.id)
+
+if(!userRoles?.length) return
+
+const roleId =
+userRoles[0].role_id
+
+const {data:role} =
+await supabaseClient
+.from("roles")
+.select("role_name")
+.eq("id",roleId)
+.single()
+
+if(role){
+
+const roleEl =
+document.getElementById("userRole")
+
+if(roleEl){
+roleEl.innerText =
+role.role_name
+}
+
+}
+
+}
+
+function setActiveMenu(){
+
+let currentPage =
+window.location.pathname
+.split("/")
+.pop()
+
+document
+.querySelectorAll("#sidebar a")
+.forEach(link=>{
+
+if(link.dataset.page === currentPage){
+link.classList.add("active")
+}
+
+})
+
+}
 
 async function generatePDF(){
 

@@ -488,13 +488,13 @@ const {data:role} = await supabaseClient
 
 let roleName = (role?.role_name || "").toLowerCase()
 
-if(roleName.includes("customer")){
-window.location.href="/portals/transporter/transporter-dashboard.html"
+if(roleName === "client"){
+window.location.href="/portals/client/client-dashboard.html"
 return
 }
 
-if(roleName.includes("client")){
-window.location.href="/portals/client/client-dashboard.html"
+if(roleName.includes("customer")){
+window.location.href="/portals/transporter/transporter-dashboard.html"
 return
 }
 
@@ -610,6 +610,11 @@ await supabaseClient
 localStorage.setItem("erp_session_token", token)
 
 /* 🔥 4. ROUTING */
+
+if(roleName === "client"){
+  window.location.href="/portals/client/client-dashboard.html"
+  return
+}
 
 if(roleName.includes("customer")){
   window.location.href="/portals/transporter/transporter-dashboard.html"

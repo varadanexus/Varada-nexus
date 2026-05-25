@@ -1995,7 +1995,7 @@ doc.text(
 
 doc.autoTable({
 
-startY:97,
+startY:102,
 
 theme:"grid",
 
@@ -2031,12 +2031,25 @@ i.vendor || ""
 
 })
 
-/* TASKS */
 
-/* TASKS TITLE */
+/* =========================
+TASKS SECTION
+========================= */
 
 let tasksY =
-doc.lastAutoTable.finalY + 10
+doc.lastAutoTable.finalY + 12
+
+/* CHECK PAGE SPACE */
+
+if(tasksY > 240){
+
+doc.addPage()
+
+tasksY = 20
+
+}
+
+/* TITLE BAR */
 
 doc.setFillColor(37,99,235)
 
@@ -2059,6 +2072,8 @@ doc.text(
 18,
 tasksY + 7
 )
+
+/* TABLE */
 
 doc.autoTable({
 
@@ -2096,10 +2111,24 @@ t.status || ""
 
 })
 
-/* EXPENSES TITLE */
+/* =========================
+EXPENSES SECTION
+========================= */
 
 let expensesY =
-doc.lastAutoTable.finalY + 10
+doc.lastAutoTable.finalY + 12
+
+/* CHECK PAGE SPACE */
+
+if(expensesY > 240){
+
+doc.addPage()
+
+expensesY = 20
+
+}
+
+/* TITLE BAR */
 
 doc.setFillColor(37,99,235)
 
@@ -2122,6 +2151,8 @@ doc.text(
 18,
 expensesY + 7
 )
+
+/* TABLE */
 
 doc.autoTable({
 

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Interior Client Credential Generator - Varada Nexus</title>
+
+<base href="/">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0a0f1c;
+color:white;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+padding:30px;
+}
+
+.topbar{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:25px;
+}
+
+.brand{
+display:flex;
+align-items:center;
+gap:14px;
+}
+
+.brand img{
+height:52px;
+}
+
+.brand h2{
+margin:0;
+font-size:24px;
+}
+
+.brand p{
+margin:2px 0 0 0;
+font-size:13px;
+color:#94a3b8;
+}
+
+.card{
+background:#111827;
+padding:24px;
+border-radius:16px;
+margin-bottom:20px;
+border:1px solid rgba(255,255,255,0.06);
+box-shadow:0 10px 30px rgba(0,0,0,0.35);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:14px;
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+margin-top:8px;
+border-radius:10px;
+border:none;
+background:#0f172a;
+color:white;
+box-sizing:border-box;
+font-size:14px;
+}
+
+textarea{
+min-height:180px;
+resize:vertical;
+}
+
+button{
+padding:12px 18px;
+background:linear-gradient(135deg,#3b82f6,#6366f1);
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+font-weight:600;
+font-size:14px;
+transition:0.2s;
+}
+
+button:hover{
+transform:translateY(-2px);
+}
+
+h3{
+margin-top:0;
+}
+
+.section-title{
+font-size:18px;
+margin-bottom:14px;
+font-weight:600;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="topbar">
+
+<div class="brand">
+
+<img src="/images/logo.png">
+
+<div>
+<h2>Interior Client Generator</h2>
+<p>Varada Nexus Private Limited</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="section-title">
+Client Information
+</div>
+
+<div class="grid">
+
+<div>
+<input id="name" placeholder="Client Name">
+</div>
+
+<div>
+<input id="mobile" placeholder="Mobile Number">
+</div>
+
+<div>
+<input id="email" placeholder="Email">
+</div>
+
+<div>
+<input id="address" placeholder="Project Address">
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="section-title">
+Project Information
+</div>
+
+<div class="grid">
+
+<div>
+<input id="projectName" placeholder="Project Name">
+</div>
+
+<div>
+<input id="projectType" placeholder="Project Type">
+</div>
+
+<div>
+<input id="projectBudget" placeholder="Project Budget">
+</div>
+
+<div>
+<input id="manager" placeholder="Project Manager">
+</div>
+
+<div>
+<input id="startDate" type="date">
+</div>
+
+<div>
+<select id="projectStatus">
+<option value="Planning">Planning</option>
+<option value="In Progress">In Progress</option>
+<option value="Completed">Completed</option>
+</select>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="section-title">
+Portal Credentials
+</div>
+
+<div class="grid">
+
+<div>
+<input id="username" placeholder="Portal Username">
+</div>
+
+<div>
+<input id="password" placeholder="Portal Password">
+</div>
+
+<div>
+<select id="loginType">
+<option value="Interior Client">Interior Client</option>
+<option value="Project Manager">Project Manager</option>
+<option value="Site Supervisor">Site Supervisor</option>
+</select>
+</div>
+
+</div>
+
+<button onclick="generatePDF()">
+Generate Interior Client PDF
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Email Preview</h3>
+
+<textarea id="emailPreview"></textarea>
+
+</div>
+
+</div>
+
+<script>
+
+async function generatePDF(){
+
+const { jsPDF } = window.jspdf
+
+let doc = new jsPDF()
+
+/* WATERMARK */
+
+doc.setGState(new doc.GState({opacity:0.05}))
+
+try{
+doc.addImage("/images/logo.png","PNG",40,70,130,130)
+}catch(e){}
+
+doc.setGState(new doc.GState({opacity:1}))
+
+/* VALUES */
+
+let name = val("name")
+let mobile = val("mobile")
+let email = val("email")
+let address = val("address")
+
+let projectName = val("projectName")
+let projectType = val("projectType")
+let projectBudget = val("projectBudget")
+let manager = val("manager")
+let startDate = val("startDate")
+let projectStatus = val("projectStatus")
+
+let username = val("username")
+let password = val("password")
+let loginType = val("loginType")
+
+let loginURL =
+"https://www.varadanexus.com/website/login.html"
+
+/* LOGO */
+
+try{
+doc.addImage("/images/logo.png","PNG",15,10,24,20)
+}catch(e){}
+
+/* HEADER */
+
+doc.setFont("helvetica","bold")
+doc.setFontSize(18)
+
+doc.text(
+"VARADA NEXUS PRIVATE LIMITED",
+105,
+16,
+{align:"center"}
+)
+
+doc.setFontSize(11)
+doc.setFont("helvetica","normal")
+
+doc.text(
+"Interior Client Portal Credentials",
+105,
+24,
+{align:"center"}
+)
+
+doc.setFont("helvetica","bold")
+doc.text(
+"CONFIDENTIAL DOCUMENT",
+105,
+31,
+{align:"center"}
+)
+
+/* CLIENT TABLE */
+
+doc.autoTable({
+
+startY:40,
+
+head:[
+["Client Information",""]
+],
+
+body:[
+
+["Client Name",name],
+["Mobile",mobile],
+["Email",email],
+["Project Address",address],
+
+],
+
+theme:"grid",
+
+styles:{
+fontSize:10,
+cellPadding:4
+},
+
+headStyles:{
+fillColor:[37,99,235],
+textColor:255
+},
+
+columnStyles:{
+0:{cellWidth:60,fontStyle:"bold"},
+1:{cellWidth:120}
+}
+
+})
+
+/* PROJECT TABLE */
+
+doc.autoTable({
+
+startY:doc.lastAutoTable.finalY + 10,
+
+head:[
+["Project Information",""]
+],
+
+body:[
+
+["Project Name",projectName],
+["Project Type",projectType],
+["Project Budget","₹ " + projectBudget],
+["Project Manager",manager],
+["Start Date",startDate],
+["Project Status",projectStatus],
+
+],
+
+theme:"grid",
+
+styles:{
+fontSize:10,
+cellPadding:4
+},
+
+headStyles:{
+fillColor:[16,185,129],
+textColor:255
+},
+
+columnStyles:{
+0:{cellWidth:60,fontStyle:"bold"},
+1:{cellWidth:120}
+}
+
+})
+
+/* LOGIN TABLE */
+
+doc.autoTable({
+
+startY:doc.lastAutoTable.finalY + 10,
+
+head:[
+["Portal Login Credentials",""]
+],
+
+body:[
+
+["Username",username],
+["Password",password],
+["Portal URL",loginURL],
+["Login Type",loginType],
+
+],
+
+theme:"grid",
+
+styles:{
+fontSize:10,
+cellPadding:4
+},
+
+headStyles:{
+fillColor:[124,58,237],
+textColor:255
+},
+
+columnStyles:{
+0:{cellWidth:60,fontStyle:"bold"},
+1:{cellWidth:120}
+}
+
+})
+
+/* NOTES */
+
+let y = doc.lastAutoTable.finalY + 18
+
+doc.setFont("helvetica","bold")
+doc.setFontSize(11)
+
+doc.text(
+"Client Access Instructions",
+15,
+y
+)
+
+doc.setFont("helvetica","normal")
+doc.setFontSize(9)
+
+doc.text(
+"Use the above credentials to access your live interior project portal. You can track tasks, materials, inventory, work progress, and project updates in real time.",
+15,
+y + 8,
+{
+maxWidth:180
+}
+)
+
+/* SIGNATURE */
+
+let signY = y + 30
+
+doc.setFont("helvetica","bold")
+
+doc.text(
+"Authorized By",
+15,
+signY
+)
+
+doc.setFont("helvetica","normal")
+
+doc.text(
+"Administration Team",
+15,
+signY + 7
+)
+
+doc.text(
+"Varada Nexus Private Limited",
+15,
+signY + 14
+)
+
+/* STAMP */
+
+try{
+doc.addImage("/images/stamp.png","PNG",145,signY-10,42,42)
+}catch(e){}
+
+/* SAVE PDF */
+
+let fileName =
+`${name}_INTERIOR_CLIENT_PORTAL.pdf`
+
+doc.save(fileName)
+
+/* EMAIL TEMPLATE */
+
+let emailText = `
+
+Subject: Interior Project Portal Credentials – Varada Nexus
+
+Dear ${name},
+
+Welcome to Varada Nexus Private Limited.
+
+Your interior project portal has been successfully created.
+
+PROJECT DETAILS
+
+Project Name:
+${projectName}
+
+Project Type:
+${projectType}
+
+Project Manager:
+${manager}
+
+Portal Login URL:
+${loginURL}
+
+Username:
+${username}
+
+Password:
+${password}
+
+You can monitor:
+
+• Project Progress
+• Task Updates
+• Inventory Usage
+• Material Tracking
+• Live Work Status
+
+For support contact:
+connect@varadanexus.com
+
+Regards,
+Administration Team
+Varada Nexus Private Limited
+
+`
+
+document.getElementById(
+"emailPreview"
+).value = emailText
+
+alert("Interior Client PDF Generated Successfully ✅")
+
+}
+
+function val(id){
+
+return document.getElementById(id).value || "-"
+
+}
+
+</script>
+
+</body>
+
+</html>

@@ -1969,14 +1969,28 @@ doc.text(
 
 /* INVENTORY */
 
-doc.setFontSize(16)
+/* MATERIALS TITLE */
 
-doc.setTextColor(37,99,235)
+doc.setFillColor(37,99,235)
+
+doc.roundedRect(
+14,
+88,
+182,
+10,
+2,
+2,
+"F"
+)
+
+doc.setFontSize(14)
+
+doc.setTextColor(255,255,255)
 
 doc.text(
-"Materials",
-14,
-92
+"PROJECT MATERIALS",
+18,
+95
 )
 
 doc.autoTable({
@@ -2019,19 +2033,36 @@ i.vendor || ""
 
 /* TASKS */
 
-doc.setFontSize(16)
+/* TASKS TITLE */
 
-doc.setTextColor(37,99,235)
+let tasksY =
+doc.lastAutoTable.finalY + 10
+
+doc.setFillColor(37,99,235)
+
+doc.roundedRect(
+14,
+tasksY,
+182,
+10,
+2,
+2,
+"F"
+)
+
+doc.setFontSize(14)
+
+doc.setTextColor(255,255,255)
 
 doc.text(
-"Project Tasks",
-14,
-doc.lastAutoTable.finalY + 7
+"PROJECT TASKS",
+18,
+tasksY + 7
 )
 
 doc.autoTable({
 
-startY:doc.lastAutoTable.finalY + 12,
+startY:tasksY + 14,
 
 theme:"grid",
 
@@ -2065,21 +2096,36 @@ t.status || ""
 
 })
 
-/* EXPENSES */
+/* EXPENSES TITLE */
 
-doc.setFontSize(16)
+let expensesY =
+doc.lastAutoTable.finalY + 10
 
-doc.setTextColor(37,99,235)
+doc.setFillColor(37,99,235)
+
+doc.roundedRect(
+14,
+expensesY,
+182,
+10,
+2,
+2,
+"F"
+)
+
+doc.setFontSize(14)
+
+doc.setTextColor(255,255,255)
 
 doc.text(
-"Project Expenses",
-14,
-doc.lastAutoTable.finalY + 7
+"PROJECT EXPENSES",
+18,
+expensesY + 7
 )
 
 doc.autoTable({
 
-startY:doc.lastAutoTable.finalY + 12,
+startY:expensesY + 14,
 
 theme:"grid",
 headStyles:{
